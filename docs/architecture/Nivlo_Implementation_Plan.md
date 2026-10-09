@@ -101,7 +101,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.5 | Domain Model | ✅ |
 | | 0.6 | Storage：SQLite 与 Migration | ✅ |
 | | 0.7 | Application Layer 与 Event Bus | ✅ |
-| | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ⬜ |
+| | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ✅ |
 | | 0.9 | Frontend 基础 | ⬜ |
 | **P1** | 1.1 | 窗口架构与 Capability | ⬜ |
 | | 1.2 | 悬浮窗 Window Behavior | ⬜ |
@@ -348,7 +348,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.8 Tauri Host、启动生命周期与 Typed IPC
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.7
 - **目标**：`src-tauri` 作为 Composition Root 完成装配，并建立类型安全的 IPC（架构文档 §14、§54、§55、§63）。
 - **任务**：
@@ -360,11 +360,15 @@ Phase 12 Backlog                        → 未排期
   - Event：`item_created`、`item_updated`（UI Event Mapper 只映射 UI 需要的事件）。
   - 正常退出路径的 Shutdown 骨架（架构文档 §41），不使用 `process::exit()`。
 - **验收标准**：
-  - [ ] 从 UI 调用 `create_item` 后数据写入 SQLite，重启后可读取。
-  - [ ] Binding 不一致时 CI 失败。
-  - [ ] 人为损坏 Migration（验证分支）时应用显示恢复对话框而不是崩溃。
-  - [ ] 不存在 `execute_sql`、`read_file(path)`、`http_request` 等通用能力型 Command（代码审查确认）。
-- **完成记录**：—
+  - [x] 从 UI 调用 `create_item` 后数据写入 SQLite，重启后可读取。
+  - [x] Binding 不一致时 CI 失败。
+  - [x] 人为损坏 Migration（验证分支）时应用显示恢复对话框而不是崩溃。
+  - [x] 不存在 `execute_sql`、`read_file(path)`、`http_request` 等通用能力型 Command（代码审查确认）。
+- **完成记录**：2026-10-09 完成。
+  - 证据：`cargo test -p nivlo-desktop` 18 个测试通过，其中 `tests/ipc.rs` 通过 Tauri mock 运行时调用真实 Command：创建 Item 后"关闭 → 重新打开同一数据目录"仍可读取（M0 链路 UI→IPC→Application→Domain→SQLite）；错误以 `{ code, message, action }` 返回（`ITEM_TITLE_EMPTY`、`ITEM_NOT_FOUND`、`INVALID_INPUT`、`ITEM_FIELD_NOT_APPLICABLE`）。
+  - 手动验证：用临时数据目录启动真实应用，日志按序出现 `startup_environment_ready → migrations_applied → startup_completed`；优雅关闭时出现 `shutdown_started → shutdown_tasks_stopped → shutdown_database_closed → shutdown_completed`；篡改 `_sqlx_migrations` 校验和后启动，日志出现 `startup_database_failed`，进程停留在标题为"Nivlo 无法启动"的恢复对话框（打开日志目录 / 导出数据库副本 / 退出），业务窗口与后台任务均未启动。
+  - Binding：`pnpm gen:bindings` 生成 `apps/desktop/ui/src/bindings/index.ts`（tauri-specta 2.0.0-rc.25），CI 步骤会重新生成并检查差异（待远端首次运行确认）。代码审查：没有 `execute_sql`、`read_file(path)`、`http_request` 等通用能力型 Command；主窗口 Capability 只授予 `core:event:default` 与三个 Item 命令。
+  - 设计说明：Command 为薄层；`AppState { services, runtime }` 是唯一 State；退出由 `RunEvent::ExitRequested` 拦截后异步执行有序退出再 `exit(0)`，不使用 `process::exit()`；窗口改为在启动成功后由 Rust 创建；为让测试 / example 可在 Windows 上启动，`build.rs` 对所有目标嵌入 Common Controls v6 清单（`windows-app.manifest`）。
 
 ### 0.9 Frontend 基础
 

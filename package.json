@@ -15,6 +15,7 @@
     "format": "pnpm --filter @nivlo/desktop-ui format",
     "format:check": "pnpm --filter @nivlo/desktop-ui format:check",
     "typecheck": "pnpm --filter @nivlo/desktop-ui typecheck",
-    "test": "pnpm --filter @nivlo/desktop-ui test"
+    "test": "pnpm --filter @nivlo/desktop-ui test",
+    "gen:bindings": "cargo run -p nivlo-desktop --example gen_bindings"
   }
 }

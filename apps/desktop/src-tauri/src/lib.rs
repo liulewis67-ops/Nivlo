@@ -1,0 +1,125 @@
+//! `nivlo-desktop`：Tauri 桌面宿主，也是 Composition Root。
+//!
+//! 本 crate 只做装配与适配：
+//!
+//! * [`lifecycle`]：启动顺序、Migration 失败的恢复对话框、退出流程。
+//! * [`commands`]：薄层 IPC Command（参数解析 → Application → 错误映射 → DTO）。
+//! * [`dto`]：IPC 的 DTO，由 `tauri-specta` 生成 TypeScript Binding。
+//! * [`events`]：领域事件到前端事件的映射与转发。
+//! * [`app::AppState`]：唯一注册到 Tauri 的状态。
+//!
+//! 业务规则不在这里实现，都在 `nivlo-domain` / `nivlo-application`。
+
+pub mod app;
+pub mod commands;
+pub mod dto;
+pub mod events;
+pub mod lifecycle;
+pub mod windows;
+
+use std::error::Error;
+use std::sync::Arc;
+
+use tauri::{Manager, RunEvent, Runtime, Wry};
+use tauri_specta::{Builder, collect_commands, collect_events};
+
+use crate::app::AppState;
+use crate::events::forwarder::spawn_forwarder;
+use crate::events::mapper::DefaultUiEventMapper;
+use crate::events::{ItemCreatedEvent, ItemUpdatedEvent};
+use crate::lifecycle::{recovery, startup};
+
+/// 构建 `tauri-specta` Builder：登记所有 Command 与事件，供运行时注册与 Binding 生成共用。
+///
+/// 对运行时泛型：生产使用 `Wry`，测试使用 `MockRuntime`。
+///
+/// 新增 Command 后必须同时：加入此处、`build.rs` 的 `COMMANDS`、对应窗口的 Capability，
+/// 并执行 `pnpm gen:bindings`。
+pub fn bindings_builder<R: Runtime>() -> Builder<R> {
+    Builder::<R>::new()
+        .commands(collect_commands![
+            commands::item::create_item,
+            commands::item::get_item,
+            commands::item::list_items,
+        ])
+        .events(collect_events![ItemCreatedEvent, ItemUpdatedEvent])
+}
+
+/// 运行桌面应用，直到退出。
+///
+/// 启动顺序见 [`lifecycle`]。数据库 Migration 失败时显示恢复对话框并返回错误，
+/// 不会启动任何业务窗口或后台任务。
+///
+/// # Errors
+///
+/// 启动失败（数据目录、日志、数据库、窗口创建）或 Tauri 运行时出错时返回错误。
+pub fn run() -> Result<(), Box<dyn Error>> {
+    let builder = bindings_builder::<Wry>();
+
+    let app = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
+        .invoke_handler(builder.invoke_handler())
+        .setup(move |app| {
+            builder.mount_events(app);
+
+            // 阶段 1：路径与日志。失败时还没有日志，直接向上返回。
+            let environment = startup::init_environment()?;
+
+            // 阶段 2：打开数据库并迁移。失败时进入恢复流程，不启动业务 Runtime。
+            let database = match tauri::async_runtime::block_on(startup::open_database(&environment.paths))
+            {
+                Ok(database) => database,
+                Err(error) => {
+                    tracing::error!(event = "startup_database_failed", %error, "数据库启动失败，进入恢复流程");
+                    recovery::run_recovery_dialog(app.handle(), &environment.paths, &error);
+                    return Err(startup::StartupError::Storage(error).into());
+                }
+            };
+
+            // 阶段 3：装配服务与运行时，启动后台任务，最后才创建窗口。
+            let state = startup::build_app_state(database, Some(environment.log_guard));
+            let forwarder = spawn_forwarder(
+                app.handle().clone(),
+                &state.runtime.event_bus,
+                Arc::new(DefaultUiEventMapper),
+                state.runtime.shutdown_token(),
+            );
+            state.runtime.track_task(forwarder);
+            app.manage(state);
+
+            windows::create_main_window(app)?;
+            tracing::info!(event = "startup_completed", "启动完成");
+            Ok(())
+        })
+        .build(tauri::generate_context!())?;
+
+    app.run(|handle, event| {
+        if let RunEvent::ExitRequested { api, .. } = event {
+            on_exit_requested(handle, &api);
+        }
+    });
+    Ok(())
+}
+
+/// 处理退出请求：第一次拦截并异步执行有序退出，完成后再真正退出。
+///
+/// 退出流程是异步的（要等后台任务、关闭数据库），所以不能让 Tauri 立即退出；
+/// 流程结束后再次调用 `exit`，此时 `begin_shutdown` 返回 `false`，放行退出。
+fn on_exit_requested(handle: &tauri::AppHandle<Wry>, api: &tauri::ExitRequestApi) {
+    // 启动失败时没有 AppState，直接允许退出。
+    let Some(state) = handle.try_state::<AppState>() else {
+        return;
+    };
+    if !state.runtime.begin_shutdown() {
+        return;
+    }
+    api.prevent_exit();
+    let handle = handle.clone();
+    tauri::async_runtime::spawn(async move {
+        if let Some(state) = handle.try_state::<AppState>() {
+            state.runtime.shutdown().await;
+        }
+        handle.exit(0);
+    });
+}

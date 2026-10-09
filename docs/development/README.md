@@ -51,19 +51,30 @@ pnpm tauri dev
 
 提交前请在本地跑完上表中的检查，CI 执行同样的命令。
 
+### 本地数据目录
+
+应用数据（数据库、日志、附件）默认位于系统应用数据目录（Windows：`%APPDATA%Nivlo`）。
+开发与测试时可通过环境变量 `NIVLO_DATA_DIR` 指向一个临时目录，避免污染真实数据：
+
+```bash
+NIVLO_DATA_DIR=/tmp/nivlo-dev pnpm tauri dev
+```
+
+日志位于数据目录的 `logs/`，可用环境变量 `NIVLO_LOG`（语法同 `RUST_LOG`）覆盖过滤级别。
+
 ## 4. 新增 Migration
 
 1. 在 `migrations/` 下新增 `NNNN_描述.sql`（编号递增）。
 2. **不要修改**已合入的 Migration；任何 Schema 变更都通过新文件完成。
-3. 运行 `cargo sqlx prepare --workspace` 更新离线查询元数据并提交（P0.6 起）。
+3. 运行 `node scripts/sqlx-prepare.mjs` 更新 `.sqlx/` 离线查询元数据并提交（需要 `sqlx-cli`：`cargo install sqlx-cli --version "~0.8" --no-default-features --features sqlite,rustls --locked`）；`--check` 参数用于校验。
 4. 为新 Schema 添加 Storage 集成测试。
 
 ## 5. 新增 IPC Command
 
 1. 在 `nivlo-application` 实现 Use Case，并补充 Application 测试。
-2. 在 `src-tauri/src/commands/` 添加薄层 Command（参数解析 → 调用 Use Case → 错误映射 → 返回 DTO）。
-3. 将 Command 写入对应窗口的 Capability 文件（`capabilities/main.json` 或 `floating.json`），遵循最小权限。
-4. 运行 `pnpm gen:bindings` 重新生成并提交 TS Binding（P0.8 起）。
+2. 在 `src-tauri/src/commands/` 添加薄层 Command（参数解析 → 调用 Use Case → 错误映射 → 返回 DTO），并在 `src/lib.rs` 的 `bindings_builder` 中登记。
+3. 把命令名加入 `src-tauri/build.rs` 的 `COMMANDS`（生成 `allow-<command>` 权限），再写入对应窗口的 Capability 文件（`capabilities/main.json` 或 `floating.json`），遵循最小权限。
+4. 运行 `pnpm gen:bindings` 重新生成并提交 TS Binding（`apps/desktop/ui/src/bindings/index.ts`，CI 会检查是否最新）。
 5. 前端通过生成的 Binding 调用，不直接使用 `invoke`。
 
 ## 6. 文档约定

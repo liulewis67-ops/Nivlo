@@ -6,11 +6,24 @@ license.workspace = true
 publish.workspace = true
 description = "Nivlo desktop host (Composition Root)"
 
+[lib]
+name = "nivlo_desktop_lib"
+
 [build-dependencies]
 tauri-build.workspace = true
 
 [dependencies]
 tauri.workspace = true
+tauri-plugin-dialog.workspace = true
+tauri-plugin-opener.workspace = true
+tauri-specta.workspace = true
+specta.workspace = true
+specta-typescript.workspace = true
+tokio-util.workspace = true
+tokio = { workspace = true, features = ["macros"] }
+chrono.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 nivlo-common.workspace = true
@@ -32,6 +45,13 @@ nivlo-platform-macos.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 nivlo-platform-linux.workspace = true
+
+[dev-dependencies]
+tauri = { workspace = true, features = ["test"] }
+sqlx.workspace = true
+tempfile.workspace = true
+uuid.workspace = true
+nivlo-application = { workspace = true, features = ["testing"] }
 
 [lints]
 workspace = true

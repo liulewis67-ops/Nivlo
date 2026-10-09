@@ -11,8 +11,10 @@
   },
   "app": {
     "withGlobalTauri": false,
-    "windows": [{ "label": "main", "title": "Nivlo", "width": 960, "height": 640 }],
-    "security": { "csp": null }
+    "windows": [],
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
