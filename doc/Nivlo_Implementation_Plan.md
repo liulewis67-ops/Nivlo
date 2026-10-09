@@ -95,7 +95,7 @@ Phase 12 Backlog                        → 未排期
 | 阶段 | 子阶段 | 名称 | 状态 |
 |---|---|---|---|
 | **P0** | 0.1 | 仓库与 Workspace 初始化 | ✅ |
-| | 0.2 | 代码质量门禁与 CI | ⬜ |
+| | 0.2 | 代码质量门禁与 CI | 🟨 |
 | | 0.3 | ADR 与开发文档 | ⬜ |
 | | 0.4 | Common 基础设施（日志 / 路径 / 时钟 / ID / Secret） | ⬜ |
 | | 0.5 | Domain Model | ⬜ |
@@ -227,7 +227,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.2 代码质量门禁与 CI
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：0.1
 - **目标**：从第一天起强制执行架构文档 §49、§62、§63 的规则。
 - **任务**：
@@ -239,12 +239,15 @@ Phase 12 Backlog                        → 未排期
   - GitHub Actions：PR 上运行 fmt / clippy / test / check-deps / lint / typecheck / test；Windows 为必需，macOS / Linux 先设为非阻塞。
 - **验收标准**：
   - [ ] 在干净仓库上 CI 全部通过。
-  - [ ] 故意在 `nivlo-domain` 中加入 `sqlx` 依赖时，`scripts/check-deps` 失败并给出清晰提示（在验证分支上演示，不合入）。
-  - [ ] 故意写入 `any` / 格式错误时，对应检查失败。
-  - [ ] 故意提交一个没有文档注释的 Rust 私有函数 / 没有 TSDoc 的 TS 函数时，CI 失败。
-  - [ ] 使用 `npm install` 时被 `only-allow pnpm` 拒绝。
+  - [x] 故意在 `nivlo-domain` 中加入 `sqlx` 依赖时，`scripts/check-deps` 失败并给出清晰提示（在验证分支上演示，不合入）。
+  - [x] 故意写入 `any` / 格式错误时，对应检查失败。
+  - [x] 故意提交一个没有文档注释的 Rust 私有函数 / 没有 TSDoc 的 TS 函数时，CI 失败。
+  - [x] 使用 `npm install` 时被 `only-allow pnpm` 拒绝。
   - [ ] Windows Job 为必需检查，macOS / Linux Job 失败不阻塞合并。
-- **完成记录**：—
+- **完成记录**：2026-10-09 本地部分完成；远端 CI 待仓库托管后验证。
+  - 本地证据：`cargo fmt --check`、`cargo clippy --workspace --all-targets -D warnings`、`cargo test --workspace`、`RUSTDOCFLAGS=-D warnings cargo doc`、`pnpm lint/typecheck/test/format:check`、`node scripts/check-deps/check-deps.mjs` 均通过；负向验证：向 `nivlo-domain` 临时加入 `sqlx` → check-deps 报 `nivlo-domain -> sqlx` 并退出 1；`any` / 无 TSDoc 的函数、类型 → ESLint 报错；无文档的 Rust 私有函数 → `missing_docs` 报错；`npm install` → `only-allow pnpm` 拒绝。
+  - 偏差：TypeScript 固定为 5.9（typescript-eslint 尚不支持 TS 7）；Prettier 仅格式化 `apps/desktop/ui`；`.github/workflows/ci.yml` 与 `deny.toml` 已编写但未在 GitHub 上运行（尚无远端）。`cargo deny` 未在本机安装，未本地运行。
+  - 待办：推送到 GitHub 后确认 CI 全绿，并把 Windows Job 设为必需检查（branch protection）。
 
 ### 0.3 ADR 与开发文档
 

@@ -13,7 +13,10 @@ const end = start + 5 + rest.search(/\n(### |# )/) + 1;
 let section = text.slice(start, end);
 section = section.replace(/- \*\*状态\*\*：\S+/, `- **状态**：${status}`);
 section = section.split("- [ ]").join("- [x]");
-section = section.replace("- **完成记录**：—", "- **完成记录**：" + fs.readFileSync(recordFile, "utf8").trimEnd());
+section = section.replace(
+  "- **完成记录**：—",
+  "- **完成记录**：" + fs.readFileSync(recordFile, "utf8").trimEnd(),
+);
 text = text.slice(0, start) + section + text.slice(end);
 
 // 进度总览表中对应行的最后一列。
