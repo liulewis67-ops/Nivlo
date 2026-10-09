@@ -14,5 +14,13 @@ nivlo-domain.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 
+[features]
+# 暴露内存 Fake（FakeUnitOfWork、RecordingPublisher 等），供其他 crate 的测试使用。
+testing = []
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
+uuid.workspace = true
+
 [lints]
 workspace = true

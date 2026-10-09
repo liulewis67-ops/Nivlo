@@ -100,7 +100,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.4 | Common 基础设施（日志 / 路径 / 时钟 / ID / Secret） | ✅ |
 | | 0.5 | Domain Model | ✅ |
 | | 0.6 | Storage：SQLite 与 Migration | ✅ |
-| | 0.7 | Application Layer 与 Event Bus | ⬜ |
+| | 0.7 | Application Layer 与 Event Bus | ✅ |
 | | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ⬜ |
 | | 0.9 | Frontend 基础 | ⬜ |
 | **P1** | 1.1 | 窗口架构与 Capability | ⬜ |
@@ -329,7 +329,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.7 Application Layer 与 Event Bus
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.6
 - **目标**：建立 Use Case 层、统一错误模型与内部事件总线（架构文档 §7.2、§38、§43）。
 - **任务**：
@@ -338,11 +338,13 @@ Phase 12 Backlog                        → 未排期
   - 进程内 Domain Event Bus（基于 `tokio::sync::broadcast` 或等价实现）；UI Event Mapper 的接口（具体映射在 0.8）。
   - Fake Repository / Fake Clock，用于 Use Case 测试。
 - **验收标准**：
-  - [ ] 使用 Fake Repository 的 Use Case 测试全部通过。
-  - [ ] `nivlo-application` 不依赖 Tauri（`scripts/check-deps` 通过）。
-  - [ ] 所有错误码在文档中登记。
-  - [ ] 创建 / 更新 Item 时发布对应 Domain Event（测试断言）。
-- **完成记录**：—
+  - [x] 使用 Fake Repository 的 Use Case 测试全部通过。
+  - [x] `nivlo-application` 不依赖 Tauri（`scripts/check-deps` 通过）。
+  - [x] 所有错误码在文档中登记。
+  - [x] 创建 / 更新 Item 时发布对应 Domain Event（测试断言）。
+- **完成记录**：2026-10-09 完成。
+  - 证据：`cargo test -p nivlo-application` 21 个测试通过——创建 / 更新 / 读取 / 列表、创建与更新时发布对应 Domain Event（`ItemCreated`、`ScheduleChanged`、`ItemUpdated`、`ItemTypeChanged`，断言事件顺序与不重复）、校验失败与提交失败时不写库且不发布事件、更新中途失败整体作废、空更新为 no-op、`AppError` 映射；`every_error_code_is_registered_in_the_docs` 保证所有错误码登记在 `docs/development/error-codes.md`；`check-deps` 确认 `nivlo-application` 不依赖 Tauri / SQLx。
+  - 设计说明：`FakeUnitOfWork` / `RecordingPublisher` 位于 `nivlo_application::testing`（`testing` feature），FakeClock 在 `nivlo-common`；`UiEventMapper` 仅定义接口，具体映射在 0.8；`UpdateItemInput` 用 `Patch::{Keep, Clear, Set}` 表达可清除字段。
 
 ### 0.8 Tauri Host、启动生命周期与 Typed IPC
 
