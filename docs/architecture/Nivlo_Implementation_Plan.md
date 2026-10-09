@@ -103,7 +103,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.7 | Application Layer 与 Event Bus | ✅ |
 | | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ✅ |
 | | 0.9 | Frontend 基础 | ✅ |
-| **P1** | 1.1 | 窗口架构与 Capability | ⬜ |
+| **P1** | 1.1 | 窗口架构与 Capability | ✅ |
 | | 1.2 | 悬浮窗 Window Behavior | ⬜ |
 | | 1.3 | Hover 展开与悬浮窗状态机 | ⬜ |
 | | 1.4 | Today 查询与缓存 | ⬜ |
@@ -191,7 +191,7 @@ Phase 12 Backlog                        → 未排期
 | D-09 | **FTS 索引同步方式** | 使用 SQLite Trigger 同步 FTS5 表（与业务写入同一事务，不会不一致），而不是通过 Domain Event 异步更新。FTS5 使用 `trigram` tokenizer 以支持中文子串搜索。 | 3.4 | 待定 |
 | D-10 | **WebView 拖拽方案** | Tauri 2 在 Windows 上启用原生 `dragDropEnabled` 时会拦截 HTML5 drop（只能拿到文件路径，拿不到浏览器拖来的 URL / 文本）。需在 2.4 开头做技术验证，从「Tauri 原生文件拖放 + HTML5 drop」的组合方案中选定一个，必要时将 10.1 Native Drop 提前。 | 2.4 | 待定 |
 | D-11 | **Workflow 字段映射模板语法** | 采用最小模板语法 `{{ path.to.var }}`（仅变量插值与少量过滤器，如 `| default`、`| trim`），不引入完整模板引擎。 | 5.3 | 待定 |
-| D-12 | **悬浮窗 IPC 白名单补充** | 架构文档 §13 的 floating 白名单没有推迟（改期）能力，但产品文档 §22 要求在悬浮面板直接推迟。推荐在 floating 白名单中增加 `reschedule_item`、`undo`、`get_inbox_count`，并同步更新架构文档 §13。 | 1.1 | 待定 |
+| D-12 | **悬浮窗 IPC 白名单补充** | 架构文档 §13 的 floating 白名单没有推迟（改期）能力，但产品文档 §22 要求在悬浮面板直接推迟。推荐在 floating 白名单中增加 `reschedule_item`、`undo`、`get_inbox_count`，并同步更新架构文档 §13。 | 1.1 | 已决定（2026-10-09，采用推荐方案，已同步架构文档 §13） |
 
 ---
 
@@ -405,7 +405,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.1 窗口架构与 Capability
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.8、0.9；D-12
 - **目标**：建立 `floating` 与 `main` 两个长期窗口及按窗口划分的权限边界（架构文档 §10、§13）。
 - **任务**：
@@ -414,10 +414,13 @@ Phase 12 Backlog                        → 未排期
   - `capabilities/main.json`：主窗口所需全部命令。
   - 关闭主窗口 = 隐藏，不退出应用。
 - **验收标准**：
-  - [ ] 测试 / 演示：从 floating 调用 main 专属命令被拒绝。
-  - [ ] 启动后只有 floating 可见；主窗口按需出现。
-  - [ ] 关闭主窗口后应用与悬浮窗继续运行。
-- **完成记录**：—
+  - [x] 测试 / 演示：从 floating 调用 main 专属命令被拒绝。
+  - [x] 启动后只有 floating 可见；主窗口按需出现。
+  - [x] 关闭主窗口后应用与悬浮窗继续运行。
+- **完成记录**：2026-10-09 完成。D-12 已决定并同步更新架构文档 §13（floating 白名单增加 `reschedule_item`、`undo`、`get_inbox_count`）。
+  - 证据（真实应用，经 CDP 驱动 `pnpm tauri dev`）：① 启动后只有 floating 一个 WebView 页面（`/json` 仅 1 项）；② 在 floating 页面调用 `create_item` / `list_items` / `get_item` / `quit_app` 均被 Tauri 拒绝（`... not allowed on window "floating" ... allowed on: [windows: "main"]`），`open_main` 成功并创建出第二个窗口；③ 向主窗口发送 `WM_CLOSE` 后主窗口 `visible=False`，进程存活、悬浮窗仍可见。
+  - 自动化测试：`tests/capabilities.rs`（6 个）锁定边界——floating 只能含 D-12 白名单内的命令、主窗口专属命令不得出现在 floating、不允许通配 / `core:default` / shell / fs、`build.rs` 中的每个命令都授予了某个窗口；`tests/windows.rs`（2 个，mock 运行时）验证启动后只有 floating、主窗口按需创建并复用。前端新增 `FloatingApp` 测试（点击徽标调用 `openMain`）。
+  - 偏差：窗口在 Rust 中创建而不是写在 `tauri.conf.json`（配置中的窗口会在数据库迁移检查之前创建，违背"迁移失败不得出现业务窗口"）；主窗口是**按需创建**（首次 `open_main` 时才创建 WebView，节省常驻内存），关闭即隐藏；`bindings_builder!` 改为宏（`collect_commands!` 不能使用外层泛型参数）；新增主窗口专属命令 `quit_app`（托盘 Quit 在 1.9 复用同一路径）与错误码 `WINDOW_UNAVAILABLE`；浮窗当前只是一个"点击打开主窗口"的徽标，初始位置为主显示器右上角，持久化与吸附在 1.2。
 
 ### 1.2 悬浮窗 Window Behavior
 

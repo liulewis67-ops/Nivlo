@@ -823,7 +823,12 @@ complete_item
 reorder_today
 capture
 open_main
+reschedule_item
+undo
+get_inbox_count
 ```
+
+其中 `reschedule_item`、`undo`、`get_inbox_count` 来自实施计划 D-12：产品文档 §22 要求在悬浮面板内直接推迟、撤销，并显示 Inbox 数量。
 
 禁止：
 

@@ -32,6 +32,7 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 | `STORAGE_UNAVAILABLE` | 数据库不可用 | Storage | 动作：`OPEN_DIAGNOSTICS` |
 | `STORAGE_CORRUPT` | 存储的数据无法还原为合法对象 | Storage | 动作：`OPEN_DIAGNOSTICS` |
 | `STORAGE_MIGRATION_FAILED` | 数据库迁移失败，业务 Runtime 不会启动 | Storage | 动作：`OPEN_DIAGNOSTICS` |
+| `WINDOW_UNAVAILABLE` | 宿主窗口无法创建或显示（如 WebView2 异常） | Host | 动作：`OPEN_DIAGNOSTICS` |
 
 ## UI 动作
 

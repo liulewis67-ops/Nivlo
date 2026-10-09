@@ -50,6 +50,8 @@ pub enum ErrorCode {
     StorageCorrupt,
     /// 数据库迁移失败。
     StorageMigrationFailed,
+    /// 宿主窗口无法创建或显示。
+    WindowUnavailable,
 }
 
 impl ErrorCode {
@@ -74,6 +76,7 @@ impl ErrorCode {
         Self::StorageUnavailable,
         Self::StorageCorrupt,
         Self::StorageMigrationFailed,
+        Self::WindowUnavailable,
     ];
 
     /// 返回稳定的大写错误码字符串（会出现在 IPC 响应中，不得随意修改）。
@@ -98,6 +101,7 @@ impl ErrorCode {
             Self::StorageUnavailable => "STORAGE_UNAVAILABLE",
             Self::StorageCorrupt => "STORAGE_CORRUPT",
             Self::StorageMigrationFailed => "STORAGE_MIGRATION_FAILED",
+            Self::WindowUnavailable => "WINDOW_UNAVAILABLE",
         }
     }
 }

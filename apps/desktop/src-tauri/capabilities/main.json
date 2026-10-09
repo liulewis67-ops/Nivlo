@@ -1,12 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main-window",
-  "description": "主窗口的权限：拥有完整的 Item 管理命令，并可监听事件。",
+  "description": "主窗口的权限：完整的 Item 管理命令、打开 / 退出应用，并可监听事件。",
   "windows": ["main"],
   "permissions": [
     "core:event:default",
     "allow-create-item",
     "allow-get-item",
-    "allow-list-items"
+    "allow-list-items",
+    "allow-open-main",
+    "allow-quit-app"
   ]
 }

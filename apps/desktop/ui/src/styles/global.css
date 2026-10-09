@@ -47,6 +47,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* 悬浮窗是透明窗口，页面背景必须透明，只有内容本身有底色。 */
+html[data-window="floating"],
+html[data-window="floating"] body {
+  background: transparent;
+}
+
 /* 统一键盘焦点样式，各 WebView 默认的焦点环不一致。 */
 :focus-visible {
   outline: 2px solid var(--nv-focus-ring);

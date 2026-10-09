@@ -8,6 +8,8 @@ const MAX_TITLE_CHARS = 500;
 export interface MemoryIpc extends IpcClient {
   /** 当前保存的全部 Item（按创建顺序）。 */
   readonly items: readonly ItemDto[];
+  /** `openMain` 被调用的次数。 */
+  readonly openMainCalls: number;
 }
 
 /** 创建内存版 IPC 时的可选配置。 */
@@ -30,11 +32,20 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const items: ItemDto[] = [];
   const listeners = new Set<() => void>();
   let pendingFailure = options.failNextCreateWith;
+  let openMainCalls = 0;
 
   return {
     get items() {
       return items;
     },
+    get openMainCalls() {
+      return openMainCalls;
+    },
+    openMain: () => {
+      openMainCalls += 1;
+      return Promise.resolve();
+    },
+    quitApp: () => Promise.resolve(),
     createItem: (request: CreateItemRequest) => {
       if (pendingFailure !== undefined) {
         const failure = pendingFailure;

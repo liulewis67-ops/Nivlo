@@ -2,7 +2,13 @@
 //! 这样 Capability 文件才能按窗口只授予所需命令（架构文档 §13）。
 
 /// 全部 App Command 名称；新增 Command 必须同步加入此处与对应窗口的 Capability。
-const COMMANDS: &[&str] = &["create_item", "get_item", "list_items"];
+const COMMANDS: &[&str] = &[
+    "create_item",
+    "get_item",
+    "list_items",
+    "open_main",
+    "quit_app",
+];
 
 fn main() {
     let mut attributes = tauri_build::Attributes::new()

@@ -30,6 +30,20 @@ export const commands = {
 	 *  存储失败时返回 [`IpcError`]。
 	 */
 	listItems: (request: ListItemsRequest) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("list_items", { request })),
+	/**
+	 *  打开（必要时创建）并聚焦主窗口。悬浮窗与主窗口都可以调用。
+	 * 
+	 *  # Errors
+	 * 
+	 *  窗口创建或显示失败时返回 `WINDOW_UNAVAILABLE`（附带 `OPEN_DIAGNOSTICS` 动作）。
+	 */
+	openMain: () => typedError<null, IpcError>(__TAURI_INVOKE("open_main")),
+	/**
+	 *  退出应用：触发有序退出流程（后台任务停止、数据库关闭、日志刷写）。仅主窗口可调用。
+	 * 
+	 *  托盘菜单上线（实施计划 1.9）后，托盘的 Quit 走同一条路径。
+	 */
+	quitApp: () => __TAURI_INVOKE<void>("quit_app"),
 };
 
 /** Events */

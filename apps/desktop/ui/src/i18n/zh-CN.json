@@ -12,6 +12,7 @@
   },
   "dev": {
     "title": "开发控制台",
+    "quit": "退出 Nivlo",
     "subtitle": "Phase 0 的 IPC 演示页：创建并列出 Item，验证 UI → IPC → SQLite 链路。",
     "form": {
       "titleLabel": "标题",
@@ -25,7 +26,7 @@
       "empty": "还没有任何 Item，先创建一个吧。"
     }
   },
-  "floating": { "placeholder": "悬浮窗（Phase 1 实现）" },
+  "floating": { "open": "打开拾序主窗口" },
   "menu": { "open": "打开菜单" },
   "error": {
     "UNKNOWN": "出了点问题，请稍后重试。",
@@ -47,7 +48,8 @@
     "STORAGE_CONSTRAINT": "保存失败：数据与已有内容冲突。",
     "STORAGE_UNAVAILABLE": "本地数据库暂时不可用。",
     "STORAGE_CORRUPT": "本地数据已损坏，请导出诊断信息。",
-    "STORAGE_MIGRATION_FAILED": "数据库升级失败。"
+    "STORAGE_MIGRATION_FAILED": "数据库升级失败。",
+    "WINDOW_UNAVAILABLE": "无法打开窗口，请查看诊断信息。"
   },
   "errorAction": { "OPEN_DIAGNOSTICS": "打开诊断信息" }
 }

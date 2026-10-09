@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
+import { ipc } from "@/lib/ipc";
 import type { ItemTypeDto } from "@/lib/ipc";
 import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
@@ -70,7 +71,12 @@ export function DevConsole() {
           <h1 className="text-xl font-semibold">{t("dev.title")}</h1>
           <p className="text-sm text-muted">{t("dev.subtitle")}</p>
         </div>
-        <Menu trigger={<Button size="sm">{t("theme.label")}</Button>} items={themeItems} />
+        <div className="flex gap-2">
+          <Menu trigger={<Button size="sm">{t("theme.label")}</Button>} items={themeItems} />
+          <Button size="sm" variant="danger" onClick={() => void ipc.quitApp()}>
+            {t("dev.quit")}
+          </Button>
+        </div>
       </header>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">

@@ -27,6 +27,10 @@ export interface IpcClient {
   getItem(id: string): Promise<ItemDto>;
   /** 列出 Item，创建时间从新到旧。 */
   listItems(request: ListItemsRequest): Promise<ItemDto[]>;
+  /** 打开（必要时创建）并聚焦主窗口。 */
+  openMain(): Promise<void>;
+  /** 退出应用：触发后端的有序退出流程。仅主窗口可调用。 */
+  quitApp(): Promise<void>;
   /**
    * 订阅"Item 发生了变化"的后端事件（创建或更新）。
    *
@@ -93,6 +97,10 @@ const tauriIpc: IpcClient = {
   createItem: (request) => call("create_item", commands.createItem(request)),
   getItem: (id) => call("get_item", commands.getItem(id)),
   listItems: (request) => call("list_items", commands.listItems(request)),
+  openMain: async () => {
+    await call("open_main", commands.openMain());
+  },
+  quitApp: () => commands.quitApp(),
   subscribeItemChanges: (onChange) =>
     listenAll([
       () => events.itemCreated.listen(() => onChange()),
@@ -126,5 +134,7 @@ export const ipc: IpcClient = {
   createItem: (request) => current.createItem(request),
   getItem: (id) => current.getItem(id),
   listItems: (request) => current.listItems(request),
+  openMain: () => current.openMain(),
+  quitApp: () => current.quitApp(),
   subscribeItemChanges: (onChange) => current.subscribeItemChanges(onChange),
 };

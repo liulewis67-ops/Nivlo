@@ -20,29 +20,41 @@ pub mod windows;
 use std::error::Error;
 use std::sync::Arc;
 
-use tauri::{Manager, RunEvent, Runtime, Wry};
-use tauri_specta::{Builder, collect_commands, collect_events};
+use tauri::{Manager, RunEvent, Wry};
 
 use crate::app::AppState;
 use crate::events::forwarder::spawn_forwarder;
 use crate::events::mapper::DefaultUiEventMapper;
-use crate::events::{ItemCreatedEvent, ItemUpdatedEvent};
 use crate::lifecycle::{recovery, startup};
+
+/// 重新导出 `tauri_specta`，供 [`bindings_builder!`] 在其他 crate（测试、example）中展开时使用。
+#[doc(hidden)]
+pub use tauri_specta;
 
 /// 构建 `tauri-specta` Builder：登记所有 Command 与事件，供运行时注册与 Binding 生成共用。
 ///
-/// 对运行时泛型：生产使用 `Wry`，测试使用 `MockRuntime`。
+/// 做成宏而不是泛型函数，是因为 `collect_commands!` 内部生成的函数无法使用外层函数的泛型参数；
+/// 宏把运行时类型 `$runtime` 直接展开进每个 Command 的类型实参：生产使用 `tauri::Wry`，
+/// 测试使用 `tauri::test::MockRuntime`。
 ///
 /// 新增 Command 后必须同时：加入此处、`build.rs` 的 `COMMANDS`、对应窗口的 Capability，
 /// 并执行 `pnpm gen:bindings`。
-pub fn bindings_builder<R: Runtime>() -> Builder<R> {
-    Builder::<R>::new()
-        .commands(collect_commands![
-            commands::item::create_item,
-            commands::item::get_item,
-            commands::item::list_items,
-        ])
-        .events(collect_events![ItemCreatedEvent, ItemUpdatedEvent])
+#[macro_export]
+macro_rules! bindings_builder {
+    ($runtime:ty) => {
+        $crate::tauri_specta::Builder::<$runtime>::new()
+            .commands($crate::tauri_specta::collect_commands![
+                $crate::commands::item::create_item,
+                $crate::commands::item::get_item,
+                $crate::commands::item::list_items,
+                $crate::commands::window::open_main::<$runtime>,
+                $crate::commands::window::quit_app::<$runtime>,
+            ])
+            .events($crate::tauri_specta::collect_events![
+                $crate::events::ItemCreatedEvent,
+                $crate::events::ItemUpdatedEvent
+            ])
+    };
 }
 
 /// 运行桌面应用，直到退出。
@@ -54,12 +66,13 @@ pub fn bindings_builder<R: Runtime>() -> Builder<R> {
 ///
 /// 启动失败（数据目录、日志、数据库、窗口创建）或 Tauri 运行时出错时返回错误。
 pub fn run() -> Result<(), Box<dyn Error>> {
-    let builder = bindings_builder::<Wry>();
+    let builder = bindings_builder!(Wry);
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(builder.invoke_handler())
+        .on_window_event(windows::on_window_event)
         .setup(move |app| {
             builder.mount_events(app);
 
@@ -88,7 +101,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             state.runtime.track_task(forwarder);
             app.manage(state);
 
-            windows::create_main_window(app)?;
+            windows::create_floating_window(app)?;
             tracing::info!(event = "startup_completed", "启动完成");
             Ok(())
         })

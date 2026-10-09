@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "floating-window",
+  "description": "悬浮窗的最小权限：只开放 Today / 快速创建 / 捕获 / 打开主窗口等悬浮窗真正需要的命令（架构文档 §13，实施计划 D-12）。随对应功能落地逐个加入。",
+  "windows": ["floating"],
+  "permissions": [
+    "core:event:default",
+    "allow-open-main"
+  ]
+}

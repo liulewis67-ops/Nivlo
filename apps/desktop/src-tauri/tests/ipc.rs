@@ -11,7 +11,7 @@
 use nivlo_common::paths::AppPaths;
 use nivlo_desktop_lib::app::AppState;
 use nivlo_desktop_lib::lifecycle::startup::{build_app_state, open_database};
-use nivlo_desktop_lib::{bindings_builder, windows::MAIN_WINDOW_LABEL};
+use nivlo_desktop_lib::windows::MAIN_WINDOW_LABEL;
 use serde_json::{Value, json};
 use tauri::ipc::{CallbackFn, InvokeBody};
 use tauri::test::{
@@ -25,7 +25,7 @@ async fn app_on(paths: &AppPaths) -> App<MockRuntime> {
     let database = open_database(paths).await.unwrap();
     let state: AppState = build_app_state(database, None);
     mock_builder()
-        .invoke_handler(bindings_builder::<MockRuntime>().invoke_handler())
+        .invoke_handler(nivlo_desktop_lib::bindings_builder!(MockRuntime).invoke_handler())
         .manage(state)
         .build(mock_context(noop_assets()))
         .unwrap()

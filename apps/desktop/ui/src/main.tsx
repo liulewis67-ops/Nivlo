@@ -33,6 +33,9 @@ async function bootstrap(): Promise<void> {
     setIpcClient(createMemoryIpc());
   }
 
+  // 让样式能按窗口区分（悬浮窗需要透明背景）。
+  document.documentElement.dataset["window"] = label;
+
   const container = document.getElementById("root");
   if (container === null) {
     throw new Error("缺少 #root 挂载节点");
