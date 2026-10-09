@@ -98,7 +98,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.2 | 代码质量门禁与 CI | 🟨 |
 | | 0.3 | ADR 与开发文档 | 🟨 |
 | | 0.4 | Common 基础设施（日志 / 路径 / 时钟 / ID / Secret） | ✅ |
-| | 0.5 | Domain Model | ⬜ |
+| | 0.5 | Domain Model | ✅ |
 | | 0.6 | Storage：SQLite 与 Migration | ⬜ |
 | | 0.7 | Application Layer 与 Event Bus | ⬜ |
 | | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ⬜ |
@@ -288,7 +288,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.5 Domain Model
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.4；D-03、D-04
 - **目标**：实现架构文档 §8 与产品文档 §16–17 的纯领域模型与规则。
 - **任务**：
@@ -298,11 +298,13 @@ Phase 12 Backlog                        → 未排期
   - 领域规则：标题非空且去除首尾空白、长度上限；Todo 可完成 / 重新打开，完成时写入 `completed_at`；**Tip 不可完成**；归档写入 `archived_at`；类型转换规则（例如 Todo → Note 时清除完成状态）。
   - `DomainEvent`（`ItemCreated`、`ItemUpdated`、`ItemCompleted`、`ScheduleChanged`…）与 `DomainError`。
 - **验收标准**：
-  - [ ] `nivlo-domain` 通过 `scripts/check-deps`。
-  - [ ] 单元测试覆盖：Todo 完成 / 重新打开、Tip 完成被拒绝、归档、类型转换、标题校验。
-  - [ ] 所有公共类型 `serde` 序列化往返测试通过。
-  - [ ] 所有公共 API 有文档注释。
-- **完成记录**：—
+  - [x] `nivlo-domain` 通过 `scripts/check-deps`。
+  - [x] 单元测试覆盖：Todo 完成 / 重新打开、Tip 完成被拒绝、归档、类型转换、标题校验。
+  - [x] 所有公共类型 `serde` 序列化往返测试通过。
+  - [x] 所有公共 API 有文档注释。
+- **完成记录**：2026-10-09 完成。D-03 已决定并同步更新架构文档 §8、§31、§32。
+  - 证据：`cargo test -p nivlo-domain` 41 个测试通过（Todo 完成 / 重新打开、Tip / Note 完成被拒绝、归档、类型转换清理、标题 / 名称校验、快照重建校验、所有公共类型的 serde 往返）；`cargo clippy -D warnings`、`check-deps` 通过。
+  - 设计说明：时间采用 `DatePoint { date, time? }`（本地日历语义，类型保证"有时间必有日期"）+ UTC `reminder_at`；Item 字段私有，经 `ItemSnapshot` 持久化，`Item::restore` 重新校验不变量；`due` / `priority` 仅 Todo，`reminder` 仅 Todo 与 Tip；`in_inbox`（D-02）与 `deleted_at`（D-08）分别在 2.2、3.5 引入。
 
 ### 0.6 Storage：SQLite 与 Migration
 

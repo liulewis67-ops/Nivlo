@@ -597,14 +597,14 @@ pub struct Item {
     pub content_format: ContentFormat,
     pub status: ItemStatus,
     pub priority: Priority,
-    pub scheduled_at: Option<DateTime>,
-    pub due_at: Option<DateTime>,
-    pub reminder_at: Option<DateTime>,
+    pub scheduled: Option<DatePoint>, // 本地日期 + 可选本地时间（实施计划 D-03）
+    pub due: Option<DatePoint>,
+    pub reminder_at: Option<DateTime<Utc>>, // 唯一的绝对时间点
     pub project_id: Option<ProjectId>,
-    pub created_at: DateTime,
-    pub updated_at: DateTime,
-    pub completed_at: Option<DateTime>,
-    pub archived_at: Option<DateTime>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub archived_at: Option<DateTime<Utc>>,
 }
 ```
 
@@ -1448,8 +1448,10 @@ content
 content_format
 status
 priority
-scheduled_at
-due_at
+scheduled_date
+scheduled_time
+due_date
+due_time
 reminder_at
 project_id
 created_at
@@ -1501,13 +1503,13 @@ Priority != Today Execution Order
 必须区分：
 
 ```text
-scheduled_at
+scheduled_date / scheduled_time
 ```
 
 = 我计划什么时候做。
 
 ```text
-due_at
+due_date / due_time
 ```
 
 = 最晚什么时候完成。
