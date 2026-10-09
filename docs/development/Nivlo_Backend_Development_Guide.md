@@ -3,7 +3,7 @@
 > Status: v1.0  
 > Last Updated: 2026-10-09  
 > 适用范围：`crates/` 下全部 Rust crate、`apps/desktop/src-tauri/`、`migrations/`、`workflows/builtin/`  
-> 依据文档：[技术架构](Nivlo_Technical_Architecture.md)、[实施计划](Nivlo_Implementation_Plan.md)、[前端开发规范](Nivlo_Frontend_Development_Guide.md)  
+> 依据文档：[技术架构](../architecture/Nivlo_Technical_Architecture.md)、[实施计划](../architecture/Nivlo_Implementation_Plan.md)、[前端开发规范](Nivlo_Frontend_Development_Guide.md)  
 > 规范中的「必须 / 禁止」为强制要求，CI 与 Code Review 按此执行；「建议」为推荐做法，偏离时需在 PR 中说明理由。
 
 ---

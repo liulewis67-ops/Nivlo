@@ -40,6 +40,8 @@ jobs:
           cargo clippy --workspace --all-targets --locked -- -D warnings
           cargo test --workspace --locked
           cargo doc --workspace --no-deps --locked
+      - name: Docs links
+        run: node scripts/check-doc-links/check-doc-links.mjs
       - name: Dependency direction
         run: node scripts/check-deps/check-deps.mjs
       - uses: EmbarkStudios/cargo-deny-action@v2

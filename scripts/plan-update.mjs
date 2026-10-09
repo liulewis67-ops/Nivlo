@@ -3,7 +3,7 @@
 import fs from "node:fs";
 
 const [, , phase, status, recordFile] = process.argv;
-const planPath = "doc/Nivlo_Implementation_Plan.md";
+const planPath = "docs/architecture/Nivlo_Implementation_Plan.md";
 let text = fs.readFileSync(planPath, "utf8");
 
 const start = text.indexOf(`### ${phase} `);

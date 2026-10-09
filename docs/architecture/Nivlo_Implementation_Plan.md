@@ -3,7 +3,7 @@
 > Status: v1.0  
 > Last Updated: 2026-10-09  
 > 依据文档：[Nivlo_Product_Design.md](Nivlo_Product_Design.md)（下称「产品文档」）、[Nivlo_Technical_Architecture.md](Nivlo_Technical_Architecture.md)（下称「架构文档」）  
-> 开发规范：[前端开发规范](Nivlo_Frontend_Development_Guide.md)、[后端开发规范](Nivlo_Backend_Development_Guide.md)（所有子阶段的实现必须遵守）  
+> 开发规范：[前端开发规范](../development/Nivlo_Frontend_Development_Guide.md)、[后端开发规范](../development/Nivlo_Backend_Development_Guide.md)（所有子阶段的实现必须遵守）  
 > 用途：本文档是后续全部开发工作的执行依据。每一项开发任务都应能对应到本文档中的某个子阶段（Sub-phase），完成后在本文档中更新状态。
 
 ---
@@ -96,7 +96,7 @@ Phase 12 Backlog                        → 未排期
 |---|---|---|---|
 | **P0** | 0.1 | 仓库与 Workspace 初始化 | ✅ |
 | | 0.2 | 代码质量门禁与 CI | 🟨 |
-| | 0.3 | ADR 与开发文档 | ⬜ |
+| | 0.3 | ADR 与开发文档 | 🟨 |
 | | 0.4 | Common 基础设施（日志 / 路径 / 时钟 / ID / Secret） | ⬜ |
 | | 0.5 | Domain Model | ⬜ |
 | | 0.6 | Storage：SQLite 与 Migration | ⬜ |
@@ -251,7 +251,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.3 ADR 与开发文档
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：0.1
 - **目标**：沉淀架构决策，让任何开发者 / Code Agent 能独立上手。
 - **任务**：
@@ -259,10 +259,12 @@ Phase 12 Backlog                        → 未排期
   - `docs/development/README.md`：环境要求（Rust、Node、pnpm、WebView2）、启动、测试、生成 Binding、新增 Migration、新增 IPC Command 的步骤。
   - 将现有 `doc/` 下的产品与架构文档迁入 `docs/architecture/`（连同本文档），前端 / 后端开发规范迁入 `docs/development/`，保留相对链接可用。
 - **验收标准**：
-  - [ ] ADR-001 ~ ADR-010 存在且状态为 Accepted。
+  - [x] ADR-001 ~ ADR-010 存在且状态为 Accepted。
   - [ ] 按开发文档在一台未配置过的 Windows 机器上可在 10 个步骤内完成首次启动（记录验证者与日期）。
-  - [ ] 文档迁移后所有内部链接有效。
-- **完成记录**：—
+  - [x] 文档迁移后所有内部链接有效。
+- **完成记录**：2026-10-09 完成主体，仍待一项人工验证。
+  - 证据：`docs/adr/` 含模板与 ADR-001 ~ 010（均为 Accepted）；`docs/development/README.md` 首次启动共 5 条命令；产品 / 架构 / 实施计划迁入 `docs/architecture/`，前后端规范迁入 `docs/development/`，`node scripts/check-doc-links/check-doc-links.mjs` 通过（已加入 CI）。
+  - 待办：在一台未配置过的 Windows 机器上按开发文档完成首次启动并记录验证者与日期（暂无第二台机器，故保持 🟨）。
 
 ### 0.4 Common 基础设施（日志 / 路径 / 时钟 / ID / Secret）
 
