@@ -3,6 +3,7 @@
 //! 领域方法返回事件，由 Application 层在**事务提交成功之后**发布（后端规范 §4.2），
 //! 因此订阅者不会收到随后被回滚的变更。事件只携带 ID，订阅者按需再查询最新状态。
 
+use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 use crate::id::{ItemId, ProjectId};
@@ -53,6 +54,13 @@ pub enum DomainEvent {
     },
     /// Today 的手动顺序被调整。
     TodayReordered,
+    /// 本地日期发生了切换（过了本地午夜、休眠唤醒或用户修改了系统时间）。
+    ///
+    /// Today 视图依赖"今天"，收到该事件后需要重新计算。
+    DayChanged {
+        /// 新的本地日期。
+        date: NaiveDate,
+    },
     /// 新建了一个 Project。
     ProjectCreated {
         /// 新 Project 的 ID。
@@ -72,7 +80,7 @@ impl DomainEvent {
             | Self::ItemArchived { item_id }
             | Self::ItemUnarchived { item_id }
             | Self::ScheduleChanged { item_id } => Some(*item_id),
-            Self::TodayReordered | Self::ProjectCreated { .. } => None,
+            Self::TodayReordered | Self::DayChanged { .. } | Self::ProjectCreated { .. } => None,
         }
     }
 }

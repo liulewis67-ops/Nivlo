@@ -9,7 +9,7 @@ use tauri_specta::Event;
 use tokio::sync::broadcast::error::RecvError;
 use tokio_util::sync::CancellationToken;
 
-use super::{ItemCreatedEvent, ItemUpdatedEvent};
+use super::{DayChangedEvent, ItemCreatedEvent, ItemUpdatedEvent, TodayReorderedEvent};
 
 /// 发送一个 UI 事件到所有窗口。
 ///
@@ -22,6 +22,11 @@ fn emit(app: &AppHandle<Wry>, event: UiEvent) {
         .emit(app),
         UiEvent::ItemUpdated { item_id } => ItemUpdatedEvent {
             item_id: item_id.to_string(),
+        }
+        .emit(app),
+        UiEvent::TodayReordered => TodayReorderedEvent {}.emit(app),
+        UiEvent::DayChanged { date } => DayChangedEvent {
+            date: date.format("%Y-%m-%d").to_string(),
         }
         .emit(app),
     };

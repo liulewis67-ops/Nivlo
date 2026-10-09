@@ -3,6 +3,8 @@
 //! * [`ports`]：Application 需要外部世界提供的能力（存储、时钟等）的 trait。
 //!   Port 在本层定义，由 Adapter crate 实现（后端规范 §4.2）。
 //! * [`item::ItemService`]：Item 的创建 / 更新 / 读取 / 列表 Use Case。
+//! * [`today::TodayService`]：Today 视图（待办 / 提示 / 今日已完成）的查询。
+//! * [`day_change`]：本地日期切换监视器。
 //! * [`settings::SettingsService`]：业务设置（键值）的读写。
 //! * [`error::AppError`]：统一错误模型，错误码登记在 `docs/development/error-codes.md`。
 //! * [`event`]：进程内事件总线与 UI 事件映射接口。
@@ -13,11 +15,13 @@
 //! 禁止依赖：`tauri`、`sqlx`、`reqwest`、`rquickjs`、`windows`、任何 Adapter crate
 //! （参见后端规范 §3.1）。
 
+pub mod day_change;
 pub mod error;
 pub mod event;
 pub mod item;
 pub mod ports;
 pub mod settings;
+pub mod today;
 
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;

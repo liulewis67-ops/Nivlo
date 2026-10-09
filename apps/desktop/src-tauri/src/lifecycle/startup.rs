@@ -6,6 +6,7 @@ use nivlo_application::event::EventBus;
 use nivlo_application::item::ItemService;
 use nivlo_application::ports::StorageError;
 use nivlo_application::settings::SettingsService;
+use nivlo_application::today::TodayService;
 use nivlo_common::clock::SystemClock;
 use nivlo_common::logging::{LogConfig, LogError, LogGuard, init_logging};
 use nivlo_common::paths::{AppPaths, PathsError};
@@ -81,10 +82,15 @@ pub fn build_app_state(database: Database, log_guard: Option<LogGuard>) -> AppSt
         clock.clone(),
         Arc::new(event_bus.clone()),
     );
-    let settings = SettingsService::new(Arc::new(database.clone()), clock);
+    let settings = SettingsService::new(Arc::new(database.clone()), clock.clone());
+    let today = TodayService::new(Arc::new(database.clone()), clock.clone());
     AppState {
-        services: ApplicationServices { items, settings },
-        runtime: RuntimeHandles::new(event_bus, database, log_guard),
+        services: ApplicationServices {
+            items,
+            settings,
+            today,
+        },
+        runtime: RuntimeHandles::new(event_bus, database, clock, log_guard),
     }
 }
 

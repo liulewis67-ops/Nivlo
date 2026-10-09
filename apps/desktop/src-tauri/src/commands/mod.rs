@@ -5,4 +5,5 @@
 //! Command（架构文档 §14）。新增 Command 的步骤见 `docs/development/README.md`。
 
 pub mod item;
+pub mod today;
 pub mod window;

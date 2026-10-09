@@ -7,7 +7,7 @@ import { FloatingBadge } from "./FloatingBadge";
 
 /** 徽标按钮。 */
 function badge(): HTMLElement {
-  return screen.getByRole("button", { name: "打开拾序主窗口" });
+  return screen.getByRole("button", { name: /打开拾序主窗口/ });
 }
 
 describe("FloatingBadge", () => {

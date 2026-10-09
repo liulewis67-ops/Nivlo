@@ -4,9 +4,9 @@
 //! `Item::restore` 重新校验，写入时从 `Item::snapshot` 取字段，Domain 类型不感知存储格式。
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_application::ports::{
-    ItemFilter, ItemRepository, SettingsRepository, StorageError, Transaction,
+    ItemFilter, ItemRepository, SettingsRepository, StorageError, TodayOrderRepository, Transaction,
 };
 use nivlo_domain::id::{ItemId, ProjectId};
 use nivlo_domain::item::{Item, ItemSnapshot};
@@ -115,6 +115,11 @@ impl SqliteTransaction {
 impl Transaction for SqliteTransaction {
     /// 返回 Item Repository 视图（即本事务自身）。
     fn items(&mut self) -> &mut dyn ItemRepository {
+        self
+    }
+
+    /// 返回 Today 顺序 Repository 视图（即本事务自身）。
+    fn today_order(&mut self) -> &mut dyn TodayOrderRepository {
         self
     }
 
@@ -251,6 +256,77 @@ impl ItemRepository for SqliteTransaction {
         row.map(row_to_item).transpose()
     }
 
+    /// 计划日期不晚于 `date` 的未完成、未归档 Todo。
+    async fn list_open_todos_scheduled_on_or_before(
+        &mut self,
+        date: NaiveDate,
+    ) -> Result<Vec<Item>, StorageError> {
+        let date = format_date(date);
+        // 日期是固定宽度的 YYYY-MM-DD 文本，字符串比较即日期比较；用到 idx_items_scheduled_date。
+        // 计划日期相同的按创建时间、ID 排序，保证结果稳定。
+        let rows = sqlx::query_as!(
+            ItemRow,
+            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,
+                    project_id, created_at, updated_at, completed_at, archived_at
+             FROM items
+             WHERE type = 'todo' AND status = 'open' AND archived_at IS NULL
+               AND scheduled_date IS NOT NULL AND scheduled_date <= ?
+             ORDER BY scheduled_date ASC, created_at ASC, id ASC",
+            date
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter().map(row_to_item).collect()
+    }
+
+    /// 计划日期恰为 `date` 的未归档 Tip。
+    async fn list_tips_scheduled_on(&mut self, date: NaiveDate) -> Result<Vec<Item>, StorageError> {
+        let date = format_date(date);
+        let rows = sqlx::query_as!(
+            ItemRow,
+            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,
+                    project_id, created_at, updated_at, completed_at, archived_at
+             FROM items
+             WHERE type = 'tip' AND archived_at IS NULL AND scheduled_date = ?
+             ORDER BY scheduled_time ASC, created_at ASC, id ASC",
+            date
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter().map(row_to_item).collect()
+    }
+
+    /// 完成时间在 `[from, to)` 内的未归档 Todo，按完成时间升序。
+    async fn list_todos_completed_between(
+        &mut self,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+    ) -> Result<Vec<Item>, StorageError> {
+        let from = format_timestamp(from);
+        let to = format_timestamp(to);
+        // 时间戳是固定宽度的 UTC 文本，字符串比较即时间比较。
+        let rows = sqlx::query_as!(
+            ItemRow,
+            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,
+                    project_id, created_at, updated_at, completed_at, archived_at
+             FROM items
+             WHERE type = 'todo' AND archived_at IS NULL
+               AND completed_at IS NOT NULL AND completed_at >= ? AND completed_at < ?
+             ORDER BY completed_at ASC, id ASC",
+            from,
+            to
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter().map(row_to_item).collect()
+    }
+
     /// 按过滤条件列出 Item，创建时间倒序。
     async fn list(&mut self, filter: &ItemFilter) -> Result<Vec<Item>, StorageError> {
         let item_type = filter.item_type.map(|t| t.as_str());
@@ -310,5 +386,27 @@ impl SettingsRepository for SqliteTransaction {
         .await
         .map_err(map_sqlx)?;
         Ok(())
+    }
+}
+
+#[async_trait]
+impl TodayOrderRepository for SqliteTransaction {
+    /// 读取某日的手动顺序（按 position 升序）。
+    async fn get(&mut self, date: NaiveDate) -> Result<Vec<ItemId>, StorageError> {
+        let date = format_date(date);
+        let rows = sqlx::query!(
+            "SELECT item_id FROM daily_item_order WHERE date = ? ORDER BY position ASC",
+            date
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter()
+            .map(|row| {
+                row.item_id
+                    .parse::<ItemId>()
+                    .map_err(|e| StorageError::Corrupt(e.to_string()))
+            })
+            .collect()
     }
 }

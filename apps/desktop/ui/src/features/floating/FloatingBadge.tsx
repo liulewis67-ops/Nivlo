@@ -1,11 +1,15 @@
 import { useRef } from "react";
 import type { PointerEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { useTodayQuery } from "@/features/today";
 import { ipc } from "@/lib/ipc";
 import { createDragIntentTracker } from "./model/drag-intent";
 
+/** 待办数尚未加载完成时徽标上显示的占位符。 */
+const PLACEHOLDER = "–";
+
 /**
- * 悬浮窗收起态的徽标。
+ * 悬浮窗收起态的徽标：显示今天还剩多少个待办（"● 4"，产品文档 §5.1）。
  *
  * 同一个元素承担两个交互：单击打开主窗口；按住并移动超过阈值则请求后端开始拖动窗口。
  * 拖动结束后的吸附与位置保存都在 Rust 一侧完成，这里只负责识别手势意图。
@@ -13,12 +17,15 @@ import { createDragIntentTracker } from "./model/drag-intent";
  * 开始拖动后系统会接管鼠标，通常不会再收到 `click`；若仍收到，用 `draggedRef` 吞掉这一次，
  * 避免"拖完松手却打开了主窗口"。键盘激活（Enter / 空格）产生的 `click` 不受影响。
  *
- * Today 数字、Hover 展开等在实施计划 1.3 之后加入；Hover 期间不得发起任何 IPC。
+ * 数字来自 Today 的查询缓存，由后端事件刷新；渲染徽标不会发起任何 IPC。
  *
  * @returns 徽标按钮。
  */
 export function FloatingBadge() {
   const { t } = useTranslation();
+  const today = useTodayQuery();
+  /** 今天还剩的待办数；尚未加载完成时为 `null`，显示占位而不是误导性的 0。 */
+  const remaining = today.data?.remainingCount ?? null;
   const trackerRef = useRef(createDragIntentTracker());
   const draggedRef = useRef(false);
 
@@ -62,7 +69,11 @@ export function FloatingBadge() {
   return (
     <button
       type="button"
-      aria-label={t("floating.open")}
+      aria-label={
+        remaining === null
+          ? t("floating.open")
+          : `${t("floating.open")}，${t("today.badge.label", { count: remaining })}`
+      }
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
@@ -71,7 +82,9 @@ export function FloatingBadge() {
       className="flex h-full w-full items-center justify-center gap-2 rounded-full border border-border bg-surface text-sm font-medium text-text shadow-md select-none"
     >
       <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
-      <span>{t("app.name")}</span>
+      <span aria-hidden="true" className="tabular-nums">
+        {remaining ?? PLACEHOLDER}
+      </span>
     </button>
   );
 }

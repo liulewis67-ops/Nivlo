@@ -6,6 +6,7 @@ const COMMANDS: &[&str] = &[
     "create_item",
     "get_item",
     "list_items",
+    "get_today",
     "open_main",
     "quit_app",
     "start_floating_drag",

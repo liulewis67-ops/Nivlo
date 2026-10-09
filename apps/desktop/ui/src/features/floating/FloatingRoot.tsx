@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { ExpandedLayoutDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
+import { useTodayQuery } from "@/features/today";
 import { FloatingBadge } from "./FloatingBadge";
 import { TodayPanel } from "./TodayPanel";
 import { needsPanelWindow } from "./model/floating-machine";
@@ -28,6 +29,9 @@ export const PANEL_HEIGHT_PX = 380;
  */
 export function FloatingRoot() {
   const { t } = useTranslation();
+  // 悬浮窗启动时取一次 Today 并保持缓存（staleTime 为无穷）；之后只由后端事件刷新。
+  // 放在根组件而不是面板里：面板在 Hover 时才挂载，必须直接读缓存而不是在 Hover 时取数。
+  useTodayQuery();
   const { state, send } = useFloatingMachine();
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
   const isPanel = needsPanelWindow(state);

@@ -61,8 +61,9 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
 
   useEffect(
     () =>
-      ipc.subscribeItemChanges(() => {
+      ipc.subscribeDataChanges(() => {
         void client.invalidateQueries({ queryKey: queryKeys.items() });
+        void client.invalidateQueries({ queryKey: queryKeys.today() });
       }),
     [client],
   );

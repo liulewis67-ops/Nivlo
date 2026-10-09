@@ -5,6 +5,7 @@
 //! 总线是进程内的 `tokio::sync::broadcast`：发布不会阻塞，慢订阅者落后过多时会丢失旧事件
 //! （收到 `Lagged`），因此订阅者应当把事件当作"该刷新了"的信号，并在需要时重新查询。
 
+use chrono::NaiveDate;
 use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
 use tokio::sync::broadcast;
@@ -68,6 +69,13 @@ pub enum UiEvent {
     ItemUpdated {
         /// 变化的 Item。
         item_id: ItemId,
+    },
+    /// Today 的手动顺序被调整。
+    TodayReordered,
+    /// 本地日期切换了，Today 需要重新取数。
+    DayChanged {
+        /// 新的本地日期。
+        date: NaiveDate,
     },
 }
 

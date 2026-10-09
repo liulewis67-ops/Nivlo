@@ -12,6 +12,7 @@ chrono.workspace = true
 nivlo-common.workspace = true
 nivlo-domain.workspace = true
 thiserror.workspace = true
+tracing.workspace = true
 tokio.workspace = true
 
 [features]
@@ -19,7 +20,8 @@ tokio.workspace = true
 testing = []
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["macros", "rt"] }
+tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
+chrono-tz.workspace = true
 uuid.workspace = true
 
 [lints]

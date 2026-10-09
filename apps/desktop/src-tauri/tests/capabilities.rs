@@ -115,19 +115,18 @@ fn every_command_in_build_rs_is_granted_to_some_window() {
     // build.rs 里登记的命令如果没有任何窗口使用，说明它是死代码或漏配了权限。
     let main = allowed_commands(&parse(include_str!("../capabilities/main.json")));
     let floating = allowed_commands(&parse(include_str!("../capabilities/floating.json")));
+    // 直接解析 build.rs 中 `COMMANDS` 常量里的字符串，而不是在测试里再维护一份列表。
     let build_rs = include_str!("../build.rs");
-    for command in [
-        "create_item",
-        "get_item",
-        "list_items",
-        "open_main",
-        "quit_app",
-        "start_floating_drag",
-    ] {
-        assert!(
-            build_rs.contains(&format!("\"{command}\"")),
-            "build.rs 缺少 {command}"
-        );
+    let start = build_rs.find("const COMMANDS").unwrap();
+    let list = &build_rs[start..];
+    // 跳过类型标注里的 `&[&str]`，从赋值号之后的数组字面量开始，到 `];` 结束。
+    let list = &list[list.find("= &[").unwrap()..list.find("];").unwrap()];
+    let commands: Vec<&str> = list.split('"').skip(1).step_by(2).collect();
+    assert!(
+        commands.len() >= 6,
+        "解析 build.rs 的命令列表失败：{commands:?}"
+    );
+    for command in commands {
         assert!(
             main.iter().chain(floating.iter()).any(|c| c == command),
             "命令 {command} 没有授予任何窗口"

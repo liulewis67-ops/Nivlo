@@ -9,6 +9,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use nivlo_application::event::EventBus;
 use nivlo_application::item::ItemService;
 use nivlo_application::settings::SettingsService;
+use nivlo_application::today::TodayService;
+use nivlo_common::clock::Clock;
 use nivlo_common::logging::LogGuard;
 use nivlo_storage::Database;
 use tauri::async_runtime::JoinHandle;
@@ -22,12 +24,16 @@ pub struct ApplicationServices {
     pub items: ItemService,
     /// 业务设置（窗口位置、置顶等）。
     pub settings: SettingsService,
+    /// Today 视图的查询。
+    pub today: TodayService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。
 pub struct RuntimeHandles {
     /// 进程内领域事件总线。
     pub event_bus: EventBus,
+    /// 全应用共享的时钟（后台任务如日期切换监视器需要它）。
+    pub clock: Arc<dyn Clock>,
     /// 数据库句柄，退出时关闭。
     database: Database,
     /// 取消令牌：退出时通知全部后台任务停止。
@@ -46,9 +52,15 @@ impl RuntimeHandles {
     /// 创建运行时句柄。
     ///
     /// `log_guard` 在测试中为 `None`（全局日志只能初始化一次）。
-    pub fn new(event_bus: EventBus, database: Database, log_guard: Option<LogGuard>) -> Self {
+    pub fn new(
+        event_bus: EventBus,
+        database: Database,
+        clock: Arc<dyn Clock>,
+        log_guard: Option<LogGuard>,
+    ) -> Self {
         Self {
             event_bus,
+            clock,
             database,
             shutdown: CancellationToken::new(),
             tasks: Mutex::new(Vec::new()),

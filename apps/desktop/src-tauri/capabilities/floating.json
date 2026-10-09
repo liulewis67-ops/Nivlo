@@ -5,6 +5,7 @@
   "windows": ["floating"],
   "permissions": [
     "core:event:default",
+    "allow-get-today",
     "allow-open-main",
     "allow-start-floating-drag",
     "allow-expand-floating",

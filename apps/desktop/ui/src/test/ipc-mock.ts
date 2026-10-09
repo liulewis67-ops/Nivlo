@@ -1,8 +1,23 @@
 import { AppError } from "@/lib/errors";
-import type { CreateItemRequest, ItemDto, IpcClient, ListItemsRequest } from "@/lib/ipc";
+import type {
+  CreateItemRequest,
+  ItemDto,
+  IpcClient,
+  ListItemsRequest,
+  TodayViewDto,
+} from "@/lib/ipc";
 
 /** 标题允许的最大字符数，与后端 `MAX_TITLE_CHARS` 保持一致。 */
 const MAX_TITLE_CHARS = 500;
+
+/** 没有任何数据时的 Today 视图。 */
+export const EMPTY_TODAY: TodayViewDto = {
+  date: "2026-10-10",
+  remainingCount: 0,
+  todos: [],
+  tips: [],
+  completed: [],
+};
 
 /** 内存版 IPC 额外暴露的、仅供测试使用的能力。 */
 export interface MemoryIpc extends IpcClient {
@@ -14,6 +29,10 @@ export interface MemoryIpc extends IpcClient {
   readonly dragStarts: number;
   /** 按顺序记录的全部方法调用名，用于断言"没有发起某些 IPC"。 */
   readonly calls: readonly string[];
+  /** 设置下一次及之后 `getToday` 返回的 Today 视图。 */
+  setToday(view: TodayViewDto): void;
+  /** 模拟后端发出一次数据变更事件（`item_created` / `day_changed` 等）。 */
+  emitDataChange(): void;
   /** 模拟后端看门狗补发"指针已离开"事件。 */
   emitFloatingPointerLeft(): void;
   /** 最近一次 `expandFloating` 请求的尺寸。 */
@@ -43,6 +62,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let pendingFailure = options.failNextCreateWith;
   let openMainCalls = 0;
   let dragStarts = 0;
+  let today: TodayViewDto = EMPTY_TODAY;
   const calls: string[] = [];
   let lastExpand: { width: number; height: number } | null = null;
 
@@ -52,6 +72,16 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     get openMainCalls() {
       return openMainCalls;
+    },
+    setToday: (view: TodayViewDto) => {
+      today = view;
+    },
+    emitDataChange: () => {
+      for (const notify of listeners) notify();
+    },
+    getToday: () => {
+      calls.push("getToday");
+      return Promise.resolve(today);
     },
     get dragStarts() {
       return dragStarts;
@@ -142,7 +172,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         .reverse();
       return Promise.resolve(request.limit === null ? visible : visible.slice(0, request.limit));
     },
-    subscribeItemChanges: (onChange: () => void) => {
+    subscribeDataChanges: (onChange: () => void) => {
       listeners.add(onChange);
       return () => {
         listeners.delete(onChange);

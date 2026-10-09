@@ -8,6 +8,7 @@
     "allow-create-item",
     "allow-get-item",
     "allow-list-items",
+    "allow-get-today",
     "allow-open-main",
     "allow-quit-app"
   ]

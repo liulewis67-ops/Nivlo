@@ -6,6 +6,7 @@ import type {
   IpcError,
   ItemDto,
   ListItemsRequest,
+  TodayViewDto,
 } from "@/bindings";
 import { toAppError } from "./errors";
 
@@ -19,6 +20,8 @@ export type {
   ItemTypeDto,
   ListItemsRequest,
   PriorityDto,
+  TodayItemDto,
+  TodayViewDto,
 } from "@/bindings";
 
 /**
@@ -34,6 +37,12 @@ export interface IpcClient {
   getItem(id: string): Promise<ItemDto>;
   /** 列出 Item，创建时间从新到旧。 */
   listItems(request: ListItemsRequest): Promise<ItemDto[]>;
+  /**
+   * 读取今天的视图（待办 / 提示 / 今日已完成）。
+   *
+   * 悬浮窗只在启动时调用一次，之后由数据变更事件驱动刷新；Hover 展开不会调用它。
+   */
+  getToday(): Promise<TodayViewDto>;
   /** 打开（必要时创建）并聚焦主窗口。 */
   openMain(): Promise<void>;
   /** 退出应用：触发后端的有序退出流程。仅主窗口可调用。 */
@@ -64,12 +73,12 @@ export interface IpcClient {
    */
   subscribeFloatingPointerLeft(onLeft: () => void): () => void;
   /**
-   * 订阅"Item 发生了变化"的后端事件（创建或更新）。
+   * 订阅"数据发生了变化"的后端事件：Item 创建 / 更新、Today 顺序调整、本地日期切换。
    *
-   * @param onChange 事件到达时的回调；事件只携带 ID，调用方应当刷新相关缓存。
+   * @param onChange 事件到达时的回调；事件只是"该刷新了"的信号，调用方应当让相关查询缓存失效。
    * @returns 取消订阅的函数，组件卸载时必须调用。
    */
-  subscribeItemChanges(onChange: () => void): () => void;
+  subscribeDataChanges(onChange: () => void): () => void;
 }
 
 /** 生成的 Binding 返回的 Result 形状。 */
@@ -129,6 +138,7 @@ const tauriIpc: IpcClient = {
   createItem: (request) => call("create_item", commands.createItem(request)),
   getItem: (id) => call("get_item", commands.getItem(id)),
   listItems: (request) => call("list_items", commands.listItems(request)),
+  getToday: () => call("get_today", commands.getToday()),
   openMain: async () => {
     await call("open_main", commands.openMain());
   },
@@ -143,10 +153,12 @@ const tauriIpc: IpcClient = {
   },
   subscribeFloatingPointerLeft: (onLeft) =>
     listenAll([() => events.floatingPointerLeft.listen(() => onLeft())]),
-  subscribeItemChanges: (onChange) =>
+  subscribeDataChanges: (onChange) =>
     listenAll([
       () => events.itemCreated.listen(() => onChange()),
       () => events.itemUpdated.listen(() => onChange()),
+      () => events.todayReordered.listen(() => onChange()),
+      () => events.dayChanged.listen(() => onChange()),
     ]),
 };
 
@@ -176,11 +188,12 @@ export const ipc: IpcClient = {
   createItem: (request) => current.createItem(request),
   getItem: (id) => current.getItem(id),
   listItems: (request) => current.listItems(request),
+  getToday: () => current.getToday(),
   openMain: () => current.openMain(),
   quitApp: () => current.quitApp(),
   startFloatingDrag: () => current.startFloatingDrag(),
   expandFloating: (width, height) => current.expandFloating(width, height),
   collapseFloating: () => current.collapseFloating(),
   subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),
-  subscribeItemChanges: (onChange) => current.subscribeItemChanges(onChange),
+  subscribeDataChanges: (onChange) => current.subscribeDataChanges(onChange),
 };

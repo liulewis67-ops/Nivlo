@@ -6,7 +6,7 @@
 
 use std::sync::{Arc, Mutex, PoisonError};
 
-use chrono::{DateTime, Duration, NaiveDate, Utc};
+use chrono::{DateTime, Duration, NaiveDate, TimeZone, Utc};
 use chrono_tz::Tz;
 
 /// 提供当前时间与用户时区的时钟抽象。
@@ -23,6 +23,31 @@ pub trait Clock: Send + Sync {
     fn today_local(&self) -> NaiveDate {
         self.now_utc().with_timezone(&self.timezone()).date_naive()
     }
+}
+
+/// 返回本地日期 `date` 的开始时刻（该日 00:00，本地时区）对应的 UTC 时间点。
+///
+/// 夏令时可能让某天的 00:00 不存在（时钟从 23:59 直接跳到 01:00），此时取该日之后第一个
+/// 存在的整点——那才是用户真正看到"这一天开始了"的时刻。
+pub fn start_of_local_day(date: NaiveDate, timezone: Tz) -> DateTime<Utc> {
+    let mut candidate = date.and_hms_opt(0, 0, 0).unwrap_or_default();
+    // 最多尝试 24 个整点：任何时区的夏令时空隙都不会超过几个小时。
+    for _ in 0..24 {
+        if let Some(local) = timezone.from_local_datetime(&candidate).earliest() {
+            return local.with_timezone(&Utc);
+        }
+        candidate += Duration::hours(1);
+    }
+    // 理论上不可达；退化为按 UTC 解释，保证调用方不会死循环。
+    Utc.from_utc_datetime(&date.and_hms_opt(0, 0, 0).unwrap_or_default())
+}
+
+/// 计算 `now` 之后的第一个"本地午夜"（下一个本地日期的开始）对应的 UTC 时间点。
+///
+/// 用于在日期切换时刻精确唤醒，而不是逐秒轮询。
+pub fn next_local_midnight(now: DateTime<Utc>, timezone: Tz) -> DateTime<Utc> {
+    let today = now.with_timezone(&timezone).date_naive();
+    start_of_local_day(today.succ_opt().unwrap_or(today), timezone)
 }
 
 /// 读取操作系统时间与时区的真实时钟。
@@ -156,6 +181,71 @@ mod tests {
         let other = clock.clone();
         clock.set(Utc.with_ymd_and_hms(2026, 6, 1, 0, 0, 0).unwrap());
         assert_eq!(other.now_utc(), clock.now_utc());
+    }
+
+    #[test]
+    fn next_midnight_in_a_fixed_offset_zone() {
+        // 上海 2026-10-09 23:30（UTC 15:30）→ 下一个午夜是 10-10 00:00 上海 = 10-09 16:00 UTC。
+        let now = Utc.with_ymd_and_hms(2026, 10, 9, 15, 30, 0).unwrap();
+        assert_eq!(
+            next_local_midnight(now, Tz::Asia__Shanghai),
+            Utc.with_ymd_and_hms(2026, 10, 9, 16, 0, 0).unwrap()
+        );
+        // 恰好在午夜：返回的是"下一个"午夜，而不是当前时刻。
+        let at_midnight = Utc.with_ymd_and_hms(2026, 10, 9, 16, 0, 0).unwrap();
+        assert_eq!(
+            next_local_midnight(at_midnight, Tz::Asia__Shanghai),
+            Utc.with_ymd_and_hms(2026, 10, 10, 16, 0, 0).unwrap()
+        );
+    }
+
+    #[test]
+    fn next_midnight_follows_the_users_timezone_not_utc() {
+        let now = Utc.with_ymd_and_hms(2026, 10, 9, 12, 0, 0).unwrap();
+        let utc = next_local_midnight(now, Tz::UTC);
+        let la = next_local_midnight(now, Tz::America__Los_Angeles);
+        assert_eq!(utc, Utc.with_ymd_and_hms(2026, 10, 10, 0, 0, 0).unwrap());
+        // 洛杉矶当时是 PDT（UTC-7）：本地午夜 = UTC 07:00。
+        assert_eq!(la, Utc.with_ymd_and_hms(2026, 10, 10, 7, 0, 0).unwrap());
+    }
+
+    #[test]
+    fn next_midnight_handles_a_daylight_saving_gap_at_midnight() {
+        // 圣保罗 2018-11-04 的夏令时从 00:00 直接跳到 01:00，当天不存在 00:00。
+        let now = Utc.with_ymd_and_hms(2018, 11, 3, 12, 0, 0).unwrap();
+        let next = next_local_midnight(now, Tz::America__Sao_Paulo);
+        let local = next.with_timezone(&Tz::America__Sao_Paulo);
+        assert_eq!(
+            local.date_naive(),
+            NaiveDate::from_ymd_opt(2018, 11, 4).unwrap()
+        );
+        assert_eq!(local.format("%H:%M").to_string(), "01:00");
+    }
+
+    #[test]
+    fn next_midnight_across_a_daylight_saving_fall_back() {
+        // 洛杉矶 2026-11-01 回拨一小时，当天有 25 小时；午夜到午夜仍是正确的本地日期边界。
+        let now = Utc.with_ymd_and_hms(2026, 11, 1, 12, 0, 0).unwrap();
+        let next = next_local_midnight(now, Tz::America__Los_Angeles);
+        let local = next.with_timezone(&Tz::America__Los_Angeles);
+        assert_eq!(
+            local.date_naive(),
+            NaiveDate::from_ymd_opt(2026, 11, 2).unwrap()
+        );
+        assert_eq!(local.format("%H:%M").to_string(), "00:00");
+    }
+
+    #[test]
+    fn start_of_local_day_is_the_utc_instant_of_local_midnight() {
+        let date = NaiveDate::from_ymd_opt(2026, 10, 9).unwrap();
+        assert_eq!(
+            start_of_local_day(date, Tz::Asia__Shanghai),
+            Utc.with_ymd_and_hms(2026, 10, 8, 16, 0, 0).unwrap()
+        );
+        assert_eq!(
+            start_of_local_day(date, Tz::UTC),
+            Utc.with_ymd_and_hms(2026, 10, 9, 0, 0, 0).unwrap()
+        );
     }
 
     #[test]

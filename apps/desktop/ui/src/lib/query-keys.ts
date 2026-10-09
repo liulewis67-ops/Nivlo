@@ -7,6 +7,8 @@ export const queryKeys = {
   items: () => ["items"] as const,
   /** 带过滤条件的 Item 列表。 */
   itemList: (filter: { includeArchived: boolean }) => ["items", "list", filter] as const,
+  /** Today 视图（待办 / 提示 / 今日已完成）。 */
+  today: () => ["today"] as const,
   /** 单个 Item 详情。 */
   item: (id: string) => ["item", id] as const,
 };

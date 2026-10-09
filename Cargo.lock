@@ -2380,10 +2380,12 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "chrono-tz",
  "nivlo-common",
  "nivlo-domain",
  "thiserror 2.0.21",
  "tokio",
+ "tracing",
  "uuid",
 ]
 
@@ -2494,6 +2496,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "chrono-tz",
  "nivlo-application",
  "nivlo-common",
  "nivlo-domain",

@@ -10,6 +10,7 @@
 use chrono::{DateTime, NaiveDate, NaiveTime, SecondsFormat, Utc};
 use nivlo_application::error::{AppError, ErrorCode};
 use nivlo_application::ports::ItemFilter;
+use nivlo_application::today::{TodayEntry, TodayView};
 use nivlo_domain::id::{ItemId, ProjectId};
 use nivlo_domain::item::{ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority};
 use serde::{Deserialize, Serialize};
@@ -333,6 +334,75 @@ impl TryFrom<CreateItemRequest> for NewItem {
             })
             .transpose()?;
         Ok(new)
+    }
+}
+
+/// Today 中的一个条目（只含展示所需的字段，不含正文，保持载荷精简）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TodayItemDto {
+    /// Item ID。
+    pub id: String,
+    /// 类型。
+    pub item_type: ItemTypeDto,
+    /// 标题。
+    pub title: String,
+    /// 状态。
+    pub status: ItemStatusDto,
+    /// 优先级。
+    pub priority: PriorityDto,
+    /// 计划日期。
+    pub scheduled: Option<DatePointDto>,
+    /// 截止日期。
+    pub due: Option<DatePointDto>,
+    /// 是否逾期：计划日期早于今天。
+    pub is_overdue: bool,
+}
+
+impl From<&TodayEntry> for TodayItemDto {
+    /// Application → DTO。
+    fn from(entry: &TodayEntry) -> Self {
+        let item = &entry.item;
+        Self {
+            id: item.id().to_string(),
+            item_type: item.item_type().into(),
+            title: item.title().to_string(),
+            status: item.status().into(),
+            priority: item.priority().into(),
+            scheduled: item.scheduled().map(Into::into),
+            due: item.due().map(Into::into),
+            is_overdue: entry.is_overdue,
+        }
+    }
+}
+
+/// Today 视图的 IPC 表示。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TodayViewDto {
+    /// 用户本地时区下的今天，`YYYY-MM-DD`。
+    pub date: String,
+    /// 今天还剩多少个待办——悬浮窗徽标上的数字。
+    pub remaining_count: u32,
+    /// 未完成的待办，已按 Today Order 排序。
+    pub todos: Vec<TodayItemDto>,
+    /// 今天的提示。
+    pub tips: Vec<TodayItemDto>,
+    /// 今天已完成的待办。
+    pub completed: Vec<TodayItemDto>,
+}
+
+impl From<&TodayView> for TodayViewDto {
+    /// Application → DTO。
+    fn from(view: &TodayView) -> Self {
+        Self {
+            date: view.date.format("%Y-%m-%d").to_string(),
+            // 待办数量不可能超过 u32；饱和转换只是为了不写 unwrap。
+            remaining_count: u32::try_from(view.remaining_count()).unwrap_or(u32::MAX),
+            todos: view.todos.iter().map(Into::into).collect(),
+            tips: view.tips.iter().map(Into::into).collect(),
+            completed: view.completed.iter().map(Into::into).collect(),
+        }
     }
 }
 

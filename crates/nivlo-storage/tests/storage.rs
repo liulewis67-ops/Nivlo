@@ -332,3 +332,165 @@ async fn settings_round_trip_overwrite_and_roll_back() {
         Some("v2")
     );
 }
+
+/// 给 Item 设置本地计划日期。
+fn scheduled(mut item: Item, month: u32, day: u32) -> Item {
+    item.set_scheduled(
+        Some(DatePoint::all_day(
+            NaiveDate::from_ymd_opt(2026, month, day).unwrap(),
+        )),
+        t(8, 0),
+    );
+    item
+}
+
+#[tokio::test]
+async fn today_queries_filter_on_the_real_database() {
+    let (_dir, _path, db) = new_db().await;
+    let today = NaiveDate::from_ymd_opt(2026, 10, 9).unwrap();
+
+    let open_today = scheduled(simple(1, ItemType::Todo, "今天", t(8, 0)), 10, 9);
+    let open_overdue = scheduled(simple(2, ItemType::Todo, "逾期", t(8, 1)), 10, 1);
+    let open_future = scheduled(simple(3, ItemType::Todo, "明天", t(8, 2)), 10, 10);
+    let unscheduled = simple(4, ItemType::Todo, "没有日期", t(8, 3));
+    let mut done = scheduled(simple(5, ItemType::Todo, "已完成", t(8, 4)), 10, 9);
+    done.complete(t(10, 0)).unwrap();
+    let mut archived = scheduled(simple(6, ItemType::Todo, "已归档", t(8, 5)), 10, 9);
+    archived.archive(t(9, 0)).unwrap();
+    let note = scheduled(simple(7, ItemType::Note, "笔记", t(8, 6)), 10, 9);
+    let tip_today = scheduled(simple(8, ItemType::Tip, "今天的提示", t(8, 7)), 10, 9);
+    let tip_other = scheduled(simple(9, ItemType::Tip, "别天的提示", t(8, 8)), 10, 8);
+
+    let mut tx = db.begin().await.unwrap();
+    for item in [
+        &open_today,
+        &open_overdue,
+        &open_future,
+        &unscheduled,
+        &done,
+        &archived,
+        &note,
+        &tip_today,
+        &tip_other,
+    ] {
+        tx.items().insert(item).await.unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let ids = |items: Vec<Item>| items.iter().map(Item::id).collect::<Vec<_>>();
+
+    // 逾期的在前（计划日期更早），今天的在后。
+    let todos = tx
+        .items()
+        .list_open_todos_scheduled_on_or_before(today)
+        .await
+        .unwrap();
+    assert_eq!(ids(todos), [id(2), id(1)]);
+
+    let tips = tx.items().list_tips_scheduled_on(today).await.unwrap();
+    assert_eq!(ids(tips), [id(8)]);
+
+    let completed = tx
+        .items()
+        .list_todos_completed_between(t(0, 0), t(23, 59))
+        .await
+        .unwrap();
+    assert_eq!(ids(completed), [id(5)]);
+    // 区间右端不包含：恰好等于完成时间的上界排除该条。
+    let none = tx
+        .items()
+        .list_todos_completed_between(t(0, 0), t(10, 0))
+        .await
+        .unwrap();
+    assert!(none.is_empty());
+}
+
+#[tokio::test]
+async fn today_order_is_read_back_by_position() {
+    let (_dir, path, db) = new_db().await;
+    let today = NaiveDate::from_ymd_opt(2026, 10, 9).unwrap();
+    let mut tx = db.begin().await.unwrap();
+    for n in 1..=3 {
+        tx.items()
+            .insert(&scheduled(simple(n, ItemType::Todo, "x", t(8, 0)), 10, 9))
+            .await
+            .unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    // 目前还没有写入顺序的 Use Case（实施计划 1.7），直接用 SQL 播种。
+    let mut conn = SqliteConnectOptions::new()
+        .filename(&path)
+        .connect()
+        .await
+        .unwrap();
+    for (position, n) in [(0_i64, 3_u128), (1, 1), (2, 2)] {
+        sqlx::query("INSERT INTO daily_item_order (date, item_id, position) VALUES (?, ?, ?)")
+            .bind("2026-10-09")
+            .bind(id(n).to_string())
+            .bind(position)
+            .execute(&mut conn)
+            .await
+            .unwrap();
+    }
+    conn.close().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.today_order().get(today).await.unwrap(),
+        [id(3), id(1), id(2)]
+    );
+    let other = NaiveDate::from_ymd_opt(2026, 10, 10).unwrap();
+    assert!(tx.today_order().get(other).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn today_service_works_end_to_end_on_sqlite() {
+    use std::sync::Arc;
+
+    use chrono_tz::Tz;
+    use nivlo_application::today::TodayService;
+    use nivlo_common::clock::FakeClock;
+
+    let (_dir, _path, db) = new_db().await;
+    // 上海时间 2026-10-09 20:00（UTC 12:00）。
+    let clock = FakeClock::new(t(12, 0), Tz::Asia__Shanghai);
+    let service = TodayService::new(Arc::new(db.clone()), Arc::new(clock));
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&scheduled(
+            simple(1, ItemType::Todo, "今天", t(8, 0)),
+            10,
+            9,
+        ))
+        .await
+        .unwrap();
+    tx.items()
+        .insert(&scheduled(
+            simple(2, ItemType::Todo, "逾期", t(8, 1)),
+            10,
+            7,
+        ))
+        .await
+        .unwrap();
+    let mut done = scheduled(simple(3, ItemType::Todo, "刚完成", t(8, 2)), 10, 9);
+    // UTC 10:00 = 上海 18:00，仍在今天。
+    done.complete(t(10, 0)).unwrap();
+    tx.items().insert(&done).await.unwrap();
+    tx.items()
+        .insert(&scheduled(simple(4, ItemType::Tip, "提示", t(8, 3)), 10, 9))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let view = service.get_today().await.unwrap();
+
+    assert_eq!(view.date, NaiveDate::from_ymd_opt(2026, 10, 9).unwrap());
+    assert_eq!(view.remaining_count(), 2);
+    assert_eq!(view.todos[0].item.id(), id(2));
+    assert!(view.todos[0].is_overdue);
+    assert_eq!(view.completed.len(), 1);
+    assert_eq!(view.tips.len(), 1);
+}

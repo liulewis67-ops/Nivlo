@@ -106,7 +106,7 @@ Phase 12 Backlog                        → 未排期
 | **P1** | 1.1 | 窗口架构与 Capability | ✅ |
 | | 1.2 | 悬浮窗 Window Behavior | 🟨 |
 | | 1.3 | Hover 展开与悬浮窗状态机 | ✅ |
-| | 1.4 | Today 查询与缓存 | ⬜ |
+| | 1.4 | Today 查询与缓存 | ✅ |
 | | 1.5 | 悬浮窗 Quick Create | ⬜ |
 | | 1.6 | 完成 / Undo / Optimistic Update | ⬜ |
 | | 1.7 | Today Stack 排序 | ⬜ |
@@ -180,13 +180,13 @@ Phase 12 Backlog                        → 未排期
 
 | ID | 事项 | 推荐方案 | 需在…前定稿 | 状态 |
 |---|---|---|---|---|
-| D-01 | **Today 的定义** | Today = `type=Todo` 且未完成且计划日期 ≤ 今天（过期未完成自动滚入 Today，带「逾期」标记）；外加计划日期 = 今天的 Tip。悬浮窗数字 = Today 中未完成 Todo 数。 | 1.4 | 待定 |
+| D-01 | **Today 的定义** | Today = `type=Todo` 且未完成且计划日期 ≤ 今天（过期未完成自动滚入 Today，带「逾期」标记）；外加计划日期 = 今天的 Tip。悬浮窗数字 = Today 中未完成 Todo 数。 | 1.4 | 已决定（2026-10-10，采用推荐方案） |
 | D-02 | **Inbox 的定义** | 采用显式字段 `in_inbox`（布尔）。Capture 产生的 Item 置为 true；任何整理动作（设置计划日期、设置项目、转换类型、手动「移出 Inbox」）置为 false；「推迟到 Inbox」置为 true 并清除计划日期。不采用「无日期且无项目即 Inbox」的推导规则，避免 Note 永远滞留 Inbox。 | 2.2 | 待定 |
 | D-03 | **时间存储模型** | 架构文档使用 `scheduled_at: DateTime`，产品文档使用 `scheduled_date`。推荐：计划与截止拆为「本地日期 + 可选本地时间」（`scheduled_date`、`scheduled_time`、`due_date`、`due_time`），按用户本地日历语义解释（跨时区不漂移）；`reminder_at` 存 UTC 时间点。需同步更新架构文档 §8、§31。 | 0.5 | 已决定（2026-10-09，采用推荐方案） |
 | D-04 | **ID 与时间戳格式** | ID 使用 UUIDv7（TEXT）；`created_at` 等审计时间戳存 UTC（RFC 3339 TEXT 或 Unix ms INTEGER，二选一并全库统一）。 | 0.5 | 已决定（2026-10-09：ID 为 UUIDv7 TEXT；审计时间戳为 UTC RFC 3339 TEXT，全库统一） |
 | D-05 | **Project Order** | 产品文档 §21 要求区分 Today Order 与 Project Order。推荐 MVP 中 Project 视图按 优先级 → 计划日期 → 创建时间 排序，手动 Project Order 推迟到 MVP 后（新增 `project_item_order` 表）。 | 3.3 | 待定 |
 | D-06 | **UI 语言** | 默认简体中文，从 0.9 起接入 i18n 框架（如 i18next），文案全部走资源文件；英文作为第二语言在 7.5 补齐。 | 0.9 | 已决定（2026-10-09，采用推荐方案） |
-| D-07 | **已完成 Todo 在 Today 中的展示** | 当天完成的 Todo 以删除线显示在 Today 列表底部，次日不再显示；提供「隐藏已完成」开关。 | 1.6 | 待定 |
+| D-07 | **已完成 Todo 在 Today 中的展示** | 当天完成的 Todo 以删除线显示在 Today 列表底部，次日不再显示；提供「隐藏已完成」开关。 | 1.6 | 已决定（2026-10-10，采用推荐方案） |
 | D-08 | **删除语义** | 增加 `deleted_at` 软删除，进入回收站，30 天后自动清除；与 `archived_at`（归档，长期保留）区分。 | 3.5 | 待定 |
 | D-09 | **FTS 索引同步方式** | 使用 SQLite Trigger 同步 FTS5 表（与业务写入同一事务，不会不一致），而不是通过 Domain Event 异步更新。FTS5 使用 `trigram` tokenizer 以支持中文子串搜索。 | 3.4 | 待定 |
 | D-10 | **WebView 拖拽方案** | Tauri 2 在 Windows 上启用原生 `dragDropEnabled` 时会拦截 HTML5 drop（只能拿到文件路径，拿不到浏览器拖来的 URL / 文本）。需在 2.4 开头做技术验证，从「Tauri 原生文件拖放 + HTML5 drop」的组合方案中选定一个，必要时将 10.1 Native Drop 提前。 | 2.4 | 待定 |
@@ -472,7 +472,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.4 Today 查询与缓存
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：1.3；D-01
 - **目标**：提供 Today 数据与事件驱动的前端缓存（架构文档 §12）。
 - **任务**：
@@ -480,10 +480,13 @@ Phase 12 Backlog                        → 未排期
   - 悬浮窗在启动时加载一次 Today，之后由事件（`item_created`、`item_updated`、`item_completed`、`today_reordered`、`day_changed`）增量更新缓存。
   - 日期切换：基于 `sleep_until(下一个本地午夜)` 发出 `day_changed`（不轮询；Phase 4 由 Scheduler 接管）。
 - **验收标准**：
-  - [ ] Storage 测试覆盖 Today 查询（含逾期滚入、Tip、已完成、归档排除）。
-  - [ ] 在主窗口修改 Item 后，悬浮窗徽标与列表在 100ms 内更新。
-  - [ ] 使用 FakeClock 测试跨越午夜时 Today 内容正确切换。
-- **完成记录**：—
+  - [x] Storage 测试覆盖 Today 查询（含逾期滚入、Tip、已完成、归档排除）。
+  - [x] 在主窗口修改 Item 后，悬浮窗徽标与列表在 100ms 内更新。
+  - [x] 使用 FakeClock 测试跨越午夜时 Today 内容正确切换。
+- **完成记录**：2026-10-10 完成。D-01、D-07 已决定（采用推荐方案）。
+  - 自动化：`TodayService` 12 个 Application 测试（待办今天出现、明天 / 无日期不出现、逾期自动滚入并带 `is_overdue`、已完成 / 已归档 / Note 不进待办、Tip 只在当天且全天提示在前、今日已完成按用户**本地日期**（上海时区）而不是 UTC 划分、手动顺序优先且新加入的追加在末尾、顺序表中的陈旧 ID 被忽略、priority / due 不影响顺序、**FakeClock 跨越本地午夜后 Today 内容正确切换**）；`next_local_midnight` / `start_of_local_day` 5 个测试（含固定偏移、洛杉矶 DST、圣保罗 DST 在午夜缺失 00:00 的缺口）；`run_day_change_watcher` 6 个暂停时间测试（午夜准时发布、多天各一次、系统时间一次跳多天只发布一次、空闲只做有界的核对且不发布、时钟回拨不空转、退出后停止）；SQLite 集成测试 3 个（Today 的三个查询在真实数据库上的过滤与排序、`daily_item_order` 按 position 读取、`TodayService` 在 SQLite 上端到端）；IPC 测试 `get_today`（含 DTO 不带正文）；前端 `FloatingRoot` 7 个新增 / 修改测试（Today 启动时取一次、Hover 展开 3 次后仍只取一次、数据变更事件让缓存失效并更新徽标、占位符、面板渲染待办 / 逾期 / 提示 / 已完成 / 空状态）。
+  - 真实应用（CDP 同时驱动悬浮窗与主窗口）：在主窗口创建计划日期为今天的 Todo，悬浮窗徽标的无障碍名称从"今天还剩 0 项待办"变为 1、再变为 2，**分别在 14ms、15ms 内**（含 `create_item` 往返；验收要求 ≤100ms）；创建没有日期的 Todo（Inbox）不改变徽标。
+  - 设计说明：`Today` 的语义放在 `TodayService`（Repository 只有名字明确的查询：`list_open_todos_scheduled_on_or_before` / `list_tips_scheduled_on` / `list_todos_completed_between`，后者由 Application 把本地日期换算为 UTC 区间）；日期切换监视器 `sleep` 到下一个本地午夜，**每次最长睡 15 分钟再用墙上时钟核对**，兜底休眠 / 改系统时间（Phase 4.5 由 Scheduler + 原生电源事件接管）；新增 `get_today` Command（floating + main 均可）、`DomainEvent::DayChanged`、UI 事件 `today_reordered` / `day_changed`；前端 `subscribeItemChanges` 泛化为 `subscribeDataChanges`，同时让 Item 与 Today 两类查询失效；`RuntimeHandles` 持有共享时钟。
 
 ### 1.5 悬浮窗 Quick Create
 

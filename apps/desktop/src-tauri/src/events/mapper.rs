@@ -26,7 +26,9 @@ impl UiEventMapper for DefaultUiEventMapper {
             | DomainEvent::ScheduleChanged { item_id } => {
                 Some(UiEvent::ItemUpdated { item_id: *item_id })
             }
-            DomainEvent::TodayReordered | DomainEvent::ProjectCreated { .. } => None,
+            DomainEvent::TodayReordered => Some(UiEvent::TodayReordered),
+            DomainEvent::DayChanged { date } => Some(UiEvent::DayChanged { date: *date }),
+            DomainEvent::ProjectCreated { .. } => None,
         }
     }
 }
@@ -68,8 +70,20 @@ mod tests {
     }
 
     #[test]
+    fn today_events_are_forwarded() {
+        assert_eq!(
+            DefaultUiEventMapper.map(&DomainEvent::TodayReordered),
+            Some(UiEvent::TodayReordered)
+        );
+        let date = chrono::NaiveDate::from_ymd_opt(2026, 10, 10).unwrap();
+        assert_eq!(
+            DefaultUiEventMapper.map(&DomainEvent::DayChanged { date }),
+            Some(UiEvent::DayChanged { date })
+        );
+    }
+
+    #[test]
     fn unrelated_events_are_not_forwarded() {
-        assert_eq!(DefaultUiEventMapper.map(&DomainEvent::TodayReordered), None);
         let project = ProjectId::from_uuid(Uuid::from_u128(2));
         assert_eq!(
             DefaultUiEventMapper.map(&DomainEvent::ProjectCreated {

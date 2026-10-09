@@ -1,7 +1,8 @@
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { TodayList, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 
@@ -22,6 +23,7 @@ export type TodayPanelProps = {
  */
 export function TodayPanel({ layout }: TodayPanelProps) {
   const { t } = useTranslation();
+  const view = useTodayQuery().data;
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
     <section
@@ -33,17 +35,24 @@ export function TodayPanel({ layout }: TodayPanelProps) {
         <h2 className="text-sm font-semibold text-text">
           {t("today.panel.title")}
           <span className="ml-2 font-normal text-muted">
-            {format(new Date(), "M月d日 EEEE", { locale: zhCN })}
+            {format(view === undefined ? new Date() : parseISO(view.date), "M月d日 EEEE", {
+              locale: zhCN,
+            })}
           </span>
         </h2>
         <Button size="sm" variant="ghost" onClick={() => void ipc.openMain()}>
           {t("today.panel.openMain")}
         </Button>
       </header>
-      <div className="flex flex-1 flex-col items-center justify-center gap-1 p-4 text-center">
-        <p className="text-sm font-medium text-text">{t("today.empty.title")}</p>
-        <p className="text-xs text-muted">{t("today.empty.hint")}</p>
-      </div>
+      {view !== undefined &&
+      (view.todos.length > 0 || view.tips.length > 0 || view.completed.length > 0) ? (
+        <TodayList view={view} />
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 p-4 text-center">
+          <p className="text-sm font-medium text-text">{t("today.empty.title")}</p>
+          <p className="text-xs text-muted">{t("today.empty.hint")}</p>
+        </div>
+      )}
     </section>
   );
 }

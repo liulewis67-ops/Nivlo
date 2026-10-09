@@ -157,3 +157,48 @@ async fn domain_rules_are_enforced_through_ipc() {
     .unwrap_err();
     assert_eq!(rejected["code"], "ITEM_FIELD_NOT_APPLICABLE");
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn get_today_returns_todos_scheduled_today_with_the_remaining_count() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    // 先读出"今天"是哪天（由应用自己的时钟决定），再用它创建数据。
+    let empty = invoke(&webview, "get_today", json!({})).unwrap();
+    assert_eq!(empty["remainingCount"], 0);
+    let today = empty["date"].as_str().unwrap().to_owned();
+
+    let make = |title: &str, scheduled: Option<&str>| {
+        json!({ "request": {
+            "itemType": "todo", "title": title, "content": null, "contentFormat": null,
+            "priority": null, "due": null, "reminderAt": null, "projectId": null,
+            "scheduled": scheduled.map(|date| json!({ "date": date, "time": null })),
+        }})
+    };
+    invoke(&webview, "create_item", make("今天的待办", Some(&today))).unwrap();
+    invoke(&webview, "create_item", make("没有日期的待办", None)).unwrap();
+    invoke(
+        &webview,
+        "create_item",
+        make("很久以前的待办", Some("2000-01-01")),
+    )
+    .unwrap();
+
+    let view = invoke(&webview, "get_today", json!({})).unwrap();
+
+    assert_eq!(view["remainingCount"], 2);
+    let titles: Vec<&str> = view["todos"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|t| t["title"].as_str().unwrap())
+        .collect();
+    assert_eq!(titles, ["很久以前的待办", "今天的待办"]);
+    assert_eq!(view["todos"][0]["isOverdue"], true);
+    assert_eq!(view["todos"][1]["isOverdue"], false);
+    // DTO 不携带正文。
+    assert!(view["todos"][0].get("content").is_none());
+}

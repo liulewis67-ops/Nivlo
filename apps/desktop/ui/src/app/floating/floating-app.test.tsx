@@ -11,7 +11,7 @@ describe("FloatingApp", () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingApp />, ipc);
 
-    await user.click(screen.getByRole("button", { name: "打开拾序主窗口" }));
+    await user.click(screen.getByRole("button", { name: /打开拾序主窗口/ }));
 
     expect(ipc.openMainCalls).toBe(1);
   });

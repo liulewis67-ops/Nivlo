@@ -23,6 +23,8 @@ use std::sync::Arc;
 use tauri::{Manager, RunEvent, Wry};
 use tauri_specta::Event;
 
+use nivlo_application::day_change::run_day_change_watcher;
+
 use crate::app::AppState;
 use crate::events::FloatingPointerLeftEvent;
 use crate::events::forwarder::spawn_forwarder;
@@ -51,6 +53,7 @@ macro_rules! bindings_builder {
                 $crate::commands::item::create_item,
                 $crate::commands::item::get_item,
                 $crate::commands::item::list_items,
+                $crate::commands::today::get_today,
                 $crate::commands::window::open_main::<$runtime>,
                 $crate::commands::window::quit_app::<$runtime>,
                 $crate::commands::window::start_floating_drag::<$runtime>,
@@ -60,7 +63,9 @@ macro_rules! bindings_builder {
             .events($crate::tauri_specta::collect_events![
                 $crate::events::ItemCreatedEvent,
                 $crate::events::ItemUpdatedEvent,
-                $crate::events::FloatingPointerLeftEvent
+                $crate::events::FloatingPointerLeftEvent,
+                $crate::events::TodayReorderedEvent,
+                $crate::events::DayChangedEvent
             ])
     };
 }
@@ -107,6 +112,14 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 state.runtime.shutdown_token(),
             );
             state.runtime.track_task(forwarder);
+            // 本地日期切换监视器：睡到下一个本地午夜再醒来，不轮询；退出时随令牌结束。
+            let shutdown = state.runtime.shutdown_token();
+            let day_watcher = tauri::async_runtime::spawn(run_day_change_watcher(
+                state.runtime.clock.clone(),
+                Arc::new(state.runtime.event_bus.clone()),
+                async move { shutdown.cancelled().await },
+            ));
+            state.runtime.track_task(day_watcher);
             app.manage(state);
 
             let floating = windows::create_floating_window(app)?;

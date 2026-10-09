@@ -28,7 +28,10 @@
   },
   "floating": { "label": "拾序悬浮窗", "open": "打开拾序主窗口" },
   "today": {
+    "badge": { "label": "今天还剩 {{count}} 项待办" },
     "panel": { "label": "今日面板", "title": "今天", "openMain": "打开主窗口" },
+    "section": { "todos": "待办", "tips": "提示", "completed": "今日已完成" },
+    "overdue": "逾期",
     "empty": { "title": "今天还没有安排", "hint": "按下 Ctrl+Shift+Space 快速添加一条待办。" }
   },
   "menu": { "open": "打开菜单" },

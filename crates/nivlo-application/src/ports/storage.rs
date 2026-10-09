@@ -12,7 +12,7 @@
 //! 事务被丢弃而未提交时必须回滚。
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::{Item, ItemType};
 
@@ -64,6 +64,9 @@ pub trait Transaction: Send {
 
     /// 设置（键值）的 Repository 视图，与本事务共享同一个连接。
     fn settings(&mut self) -> &mut dyn SettingsRepository;
+
+    /// Today 手动顺序的 Repository 视图，与本事务共享同一个连接。
+    fn today_order(&mut self) -> &mut dyn TodayOrderRepository;
 
     /// 提交事务。
     ///
@@ -117,6 +120,40 @@ pub trait ItemRepository: Send {
     /// 记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
     async fn get(&mut self, id: ItemId) -> Result<Option<Item>, StorageError>;
 
+    /// 列出计划日期**不晚于** `date` 的未完成、未归档 Todo（含逾期的），按计划日期、创建时间从早到晚排序。
+    ///
+    /// 这是 Today 的数据来源之一（实施计划 D-01：逾期未完成的 Todo 自动滚入 Today）。
+    /// Repository 只表达"计划日期 ≤ date"这个查询条件，"这些就是 Today"的语义由
+    /// `TodayService` 负责并测试。
+    ///
+    /// # Errors
+    ///
+    /// 任一记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
+    async fn list_open_todos_scheduled_on_or_before(
+        &mut self,
+        date: NaiveDate,
+    ) -> Result<Vec<Item>, StorageError>;
+
+    /// 列出计划日期**恰好**为 `date` 的未归档 Tip。
+    ///
+    /// # Errors
+    ///
+    /// 任一记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
+    async fn list_tips_scheduled_on(&mut self, date: NaiveDate) -> Result<Vec<Item>, StorageError>;
+
+    /// 列出完成时间落在 `[from, to)` 内的未归档 Todo，按完成时间从早到晚排序。
+    ///
+    /// 用于"今天完成的 Todo"（实施计划 D-07）；调用方负责把本地日期换算成 UTC 区间。
+    ///
+    /// # Errors
+    ///
+    /// 任一记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
+    async fn list_todos_completed_between(
+        &mut self,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+    ) -> Result<Vec<Item>, StorageError>;
+
     /// 按过滤条件列出 Item，按创建时间从新到旧排序。
     ///
     /// # Errors
@@ -148,4 +185,17 @@ pub trait SettingsRepository: Send {
         value: &str,
         updated_at: DateTime<Utc>,
     ) -> Result<(), StorageError>;
+}
+
+/// Today 手动执行顺序的持久化（`daily_item_order` 表）。
+///
+/// 顺序独立于 priority / created_at / due（Priority != Today Execution Order，架构文档 §31.3）。
+#[async_trait]
+pub trait TodayOrderRepository: Send {
+    /// 读取某个本地日期的手动顺序（Item ID，按 position 升序）；没有记录时返回空列表。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用或记录中的 ID 无法解析时返回对应的 [`StorageError`]。
+    async fn get(&mut self, date: NaiveDate) -> Result<Vec<ItemId>, StorageError>;
 }

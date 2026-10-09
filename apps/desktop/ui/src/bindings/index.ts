@@ -31,6 +31,17 @@ export const commands = {
 	 */
 	listItems: (request: ListItemsRequest) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("list_items", { request })),
 	/**
+	 *  读取今天的视图：待办（已按 Today Order 排序，含逾期）、提示与今日已完成。
+	 * 
+	 *  悬浮窗只在**启动时**调用一次，之后由事件（`item_created`、`item_updated`、
+	 *  `today_reordered`、`day_changed`）驱动缓存刷新；Hover 展开不会调用本命令（架构文档 §12）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	getToday: () => typedError<TodayViewDto, IpcError>(__TAURI_INVOKE("get_today")),
+	/**
 	 *  打开（必要时创建）并聚焦主窗口。悬浮窗与主窗口都可以调用。
 	 * 
 	 *  # Errors
@@ -80,9 +91,11 @@ export const commands = {
 
 /** Events */
 export const events = {
+	dayChanged: makeEvent<DayChangedEvent>("day_changed"),
 	floatingPointerLeft: makeEvent<FloatingPointerLeftEvent>("floating_pointer_left"),
 	itemCreated: makeEvent<ItemCreatedEvent>("item_created"),
 	itemUpdated: makeEvent<ItemUpdatedEvent>("item_updated"),
+	todayReordered: makeEvent<TodayReorderedEvent>("today_reordered"),
 };
 
 /* Types */
@@ -121,6 +134,12 @@ export type DatePointDto = {
 	date: string,
 	/**  本地时间，`HH:MM:SS`；`null` 表示全天。 */
 	time: string | null,
+};
+
+/**  本地日期切换了（过了午夜、休眠唤醒或修改了系统时间），Today 需要重新取数。 */
+export type DayChangedEvent = {
+	/**  新的本地日期，`YYYY-MM-DD`。 */
+	date: string,
 };
 
 /**  展开悬浮窗的请求：面板期望的 logical 尺寸。 */
@@ -241,6 +260,43 @@ export type PriorityDto =
 "medium" | 
 /**  高。 */
 "high";
+
+/**  Today 中的一个条目（只含展示所需的字段，不含正文，保持载荷精简）。 */
+export type TodayItemDto = {
+	/**  Item ID。 */
+	id: string,
+	/**  类型。 */
+	itemType: ItemTypeDto,
+	/**  标题。 */
+	title: string,
+	/**  状态。 */
+	status: ItemStatusDto,
+	/**  优先级。 */
+	priority: PriorityDto,
+	/**  计划日期。 */
+	scheduled: DatePointDto | null,
+	/**  截止日期。 */
+	due: DatePointDto | null,
+	/**  是否逾期：计划日期早于今天。 */
+	isOverdue: boolean,
+};
+
+/**  Today 的手动顺序被调整。 */
+export type TodayReorderedEvent = Record<string, never>;
+
+/**  Today 视图的 IPC 表示。 */
+export type TodayViewDto = {
+	/**  用户本地时区下的今天，`YYYY-MM-DD`。 */
+	date: string,
+	/**  今天还剩多少个待办——悬浮窗徽标上的数字。 */
+	remainingCount: number,
+	/**  未完成的待办，已按 Today Order 排序。 */
+	todos: TodayItemDto[],
+	/**  今天的提示。 */
+	tips: TodayItemDto[],
+	/**  今天已完成的待办。 */
+	completed: TodayItemDto[],
+};
 
 /**  展开后面板相对徽标的垂直方向。 */
 export type VerticalAnchorDto = 
