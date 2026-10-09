@@ -42,6 +42,17 @@ jobs:
           cargo doc --workspace --no-deps --locked
       - name: Docs links
         run: node scripts/check-doc-links/check-doc-links.mjs
+      - name: Cache sqlx-cli
+        id: sqlx-cli-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-sqlx.exe
+          key: sqlx-cli-0.8-${{ runner.os }}
+      - name: Install sqlx-cli
+        if: steps.sqlx-cli-cache.outputs.cache-hit != 'true'
+        run: cargo install sqlx-cli --version "~0.8" --no-default-features --features sqlite,rustls --locked
+      - name: SQLx offline metadata is up to date
+        run: node scripts/sqlx-prepare.mjs --check
       - name: Clock usage
         run: node scripts/check-clock-usage.mjs
       - name: Dependency direction

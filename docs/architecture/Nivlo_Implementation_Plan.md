@@ -99,7 +99,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.3 | ADR 与开发文档 | 🟨 |
 | | 0.4 | Common 基础设施（日志 / 路径 / 时钟 / ID / Secret） | ✅ |
 | | 0.5 | Domain Model | ✅ |
-| | 0.6 | Storage：SQLite 与 Migration | ⬜ |
+| | 0.6 | Storage：SQLite 与 Migration | ✅ |
 | | 0.7 | Application Layer 与 Event Bus | ⬜ |
 | | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ⬜ |
 | | 0.9 | Frontend 基础 | ⬜ |
@@ -308,7 +308,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.6 Storage：SQLite 与 Migration
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.5
 - **目标**：SQLite 成为 Domain State 的唯一 Source of Truth（架构文档 §29–31）。
 - **任务**：
@@ -318,11 +318,14 @@ Phase 12 Backlog                        → 未排期
   - 在 `nivlo-application` 中定义 Repository Port 与 `UnitOfWork`（事务边界由 Application 层控制，架构文档 §56），在 `nivlo-storage` 中实现 `SqliteItemRepository` 等。
   - 启用 SQLx 离线模式（`cargo sqlx prepare`），CI 中检查查询元数据是否最新。
 - **验收标准**：
-  - [ ] 集成测试（临时数据库）：从空库迁移成功；重复运行 Migration 幂等。
-  - [ ] 集成测试：Item CRUD；事务中途失败整体回滚；外键约束生效。
-  - [ ] CI 中 `cargo sqlx prepare --check` 通过。
-  - [ ] 数据库文件位于 `AppPaths` 的 `database/nivlo.db`。
-- **完成记录**：—
+  - [x] 集成测试（临时数据库）：从空库迁移成功；重复运行 Migration 幂等。
+  - [x] 集成测试：Item CRUD；事务中途失败整体回滚；外键约束生效。
+  - [x] CI 中 `cargo sqlx prepare --check` 通过。
+  - [x] 数据库文件位于 `AppPaths` 的 `database/nivlo.db`。
+- **完成记录**：2026-10-09 完成。
+  - 证据：`cargo test -p nivlo-storage` 13 个测试通过——空库迁移成功且重复运行幂等（版本 1）、Item 全字段读写往返、更新与 NotFound、列表过滤 / 排序 / limit、未提交事务回滚、事务中途失败整体回滚、外键约束生效（`Constraint`）、被篡改的 Migration 报 `Migration` 错误、被外部改坏的行报 `Corrupt`、数据库位于 `AppPaths` 的 `database/nivlo.db`；`node scripts/sqlx-prepare.mjs --check` 通过（离线元数据在 `.sqlx/`）。
+  - 设计说明：`UnitOfWork` / `Transaction` / `ItemRepository` 等 Port 定义在 `nivlo-application::ports`，`Database` 实现 `UnitOfWork`，`SqliteTransaction` 同时实现各 Repository，`tx.items()` 返回自身从而共享同一连接；migration 0001 使用 STRICT 表与 CHECK 约束；时间戳为固定宽度 UTC RFC 3339（毫秒）文本；`projects`/`tags`/`item_tags`/`daily_item_order`/`settings` 表已建，对应 Repository 在使用它们的子阶段（1.4、1.7、3.3、3.5）实现。
+  - 待确认：CI 中的 `sqlx prepare --check` 步骤已写入 workflow，随 0.2 的远端验证一并确认。开发机 C 盘空间不足，`cargo install` 需设置 `CARGO_TARGET_DIR` 与 `TEMP` 到 E 盘。
 
 ### 0.7 Application Layer 与 Event Bus
 

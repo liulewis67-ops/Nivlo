@@ -1,6 +1,30 @@
 //! Item 的类型、状态、优先级与内容格式枚举。
 
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
+
+use crate::error::DomainError;
+
+/// 为"字符串 <-> 枚举"的持久化编码实现 `FromStr`，与各枚举的 `as_str` 互为逆操作。
+macro_rules! impl_from_str {
+    ($ty:ident { $($text:literal => $variant:ident),+ $(,)? }) => {
+        impl FromStr for $ty {
+            type Err = DomainError;
+
+            /// 解析持久化使用的稳定字符串；未知取值视为数据不一致。
+            fn from_str(s: &str) -> Result<Self, Self::Err> {
+                match s {
+                    $($text => Ok(Self::$variant),)+
+                    other => Err(DomainError::InvalidSnapshot(format!(
+                        "未知的 {} 取值：{other}",
+                        stringify!($ty)
+                    ))),
+                }
+            }
+        }
+    };
+}
 
 /// Item 的类型（架构文档 §8.1）。
 ///
@@ -118,5 +142,52 @@ impl ContentFormat {
             Self::Plain => "plain",
             Self::Markdown => "markdown",
         }
+    }
+}
+
+impl_from_str!(ItemType { "todo" => Todo, "note" => Note, "tip" => Tip });
+impl_from_str!(ItemStatus { "open" => Open, "done" => Done });
+impl_from_str!(Priority { "none" => None, "low" => Low, "medium" => Medium, "high" => High });
+impl_from_str!(ContentFormat { "plain" => Plain, "markdown" => Markdown });
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn as_str_and_from_str_are_inverse() {
+        for v in [ItemType::Todo, ItemType::Note, ItemType::Tip] {
+            assert_eq!(v.as_str().parse::<ItemType>().unwrap(), v);
+        }
+        for v in [ItemStatus::Open, ItemStatus::Done] {
+            assert_eq!(v.as_str().parse::<ItemStatus>().unwrap(), v);
+        }
+        for v in [
+            Priority::None,
+            Priority::Low,
+            Priority::Medium,
+            Priority::High,
+        ] {
+            assert_eq!(v.as_str().parse::<Priority>().unwrap(), v);
+        }
+        for v in [ContentFormat::Plain, ContentFormat::Markdown] {
+            assert_eq!(v.as_str().parse::<ContentFormat>().unwrap(), v);
+        }
+    }
+
+    #[test]
+    fn unknown_text_is_rejected() {
+        assert!(matches!(
+            "urgent".parse::<Priority>(),
+            Err(DomainError::InvalidSnapshot(_))
+        ));
+        assert!("".parse::<ItemType>().is_err());
+    }
+
+    #[test]
+    fn only_todo_is_completable() {
+        assert!(ItemType::Todo.is_completable());
+        assert!(!ItemType::Note.is_completable() && !ItemType::Tip.is_completable());
     }
 }

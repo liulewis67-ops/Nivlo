@@ -7,6 +7,12 @@ publish.workspace = true
 description = "Nivlo application crate"
 
 [dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+nivlo-common.workspace = true
+nivlo-domain.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
 
 [lints]
 workspace = true

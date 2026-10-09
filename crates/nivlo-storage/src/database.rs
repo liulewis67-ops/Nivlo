@@ -1,0 +1,111 @@
+//! 连接池、Migration 与事务工厂。
+
+use std::path::Path;
+use std::time::Duration;
+
+use async_trait::async_trait;
+use nivlo_application::ports::{StorageError, Transaction, UnitOfWork};
+use sqlx::SqlitePool;
+use sqlx::migrate::Migrator;
+use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
+
+use crate::error::map_sqlx;
+use crate::item_repository::SqliteTransaction;
+
+/// 编译期嵌入的 Migration。已合入的 Migration 不得修改（sqlx 会校验 checksum）。
+static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
+
+/// 连接池大小。
+///
+/// Nivlo 是单用户桌面应用，不需要 Web Server 级别的连接池（架构文档 §29）。
+const MAX_CONNECTIONS: u32 = 4;
+
+/// 等待数据库锁的最长时间。
+const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// SQLite 数据库句柄。克隆开销很小，所有克隆共享同一个连接池。
+#[derive(Debug, Clone)]
+pub struct Database {
+    /// 底层连接池。
+    pool: SqlitePool,
+}
+
+impl Database {
+    /// 打开（必要时创建）数据库文件并建立连接池。
+    ///
+    /// 启用 WAL、`foreign_keys=ON` 与 `busy_timeout`（架构文档 §29）。本函数**不**运行 Migration，
+    /// 调用方需随后调用 [`Database::migrate`]；两步分开，是为了 Migration 失败时
+    /// 宿主还能拿到句柄做恢复 / 诊断（架构文档 §30）。
+    ///
+    /// # Errors
+    ///
+    /// 文件无法创建或打开时返回 [`StorageError::Unavailable`]。
+    pub async fn open(path: &Path) -> Result<Self, StorageError> {
+        let options = SqliteConnectOptions::new()
+            .filename(path)
+            .create_if_missing(true)
+            .journal_mode(SqliteJournalMode::Wal)
+            // WAL 模式下 NORMAL 足以保证不损坏，且比默认的 FULL 少很多 fsync。
+            .synchronous(SqliteSynchronous::Normal)
+            .foreign_keys(true)
+            .busy_timeout(BUSY_TIMEOUT);
+        let pool = SqlitePoolOptions::new()
+            .max_connections(MAX_CONNECTIONS)
+            .connect_with(options)
+            .await
+            .map_err(map_sqlx)?;
+        Ok(Self { pool })
+    }
+
+    /// 运行全部尚未应用的 Migration；重复调用是幂等的。
+    ///
+    /// # Errors
+    ///
+    /// Migration 失败（SQL 错误、checksum 不匹配、版本比应用更新）时返回
+    /// [`StorageError::Migration`]。此时宿主**不得**启动业务 Runtime。
+    pub async fn migrate(&self) -> Result<(), StorageError> {
+        MIGRATOR
+            .run(&self.pool)
+            .await
+            .map_err(|e| StorageError::Migration(e.to_string()))?;
+        tracing::info!(event = "migrations_applied", "数据库迁移完成");
+        Ok(())
+    }
+
+    /// 返回已应用的最新 Schema 版本；尚未运行过任何 Migration 时返回 `None`。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回 [`StorageError::Unavailable`]。
+    pub async fn schema_version(&self) -> Result<Option<i64>, StorageError> {
+        // `_sqlx_migrations` 由 sqlx 在第一次 Migration 时创建，之前查询会失败，需先判断表是否存在。
+        let exists: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = '_sqlx_migrations'",
+        )
+        .fetch_one(&self.pool)
+        .await
+        .map_err(map_sqlx)?;
+        if exists == 0 {
+            return Ok(None);
+        }
+        // 只统计成功应用的版本；失败的 Migration 以 success=0 记录。
+        sqlx::query_scalar("SELECT MAX(version) FROM _sqlx_migrations WHERE success = 1")
+            .fetch_one(&self.pool)
+            .await
+            .map_err(map_sqlx)
+    }
+
+    /// 关闭连接池，等待所有连接归还并刷写 WAL。
+    pub async fn close(&self) {
+        self.pool.close().await;
+    }
+}
+
+#[async_trait]
+impl UnitOfWork for Database {
+    /// 从连接池取一个连接并开启事务。
+    async fn begin(&self) -> Result<Box<dyn Transaction>, StorageError> {
+        let tx = self.pool.begin().await.map_err(map_sqlx)?;
+        Ok(Box::new(SqliteTransaction::new(tx)))
+    }
+}
