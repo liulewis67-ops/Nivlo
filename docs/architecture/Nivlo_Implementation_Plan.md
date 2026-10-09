@@ -97,7 +97,7 @@ Phase 12 Backlog                        → 未排期
 | **P0** | 0.1 | 仓库与 Workspace 初始化 | ✅ |
 | | 0.2 | 代码质量门禁与 CI | 🟨 |
 | | 0.3 | ADR 与开发文档 | 🟨 |
-| | 0.4 | Common 基础设施（日志 / 路径 / 时钟 / ID / Secret） | ⬜ |
+| | 0.4 | Common 基础设施（日志 / 路径 / 时钟 / ID / Secret） | ✅ |
 | | 0.5 | Domain Model | ⬜ |
 | | 0.6 | Storage：SQLite 与 Migration | ⬜ |
 | | 0.7 | Application Layer 与 Event Bus | ⬜ |
@@ -182,8 +182,8 @@ Phase 12 Backlog                        → 未排期
 |---|---|---|---|---|
 | D-01 | **Today 的定义** | Today = `type=Todo` 且未完成且计划日期 ≤ 今天（过期未完成自动滚入 Today，带「逾期」标记）；外加计划日期 = 今天的 Tip。悬浮窗数字 = Today 中未完成 Todo 数。 | 1.4 | 待定 |
 | D-02 | **Inbox 的定义** | 采用显式字段 `in_inbox`（布尔）。Capture 产生的 Item 置为 true；任何整理动作（设置计划日期、设置项目、转换类型、手动「移出 Inbox」）置为 false；「推迟到 Inbox」置为 true 并清除计划日期。不采用「无日期且无项目即 Inbox」的推导规则，避免 Note 永远滞留 Inbox。 | 2.2 | 待定 |
-| D-03 | **时间存储模型** | 架构文档使用 `scheduled_at: DateTime`，产品文档使用 `scheduled_date`。推荐：计划与截止拆为「本地日期 + 可选本地时间」（`scheduled_date`、`scheduled_time`、`due_date`、`due_time`），按用户本地日历语义解释（跨时区不漂移）；`reminder_at` 存 UTC 时间点。需同步更新架构文档 §8、§31。 | 0.5 | 待定 |
-| D-04 | **ID 与时间戳格式** | ID 使用 UUIDv7（TEXT）；`created_at` 等审计时间戳存 UTC（RFC 3339 TEXT 或 Unix ms INTEGER，二选一并全库统一）。 | 0.5 | 待定 |
+| D-03 | **时间存储模型** | 架构文档使用 `scheduled_at: DateTime`，产品文档使用 `scheduled_date`。推荐：计划与截止拆为「本地日期 + 可选本地时间」（`scheduled_date`、`scheduled_time`、`due_date`、`due_time`），按用户本地日历语义解释（跨时区不漂移）；`reminder_at` 存 UTC 时间点。需同步更新架构文档 §8、§31。 | 0.5 | 已决定（2026-10-09，采用推荐方案） |
+| D-04 | **ID 与时间戳格式** | ID 使用 UUIDv7（TEXT）；`created_at` 等审计时间戳存 UTC（RFC 3339 TEXT 或 Unix ms INTEGER，二选一并全库统一）。 | 0.5 | 已决定（2026-10-09：ID 为 UUIDv7 TEXT；审计时间戳为 UTC RFC 3339 TEXT，全库统一） |
 | D-05 | **Project Order** | 产品文档 §21 要求区分 Today Order 与 Project Order。推荐 MVP 中 Project 视图按 优先级 → 计划日期 → 创建时间 排序，手动 Project Order 推迟到 MVP 后（新增 `project_item_order` 表）。 | 3.3 | 待定 |
 | D-06 | **UI 语言** | 默认简体中文，从 0.9 起接入 i18n 框架（如 i18next），文案全部走资源文件；英文作为第二语言在 7.5 补齐。 | 0.9 | 待定 |
 | D-07 | **已完成 Todo 在 Today 中的展示** | 当天完成的 Todo 以删除线显示在 Today 列表底部，次日不再显示；提供「隐藏已完成」开关。 | 1.6 | 待定 |
@@ -268,7 +268,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.4 Common 基础设施（日志 / 路径 / 时钟 / ID / Secret）
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.1；D-04
 - **目标**：提供所有层共享、与平台无关的基础能力。
 - **任务**：
@@ -278,11 +278,13 @@ Phase 12 Backlog                        → 未排期
   - `Clock` trait（`now_utc()`、`today_local()`、`timezone()`），提供系统实现与可控的 `FakeClock`，供所有日期相关逻辑注入。
   - ID 生成（UUIDv7）。
 - **验收标准**：
-  - [ ] 单元测试覆盖路径解析、目录自动创建。
-  - [ ] 单元测试证明 `Secret` 在 `{:?}`、`{}`、`tracing` 字段中都输出 `***`。
-  - [ ] 日志文件按天滚动且保留天数可配置。
-  - [ ] 业务代码中不直接调用 `chrono::Local::now()` / `Utc::now()`（通过 grep 检查，除 `Clock` 实现外）。
-- **完成记录**：—
+  - [x] 单元测试覆盖路径解析、目录自动创建。
+  - [x] 单元测试证明 `Secret` 在 `{:?}`、`{}`、`tracing` 字段中都输出 `***`。
+  - [x] 日志文件按天滚动且保留天数可配置。
+  - [x] 业务代码中不直接调用 `chrono::Local::now()` / `Utc::now()`（通过 grep 检查，除 `Clock` 实现外）。
+- **完成记录**：2026-10-09 完成。D-04 已决定（UUIDv7 TEXT；UTC RFC 3339 TEXT）。
+  - 证据：`cargo test -p nivlo-common` 23 个测试通过（路径解析 / 目录创建、Secret 在 `{:?}`、`{}`、tracing 字段中均为 `***`、日志滚动与保留、FakeClock 跨午夜、UUIDv7）；`cargo clippy -D warnings` 通过；`node scripts/check-clock-usage.mjs` 通过（已加入 CI）。
+  - 说明：路径根目录除按系统约定解析外，支持环境变量 `NIVLO_DATA_DIR` 覆盖；时区使用 `chrono-tz` + `iana-time-zone` 探测，失败回退 UTC。
 
 ### 0.5 Domain Model
 
