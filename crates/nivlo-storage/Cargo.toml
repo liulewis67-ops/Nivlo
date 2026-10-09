@@ -1,0 +1,12 @@
+[package]
+name = "nivlo-storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Nivlo storage crate"
+
+[dependencies]
+
+[lints]
+workspace = true

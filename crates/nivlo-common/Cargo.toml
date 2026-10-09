@@ -1,0 +1,12 @@
+[package]
+name = "nivlo-common"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Nivlo common crate"
+
+[dependencies]
+
+[lints]
+workspace = true

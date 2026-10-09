@@ -1,0 +1,51 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "apps/desktop/src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "UNLICENSED"
+publish = false
+
+# 所有依赖版本在此统一声明，子 crate 使用 `xxx.workspace = true` 引用（后端规范 §2.2）。
+[workspace.dependencies]
+nivlo-domain = { path = "crates/nivlo-domain" }
+nivlo-application = { path = "crates/nivlo-application" }
+nivlo-storage = { path = "crates/nivlo-storage" }
+nivlo-capture = { path = "crates/nivlo-capture" }
+nivlo-workflow = { path = "crates/nivlo-workflow" }
+nivlo-script = { path = "crates/nivlo-script" }
+nivlo-scheduler = { path = "crates/nivlo-scheduler" }
+nivlo-integrations = { path = "crates/nivlo-integrations" }
+nivlo-platform = { path = "crates/nivlo-platform" }
+nivlo-platform-windows = { path = "crates/nivlo-platform-windows" }
+nivlo-platform-macos = { path = "crates/nivlo-platform-macos" }
+nivlo-platform-linux = { path = "crates/nivlo-platform-linux" }
+nivlo-common = { path = "crates/nivlo-common" }
+
+tauri = { version = "2", features = [] }
+tauri-build = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[workspace.lints.rust]
+missing_docs = "warn"
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+undocumented_unsafe_blocks = "warn"
+missing_docs_in_private_items = "warn"
+todo = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
