@@ -82,7 +82,7 @@ Phase 12 Backlog                        → 未排期
 
 | 里程碑 | 完成条件 | 对应阶段 | 状态 |
 |---|---|---|---|
-| M0 | UI 可通过 Typed IPC 创建 / 读取 Item，数据持久化到 SQLite | Phase 0 | ⬜ |
+| M0 | UI 可通过 Typed IPC 创建 / 读取 Item，数据持久化到 SQLite | Phase 0 | ✅ |
 | M1 | 开机常驻；Hover 悬浮窗立即展示 Today；可在悬浮窗直接创建、排序、完成 Todo；数据可靠持久化 | Phase 1 | ⬜ |
 | M2 | 拖拽 / 粘贴 / 快捷键捕获 URL、文件、文本进入 Inbox，保留 Source | Phase 2 | ⬜ |
 | M3 | Calendar 规划 + 提醒可靠触发，形成 Capture → Schedule → Execute 闭环 | Phase 3–4 | ⬜ |
@@ -102,7 +102,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.6 | Storage：SQLite 与 Migration | ✅ |
 | | 0.7 | Application Layer 与 Event Bus | ✅ |
 | | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ✅ |
-| | 0.9 | Frontend 基础 | ⬜ |
+| | 0.9 | Frontend 基础 | ✅ |
 | **P1** | 1.1 | 窗口架构与 Capability | ⬜ |
 | | 1.2 | 悬浮窗 Window Behavior | ⬜ |
 | | 1.3 | Hover 展开与悬浮窗状态机 | ⬜ |
@@ -185,7 +185,7 @@ Phase 12 Backlog                        → 未排期
 | D-03 | **时间存储模型** | 架构文档使用 `scheduled_at: DateTime`，产品文档使用 `scheduled_date`。推荐：计划与截止拆为「本地日期 + 可选本地时间」（`scheduled_date`、`scheduled_time`、`due_date`、`due_time`），按用户本地日历语义解释（跨时区不漂移）；`reminder_at` 存 UTC 时间点。需同步更新架构文档 §8、§31。 | 0.5 | 已决定（2026-10-09，采用推荐方案） |
 | D-04 | **ID 与时间戳格式** | ID 使用 UUIDv7（TEXT）；`created_at` 等审计时间戳存 UTC（RFC 3339 TEXT 或 Unix ms INTEGER，二选一并全库统一）。 | 0.5 | 已决定（2026-10-09：ID 为 UUIDv7 TEXT；审计时间戳为 UTC RFC 3339 TEXT，全库统一） |
 | D-05 | **Project Order** | 产品文档 §21 要求区分 Today Order 与 Project Order。推荐 MVP 中 Project 视图按 优先级 → 计划日期 → 创建时间 排序，手动 Project Order 推迟到 MVP 后（新增 `project_item_order` 表）。 | 3.3 | 待定 |
-| D-06 | **UI 语言** | 默认简体中文，从 0.9 起接入 i18n 框架（如 i18next），文案全部走资源文件；英文作为第二语言在 7.5 补齐。 | 0.9 | 待定 |
+| D-06 | **UI 语言** | 默认简体中文，从 0.9 起接入 i18n 框架（如 i18next），文案全部走资源文件；英文作为第二语言在 7.5 补齐。 | 0.9 | 已决定（2026-10-09，采用推荐方案） |
 | D-07 | **已完成 Todo 在 Today 中的展示** | 当天完成的 Todo 以删除线显示在 Today 列表底部，次日不再显示；提供「隐藏已完成」开关。 | 1.6 | 待定 |
 | D-08 | **删除语义** | 增加 `deleted_at` 软删除，进入回收站，30 天后自动清除；与 `archived_at`（归档，长期保留）区分。 | 3.5 | 待定 |
 | D-09 | **FTS 索引同步方式** | 使用 SQLite Trigger 同步 FTS5 表（与业务写入同一事务，不会不一致），而不是通过 Domain Event 异步更新。FTS5 使用 `trigram` tokenizer 以支持中文子串搜索。 | 3.4 | 待定 |
@@ -372,7 +372,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 0.9 Frontend 基础
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.8；D-06
 - **目标**：建立跨平台一致的前端基础（架构文档 §15、§47）。
 - **任务**：
@@ -383,11 +383,15 @@ Phase 12 Backlog                        → 未排期
   - i18n 框架接入（按 D-06）。
   - Vitest + React Testing Library。
 - **验收标准**：
-  - [ ] `pnpm test` 运行示例组件测试通过。
-  - [ ] 开发页面可通过 IPC 创建与列出 Item（**M0 演示**）。
-  - [ ] UI 中所有可见文案来自 i18n 资源文件（grep 检查无硬编码中文 / 英文文案）。
-  - [ ] 浅色 / 深色主题切换后所有基础控件可读。
-- **完成记录**：—
+  - [x] `pnpm test` 运行示例组件测试通过。
+  - [x] 开发页面可通过 IPC 创建与列出 Item（**M0 演示**）。
+  - [x] UI 中所有可见文案来自 i18n 资源文件（grep 检查无硬编码中文 / 英文文案）。
+  - [x] 浅色 / 深色主题切换后所有基础控件可读。
+- **完成记录**：2026-10-09 完成。D-06 已决定：默认 zh-CN，i18next 接入，英文在 7.5 补齐。
+  - 证据：`pnpm test` 21 个测试通过（Button / Input / Checkbox / Menu / Toast 的交互与键盘操作、`AppError` 转换与 i18n 错误文案、主题 Store、开发控制台创建 / 失败 Toast 流程、后端登记的每个错误码在 `zh-CN.json` 中都有文案）；`pnpm lint`、`typecheck`、`format:check`、`build:ui` 通过。
+  - M0 演示：用 `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port` 通过 CDP 驱动真实的 `pnpm tauri dev` 窗口——在页面中创建 Item 后列表显示该条（UI→Tauri IPC→SQLite）；标题为空时弹出"标题不能为空。"（以错误码为 key 的 i18n 文案）；优雅退出后用同一数据目录重启，之前创建的 Item 仍在列表中。浅色 / 深色主题均已在浏览器中目视确认所有基础控件可读。
+  - 文案检查：用 ESLint（`react/jsx-no-literals` + 可见属性的 `no-restricted-syntax`）代替 grep，字面量文案会让 `pnpm lint` 失败。分层约束同样由 ESLint 强制（只有 `lib/ipc` 与测试工具可引用 bindings；components 不得引用 features；feature 之间只能经 `index.ts`）。注释规范规则改为精确匹配"直接把函数赋给常量"的声明（含 export），不再误伤内联回调。
+  - 偏差：TS 额外开启 `noUncheckedIndexedAccess` / `exactOptionalPropertyTypes` 等；Menu / Tooltip 使用 Radix 的 headless 原语（规范允许）；`pnpm dev:ui`（纯浏览器）自动使用内存 IPC Mock（`src/test/ipc-mock.ts`）。
 
 ---
 

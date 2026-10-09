@@ -1,0 +1,95 @@
+/*
+ * Design Token（前端规范 §8.1）。
+ *
+ * 所有颜色、间距、圆角、字体、阴影、z-index、动画时长都在这里以 CSS 变量定义，
+ * 组件与 Tailwind 主题只引用变量，禁止硬编码色值 / 魔法数字。
+ * 浅色为默认；根元素 `data-theme="dark"` 切换为深色，所有 Token 必须有两套取值。
+ */
+
+:root {
+  /* 字体：中文优先使用系统 UI 字体，保证各平台 WebView 外观一致。 */
+  --nv-font-sans:
+    "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --nv-font-mono: "Cascadia Mono", "SF Mono", "JetBrains Mono", Consolas, monospace;
+
+  --nv-text-xs: 0.75rem;
+  --nv-text-sm: 0.8125rem;
+  --nv-text-md: 0.875rem;
+  --nv-text-lg: 1rem;
+  --nv-text-xl: 1.25rem;
+
+  /* 间距（4px 栅格）。 */
+  --nv-space-1: 0.25rem;
+  --nv-space-2: 0.5rem;
+  --nv-space-3: 0.75rem;
+  --nv-space-4: 1rem;
+  --nv-space-6: 1.5rem;
+  --nv-space-8: 2rem;
+
+  --nv-radius-sm: 0.25rem;
+  --nv-radius-md: 0.5rem;
+  --nv-radius-lg: 0.75rem;
+  --nv-radius-full: 9999px;
+
+  /* 层级：Menu < Tooltip < Toast，避免魔法数字 z-index。 */
+  --nv-z-menu: 40;
+  --nv-z-tooltip: 50;
+  --nv-z-toast: 60;
+
+  /* 动画时长与曲线；只对 transform / opacity 做动画（前端规范 §8.3）。 */
+  --nv-duration-fast: 120ms;
+  --nv-duration-normal: 200ms;
+  --nv-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* 浅色主题。 */
+  --nv-bg: #f6f7f9;
+  --nv-surface: #ffffff;
+  --nv-surface-hover: #eef0f4;
+  --nv-border: #d9dde5;
+  --nv-text: #1b1f27;
+  --nv-text-muted: #5b6475;
+  --nv-primary: #2563eb;
+  --nv-primary-hover: #1d4ed8;
+  --nv-primary-contrast: #ffffff;
+  --nv-danger: #c62828;
+  --nv-danger-contrast: #ffffff;
+  --nv-success: #2e7d32;
+  --nv-focus-ring: #2563eb;
+  --nv-shadow-md: 0 4px 16px rgb(15 23 42 / 12%);
+  --nv-shadow-lg: 0 12px 32px rgb(15 23 42 / 18%);
+  --nv-scrollbar-thumb: #c3c9d4;
+  --nv-scrollbar-thumb-hover: #a4acbb;
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --nv-bg: #14161b;
+  --nv-surface: #1c1f26;
+  --nv-surface-hover: #262a33;
+  --nv-border: #343945;
+  --nv-text: #e8eaf0;
+  --nv-text-muted: #9aa3b5;
+  --nv-primary: #5b8def;
+  --nv-primary-hover: #7aa3f5;
+  --nv-primary-contrast: #0b1020;
+  --nv-danger: #ef6b6b;
+  --nv-danger-contrast: #1a0a0a;
+  --nv-success: #6fcf7a;
+  --nv-focus-ring: #7aa3f5;
+  --nv-shadow-md: 0 4px 16px rgb(0 0 0 / 45%);
+  --nv-shadow-lg: 0 12px 32px rgb(0 0 0 / 55%);
+  --nv-scrollbar-thumb: #4a5160;
+  --nv-scrollbar-thumb-hover: #646d80;
+
+  color-scheme: dark;
+}
+
+/* 尊重用户的"减少动态效果"设置。 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --nv-duration-fast: 0ms;
+    --nv-duration-normal: 0ms;
+  }
+}

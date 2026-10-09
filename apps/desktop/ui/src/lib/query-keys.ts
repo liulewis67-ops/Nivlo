@@ -1,0 +1,12 @@
+/**
+ * Query Key 工厂。所有 TanStack Query 的 Key 都必须由这里生成，
+ * 禁止在业务代码中手写数组字面量（前端规范 §7.2）。
+ */
+export const queryKeys = {
+  /** 所有 Item 列表查询的前缀，用于一次性失效全部列表。 */
+  items: () => ["items"] as const,
+  /** 带过滤条件的 Item 列表。 */
+  itemList: (filter: { includeArchived: boolean }) => ["items", "list", filter] as const,
+  /** 单个 Item 详情。 */
+  item: (id: string) => ["item", id] as const,
+};

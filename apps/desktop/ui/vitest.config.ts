@@ -1,6 +1,15 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
+import viteConfig from "./vite.config.ts";
 
-/** Vitest 配置：默认 Node 环境，组件测试在 0.9 引入 jsdom。 */
-export default defineConfig({
-  test: { include: ["src/**/*.test.{ts,tsx}"] },
-});
+/** Vitest 配置：复用 Vite 的别名，组件测试使用 jsdom。 */
+export default mergeConfig(
+  viteConfig,
+  defineConfig({
+    test: {
+      environment: "jsdom",
+      include: ["src/**/*.test.{ts,tsx}"],
+      setupFiles: ["./src/test/setup.ts"],
+      css: false,
+    },
+  }),
+);

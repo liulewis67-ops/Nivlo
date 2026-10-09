@@ -1,0 +1,81 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Tailwind 主题：把 Token 暴露为工具类（如 `bg-surface`、`text-muted`、`rounded-md`），
+ * `inline` 保证工具类直接引用 `var(--nv-*)`，主题切换时无需重新生成。
+ */
+@theme inline {
+  --font-sans: var(--nv-font-sans);
+  --font-mono: var(--nv-font-mono);
+
+  --color-bg: var(--nv-bg);
+  --color-surface: var(--nv-surface);
+  --color-surface-hover: var(--nv-surface-hover);
+  --color-border: var(--nv-border);
+  --color-text: var(--nv-text);
+  --color-muted: var(--nv-text-muted);
+  --color-primary: var(--nv-primary);
+  --color-primary-hover: var(--nv-primary-hover);
+  --color-primary-contrast: var(--nv-primary-contrast);
+  --color-danger: var(--nv-danger);
+  --color-danger-contrast: var(--nv-danger-contrast);
+  --color-success: var(--nv-success);
+  --color-focus: var(--nv-focus-ring);
+
+  --radius-sm: var(--nv-radius-sm);
+  --radius-md: var(--nv-radius-md);
+  --radius-lg: var(--nv-radius-lg);
+
+  --shadow-md: var(--nv-shadow-md);
+  --shadow-lg: var(--nv-shadow-lg);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--nv-bg);
+  color: var(--nv-text);
+  font-family: var(--nv-font-sans);
+  font-size: var(--nv-text-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 统一键盘焦点样式，各 WebView 默认的焦点环不一致。 */
+:focus-visible {
+  outline: 2px solid var(--nv-focus-ring);
+  outline-offset: 2px;
+}
+
+/* 统一滚动条外观（WebView2 / WebKit 均支持），避免系统默认滚动条破坏一致性。 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nv-scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--nv-scrollbar-thumb);
+  border: 2px solid transparent;
+  border-radius: var(--nv-radius-full);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nv-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}

@@ -1,0 +1,53 @@
+{
+  "app": { "name": "拾序" },
+  "common": {
+    "loading": "加载中…"
+  },
+  "toast": { "dismiss": "关闭提示" },
+  "theme": {
+    "label": "主题",
+    "system": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
+  },
+  "dev": {
+    "title": "开发控制台",
+    "subtitle": "Phase 0 的 IPC 演示页：创建并列出 Item，验证 UI → IPC → SQLite 链路。",
+    "form": {
+      "titleLabel": "标题",
+      "titlePlaceholder": "输入一条待办、笔记或提示",
+      "typeLabel": "类型",
+      "submit": "创建"
+    },
+    "type": { "todo": "待办", "note": "笔记", "tip": "提示" },
+    "list": {
+      "heading": "最近的 Item",
+      "empty": "还没有任何 Item，先创建一个吧。"
+    }
+  },
+  "floating": { "placeholder": "悬浮窗（Phase 1 实现）" },
+  "menu": { "open": "打开菜单" },
+  "error": {
+    "UNKNOWN": "出了点问题，请稍后重试。",
+    "INVALID_INPUT": "输入的内容不合法。",
+    "ITEM_NOT_FOUND": "找不到这个条目，它可能已被删除。",
+    "ITEM_TITLE_EMPTY": "标题不能为空。",
+    "ITEM_TITLE_TOO_LONG": "标题太长了。",
+    "ITEM_CONTENT_TOO_LONG": "内容太长了。",
+    "ITEM_NOT_COMPLETABLE": "笔记和提示不能被完成。",
+    "ITEM_ALREADY_COMPLETED": "这个待办已经完成了。",
+    "ITEM_NOT_COMPLETED": "这个待办还没有完成。",
+    "ITEM_ALREADY_ARCHIVED": "这个条目已经归档。",
+    "ITEM_NOT_ARCHIVED": "这个条目还没有归档。",
+    "ITEM_ARCHIVED": "条目已归档，请先取消归档。",
+    "ITEM_FIELD_NOT_APPLICABLE": "这个字段不适用于当前类型的条目。",
+    "NAME_EMPTY": "名称不能为空。",
+    "NAME_TOO_LONG": "名称太长了。",
+    "DATA_INCONSISTENT": "本地数据不一致，请导出诊断信息并联系开发者。",
+    "STORAGE_CONSTRAINT": "保存失败：数据与已有内容冲突。",
+    "STORAGE_UNAVAILABLE": "本地数据库暂时不可用。",
+    "STORAGE_CORRUPT": "本地数据已损坏，请导出诊断信息。",
+    "STORAGE_MIGRATION_FAILED": "数据库升级失败。"
+  },
+  "errorAction": { "OPEN_DIAGNOSTICS": "打开诊断信息" }
+}
