@@ -9,6 +9,8 @@ const COMMANDS: &[&str] = &[
     "open_main",
     "quit_app",
     "start_floating_drag",
+    "expand_floating",
+    "collapse_floating",
 ];
 
 fn main() {

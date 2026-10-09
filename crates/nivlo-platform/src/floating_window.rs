@@ -56,6 +56,15 @@ pub trait FloatingWindowPort: Send + Sync {
     /// 系统调用失败时返回 [`PlatformError::Failed`]。
     fn move_to(&self, position: Point) -> Result<(), PlatformError>;
 
+    /// 鼠标指针在屏幕上的位置（物理像素）。
+    ///
+    /// 用于在 WebView 没有投递"指针离开"事件时（例如指针被快速甩出窗口）兜底判断指针是否还在窗口内。
+    ///
+    /// # Errors
+    ///
+    /// 平台无法读取指针位置时返回 [`PlatformError::Unsupported`] 或 [`PlatformError::Failed`]。
+    fn cursor_position(&self) -> Result<Point, PlatformError>;
+
     /// 窗口当前所在的显示器。
     ///
     /// # Errors

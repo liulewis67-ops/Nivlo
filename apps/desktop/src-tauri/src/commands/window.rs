@@ -1,9 +1,14 @@
 //! 窗口与应用生命周期相关的 Command。
 
-use nivlo_application::error::{AppError, ErrorAction, ErrorCode};
-use tauri::{AppHandle, Runtime, WebviewWindow};
+use std::sync::Arc;
 
-use crate::dto::IpcError;
+use nivlo_application::error::{AppError, ErrorAction, ErrorCode};
+use nivlo_platform::error::PlatformError;
+use tauri::{AppHandle, Runtime, State, WebviewWindow};
+
+use crate::app::AppState;
+use crate::dto::{ExpandFloatingRequest, ExpandedLayoutDto, IpcError};
+use crate::windows::floating::FloatingHandle;
 use crate::windows::show_main_window;
 
 /// 打开（必要时创建）并聚焦主窗口。悬浮窗与主窗口都可以调用。
@@ -50,4 +55,58 @@ pub async fn start_floating_drag<R: Runtime>(window: WebviewWindow<R>) -> Result
             error.to_string(),
         ))
     })
+}
+
+/// 把悬浮窗展开为 Today 面板（Hover 展开时调用）。
+///
+/// 这是窗口几何命令，**不查询任何业务数据**：Hover 期间唯一允许发出的 IPC 就是
+/// 展开 / 收起（前端规范 §9）。面板朝屏幕内侧展开，完整位于当前显示器工作区内；
+/// 返回的布局告诉前端面板是从徽标所在的哪个角长出来的。
+///
+/// # Errors
+///
+/// 尺寸不合法返回 `INVALID_INPUT`；窗口不可用返回 `WINDOW_UNAVAILABLE`。
+#[tauri::command]
+#[specta::specta]
+pub async fn expand_floating(
+    state: State<'_, AppState>,
+    request: ExpandFloatingRequest,
+) -> Result<ExpandedLayoutDto, IpcError> {
+    let panel = request.validated()?;
+    let floating = floating_handle(&state)?;
+    floating
+        .expand(panel)
+        .map(ExpandedLayoutDto::from)
+        .map_err(window_error)
+}
+
+/// 把悬浮窗收起回徽标，位置与展开前一致。未展开时是空操作。
+///
+/// # Errors
+///
+/// 窗口不可用时返回 `WINDOW_UNAVAILABLE`。
+#[tauri::command]
+#[specta::specta]
+pub async fn collapse_floating(state: State<'_, AppState>) -> Result<(), IpcError> {
+    floating_handle(&state)?.collapse().map_err(window_error)
+}
+
+/// 取出悬浮窗的行为句柄；启动尚未完成时返回 `WINDOW_UNAVAILABLE`。
+fn floating_handle<'a>(
+    state: &'a State<'_, AppState>,
+) -> Result<&'a Arc<dyn FloatingHandle>, IpcError> {
+    state.runtime.floating().ok_or_else(|| {
+        IpcError::from(AppError::new(
+            ErrorCode::WindowUnavailable,
+            "悬浮窗尚未创建",
+        ))
+    })
+}
+
+/// 把平台错误转换为 IPC 错误并记录日志。
+fn window_error(error: PlatformError) -> IpcError {
+    tracing::warn!(event = "floating_window_command_failed", %error, "悬浮窗命令失败");
+    let mut app_error = AppError::new(ErrorCode::WindowUnavailable, error.to_string());
+    app_error.action = Some(ErrorAction::OpenDiagnostics);
+    IpcError::from(app_error)
 }

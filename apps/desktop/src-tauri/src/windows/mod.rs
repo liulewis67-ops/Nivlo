@@ -106,8 +106,8 @@ pub fn on_window_event<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
             let Some(state) = window.app_handle().try_state::<AppState>() else {
                 return;
             };
-            if let Some(observer) = state.runtime.move_observer() {
-                observer.on_moved(Point {
+            if let Some(floating) = state.runtime.floating() {
+                floating.on_moved(Point {
                     x: position.x,
                     y: position.y,
                 });

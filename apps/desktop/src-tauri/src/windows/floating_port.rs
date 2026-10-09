@@ -107,6 +107,17 @@ impl<R: Runtime> FloatingWindowPort for TauriFloatingWindow<R> {
             .map_err(failed)
     }
 
+    /// 指针的屏幕位置（取整为物理像素）。
+    fn cursor_position(&self) -> Result<Point, PlatformError> {
+        let position = self.window.cursor_position().map_err(failed)?;
+        // 屏幕坐标远小于 i32 范围，四舍五入后转换不会截断。
+        #[allow(clippy::cast_possible_truncation)]
+        Ok(Point {
+            x: position.x.round() as i32,
+            y: position.y.round() as i32,
+        })
+    }
+
     /// 窗口所在的显示器。
     fn current_monitor(&self) -> Result<MonitorInfo, PlatformError> {
         let current = self

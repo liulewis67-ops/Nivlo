@@ -6,6 +6,8 @@
   "permissions": [
     "core:event:default",
     "allow-open-main",
-    "allow-start-floating-drag"
+    "allow-start-floating-drag",
+    "allow-expand-floating",
+    "allow-collapse-floating"
   ]
 }

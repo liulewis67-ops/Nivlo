@@ -26,7 +26,11 @@
       "empty": "还没有任何 Item，先创建一个吧。"
     }
   },
-  "floating": { "open": "打开拾序主窗口" },
+  "floating": { "label": "拾序悬浮窗", "open": "打开拾序主窗口" },
+  "today": {
+    "panel": { "label": "今日面板", "title": "今天", "openMain": "打开主窗口" },
+    "empty": { "title": "今天还没有安排", "hint": "按下 Ctrl+Shift+Space 快速添加一条待办。" }
+  },
   "menu": { "open": "打开菜单" },
   "error": {
     "UNKNOWN": "出了点问题，请稍后重试。",

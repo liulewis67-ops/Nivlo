@@ -12,6 +12,12 @@ export interface MemoryIpc extends IpcClient {
   readonly openMainCalls: number;
   /** `startFloatingDrag` 被调用的次数。 */
   readonly dragStarts: number;
+  /** 按顺序记录的全部方法调用名，用于断言"没有发起某些 IPC"。 */
+  readonly calls: readonly string[];
+  /** 模拟后端看门狗补发"指针已离开"事件。 */
+  emitFloatingPointerLeft(): void;
+  /** 最近一次 `expandFloating` 请求的尺寸。 */
+  readonly lastExpand: { width: number; height: number } | null;
 }
 
 /** 创建内存版 IPC 时的可选配置。 */
@@ -33,9 +39,12 @@ export type MemoryIpcOptions = {
 export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const items: ItemDto[] = [];
   const listeners = new Set<() => void>();
+  const pointerLeftListeners = new Set<() => void>();
   let pendingFailure = options.failNextCreateWith;
   let openMainCalls = 0;
   let dragStarts = 0;
+  const calls: string[] = [];
+  let lastExpand: { width: number; height: number } | null = null;
 
   return {
     get items() {
@@ -47,16 +56,43 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     get dragStarts() {
       return dragStarts;
     },
+    get calls() {
+      return calls;
+    },
+    emitFloatingPointerLeft: () => {
+      for (const notify of pointerLeftListeners) notify();
+    },
+    subscribeFloatingPointerLeft: (onLeft: () => void) => {
+      pointerLeftListeners.add(onLeft);
+      return () => {
+        pointerLeftListeners.delete(onLeft);
+      };
+    },
+    get lastExpand() {
+      return lastExpand;
+    },
+    expandFloating: (width: number, height: number) => {
+      calls.push("expandFloating");
+      lastExpand = { width, height };
+      return Promise.resolve({ horizontal: "right" as const, vertical: "top" as const });
+    },
+    collapseFloating: () => {
+      calls.push("collapseFloating");
+      return Promise.resolve();
+    },
     startFloatingDrag: () => {
+      calls.push("startFloatingDrag");
       dragStarts += 1;
       return Promise.resolve();
     },
     openMain: () => {
+      calls.push("openMain");
       openMainCalls += 1;
       return Promise.resolve();
     },
     quitApp: () => Promise.resolve(),
     createItem: (request: CreateItemRequest) => {
+      calls.push("createItem");
       if (pendingFailure !== undefined) {
         const failure = pendingFailure;
         pendingFailure = undefined;
@@ -92,12 +128,14 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       return Promise.resolve(item);
     },
     getItem: (id: string) => {
+      calls.push("getItem");
       const found = items.find((item) => item.id === id);
       return found === undefined
         ? Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`))
         : Promise.resolve(found);
     },
     listItems: (request: ListItemsRequest) => {
+      calls.push("listItems");
       const visible = items
         .filter((item) => request.includeArchived || item.archivedAt === null)
         .filter((item) => request.itemType === null || item.itemType === request.itemType)

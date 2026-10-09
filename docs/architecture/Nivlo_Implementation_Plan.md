@@ -105,7 +105,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.9 | Frontend 基础 | ✅ |
 | **P1** | 1.1 | 窗口架构与 Capability | ✅ |
 | | 1.2 | 悬浮窗 Window Behavior | 🟨 |
-| | 1.3 | Hover 展开与悬浮窗状态机 | ⬜ |
+| | 1.3 | Hover 展开与悬浮窗状态机 | ✅ |
 | | 1.4 | Today 查询与缓存 | ⬜ |
 | | 1.5 | 悬浮窗 Quick Create | ⬜ |
 | | 1.6 | 完成 / Undo / Optimistic Update | ⬜ |
@@ -450,7 +450,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.3 Hover 展开与悬浮窗状态机
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：1.2
 - **目标**：实现架构文档 §10.1 的 `Collapsed / Expanded / QuickCreate / DragHover` 状态机与产品文档 §5.4 的 Hover 体验。
 - **任务**：
@@ -459,11 +459,16 @@ Phase 12 Backlog                        → 未排期
   - 单窗口动态 resize：根据吸附边缘决定展开方向（朝屏幕内侧展开），确保面板完整位于当前显示器工作区内。
   - Hover 期间**不发起任何 IPC / 数据库查询**，只使用已有 Today 缓存渲染。
 - **验收标准**：
-  - [ ] 状态机单元测试（fake timers）覆盖所有状态转移与延迟。
-  - [ ] 测试断言：Hover 展开过程中 IPC `invoke` 未被调用。
-  - [ ] 悬浮窗分别吸附在左 / 右 / 上 / 下边缘及四个角落时，展开面板不超出屏幕（截图证据）。
-  - [ ] 鼠标从徽标斜向移动到面板时面板不收起、不闪烁。
-- **完成记录**：—
+  - [x] 状态机单元测试（fake timers）覆盖所有状态转移与延迟。
+  - [x] 测试断言：Hover 展开过程中 IPC `invoke` 未被调用。
+  - [x] 悬浮窗分别吸附在左 / 右 / 上 / 下边缘及四个角落时，展开面板不超出屏幕（截图证据）。
+  - [x] 鼠标从徽标斜向移动到面板时面板不收起、不闪烁。
+- **完成记录**：2026-10-10 完成。
+  - 自动化：`floating-machine.test.ts` 23 个假计时器测试覆盖全部状态转移与延迟（进入 250ms 展开、离开 500ms 收起、展开前离开取消、收起前重入取消、Quick Create 期间离开不收起、拖放悬停立即响应并按进入前的状态返回、dispose 清空计时器且空闲时无任何 Timer）；`floating-root.test.tsx` 8 个组件测试（含"Hover 展开与收起期间的全部 IPC 调用恰好是 `expandFloating`、`collapseFloating`，没有任何业务数据调用"）；`nivlo-platform::expand_bounds` 7 个测试（四边 + 四角 + 次显示器 + DPI 缩放 + 工作区过小）；`FloatingController` 展开 / 收起 / 看门狗 11 个测试。
+  - 真实应用（Windows 11，125% 缩放，用真实光标驱动，脚本在 scratchpad）：把徽标放到**四个角落与四条边中点**共 8 个位置，每个位置悬停 → 面板（375×475 物理像素 = 300×380 logical）展开，**全部完整位于工作区内**、完整覆盖原徽标区域，移开后**精确收起回原来的位置**（8/8）；面板朝屏幕内侧展开（右上角→向左下，底边→向上）；从徽标沿对角线扫到面板远端角，面板保持展开不闪烁，移出窗口后收起；已截取面板截图确认圆角 / 标题日期 / 空状态渲染正常。
+  - 验收口径说明（不修改原文）：验收条目写"Hover 展开过程中 IPC `invoke` 未被调用"。窗口必须由 Rust 调整大小，所以 Hover 期间必然存在窗口几何命令；实际落地的口径是"**不发起任何业务数据 IPC（无 `get_today` / SQLite / 网络），只允许 `expand_floating` / `collapse_floating` 两个窗口几何命令**"，并由测试断言调用序列恰为这两个命令（前端规范 §9 与架构文档 §12 的原意正是"Hover 视觉响应不依赖数据库"）。
+  - 发现并修复：在真实 WebView2 中，指针被快速甩出窗口时**不会投递 `pointerleave`**（用 `SetCursorPos` 与绝对坐标 `mouse_event` 都复现），面板会一直停在展开状态。兜底方案是后端看门狗：**只在面板展开期间**以 150ms 间隔读取光标位置，指针由内到外时边沿触发一次 `floating_pointer_left` 事件，前端把它当作 `pointerLeave` 送进状态机；窗口内的 `pointermove` 会补发 `pointerEnter` 取消误启动的收起；收起 / 展开重入 / 退出时看门狗都会停止，空闲时没有任何计时器。
+  - 设计说明：单窗口动态 resize（徽标与面板同在一个窗口里，因此"Hover Safe Area"天然成立——从徽标到面板的路径始终在窗口内）；展开期间控制器忽略 `Moved` 事件、取消待执行的拖动结算，收起时恢复展开前保存的徽标外框，反复展开（如进入 Quick Create 后面板变高）始终基于同一个徽标外框；`FloatingWindowPort` 新增 `cursor_position`；前端新增 `FloatingRoot` / `TodayPanel` 外壳（Today 列表在 1.4 接入）；新增悬浮窗命令 `expand_floating` / `collapse_floating`（均在 floating Capability 白名单内）与事件 `floating_pointer_left`。开发机 C 盘剩余空间为 0，本地验证期间将 WebView2 数据目录指向 E 盘（`WEBVIEW2_USER_DATA_FOLDER`）。
 
 ### 1.4 Today 查询与缓存
 

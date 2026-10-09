@@ -53,6 +53,16 @@ impl Rect {
         }
     }
 
+    /// 点是否落在矩形内（左 / 上边界包含，右 / 下边界不包含，与屏幕像素语义一致）。
+    pub fn contains(&self, point: Point) -> bool {
+        let right = i64::from(self.x) + i64::from(self.width);
+        let bottom = i64::from(self.y) + i64::from(self.height);
+        i64::from(point.x) >= i64::from(self.x)
+            && i64::from(point.x) < right
+            && i64::from(point.y) >= i64::from(self.y)
+            && i64::from(point.y) < bottom
+    }
+
     /// 点到矩形的距离的平方；点在矩形内时为 0。用于在窗口不在任何显示器内时找最近的显示器。
     fn distance_squared_to(&self, point: Point) -> i64 {
         let right = i64::from(self.x) + i64::from(self.width);
@@ -249,6 +259,97 @@ pub fn default_placement(monitors: &[MonitorInfo]) -> Option<Placement> {
         edge: Some(Edge::Right),
         x_ratio: 1.0,
         y_ratio: DEFAULT_Y_RATIO,
+    })
+}
+
+/// 面板相对徽标的水平锚点：徽标位于面板的哪一侧。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum HorizontalAnchor {
+    /// 徽标在面板左侧，面板向右展开。
+    Left,
+    /// 徽标在面板右侧，面板向左展开。
+    Right,
+}
+
+/// 面板相对徽标的垂直锚点：徽标位于面板的上侧还是下侧。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum VerticalAnchor {
+    /// 徽标在面板上侧，面板向下展开。
+    Top,
+    /// 徽标在面板下侧，面板向上展开。
+    Bottom,
+}
+
+/// 展开后的窗口布局：目标外框与展开方向。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ExpandedLayout {
+    /// 展开后窗口的外框（物理像素）。
+    pub bounds: Rect,
+    /// 水平锚点。
+    pub horizontal: HorizontalAnchor,
+    /// 垂直锚点。
+    pub vertical: VerticalAnchor,
+}
+
+/// 计算悬浮窗展开为 Today 面板后的外框。
+///
+/// 面板总是朝**屏幕内侧**展开：徽标在工作区右半边就向左展开（面板右缘与徽标右缘对齐），
+/// 在左半边就向右展开；上下方向同理。这样无论徽标吸附在四条边的哪一条、或者在四个角落，
+/// 展开后的面板都完整位于当前显示器工作区内（产品文档 §5.2、实施计划 1.3）。
+/// 面板尺寸以 logical px 给出，按徽标所在显示器的缩放换算；比工作区还大时收缩到工作区大小。
+///
+/// 返回 `None` 表示没有可用的显示器。
+pub fn expand_bounds(
+    collapsed: Rect,
+    panel_logical: (f64, f64),
+    monitors: &[MonitorInfo],
+) -> Option<ExpandedLayout> {
+    let monitor = pick_monitor(monitors, collapsed.center())?;
+    let work = monitor.work_area;
+    let width = to_physical(panel_logical.0, monitor.scale_factor).min(work.width);
+    let height = to_physical(panel_logical.1, monitor.scale_factor).min(work.height);
+
+    let center = collapsed.center();
+    let work_center_x = i64::from(work.x) + i64::from(work.width) / 2;
+    let work_center_y = i64::from(work.y) + i64::from(work.height) / 2;
+    let horizontal = if i64::from(center.x) >= work_center_x {
+        HorizontalAnchor::Right
+    } else {
+        HorizontalAnchor::Left
+    };
+    let vertical = if i64::from(center.y) >= work_center_y {
+        VerticalAnchor::Bottom
+    } else {
+        VerticalAnchor::Top
+    };
+
+    let collapsed_right = i64::from(collapsed.x) + i64::from(collapsed.width);
+    let collapsed_bottom = i64::from(collapsed.y) + i64::from(collapsed.height);
+    let x = match horizontal {
+        HorizontalAnchor::Left => i64::from(collapsed.x),
+        HorizontalAnchor::Right => collapsed_right - i64::from(width),
+    };
+    let y = match vertical {
+        VerticalAnchor::Top => i64::from(collapsed.y),
+        VerticalAnchor::Bottom => collapsed_bottom - i64::from(height),
+    };
+    // 最后统一夹到工作区内：徽标本身贴着或略超出边缘时，面板也不会跑出屏幕。
+    let max_x = i64::from(work.x) + i64::from(work.width) - i64::from(width);
+    let max_y = i64::from(work.y) + i64::from(work.height) - i64::from(height);
+    let x = x.clamp(i64::from(work.x), max_x.max(i64::from(work.x)));
+    let y = y.clamp(i64::from(work.y), max_y.max(i64::from(work.y)));
+
+    Some(ExpandedLayout {
+        bounds: Rect {
+            x: clamp_to_i32(x),
+            y: clamp_to_i32(y),
+            width,
+            height,
+        },
+        horizontal,
+        vertical,
     })
 }
 
@@ -523,5 +624,137 @@ mod tests {
             serde_json::from_value::<Placement>(json).unwrap(),
             placement
         );
+    }
+
+    /// 判断矩形是否完整位于显示器工作区内。
+    fn inside(rect: Rect, monitor: &MonitorInfo) -> bool {
+        let work = monitor.work_area;
+        i64::from(rect.x) >= i64::from(work.x)
+            && i64::from(rect.y) >= i64::from(work.y)
+            && i64::from(rect.x) + i64::from(rect.width)
+                <= i64::from(work.x) + i64::from(work.width)
+            && i64::from(rect.y) + i64::from(rect.height)
+                <= i64::from(work.y) + i64::from(work.height)
+    }
+
+    /// 以 logical 300x380 展开。
+    fn expand(collapsed: Rect, monitors: &[MonitorInfo]) -> ExpandedLayout {
+        expand_bounds(collapsed, (300.0, 380.0), monitors).unwrap()
+    }
+
+    #[test]
+    fn panel_expands_inward_from_every_edge_and_corner() {
+        let monitor = primary();
+        let monitors = [monitor.clone()];
+        // (徽标左上角, 期望的水平锚点, 期望的垂直锚点)
+        let cases = [
+            ((0, 500), HorizontalAnchor::Left, VerticalAnchor::Bottom),
+            (
+                (1920 - 88, 200),
+                HorizontalAnchor::Right,
+                VerticalAnchor::Top,
+            ),
+            ((900, 0), HorizontalAnchor::Left, VerticalAnchor::Top),
+            (
+                (1200, 1000),
+                HorizontalAnchor::Right,
+                VerticalAnchor::Bottom,
+            ),
+            // 四个角落
+            ((0, 0), HorizontalAnchor::Left, VerticalAnchor::Top),
+            ((1920 - 88, 0), HorizontalAnchor::Right, VerticalAnchor::Top),
+            ((0, 1000), HorizontalAnchor::Left, VerticalAnchor::Bottom),
+            (
+                (1920 - 88, 1000),
+                HorizontalAnchor::Right,
+                VerticalAnchor::Bottom,
+            ),
+        ];
+        for ((x, y), horizontal, vertical) in cases {
+            let layout = expand(badge(x, y), &monitors);
+            assert_eq!(
+                (layout.horizontal, layout.vertical),
+                (horizontal, vertical),
+                "{x},{y}"
+            );
+            assert!(
+                inside(layout.bounds, &monitor),
+                "展开后超出屏幕：{x},{y} -> {:?}",
+                layout.bounds
+            );
+            assert_eq!((layout.bounds.width, layout.bounds.height), (300, 380));
+        }
+    }
+
+    #[test]
+    fn the_badge_corner_stays_anchored_so_the_pointer_remains_over_the_panel() {
+        let monitors = [primary()];
+        // 右上角：面板右缘与徽标右缘对齐、上缘与徽标上缘对齐。
+        let badge_rect = badge(1920 - 88, 40);
+        let layout = expand(badge_rect, &monitors);
+        assert_eq!(layout.bounds.x + 300, 1920);
+        assert_eq!(layout.bounds.y, 40);
+        // 徽标区域被面板完整覆盖。
+        assert!(layout.bounds.x <= badge_rect.x && layout.bounds.y <= badge_rect.y);
+    }
+
+    #[test]
+    fn panel_size_follows_the_monitor_scale() {
+        let hi_dpi = monitor("HIDPI", 0, 0, 2880, 1560, 1.5, true);
+        let layout = expand(
+            Rect {
+                x: 0,
+                y: 0,
+                width: 132,
+                height: 60,
+            },
+            &[hi_dpi],
+        );
+        assert_eq!((layout.bounds.width, layout.bounds.height), (450, 570));
+    }
+
+    #[test]
+    fn panel_is_shrunk_to_fit_a_tiny_work_area() {
+        let tiny = monitor("TINY", 0, 0, 200, 300, 1.0, true);
+        let layout = expand(
+            Rect {
+                x: 100,
+                y: 200,
+                width: 88,
+                height: 40,
+            },
+            std::slice::from_ref(&tiny),
+        );
+        assert_eq!((layout.bounds.width, layout.bounds.height), (200, 300));
+        assert!(inside(layout.bounds, &tiny));
+    }
+
+    #[test]
+    fn expansion_on_a_secondary_monitor_stays_on_it() {
+        let right = monitor("RIGHT", 1920, 0, 1920, 1040, 1.0, false);
+        let monitors = [primary(), right.clone()];
+        let layout = expand(badge(1920 + 1920 - 88, 300), &monitors);
+        assert!(inside(layout.bounds, &right));
+        assert!(layout.bounds.x >= 1920);
+    }
+
+    #[test]
+    fn rect_contains_uses_half_open_pixel_semantics() {
+        let rect = Rect {
+            x: 10,
+            y: 20,
+            width: 5,
+            height: 5,
+        };
+        assert!(rect.contains(Point { x: 10, y: 20 }));
+        assert!(rect.contains(Point { x: 14, y: 24 }));
+        assert!(!rect.contains(Point { x: 15, y: 24 }));
+        assert!(!rect.contains(Point { x: 14, y: 25 }));
+        assert!(!rect.contains(Point { x: 9, y: 20 }));
+    }
+
+    #[test]
+    fn no_monitors_means_no_expansion() {
+        assert!(expand_bounds(badge(0, 0), (300.0, 380.0), &[]).is_none());
     }
 }

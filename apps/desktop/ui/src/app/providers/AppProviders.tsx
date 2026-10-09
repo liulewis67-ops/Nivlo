@@ -4,25 +4,10 @@ import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 import { ToastViewport, TooltipProvider } from "@/components";
 import { initI18n } from "@/i18n";
-import { errorMessage } from "@/lib/error-message";
-import { toAppError } from "@/lib/errors";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
+import { reportError } from "@/lib/report-error";
 import { applyTheme, useThemeStore } from "@/stores/theme-store";
-import { useToastStore } from "@/stores/toast-store";
-
-/**
- * 把查询 / 变更失败统一显示为错误 Toast。
- *
- * 文案来自 i18n（以错误码为 key），后端 `message` 只进日志（前端规范 §6.3）。
- *
- * @param error 抛出的任意错误。
- */
-function reportError(error: unknown): void {
-  const appError = toAppError(error);
-  console.error(`[${appError.code}] ${appError.message}`);
-  useToastStore.getState().push("error", errorMessage(appError));
-}
 
 /**
  * 创建应用使用的 `QueryClient`。

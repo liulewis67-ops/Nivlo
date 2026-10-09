@@ -21,8 +21,10 @@ use std::error::Error;
 use std::sync::Arc;
 
 use tauri::{Manager, RunEvent, Wry};
+use tauri_specta::Event;
 
 use crate::app::AppState;
+use crate::events::FloatingPointerLeftEvent;
 use crate::events::forwarder::spawn_forwarder;
 use crate::events::mapper::DefaultUiEventMapper;
 use crate::lifecycle::{recovery, startup};
@@ -52,10 +54,13 @@ macro_rules! bindings_builder {
                 $crate::commands::window::open_main::<$runtime>,
                 $crate::commands::window::quit_app::<$runtime>,
                 $crate::commands::window::start_floating_drag::<$runtime>,
+                $crate::commands::window::expand_floating,
+                $crate::commands::window::collapse_floating,
             ])
             .events($crate::tauri_specta::collect_events![
                 $crate::events::ItemCreatedEvent,
-                $crate::events::ItemUpdatedEvent
+                $crate::events::ItemUpdatedEvent,
+                $crate::events::FloatingPointerLeftEvent
             ])
     };
 }
@@ -110,10 +115,24 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 app.state::<AppState>().services.settings.clone(),
                 tauri::async_runtime::handle().inner().clone(),
                 app.state::<AppState>().runtime.shutdown_token(),
+                {
+                    let handle = app.handle().clone();
+                    Arc::new(move || {
+                        // 只通知悬浮窗自己；发送失败（窗口正在销毁）可以忽略，下次展开会重新兜底。
+                        let event = FloatingPointerLeftEvent {};
+                        if let Err(error) = event.emit_to(&handle, windows::FLOATING_WINDOW_LABEL) {
+                            tracing::warn!(
+                                event = "floating_pointer_left_emit_failed",
+                                %error,
+                                "发送指针离开事件失败"
+                            );
+                        }
+                    })
+                },
             );
             // 先还原位置再开始观察移动事件，避免把"还原"本身当成用户拖动。
             tauri::async_runtime::block_on(controller.restore());
-            app.state::<AppState>().runtime.set_move_observer(controller);
+            app.state::<AppState>().runtime.set_floating(controller);
             tracing::info!(event = "startup_completed", "启动完成");
             Ok(())
         })

@@ -1,4 +1,4 @@
-import { FloatingBadge } from "@/features/floating";
+import { FloatingRoot } from "@/features/floating";
 
 /**
  * 悬浮窗的根组件。
@@ -9,5 +9,5 @@ import { FloatingBadge } from "@/features/floating";
  * @returns 悬浮窗内容。
  */
 export function FloatingApp() {
-  return <FloatingBadge />;
+  return <FloatingRoot />;
 }

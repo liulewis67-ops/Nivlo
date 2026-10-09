@@ -2,6 +2,8 @@
 
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
+use std::sync::atomic::{AtomicU64, Ordering};
+
 use chrono::{TimeZone, Utc};
 use nivlo_application::testing::FakeUnitOfWork;
 use nivlo_common::clock::FakeClock;
@@ -19,6 +21,7 @@ struct FakeState {
     bounds: Rect,
     monitors: Vec<MonitorInfo>,
     moves: Vec<Point>,
+    cursor: Point,
     always_on_top: Option<bool>,
     focusable: Option<bool>,
 }
@@ -36,6 +39,7 @@ impl FakePort {
                 },
                 monitors,
                 moves: Vec::new(),
+                cursor: Point { x: 0, y: 0 },
                 always_on_top: None,
                 focusable: None,
             }),
@@ -47,6 +51,11 @@ impl FakePort {
         let mut state = lock(&self.state);
         state.bounds.x = x;
         state.bounds.y = y;
+    }
+
+    /// 模拟指针移动到 `(x, y)`。
+    fn set_cursor(&self, x: i32, y: i32) {
+        lock(&self.state).cursor = Point { x, y };
     }
 
     /// 窗口当前位置。
@@ -69,9 +78,13 @@ impl FloatingWindowPort for FakePort {
         Ok(lock(&self.state).bounds)
     }
     fn collapse(&self) -> Result<(), PlatformError> {
+        let mut state = lock(&self.state);
+        state.bounds.width = 88;
+        state.bounds.height = 40;
         Ok(())
     }
-    fn expand(&self, _bounds: Rect) -> Result<(), PlatformError> {
+    fn expand(&self, bounds: Rect) -> Result<(), PlatformError> {
+        lock(&self.state).bounds = bounds;
         Ok(())
     }
     fn set_focusable(&self, enabled: bool) -> Result<(), PlatformError> {
@@ -88,6 +101,9 @@ impl FloatingWindowPort for FakePort {
         state.bounds.y = position.y;
         state.moves.push(position);
         Ok(())
+    }
+    fn cursor_position(&self) -> Result<Point, PlatformError> {
+        Ok(lock(&self.state).cursor)
     }
     fn current_monitor(&self) -> Result<MonitorInfo, PlatformError> {
         lock(&self.state)
@@ -125,6 +141,8 @@ fn single() -> Vec<MonitorInfo> {
 struct Fixture {
     controller: Arc<FloatingController<FakePort>>,
     port: Arc<FakePort>,
+    /// 看门狗触发 `on_pointer_outside` 的次数。
+    pointer_outside: Arc<AtomicU64>,
     uow: FakeUnitOfWork,
     shutdown: CancellationToken,
 }
@@ -139,11 +157,21 @@ async fn fixture(monitors: Vec<MonitorInfo>, start: (i32, i32), saved: &[(&str, 
     }
     let port = FakePort::new(monitors, start.0, start.1);
     let shutdown = CancellationToken::new();
-    let controller =
-        FloatingController::new(port.clone(), settings, Handle::current(), shutdown.clone());
+    let pointer_outside = Arc::new(AtomicU64::new(0));
+    let counter = pointer_outside.clone();
+    let controller = FloatingController::new(
+        port.clone(),
+        settings,
+        Handle::current(),
+        shutdown.clone(),
+        Arc::new(move || {
+            counter.fetch_add(1, Ordering::SeqCst);
+        }),
+    );
     Fixture {
         controller,
         port,
+        pointer_outside,
         uow,
         shutdown,
     }
@@ -309,4 +337,196 @@ async fn unchanged_placement_is_not_written_twice() {
     f.uow.fail_next_commit();
     f.controller.settle().await;
     assert_eq!(f.uow.committed_setting(keys::FLOATING_PLACEMENT), first);
+}
+
+/// 面板尺寸（logical px）。
+const PANEL: (f64, f64) = (300.0, 380.0);
+
+#[tokio::test(start_paused = true)]
+async fn expand_places_the_panel_inside_the_work_area_and_reports_the_direction() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1920 - 88, 20);
+
+    let layout = f.controller.expand(PANEL).unwrap();
+
+    let bounds = f.port.bounds().unwrap();
+    assert_eq!((bounds.width, bounds.height), (300, 380));
+    assert!(bounds.x >= 0 && bounds.x + 300 <= 1920 && bounds.y >= 0 && bounds.y + 380 <= 1040);
+    // 徽标在右上角：面板向左、向下展开，右缘与徽标右缘对齐。
+    assert_eq!(
+        layout.horizontal,
+        nivlo_platform::placement::HorizontalAnchor::Right
+    );
+    assert_eq!(
+        layout.vertical,
+        nivlo_platform::placement::VerticalAnchor::Top
+    );
+    assert_eq!(bounds.x + 300, 1920);
+}
+
+#[tokio::test(start_paused = true)]
+async fn collapse_restores_the_original_badge_position() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1920 - 88, 500);
+    let before = f.port.bounds().unwrap();
+
+    f.controller.expand(PANEL).unwrap();
+    f.controller.collapse().unwrap();
+
+    assert_eq!(f.port.bounds().unwrap(), before);
+}
+
+#[tokio::test(start_paused = true)]
+async fn repeated_expansion_keeps_returning_to_the_same_badge() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1920 - 88, 500);
+    let before = f.port.bounds().unwrap();
+
+    f.controller.expand(PANEL).unwrap();
+    // 进入 Quick Create 后面板变高，再次展开基于同一个收起态外框。
+    f.controller.expand((300.0, 460.0)).unwrap();
+    assert_eq!(f.port.bounds().unwrap().height, 460);
+    f.controller.collapse().unwrap();
+
+    assert_eq!(f.port.bounds().unwrap(), before);
+}
+
+#[tokio::test(start_paused = true)]
+async fn moves_while_expanded_are_not_treated_as_drags() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1920 - 88, 500);
+    f.controller.expand(PANEL).unwrap();
+
+    // 展开过程中系统回送的位置变化（包括不匹配目标位置的中间事件）不能触发吸附与保存。
+    f.controller.on_moved(Point { x: 1500, y: 500 });
+    advance(Duration::from_millis(500)).await;
+
+    assert!(saved_placement(&f.uow).is_none());
+    assert_eq!(f.port.bounds().unwrap().width, 300);
+}
+
+#[tokio::test(start_paused = true)]
+async fn dragging_works_again_after_collapsing() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.expand(PANEL).unwrap();
+    f.controller.collapse().unwrap();
+
+    f.port.drag_to(10, 300);
+    f.controller.on_moved(Point { x: 10, y: 300 });
+    advance(Duration::from_millis(300)).await;
+
+    assert_eq!(f.port.position(), Point { x: 0, y: 300 });
+    assert_eq!(saved_placement(&f.uow).unwrap().edge, Some(Edge::Left));
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_pending_drag_settle_is_cancelled_by_expanding() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(10, 300);
+    f.controller.on_moved(Point { x: 10, y: 300 });
+
+    f.controller.expand(PANEL).unwrap();
+    advance(Duration::from_millis(500)).await;
+
+    assert!(
+        saved_placement(&f.uow).is_none(),
+        "展开之后不应再执行之前的拖动结算"
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn collapse_without_expanding_is_a_no_op_and_failed_expand_leaves_it_collapsed() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    let before = f.port.bounds().unwrap();
+    f.controller.collapse().unwrap();
+    assert_eq!(f.port.bounds().unwrap(), before);
+
+    // 没有显示器时展开失败，控制器不能卡在"已展开"状态。
+    lock(&f.port.state).monitors.clear();
+    assert!(f.controller.expand(PANEL).is_err());
+    lock(&f.port.state).monitors = single();
+    f.port.drag_to(10, 300);
+    f.controller.on_moved(Point { x: 10, y: 300 });
+    advance(Duration::from_millis(300)).await;
+    assert!(saved_placement(&f.uow).is_some());
+}
+
+#[tokio::test(start_paused = true)]
+async fn watchdog_reports_the_pointer_leaving_once_and_only_while_expanded() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1920 - 88, 500);
+    f.controller.expand(PANEL).unwrap();
+    let panel = f.port.bounds().unwrap();
+
+    // 指针在面板内：不报告。
+    f.port.set_cursor(panel.x + 10, panel.y + 10);
+    advance(Duration::from_millis(600)).await;
+    assert_eq!(f.pointer_outside.load(Ordering::SeqCst), 0);
+
+    // 指针被甩到窗口外：只报告一次，不会每个周期都报告。
+    f.port.set_cursor(100, 100);
+    advance(Duration::from_millis(1000)).await;
+    assert_eq!(f.pointer_outside.load(Ordering::SeqCst), 1);
+
+    // 回到窗口内再离开：再次报告。
+    f.port.set_cursor(panel.x + 10, panel.y + 10);
+    advance(Duration::from_millis(300)).await;
+    f.port.set_cursor(100, 100);
+    advance(Duration::from_millis(300)).await;
+    assert_eq!(f.pointer_outside.load(Ordering::SeqCst), 2);
+}
+
+#[tokio::test(start_paused = true)]
+async fn watchdog_stops_after_collapsing() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.expand(PANEL).unwrap();
+    f.controller.collapse().unwrap();
+
+    f.port.set_cursor(100, 100);
+    advance(Duration::from_millis(2000)).await;
+
+    assert_eq!(
+        f.pointer_outside.load(Ordering::SeqCst),
+        0,
+        "收起后不应再有任何检查"
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn re_expanding_does_not_start_a_second_watchdog() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.expand(PANEL).unwrap();
+    f.controller.expand((300.0, 460.0)).unwrap();
+    f.port.set_cursor(100, 100);
+
+    advance(Duration::from_millis(1000)).await;
+
+    assert_eq!(
+        f.pointer_outside.load(Ordering::SeqCst),
+        1,
+        "同一时刻只能有一个看门狗"
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn watchdog_exits_on_shutdown() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.expand(PANEL).unwrap();
+    f.shutdown.cancel();
+    f.port.set_cursor(100, 100);
+
+    advance(Duration::from_millis(1000)).await;
+
+    assert_eq!(f.pointer_outside.load(Ordering::SeqCst), 0);
 }

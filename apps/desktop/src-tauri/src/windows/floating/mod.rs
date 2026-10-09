@@ -14,8 +14,8 @@ use nivlo_application::settings::{SettingsService, keys};
 use nivlo_platform::error::PlatformError;
 use nivlo_platform::floating_window::FloatingWindowPort;
 use nivlo_platform::placement::{
-    COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, Placement, Point, default_placement,
-    placement_for_bounds, resolve_position,
+    COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, ExpandedLayout, Placement, Point,
+    Rect, default_placement, expand_bounds, placement_for_bounds, resolve_position,
 };
 use tokio::runtime::Handle;
 use tokio_util::sync::CancellationToken;
@@ -25,10 +25,33 @@ use tokio_util::sync::CancellationToken;
 /// 太短会在用户短暂停顿时提前吸附，太长则松手后窗口"迟钝"；150ms 是手感与稳定性的折中。
 const SETTLE_DELAY: Duration = Duration::from_millis(150);
 
-/// 悬浮窗被移动时的观察者，由窗口事件回调调用（该回调在主线程上，不能阻塞）。
-pub trait MoveObserver: Send + Sync {
-    /// 窗口被移动到 `position`（物理像素）。
+/// 面板展开期间检查"指针是否还在窗口内"的间隔。
+///
+/// WebView 在指针被快速甩出窗口时可能不会投递 `pointerleave`（已在 Windows 11 + WebView2 上
+/// 复现），面板会一直停在展开状态。这个看门狗**只在面板展开期间运行**（通常是几秒），
+/// 收起后立即停止，空闲时没有任何计时器，因此不违反"禁止轮询"的原则（后端规范 §7）。
+const WATCHDOG_INTERVAL: Duration = Duration::from_millis(150);
+
+/// 悬浮窗的行为句柄：窗口事件回调与 IPC Command 通过它与位置控制器交互。
+///
+/// 做成 trait 对象是为了让 `AppState` 不必携带控制器的泛型参数（`FloatingController<P>`）。
+pub trait FloatingHandle: Send + Sync {
+    /// 窗口被移动到 `position`（物理像素）。由窗口事件回调调用——该回调在主线程上，不能阻塞。
     fn on_moved(&self, position: Point);
+
+    /// 把窗口展开为 `panel_logical`（logical px）大小的 Today 面板，并返回展开后的布局。
+    ///
+    /// # Errors
+    ///
+    /// 没有可用显示器或窗口调用失败时返回 [`PlatformError`]。
+    fn expand(&self, panel_logical: (f64, f64)) -> Result<ExpandedLayout, PlatformError>;
+
+    /// 收起回徽标，位置与展开前一致。未展开时是空操作。
+    ///
+    /// # Errors
+    ///
+    /// 窗口调用失败时返回 [`PlatformError`]。
+    fn collapse(&self) -> Result<(), PlatformError>;
 }
 
 /// 悬浮窗位置控制器。
@@ -39,12 +62,21 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     port: Arc<P>,
     /// 设置服务，用于保存 / 读取位置与置顶偏好。
     settings: SettingsService,
+    /// 看门狗发现指针已离开窗口时调用（宿主据此通知前端补发 `pointerLeave`）。
+    on_pointer_outside: Arc<dyn Fn() + Send + Sync>,
     /// 用于派生后台任务的 Tokio 句柄（窗口事件回调不在 Tokio 运行时内）。
     runtime: Handle,
     /// 退出信号，取消尚未执行的吸附任务。
     shutdown: CancellationToken,
     /// 防抖代数：每次 `Moved` 加一，只有最新一代的定时任务才会执行吸附。
     generation: AtomicU64,
+    /// 看门狗代数：每次展开 / 收起加一，旧一代的看门狗任务发现代数变化后退出。
+    watchdog: AtomicU64,
+    /// 展开期间保存的收起态外框；`Some` 表示当前处于展开状态。
+    ///
+    /// 展开 / 收起会让窗口位置与尺寸变化并产生 `Moved` 事件，这些不是用户拖动，
+    /// 因此展开期间忽略移动事件，也不做吸附。
+    collapsed: Mutex<Option<Rect>>,
     /// 控制器自己发起的移动的目标位置，用来忽略自己触发的 `Moved` 事件。
     expected: Mutex<Option<Point>>,
     /// 最近一次保存的位置 JSON，内容没变时不重复写库。
@@ -63,14 +95,18 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
         settings: SettingsService,
         runtime: Handle,
         shutdown: CancellationToken,
+        on_pointer_outside: Arc<dyn Fn() + Send + Sync>,
     ) -> Arc<Self> {
         Arc::new_cyclic(|me| Self {
             me: me.clone(),
             port,
             settings,
+            on_pointer_outside,
             runtime,
             shutdown,
             generation: AtomicU64::new(0),
+            watchdog: AtomicU64::new(0),
+            collapsed: Mutex::new(None),
             expected: Mutex::new(None),
             last_saved: Mutex::new(None),
         })
@@ -155,6 +191,10 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
 
     /// [`FloatingController::settle`] 的实际逻辑。
     async fn try_settle(&self) -> Result<(), PlatformError> {
+        if lock(&self.collapsed).is_some() {
+            // 展开期间窗口的位置由展开 / 收起决定，不是用户拖动，不能据此吸附或保存。
+            return Ok(());
+        }
         let bounds = self.port.bounds()?;
         let monitors = self.port.monitors()?;
         let Some(placement) = placement_for_bounds(bounds, &monitors) else {
@@ -163,7 +203,6 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
         let size = (COLLAPSED_WIDTH_LOGICAL_PX, COLLAPSED_HEIGHT_LOGICAL_PX);
         // 用户只能拖动收起态的徽标（展开面板时窗口位置由 expand / collapse 决定，不走这里），
         // 因此按收起态的 logical 尺寸还原位置即可。
-        // TODO(P1.3): 展开 / 收起期间的程序化移动需要暂停吸附，避免与展开方向计算互相干扰。
         if let Some((target, _)) = resolve_position(&placement, size, &monitors)
             && (target.x != bounds.x || target.y != bounds.y)
         {
@@ -190,9 +229,103 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
     }
 }
 
-impl<P: FloatingWindowPort + 'static> MoveObserver for FloatingController<P> {
+impl<P: FloatingWindowPort + 'static> FloatingController<P> {
+    /// 启动（或重启）展开期间的看门狗：指针从窗口内移到窗口外时，边沿触发一次 `on_pointer_outside`。
+    ///
+    /// 重复展开（如面板变高）会让旧看门狗因代数变化而退出，同一时刻只有一个在运行。
+    fn start_watchdog(&self) {
+        let Some(this) = self.me.upgrade() else {
+            return;
+        };
+        let generation = this.watchdog.fetch_add(1, Ordering::SeqCst) + 1;
+        let runtime = this.runtime.clone();
+        runtime.spawn(async move {
+            let mut was_outside = false;
+            loop {
+                tokio::select! {
+                    () = this.shutdown.cancelled() => return,
+                    () = tokio::time::sleep(WATCHDOG_INTERVAL) => {}
+                }
+                if this.watchdog.load(Ordering::SeqCst) != generation {
+                    return;
+                }
+                let (Ok(cursor), Ok(bounds)) = (this.port.cursor_position(), this.port.bounds())
+                else {
+                    // 读不到位置时放弃兜底（DOM 事件仍然有效），不要反复失败刷日志。
+                    return;
+                };
+                let outside = !bounds.contains(cursor);
+                if outside && !was_outside {
+                    (this.on_pointer_outside)();
+                }
+                was_outside = outside;
+            }
+        });
+    }
+
+    /// 把窗口调整为 `rect`（位置与尺寸），并记住目标位置以便忽略由此产生的 `Moved` 事件。
+    fn move_to_rect(&self, rect: Rect) -> Result<(), PlatformError> {
+        *lock(&self.expected) = Some(Point {
+            x: rect.x,
+            y: rect.y,
+        });
+        self.port.expand(rect).inspect_err(|_| {
+            *lock(&self.expected) = None;
+        })
+    }
+}
+
+impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
+    /// 展开为面板：面板朝屏幕内侧展开，完整位于当前显示器工作区内。
+    ///
+    /// 重复调用（例如进入 Quick Create 后面板变高）会基于**同一个**收起态外框重新计算，
+    /// 因此多次展开 / 调整大小后再收起，位置仍回到最初的徽标处。
+    fn expand(&self, panel_logical: (f64, f64)) -> Result<ExpandedLayout, PlatformError> {
+        let collapsed = {
+            let mut slot = lock(&self.collapsed);
+            match *slot {
+                Some(rect) => rect,
+                None => {
+                    let rect = self.port.bounds()?;
+                    *slot = Some(rect);
+                    rect
+                }
+            }
+        };
+        let layout = self
+            .port
+            .monitors()
+            .and_then(|monitors| {
+                expand_bounds(collapsed, panel_logical, &monitors)
+                    .ok_or_else(|| PlatformError::Failed("没有可用的显示器".to_owned()))
+            })
+            .inspect_err(|_| *lock(&self.collapsed) = None)?;
+        // 取消尚未执行的吸附：展开之前的拖动结算不应在面板展开后才触发。
+        self.generation.fetch_add(1, Ordering::SeqCst);
+        self.move_to_rect(layout.bounds).inspect_err(|_| {
+            // 展开失败时回到收起态，避免控制器误以为窗口已展开而一直忽略拖动。
+            *lock(&self.collapsed) = None;
+        })?;
+        self.start_watchdog();
+        Ok(layout)
+    }
+
+    /// 收起：恢复展开前保存的徽标外框。
+    fn collapse(&self) -> Result<(), PlatformError> {
+        let Some(collapsed) = lock(&self.collapsed).take() else {
+            return Ok(());
+        };
+        self.watchdog.fetch_add(1, Ordering::SeqCst);
+        // 先清掉 collapsed 再移动：移动产生的事件会被当作"自己的移动"（expected）而忽略，
+        // 不会误触发一次吸附。
+        self.move_to_rect(collapsed)
+    }
+
     /// 记录一次移动，并（重新）启动防抖定时器。
     fn on_moved(&self, position: Point) {
+        if lock(&self.collapsed).is_some() {
+            return;
+        }
         {
             let mut expected = lock(&self.expected);
             if *expected == Some(position) {

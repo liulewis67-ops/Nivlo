@@ -85,3 +85,19 @@ html[data-window="floating"] body {
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* 悬浮面板展开动画：只用 transform 与 opacity，时长来自 Token，尊重"减少动态效果"。 */
+@keyframes nv-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.nv-panel-in {
+  animation: nv-panel-in var(--nv-duration-normal) var(--nv-ease-standard);
+}

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expand-floating"
+description = "Enables the expand_floating command without any pre-configured scope."
+commands.allow = ["expand_floating"]
+
+[[permission]]
+identifier = "deny-expand-floating"
+description = "Denies the expand_floating command without any pre-configured scope."
+commands.deny = ["expand_floating"]

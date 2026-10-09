@@ -1,12 +1,19 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { commands, events } from "@/bindings";
-import type { CreateItemRequest, IpcError, ItemDto, ListItemsRequest } from "@/bindings";
+import type {
+  CreateItemRequest,
+  ExpandedLayoutDto,
+  IpcError,
+  ItemDto,
+  ListItemsRequest,
+} from "@/bindings";
 import { toAppError } from "./errors";
 
 export type {
   ContentFormatDto,
   CreateItemRequest,
   DatePointDto,
+  ExpandedLayoutDto,
   ItemDto,
   ItemStatusDto,
   ItemTypeDto,
@@ -36,6 +43,26 @@ export interface IpcClient {
    * 窗口位置始终由 Rust 控制，前端不直接移动窗口。
    */
   startFloatingDrag(): Promise<void>;
+  /**
+   * 把悬浮窗展开为 Today 面板（窗口几何命令，不查询任何业务数据）。
+   *
+   * @param width 面板宽度（logical px）。
+   * @param height 面板高度（logical px）。
+   * @returns 展开方向，用于设置面板动画的 transform-origin。
+   */
+  expandFloating(width: number, height: number): Promise<ExpandedLayoutDto>;
+  /** 把悬浮窗收起回徽标，位置与展开前一致。 */
+  collapseFloating(): Promise<void>;
+  /**
+   * 订阅"悬浮窗指针已离开"事件。
+   *
+   * WebView 在指针被快速甩出窗口时可能不投递 `pointerleave`，后端看门狗会补发这个事件，
+   * 前端据此把"指针离开"送进状态机，避免面板一直停在展开状态。
+   *
+   * @param onLeft 事件到达时的回调。
+   * @returns 取消订阅的函数，组件卸载时必须调用。
+   */
+  subscribeFloatingPointerLeft(onLeft: () => void): () => void;
   /**
    * 订阅"Item 发生了变化"的后端事件（创建或更新）。
    *
@@ -109,6 +136,13 @@ const tauriIpc: IpcClient = {
   startFloatingDrag: async () => {
     await call("start_floating_drag", commands.startFloatingDrag());
   },
+  expandFloating: (width, height) =>
+    call("expand_floating", commands.expandFloating({ width, height })),
+  collapseFloating: async () => {
+    await call("collapse_floating", commands.collapseFloating());
+  },
+  subscribeFloatingPointerLeft: (onLeft) =>
+    listenAll([() => events.floatingPointerLeft.listen(() => onLeft())]),
   subscribeItemChanges: (onChange) =>
     listenAll([
       () => events.itemCreated.listen(() => onChange()),
@@ -145,5 +179,8 @@ export const ipc: IpcClient = {
   openMain: () => current.openMain(),
   quitApp: () => current.quitApp(),
   startFloatingDrag: () => current.startFloatingDrag(),
+  expandFloating: (width, height) => current.expandFloating(width, height),
+  collapseFloating: () => current.collapseFloating(),
+  subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),
   subscribeItemChanges: (onChange) => current.subscribeItemChanges(onChange),
 };

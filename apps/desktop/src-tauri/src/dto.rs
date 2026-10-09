@@ -336,6 +336,90 @@ impl TryFrom<CreateItemRequest> for NewItem {
     }
 }
 
+/// 展开悬浮窗的请求：面板期望的 logical 尺寸。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ExpandFloatingRequest {
+    /// 面板宽度（logical px）。
+    pub width: f64,
+    /// 面板高度（logical px）。
+    pub height: f64,
+}
+
+/// 悬浮窗面板允许请求的最大边长（logical px），防止前端的错误输入把窗口撑到离谱的大小。
+const MAX_PANEL_LOGICAL_PX: f64 = 2000.0;
+
+/// 悬浮窗面板允许请求的最小边长（logical px）。
+const MIN_PANEL_LOGICAL_PX: f64 = 40.0;
+
+impl ExpandFloatingRequest {
+    /// 校验尺寸并返回 `(宽, 高)`。
+    ///
+    /// # Errors
+    ///
+    /// 尺寸不是有限数，或超出允许范围时返回 `INVALID_INPUT`。
+    pub fn validated(self) -> Result<(f64, f64), AppError> {
+        let in_range = |value: f64| {
+            value.is_finite() && (MIN_PANEL_LOGICAL_PX..=MAX_PANEL_LOGICAL_PX).contains(&value)
+        };
+        if in_range(self.width) && in_range(self.height) {
+            Ok((self.width, self.height))
+        } else {
+            Err(invalid(format!(
+                "无效的面板尺寸：{} x {}",
+                self.width, self.height
+            )))
+        }
+    }
+}
+
+/// 展开后面板相对徽标的水平方向。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "snake_case")]
+pub enum HorizontalAnchorDto {
+    /// 徽标在面板左侧，面板向右展开。
+    Left,
+    /// 徽标在面板右侧，面板向左展开。
+    Right,
+}
+
+/// 展开后面板相对徽标的垂直方向。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "snake_case")]
+pub enum VerticalAnchorDto {
+    /// 徽标在面板上侧，面板向下展开。
+    Top,
+    /// 徽标在面板下侧，面板向上展开。
+    Bottom,
+}
+
+/// 展开后的布局：前端据此设置动画的 transform-origin，让面板从徽标所在的角"长出来"。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ExpandedLayoutDto {
+    /// 水平锚点。
+    pub horizontal: HorizontalAnchorDto,
+    /// 垂直锚点。
+    pub vertical: VerticalAnchorDto,
+}
+
+impl From<nivlo_platform::placement::ExpandedLayout> for ExpandedLayoutDto {
+    /// Platform → DTO。
+    fn from(layout: nivlo_platform::placement::ExpandedLayout) -> Self {
+        use nivlo_platform::placement::{HorizontalAnchor, VerticalAnchor};
+        Self {
+            horizontal: match layout.horizontal {
+                HorizontalAnchor::Left => HorizontalAnchorDto::Left,
+                HorizontalAnchor::Right => HorizontalAnchorDto::Right,
+            },
+            vertical: match layout.vertical {
+                VerticalAnchor::Top => VerticalAnchorDto::Top,
+                VerticalAnchor::Bottom => VerticalAnchorDto::Bottom,
+            },
+        }
+    }
+}
+
 /// 列出 Item 的请求。
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]

@@ -56,10 +56,31 @@ export const commands = {
 	 *  系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
 	 */
 	startFloatingDrag: () => typedError<null, IpcError>(__TAURI_INVOKE("start_floating_drag")),
+	/**
+	 *  把悬浮窗展开为 Today 面板（Hover 展开时调用）。
+	 * 
+	 *  这是窗口几何命令，**不查询任何业务数据**：Hover 期间唯一允许发出的 IPC 就是
+	 *  展开 / 收起（前端规范 §9）。面板朝屏幕内侧展开，完整位于当前显示器工作区内；
+	 *  返回的布局告诉前端面板是从徽标所在的哪个角长出来的。
+	 * 
+	 *  # Errors
+	 * 
+	 *  尺寸不合法返回 `INVALID_INPUT`；窗口不可用返回 `WINDOW_UNAVAILABLE`。
+	 */
+	expandFloating: (request: ExpandFloatingRequest) => typedError<ExpandedLayoutDto, IpcError>(__TAURI_INVOKE("expand_floating", { request })),
+	/**
+	 *  把悬浮窗收起回徽标，位置与展开前一致。未展开时是空操作。
+	 * 
+	 *  # Errors
+	 * 
+	 *  窗口不可用时返回 `WINDOW_UNAVAILABLE`。
+	 */
+	collapseFloating: () => typedError<null, IpcError>(__TAURI_INVOKE("collapse_floating")),
 };
 
 /** Events */
 export const events = {
+	floatingPointerLeft: makeEvent<FloatingPointerLeftEvent>("floating_pointer_left"),
 	itemCreated: makeEvent<ItemCreatedEvent>("item_created"),
 	itemUpdated: makeEvent<ItemUpdatedEvent>("item_updated"),
 };
@@ -101,6 +122,32 @@ export type DatePointDto = {
 	/**  本地时间，`HH:MM:SS`；`null` 表示全天。 */
 	time: string | null,
 };
+
+/**  展开悬浮窗的请求：面板期望的 logical 尺寸。 */
+export type ExpandFloatingRequest = {
+	/**  面板宽度（logical px）。 */
+	width: number | null,
+	/**  面板高度（logical px）。 */
+	height: number | null,
+};
+
+/**  展开后的布局：前端据此设置动画的 transform-origin，让面板从徽标所在的角"长出来"。 */
+export type ExpandedLayoutDto = {
+	/**  水平锚点。 */
+	horizontal: HorizontalAnchorDto,
+	/**  垂直锚点。 */
+	vertical: VerticalAnchorDto,
+};
+
+/**  悬浮窗发现指针已经离开（由后端看门狗补发，弥补 WebView 漏发 `pointerleave`）。 */
+export type FloatingPointerLeftEvent = Record<string, never>;
+
+/**  展开后面板相对徽标的水平方向。 */
+export type HorizontalAnchorDto = 
+/**  徽标在面板左侧，面板向右展开。 */
+"left" | 
+/**  徽标在面板右侧，面板向左展开。 */
+"right";
 
 /**  IPC 统一的错误结构 `{ code, message, action }`（架构文档 §43）。 */
 export type IpcError = {
@@ -194,6 +241,13 @@ export type PriorityDto =
 "medium" | 
 /**  高。 */
 "high";
+
+/**  展开后面板相对徽标的垂直方向。 */
+export type VerticalAnchorDto = 
+/**  徽标在面板上侧，面板向下展开。 */
+"top" | 
+/**  徽标在面板下侧，面板向上展开。 */
+"bottom";
 
 /* Tauri Specta runtime */
 async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {

@@ -14,7 +14,7 @@ use nivlo_storage::Database;
 use tauri::async_runtime::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
-use crate::windows::floating::MoveObserver;
+use crate::windows::floating::FloatingHandle;
 
 /// Application 层的 Use Case 服务集合。
 pub struct ApplicationServices {
@@ -38,8 +38,8 @@ pub struct RuntimeHandles {
     log_guard: Mutex<Option<LogGuard>>,
     /// 是否已进入退出流程，避免重复执行。
     shutting_down: AtomicBool,
-    /// 悬浮窗移动事件的观察者；窗口创建之后才能设置，因此用 `OnceLock`。
-    move_observer: OnceLock<Arc<dyn MoveObserver>>,
+    /// 悬浮窗的行为句柄；窗口创建之后才能设置，因此用 `OnceLock`。
+    floating: OnceLock<Arc<dyn FloatingHandle>>,
 }
 
 impl RuntimeHandles {
@@ -54,19 +54,19 @@ impl RuntimeHandles {
             tasks: Mutex::new(Vec::new()),
             log_guard: Mutex::new(log_guard),
             shutting_down: AtomicBool::new(false),
-            move_observer: OnceLock::new(),
+            floating: OnceLock::new(),
         }
     }
 
-    /// 设置悬浮窗移动事件的观察者；只能设置一次，重复设置被忽略。
-    pub fn set_move_observer(&self, observer: Arc<dyn MoveObserver>) {
+    /// 设置悬浮窗的行为句柄；只能设置一次，重复设置被忽略。
+    pub fn set_floating(&self, handle: Arc<dyn FloatingHandle>) {
         // 只在启动时调用一次；再次设置属于编程错误，保留第一个即可，不值得 panic。
-        let _ = self.move_observer.set(observer);
+        let _ = self.floating.set(handle);
     }
 
-    /// 悬浮窗移动事件的观察者；窗口尚未创建时为 `None`。
-    pub fn move_observer(&self) -> Option<&Arc<dyn MoveObserver>> {
-        self.move_observer.get()
+    /// 悬浮窗的行为句柄；窗口尚未创建时为 `None`。
+    pub fn floating(&self) -> Option<&Arc<dyn FloatingHandle>> {
+        self.floating.get()
     }
 
     /// 返回退出信号的令牌克隆，供后台任务在 `select!` 中监听。

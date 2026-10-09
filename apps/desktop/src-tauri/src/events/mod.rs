@@ -28,3 +28,9 @@ pub struct ItemUpdatedEvent {
     /// 变化的 Item ID。
     pub item_id: String,
 }
+
+/// 悬浮窗发现指针已经离开（由后端看门狗补发，弥补 WebView 漏发 `pointerleave`）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
+#[serde(rename_all = "camelCase")]
+#[tauri_specta(event_name = "floating_pointer_left")]
+pub struct FloatingPointerLeftEvent {}
