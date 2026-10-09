@@ -10,6 +10,8 @@ export interface MemoryIpc extends IpcClient {
   readonly items: readonly ItemDto[];
   /** `openMain` 被调用的次数。 */
   readonly openMainCalls: number;
+  /** `startFloatingDrag` 被调用的次数。 */
+  readonly dragStarts: number;
 }
 
 /** 创建内存版 IPC 时的可选配置。 */
@@ -33,6 +35,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const listeners = new Set<() => void>();
   let pendingFailure = options.failNextCreateWith;
   let openMainCalls = 0;
+  let dragStarts = 0;
 
   return {
     get items() {
@@ -40,6 +43,13 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     get openMainCalls() {
       return openMainCalls;
+    },
+    get dragStarts() {
+      return dragStarts;
+    },
+    startFloatingDrag: () => {
+      dragStarts += 1;
+      return Promise.resolve();
     },
     openMain: () => {
       openMainCalls += 1;

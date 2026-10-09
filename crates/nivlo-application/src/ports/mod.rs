@@ -2,4 +2,6 @@
 
 mod storage;
 
-pub use storage::{ItemFilter, ItemRepository, StorageError, Transaction, UnitOfWork};
+pub use storage::{
+    ItemFilter, ItemRepository, SettingsRepository, StorageError, Transaction, UnitOfWork,
+};

@@ -32,6 +32,11 @@ export interface IpcClient {
   /** 退出应用：触发后端的有序退出流程。仅主窗口可调用。 */
   quitApp(): Promise<void>;
   /**
+   * 请求后端开始拖动悬浮窗（交给操作系统的原生拖动，保证跟手）。
+   * 窗口位置始终由 Rust 控制，前端不直接移动窗口。
+   */
+  startFloatingDrag(): Promise<void>;
+  /**
    * 订阅"Item 发生了变化"的后端事件（创建或更新）。
    *
    * @param onChange 事件到达时的回调；事件只携带 ID，调用方应当刷新相关缓存。
@@ -101,6 +106,9 @@ const tauriIpc: IpcClient = {
     await call("open_main", commands.openMain());
   },
   quitApp: () => commands.quitApp(),
+  startFloatingDrag: async () => {
+    await call("start_floating_drag", commands.startFloatingDrag());
+  },
   subscribeItemChanges: (onChange) =>
     listenAll([
       () => events.itemCreated.listen(() => onChange()),
@@ -136,5 +144,6 @@ export const ipc: IpcClient = {
   listItems: (request) => current.listItems(request),
   openMain: () => current.openMain(),
   quitApp: () => current.quitApp(),
+  startFloatingDrag: () => current.startFloatingDrag(),
   subscribeItemChanges: (onChange) => current.subscribeItemChanges(onChange),
 };

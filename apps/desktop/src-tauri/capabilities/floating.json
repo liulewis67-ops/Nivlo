@@ -5,6 +5,7 @@
   "windows": ["floating"],
   "permissions": [
     "core:event:default",
-    "allow-open-main"
+    "allow-open-main",
+    "allow-start-floating-drag"
   ]
 }

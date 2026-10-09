@@ -4,7 +4,10 @@
 //! `Item::restore` 重新校验，写入时从 `Item::snapshot` 取字段，Domain 类型不感知存储格式。
 
 use async_trait::async_trait;
-use nivlo_application::ports::{ItemFilter, ItemRepository, StorageError, Transaction};
+use chrono::{DateTime, Utc};
+use nivlo_application::ports::{
+    ItemFilter, ItemRepository, SettingsRepository, StorageError, Transaction,
+};
 use nivlo_domain::id::{ItemId, ProjectId};
 use nivlo_domain::item::{Item, ItemSnapshot};
 use sqlx::Sqlite;
@@ -112,6 +115,11 @@ impl SqliteTransaction {
 impl Transaction for SqliteTransaction {
     /// 返回 Item Repository 视图（即本事务自身）。
     fn items(&mut self) -> &mut dyn ItemRepository {
+        self
+    }
+
+    /// 返回设置 Repository 视图（即本事务自身）。
+    fn settings(&mut self) -> &mut dyn SettingsRepository {
         self
     }
 
@@ -268,5 +276,39 @@ impl ItemRepository for SqliteTransaction {
         .await
         .map_err(map_sqlx)?;
         rows.into_iter().map(row_to_item).collect()
+    }
+}
+
+#[async_trait]
+impl SettingsRepository for SqliteTransaction {
+    /// 按 key 读取设置。
+    async fn get(&mut self, key: &str) -> Result<Option<String>, StorageError> {
+        let row = sqlx::query!("SELECT value FROM settings WHERE key = ?", key)
+            .fetch_optional(&mut *self.tx)
+            .await
+            .map_err(map_sqlx)?;
+        Ok(row.map(|r| r.value))
+    }
+
+    /// 写入（覆盖）设置并记录更新时间。
+    async fn set(
+        &mut self,
+        key: &str,
+        value: &str,
+        updated_at: DateTime<Utc>,
+    ) -> Result<(), StorageError> {
+        let updated_at = format_timestamp(updated_at);
+        // UPSERT：同一个 key 只有一行，重复写入覆盖旧值。
+        sqlx::query!(
+            "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+            key,
+            value,
+            updated_at
+        )
+        .execute(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        Ok(())
     }
 }

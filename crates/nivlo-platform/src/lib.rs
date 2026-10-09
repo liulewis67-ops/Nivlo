@@ -1,3 +1,16 @@
-//! `nivlo-platform`：跨平台 Port 定义（Window、Drop、Clipboard、Credential、Notification、Shortcut、Autostart、Open），每个 Port 独立 trait。
+//! `nivlo-platform`：跨平台 Port 定义。
+//!
+//! 每种平台能力是一个**独立的小 trait**，不做拥有几十个方法的 God Trait（架构文档 §7.9、ADR-006）：
+//!
+//! * [`floating_window::FloatingWindowPort`]：悬浮窗的位置 / 尺寸 / 置顶 / 焦点。
+//! * [`placement`]：悬浮窗位置的纯计算（吸附、跨显示器、DPI），与具体窗口库无关，便于测试。
+//! * [`error::PlatformError`]：平台能力不足时返回明确的 `Unsupported`，而不是 panic（架构文档 §53）。
+//!
+//! 后续阶段会继续加入 `DropPort`、`ClipboardPort`、`CredentialPort`、`NotificationPort`、
+//! `ShortcutPort`、`AutostartPort`、`OpenPort`。
 //!
 //! 禁止依赖：任何具体平台库（参见后端规范 §3.1）。
+
+pub mod error;
+pub mod floating_window;
+pub mod placement;

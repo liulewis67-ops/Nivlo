@@ -20,7 +20,7 @@ tauri-specta.workspace = true
 specta.workspace = true
 specta-typescript.workspace = true
 tokio-util.workspace = true
-tokio = { workspace = true, features = ["macros"] }
+tokio = { workspace = true, features = ["macros", "rt"] }
 chrono.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
@@ -47,6 +47,7 @@ nivlo-platform-macos.workspace = true
 nivlo-platform-linux.workspace = true
 
 [dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
 tauri = { workspace = true, features = ["test"] }
 sqlx.workspace = true
 tempfile.workspace = true

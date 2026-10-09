@@ -285,3 +285,50 @@ async fn corrupt_rows_are_reported_not_hidden() {
     let err = tx.items().get(id(1)).await.unwrap_err();
     assert!(matches!(err, StorageError::Corrupt(_)), "{err:?}");
 }
+
+#[tokio::test]
+async fn settings_round_trip_overwrite_and_roll_back() {
+    let (_dir, _path, db) = new_db().await;
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(tx.settings().get("floating.placement").await.unwrap(), None);
+    tx.settings()
+        .set("floating.placement", "{\"edge\":\"right\"}", t(8, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.settings()
+            .get("floating.placement")
+            .await
+            .unwrap()
+            .as_deref(),
+        Some("{\"edge\":\"right\"}")
+    );
+    // 覆盖写入后只有一行。
+    tx.settings()
+        .set("floating.placement", "v2", t(9, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    // 未提交的修改被丢弃。
+    let mut tx = db.begin().await.unwrap();
+    tx.settings()
+        .set("floating.placement", "uncommitted", t(10, 0))
+        .await
+        .unwrap();
+    drop(tx);
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.settings()
+            .get("floating.placement")
+            .await
+            .unwrap()
+            .as_deref(),
+        Some("v2")
+    );
+}

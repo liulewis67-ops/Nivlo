@@ -8,18 +8,23 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::Item;
 
 use crate::event::EventPublisher;
-use crate::ports::{ItemFilter, ItemRepository, StorageError, Transaction, UnitOfWork};
+use crate::ports::{
+    ItemFilter, ItemRepository, SettingsRepository, StorageError, Transaction, UnitOfWork,
+};
 
 /// 内存数据库的共享状态。
 #[derive(Debug, Default)]
 struct FakeState {
     /// 已提交的 Item。
     items: BTreeMap<ItemId, Item>,
+    /// 已提交的设置。
+    settings: BTreeMap<String, String>,
     /// 为 `true` 时下一次 `commit` 失败（用于测试回滚路径），触发后自动复位。
     fail_next_commit: bool,
 }
@@ -52,6 +57,11 @@ impl FakeUnitOfWork {
         self.lock().items.values().cloned().collect()
     }
 
+    /// 返回当前已提交的某个设置。
+    pub fn committed_setting(&self, key: &str) -> Option<String> {
+        self.lock().settings.get(key).cloned()
+    }
+
     /// 直接放入一个已存在的 Item，跳过 Use Case，用于准备测试数据。
     pub fn seed(&self, item: Item) {
         self.lock().items.insert(item.id(), item);
@@ -62,10 +72,14 @@ impl FakeUnitOfWork {
 impl UnitOfWork for FakeUnitOfWork {
     /// 开启事务：复制当前已提交数据作为工作副本。
     async fn begin(&self) -> Result<Box<dyn Transaction>, StorageError> {
-        let working = self.lock().items.clone();
+        let (working, working_settings) = {
+            let state = self.lock();
+            (state.items.clone(), state.settings.clone())
+        };
         Ok(Box::new(FakeTransaction {
             shared: self.clone(),
             working,
+            working_settings,
         }))
     }
 }
@@ -74,14 +88,21 @@ impl UnitOfWork for FakeUnitOfWork {
 struct FakeTransaction {
     /// 所属数据库。
     shared: FakeUnitOfWork,
-    /// 本事务的工作副本；丢弃即回滚。
+    /// 本事务的 Item 工作副本；丢弃即回滚。
     working: BTreeMap<ItemId, Item>,
+    /// 本事务的设置工作副本；丢弃即回滚。
+    working_settings: BTreeMap<String, String>,
 }
 
 #[async_trait]
 impl Transaction for FakeTransaction {
     /// 返回 Item Repository 视图。
     fn items(&mut self) -> &mut dyn ItemRepository {
+        self
+    }
+
+    /// 返回设置 Repository 视图。
+    fn settings(&mut self) -> &mut dyn SettingsRepository {
         self
     }
 
@@ -93,6 +114,7 @@ impl Transaction for FakeTransaction {
             return Err(StorageError::Unavailable("模拟的提交失败".to_owned()));
         }
         state.items = self.working;
+        state.settings = self.working_settings;
         Ok(())
     }
 
@@ -153,6 +175,26 @@ impl ItemRepository for FakeTransaction {
             items.truncate(limit as usize);
         }
         Ok(items)
+    }
+}
+
+#[async_trait]
+impl SettingsRepository for FakeTransaction {
+    /// 按 key 读取。
+    async fn get(&mut self, key: &str) -> Result<Option<String>, StorageError> {
+        Ok(self.working_settings.get(key).cloned())
+    }
+
+    /// 写入并覆盖；内存版忽略更新时间。
+    async fn set(
+        &mut self,
+        key: &str,
+        value: &str,
+        _updated_at: DateTime<Utc>,
+    ) -> Result<(), StorageError> {
+        self.working_settings
+            .insert(key.to_owned(), value.to_owned());
+        Ok(())
     }
 }
 

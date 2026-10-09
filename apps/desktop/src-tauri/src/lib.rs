@@ -26,6 +26,8 @@ use crate::app::AppState;
 use crate::events::forwarder::spawn_forwarder;
 use crate::events::mapper::DefaultUiEventMapper;
 use crate::lifecycle::{recovery, startup};
+use crate::windows::floating::FloatingController;
+use crate::windows::floating_port::TauriFloatingWindow;
 
 /// 重新导出 `tauri_specta`，供 [`bindings_builder!`] 在其他 crate（测试、example）中展开时使用。
 #[doc(hidden)]
@@ -49,6 +51,7 @@ macro_rules! bindings_builder {
                 $crate::commands::item::list_items,
                 $crate::commands::window::open_main::<$runtime>,
                 $crate::commands::window::quit_app::<$runtime>,
+                $crate::commands::window::start_floating_drag::<$runtime>,
             ])
             .events($crate::tauri_specta::collect_events![
                 $crate::events::ItemCreatedEvent,
@@ -101,7 +104,16 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             state.runtime.track_task(forwarder);
             app.manage(state);
 
-            windows::create_floating_window(app)?;
+            let floating = windows::create_floating_window(app)?;
+            let controller = FloatingController::new(
+                Arc::new(TauriFloatingWindow::new(floating)),
+                app.state::<AppState>().services.settings.clone(),
+                tauri::async_runtime::handle().inner().clone(),
+                app.state::<AppState>().runtime.shutdown_token(),
+            );
+            // 先还原位置再开始观察移动事件，避免把"还原"本身当成用户拖动。
+            tauri::async_runtime::block_on(controller.restore());
+            app.state::<AppState>().runtime.set_move_observer(controller);
             tracing::info!(event = "startup_completed", "启动完成");
             Ok(())
         })

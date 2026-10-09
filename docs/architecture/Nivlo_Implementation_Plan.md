@@ -104,7 +104,7 @@ Phase 12 Backlog                        → 未排期
 | | 0.8 | Tauri Host、启动生命周期与 Typed IPC | ✅ |
 | | 0.9 | Frontend 基础 | ✅ |
 | **P1** | 1.1 | 窗口架构与 Capability | ✅ |
-| | 1.2 | 悬浮窗 Window Behavior | ⬜ |
+| | 1.2 | 悬浮窗 Window Behavior | 🟨 |
 | | 1.3 | Hover 展开与悬浮窗状态机 | ⬜ |
 | | 1.4 | Today 查询与缓存 | ⬜ |
 | | 1.5 | 悬浮窗 Quick Create | ⬜ |
@@ -424,7 +424,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.2 悬浮窗 Window Behavior
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：1.1
 - **目标**：实现悬浮窗的位置、拖动、吸附、置顶，并从第一阶段处理多显示器与 DPI（架构文档 §10.2–10.3、§11）。
 - **任务**：
@@ -436,12 +436,17 @@ Phase 12 Backlog                        → 未排期
   - Hover 不抢焦点：默认 `focusable=false`，仅在 Quick Create 输入时临时可聚焦。
   - 设置项：是否置顶。
 - **验收标准**：
-  - [ ] 重启后悬浮窗回到同一显示器、同一边缘、相同相对位置。
-  - [ ] 断开副显示器后重启，悬浮窗出现在主显示器可见区域内。
+  - [x] 重启后悬浮窗回到同一显示器、同一边缘、相同相对位置。
+  - [x] 断开副显示器后重启，悬浮窗出现在主显示器可见区域内。
   - [ ] 在 100% 与 150% 缩放的显示器之间移动，徽标视觉尺寸一致（截图证据）。
-  - [ ] 在记事本中持续输入时将鼠标移到悬浮窗上，记事本不失去焦点（手动验证记录）。
-  - [ ] 拖动与吸附过程无明显卡顿或闪烁。
-- **完成记录**：—
+  - [x] 在记事本中持续输入时将鼠标移到悬浮窗上，记事本不失去焦点（手动验证记录）。
+  - [x] 拖动与吸附过程无明显卡顿或闪烁。
+- **完成记录**：2026-10-09 主体完成，一项需要双显示器环境的验收待补。
+  - 自动化：`nivlo-platform::placement` 18 个测试（吸附 / 阈值随 DPI 缩放 / 负坐标显示器 / 找不到显示器回退主显示器 / 越界比例夹取 / 分辨率变化后位置仍合理 / 窗口超出所有显示器时选最近的）；`FloatingController` 10 个测试（默认位置、还原到保存的显示器、显示器消失回退主显示器、位置 JSON 损坏回退默认、置顶与不可聚焦、拖动后吸附并保存、连续拖动只收尾一次、控制器自己的移动不触发吸附、退出时取消待执行任务、内容不变不重复写库）；`SettingsService` / SQLite `settings` 的读写与回滚；前端 `drag-intent` 纯逻辑（阈值 4px、斜线距离、只触发一次）与 `FloatingBadge` 组件测试（单击打开主窗口、拖动不触发点击、非左键忽略、键盘激活）。
+  - 真实应用（Windows 11，单显示器，125% 缩放，WebView2；用 SetWindowPos / 合成真实鼠标输入驱动）：① 窗口外框恰为 110×50 物理像素 = 88×40 logical，默认贴主显示器工作区右缘；② 窗口样式 `WS_EX_TOPMOST` 与 `WS_EX_NOACTIVATE` 均已设置；Notepad 位于前台时把鼠标移到徽标上，前台窗口始终是 Notepad；③ 把窗口移到距左边缘 15px 处，约 150ms 后自动吸附到 x=0，`settings` 表中保存 `{"monitor_id":"\\.\DISPLAY1","edge":"left","x_ratio":0,"y_ratio":0.309…}`；④ 重启后窗口回到同一位置；⑤ 把保存的显示器改成不存在的 `DISPLAY9` 且比例越界，重启后窗口落在主显示器工作区内（右缘、底部，完全可见）；⑥ 合成真实鼠标"按下→移动→松开"：窗口跟随移动且**没有**打开主窗口，松开位置距左缘 18px 时吸附到 0；⑦ 单击徽标中心：主窗口打开（宽 1218px = 960 logical × 1.25 + 边框）。
+  - 发现并修复：Windows 创建顶层窗口时会把宽度夹到系统最小宽度（`SM_CXMIN` = 136 logical px），导致按 88px 计算的位置让窗口超出屏幕；`min_inner_size` 无效，但创建之后用 `SetWindowPos` 缩小是允许的，因此在 `FloatingController::restore` 中先 `collapse()` 再按徽标尺寸还原位置。
+  - 未能验证（保持未勾选）：在 100% 与 150% 缩放的**两块显示器之间**移动时徽标视觉尺寸一致——本机只有一块 125% 显示器。位置与尺寸换算已由单元测试覆盖（`badge_visual_size_is_constant_across_scale_factors`），仍需在双显示器环境手动补充截图证据。
+  - 设计说明：位置保存为 `{monitor_id, edge, x_ratio, y_ratio}`（与分辨率 / 缩放无关）；`FloatingWindowPort` 定义在 `nivlo-platform`，Tauri 实现在 `windows/floating_port.rs`；拖动通过 Rust 命令 `start_floating_drag` 调用原生拖动（前端不直接移动窗口），拖动结束靠对 `Moved` 事件防抖（150ms）识别；新增 `settings` 读写（`SettingsService`）与 `SettingsRepository` Port；「置顶」设置项的 UI 在 3.5，当前读取 `floating.always_on_top`（缺省 true）。
 
 ### 1.3 Hover 展开与悬浮窗状态机
 

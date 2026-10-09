@@ -12,6 +12,7 @@
 //! 事务被丢弃而未提交时必须回滚。
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::{Item, ItemType};
 
@@ -60,6 +61,9 @@ pub trait UnitOfWork: Send + Sync {
 pub trait Transaction: Send {
     /// Item 的 Repository 视图，与本事务共享同一个连接。
     fn items(&mut self) -> &mut dyn ItemRepository;
+
+    /// 设置（键值）的 Repository 视图，与本事务共享同一个连接。
+    fn settings(&mut self) -> &mut dyn SettingsRepository;
 
     /// 提交事务。
     ///
@@ -119,4 +123,29 @@ pub trait ItemRepository: Send {
     ///
     /// 任一记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
     async fn list(&mut self, filter: &ItemFilter) -> Result<Vec<Item>, StorageError>;
+}
+
+/// 业务设置的持久化操作（键值对，值为字符串，通常是 JSON）。
+///
+/// 对应 `settings` 表；窗口位置、置顶、快捷键等设置都存放在这里。
+#[async_trait]
+pub trait SettingsRepository: Send {
+    /// 读取一个设置；不存在时返回 `Ok(None)`。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回 [`StorageError::Unavailable`]。
+    async fn get(&mut self, key: &str) -> Result<Option<String>, StorageError>;
+
+    /// 写入（覆盖）一个设置，并记录更新时间。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用或违反约束时返回对应的 [`StorageError`]。
+    async fn set(
+        &mut self,
+        key: &str,
+        value: &str,
+        updated_at: DateTime<Utc>,
+    ) -> Result<(), StorageError>;
 }

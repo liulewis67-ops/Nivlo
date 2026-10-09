@@ -22,6 +22,11 @@ const FLOATING_ALLOWED: &[&str] = &[
     "reschedule_item",
     "undo",
     "get_inbox_count",
+    // 悬浮窗的窗口行为命令（位置、拖动、展开 / 收起、焦点）。
+    "start_floating_drag",
+    "expand_floating",
+    "collapse_floating",
+    "set_floating_focusable",
 ];
 
 /// 解析一个 Capability 文件。
@@ -117,6 +122,7 @@ fn every_command_in_build_rs_is_granted_to_some_window() {
         "list_items",
         "open_main",
         "quit_app",
+        "start_floating_drag",
     ] {
         assert!(
             build_rs.contains(&format!("\"{command}\"")),

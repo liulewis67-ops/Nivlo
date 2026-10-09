@@ -3,6 +3,7 @@
 //! * [`ports`]：Application 需要外部世界提供的能力（存储、时钟等）的 trait。
 //!   Port 在本层定义，由 Adapter crate 实现（后端规范 §4.2）。
 //! * [`item::ItemService`]：Item 的创建 / 更新 / 读取 / 列表 Use Case。
+//! * [`settings::SettingsService`]：业务设置（键值）的读写。
 //! * [`error::AppError`]：统一错误模型，错误码登记在 `docs/development/error-codes.md`。
 //! * [`event`]：进程内事件总线与 UI 事件映射接口。
 //! * 事务边界由本层通过 [`ports::UnitOfWork`] 控制：一个 Use Case 内的多次写入在同一事务中提交，
@@ -16,6 +17,7 @@ pub mod error;
 pub mod event;
 pub mod item;
 pub mod ports;
+pub mod settings;
 
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;

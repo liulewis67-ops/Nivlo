@@ -5,6 +5,7 @@ use std::sync::Arc;
 use nivlo_application::event::EventBus;
 use nivlo_application::item::ItemService;
 use nivlo_application::ports::StorageError;
+use nivlo_application::settings::SettingsService;
 use nivlo_common::clock::SystemClock;
 use nivlo_common::logging::{LogConfig, LogError, LogGuard, init_logging};
 use nivlo_common::paths::{AppPaths, PathsError};
@@ -74,13 +75,15 @@ pub async fn open_database(paths: &AppPaths) -> Result<Database, StorageError> {
 /// 测试传入 `None` 作为日志守卫（全局日志只能初始化一次）。
 pub fn build_app_state(database: Database, log_guard: Option<LogGuard>) -> AppState {
     let event_bus = EventBus::new();
+    let clock = Arc::new(SystemClock::new());
     let items = ItemService::new(
         Arc::new(database.clone()),
-        Arc::new(SystemClock::new()),
+        clock.clone(),
         Arc::new(event_bus.clone()),
     );
+    let settings = SettingsService::new(Arc::new(database.clone()), clock);
     AppState {
-        services: ApplicationServices { items },
+        services: ApplicationServices { items, settings },
         runtime: RuntimeHandles::new(event_bus, database, log_guard),
     }
 }

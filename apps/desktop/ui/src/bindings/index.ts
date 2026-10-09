@@ -44,6 +44,18 @@ export const commands = {
 	 *  托盘菜单上线（实施计划 1.9）后，托盘的 Quit 走同一条路径。
 	 */
 	quitApp: () => __TAURI_INVOKE<void>("quit_app"),
+	/**
+	 *  开始拖动悬浮窗（由悬浮窗在检测到"按下并移动超过阈值"之后调用）。
+	 * 
+	 *  把拖动交给操作系统的原生窗口拖动，保证跟手；拖动结束后的吸附与保存由
+	 *  `FloatingController` 在收到连续的移动事件之后完成。窗口位置始终由 Rust 控制，
+	 *  前端不直接使用 window API 移动窗口（前端规范 §9）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
+	 */
+	startFloatingDrag: () => typedError<null, IpcError>(__TAURI_INVOKE("start_floating_drag")),
 };
 
 /** Events */

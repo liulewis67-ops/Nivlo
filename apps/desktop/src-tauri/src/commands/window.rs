@@ -1,7 +1,7 @@
 //! 窗口与应用生命周期相关的 Command。
 
 use nivlo_application::error::{AppError, ErrorAction, ErrorCode};
-use tauri::{AppHandle, Runtime};
+use tauri::{AppHandle, Runtime, WebviewWindow};
 
 use crate::dto::IpcError;
 use crate::windows::show_main_window;
@@ -29,4 +29,25 @@ pub async fn open_main<R: Runtime>(app: AppHandle<R>) -> Result<(), IpcError> {
 #[specta::specta]
 pub async fn quit_app<R: Runtime>(app: AppHandle<R>) {
     app.exit(0);
+}
+
+/// 开始拖动悬浮窗（由悬浮窗在检测到"按下并移动超过阈值"之后调用）。
+///
+/// 把拖动交给操作系统的原生窗口拖动，保证跟手；拖动结束后的吸附与保存由
+/// `FloatingController` 在收到连续的移动事件之后完成。窗口位置始终由 Rust 控制，
+/// 前端不直接使用 window API 移动窗口（前端规范 §9）。
+///
+/// # Errors
+///
+/// 系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
+#[tauri::command]
+#[specta::specta]
+pub async fn start_floating_drag<R: Runtime>(window: WebviewWindow<R>) -> Result<(), IpcError> {
+    window.start_dragging().map_err(|error| {
+        tracing::warn!(event = "floating_drag_failed", %error, "开始拖动悬浮窗失败");
+        IpcError::from(AppError::new(
+            ErrorCode::WindowUnavailable,
+            error.to_string(),
+        ))
+    })
 }

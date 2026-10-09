@@ -3,20 +3,25 @@
 //! `AppState` 是唯一注册到 Tauri 的 State；不使用全局可变静态变量。
 //! 服务用 `Arc` 共享，长生命周期组件通过 Handle 访问。
 
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use nivlo_application::event::EventBus;
 use nivlo_application::item::ItemService;
+use nivlo_application::settings::SettingsService;
 use nivlo_common::logging::LogGuard;
 use nivlo_storage::Database;
 use tauri::async_runtime::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
+use crate::windows::floating::MoveObserver;
+
 /// Application 层的 Use Case 服务集合。
 pub struct ApplicationServices {
     /// Item 的创建 / 更新 / 读取 / 列表。
     pub items: ItemService,
+    /// 业务设置（窗口位置、置顶等）。
+    pub settings: SettingsService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。
@@ -33,6 +38,8 @@ pub struct RuntimeHandles {
     log_guard: Mutex<Option<LogGuard>>,
     /// 是否已进入退出流程，避免重复执行。
     shutting_down: AtomicBool,
+    /// 悬浮窗移动事件的观察者；窗口创建之后才能设置，因此用 `OnceLock`。
+    move_observer: OnceLock<Arc<dyn MoveObserver>>,
 }
 
 impl RuntimeHandles {
@@ -47,7 +54,19 @@ impl RuntimeHandles {
             tasks: Mutex::new(Vec::new()),
             log_guard: Mutex::new(log_guard),
             shutting_down: AtomicBool::new(false),
+            move_observer: OnceLock::new(),
         }
+    }
+
+    /// 设置悬浮窗移动事件的观察者；只能设置一次，重复设置被忽略。
+    pub fn set_move_observer(&self, observer: Arc<dyn MoveObserver>) {
+        // 只在启动时调用一次；再次设置属于编程错误，保留第一个即可，不值得 panic。
+        let _ = self.move_observer.set(observer);
+    }
+
+    /// 悬浮窗移动事件的观察者；窗口尚未创建时为 `None`。
+    pub fn move_observer(&self) -> Option<&Arc<dyn MoveObserver>> {
+        self.move_observer.get()
     }
 
     /// 返回退出信号的令牌克隆，供后台任务在 `select!` 中监听。
