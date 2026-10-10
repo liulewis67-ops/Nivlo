@@ -140,6 +140,15 @@ pub fn file_ref(path: &Path) -> FileRef {
     }
 }
 
+/// 被引用的文件现在还在不在原处。
+///
+/// 文件只保存引用（实施计划 2.2），用户随时可能移动或删除它；展示时用这个函数检查，
+/// 缺失就显示「文件不存在」状态，而不是报错。读不到元数据（含无权限）一律视为不存在。
+#[must_use]
+pub fn reference_exists(path: &str) -> bool {
+    std::fs::metadata(path).is_ok()
+}
+
 /// 把拖入 / 粘贴的一组路径规范化为输入：按路径去重并保持顺序；
 /// 一个文件是 [`CaptureInput::File`]，多个是 [`CaptureInput::Files`]，没有路径返回 `None`。
 #[must_use]

@@ -234,3 +234,18 @@ fn a_very_long_url_title_is_truncated_too() {
     assert!(title.chars().count() <= MAX_DEFAULT_TITLE_CHARS);
     assert!(title.ends_with('…'));
 }
+
+#[test]
+fn a_moved_or_deleted_reference_is_reported_as_missing_without_error() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("报告 final.pdf");
+    std::fs::write(&path, b"%PDF-1.7").unwrap();
+    let text = path.to_string_lossy().into_owned();
+    assert!(reference_exists(&text));
+
+    std::fs::rename(&path, dir.path().join("移走了.pdf")).unwrap();
+
+    assert!(!reference_exists(&text));
+    assert!(!reference_exists(r"Z:\永远不存在的盘\x.txt"));
+    assert!(!reference_exists(""));
+}

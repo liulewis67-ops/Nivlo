@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE (?1 IS NULL OR type = ?1)\n               AND (?2 = 1 OR archived_at IS NULL)\n             ORDER BY created_at DESC, id DESC\n             LIMIT ?3",
+  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE type = 'tip' AND archived_at IS NULL AND scheduled_date = ?\n             ORDER BY scheduled_time ASC, created_at ASC, id ASC",
   "describe": {
     "columns": [
       {
@@ -69,28 +69,33 @@
         "type_info": "Text"
       },
       {
-        "name": "created_at",
+        "name": "in_inbox",
         "ordinal": 13,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
-        "name": "updated_at",
+        "name": "created_at",
         "ordinal": 14,
         "type_info": "Text"
       },
       {
-        "name": "completed_at",
+        "name": "updated_at",
         "ordinal": 15,
         "type_info": "Text"
       },
       {
-        "name": "archived_at",
+        "name": "completed_at",
         "ordinal": 16,
+        "type_info": "Text"
+      },
+      {
+        "name": "archived_at",
+        "ordinal": 17,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 1
     },
     "nullable": [
       false,
@@ -108,9 +113,10 @@
       true,
       false,
       false,
+      false,
       true,
       true
     ]
   },
-  "hash": "b5c453711c7185ced8dafe7b7dabc547d2919fd27205cca4715e38d470ceb2ac"
+  "hash": "ff249f341d8a929a204d7ee131197eb8ae34485db5fd7a01327878516f5e8f27"
 }

@@ -6,10 +6,13 @@
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_application::ports::{
-    ItemFilter, ItemRepository, SettingsRepository, StorageError, TodayOrderRepository, Transaction,
+    AttachmentRepository, ItemFilter, ItemRepository, SettingsRepository, SourceRepository,
+    StorageError, TodayOrderRepository, Transaction,
 };
-use nivlo_domain::id::{ItemId, ProjectId};
+use nivlo_domain::attachment::{Attachment, AttachmentKind};
+use nivlo_domain::id::{AttachmentId, ItemId, ProjectId, SourceId};
 use nivlo_domain::item::{Item, ItemSnapshot};
+use nivlo_domain::source::{Source, SourceType};
 use sqlx::Sqlite;
 
 use crate::codec::{
@@ -45,6 +48,8 @@ struct ItemRow {
     reminder_at: Option<String>,
     /// 所属项目。
     project_id: Option<String>,
+    /// 是否在 Inbox（0 / 1）。
+    in_inbox: i64,
     /// 创建时间。
     created_at: String,
     /// 更新时间。
@@ -87,6 +92,7 @@ fn row_to_item(row: ItemRow) -> Result<Item, StorageError> {
             .map(|text| text.parse::<ProjectId>())
             .transpose()
             .map_err(|e| StorageError::Corrupt(e.to_string()))?,
+        in_inbox: row.in_inbox != 0,
         created_at: parse_timestamp(&row.created_at)?,
         updated_at: parse_timestamp(&row.updated_at)?,
         completed_at: parse_opt(row.completed_at.as_deref(), parse_timestamp)?,
@@ -128,6 +134,16 @@ impl Transaction for SqliteTransaction {
         self
     }
 
+    /// 返回来源 Repository 视图（即本事务自身）。
+    fn sources(&mut self) -> &mut dyn SourceRepository {
+        self
+    }
+
+    /// 返回附件 Repository 视图（即本事务自身）。
+    fn attachments(&mut self) -> &mut dyn AttachmentRepository {
+        self
+    }
+
     /// 提交事务。
     async fn commit(self: Box<Self>) -> Result<(), StorageError> {
         self.tx.commit().await.map_err(map_sqlx)
@@ -155,6 +171,7 @@ impl ItemRepository for SqliteTransaction {
         let due_time = s.due_time.map(format_time);
         let reminder_at = s.reminder_at.map(format_timestamp);
         let project_id = s.project_id.map(|p| p.to_string());
+        let in_inbox = i64::from(s.in_inbox);
         let created_at = format_timestamp(s.created_at);
         let updated_at = format_timestamp(s.updated_at);
         let completed_at = s.completed_at.map(format_timestamp);
@@ -163,8 +180,8 @@ impl ItemRepository for SqliteTransaction {
             "INSERT INTO items (
                 id, type, title, content, content_format, status, priority,
                 scheduled_date, scheduled_time, due_date, due_time, reminder_at,
-                project_id, created_at, updated_at, completed_at, archived_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                project_id, in_inbox, created_at, updated_at, completed_at, archived_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             id,
             item_type,
             s.title,
@@ -178,6 +195,7 @@ impl ItemRepository for SqliteTransaction {
             due_time,
             reminder_at,
             project_id,
+            in_inbox,
             created_at,
             updated_at,
             completed_at,
@@ -203,6 +221,7 @@ impl ItemRepository for SqliteTransaction {
         let due_time = s.due_time.map(format_time);
         let reminder_at = s.reminder_at.map(format_timestamp);
         let project_id = s.project_id.map(|p| p.to_string());
+        let in_inbox = i64::from(s.in_inbox);
         let updated_at = format_timestamp(s.updated_at);
         let completed_at = s.completed_at.map(format_timestamp);
         let archived_at = s.archived_at.map(format_timestamp);
@@ -211,7 +230,8 @@ impl ItemRepository for SqliteTransaction {
             "UPDATE items SET
                 type = ?, title = ?, content = ?, content_format = ?, status = ?, priority = ?,
                 scheduled_date = ?, scheduled_time = ?, due_date = ?, due_time = ?,
-                reminder_at = ?, project_id = ?, updated_at = ?, completed_at = ?, archived_at = ?
+                reminder_at = ?, project_id = ?, in_inbox = ?, updated_at = ?, completed_at = ?,
+                archived_at = ?
             WHERE id = ?",
             item_type,
             s.title,
@@ -225,6 +245,7 @@ impl ItemRepository for SqliteTransaction {
             due_time,
             reminder_at,
             project_id,
+            in_inbox,
             updated_at,
             completed_at,
             archived_at,
@@ -246,7 +267,7 @@ impl ItemRepository for SqliteTransaction {
             ItemRow,
             "SELECT id, type AS item_type, title, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
-                    project_id, created_at, updated_at, completed_at, archived_at
+                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items WHERE id = ?",
             id
         )
@@ -268,7 +289,7 @@ impl ItemRepository for SqliteTransaction {
             ItemRow,
             "SELECT id, type AS item_type, title, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
-                    project_id, created_at, updated_at, completed_at, archived_at
+                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
              WHERE type = 'todo' AND status = 'open' AND archived_at IS NULL
                AND scheduled_date IS NOT NULL AND scheduled_date <= ?
@@ -288,7 +309,7 @@ impl ItemRepository for SqliteTransaction {
             ItemRow,
             "SELECT id, type AS item_type, title, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
-                    project_id, created_at, updated_at, completed_at, archived_at
+                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
              WHERE type = 'tip' AND archived_at IS NULL AND scheduled_date = ?
              ORDER BY scheduled_time ASC, created_at ASC, id ASC",
@@ -313,7 +334,7 @@ impl ItemRepository for SqliteTransaction {
             ItemRow,
             "SELECT id, type AS item_type, title, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
-                    project_id, created_at, updated_at, completed_at, archived_at
+                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
              WHERE type = 'todo' AND archived_at IS NULL
                AND completed_at IS NOT NULL AND completed_at >= ? AND completed_at < ?
@@ -338,7 +359,7 @@ impl ItemRepository for SqliteTransaction {
             ItemRow,
             "SELECT id, type AS item_type, title, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
-                    project_id, created_at, updated_at, completed_at, archived_at
+                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
              WHERE (?1 IS NULL OR type = ?1)
                AND (?2 = 1 OR archived_at IS NULL)
@@ -440,5 +461,142 @@ impl TodayOrderRepository for SqliteTransaction {
             .await
             .map_err(map_sqlx)?;
         Ok(())
+    }
+}
+
+#[async_trait]
+impl SourceRepository for SqliteTransaction {
+    /// 插入一条来源记录。
+    async fn insert(&mut self, source: &Source) -> Result<(), StorageError> {
+        let id = source.id.to_string();
+        let item_id = source.item_id.to_string();
+        let source_type = source.source_type.as_str();
+        let captured_at = format_timestamp(source.captured_at);
+        sqlx::query!(
+            "INSERT INTO item_sources (
+                id, item_id, source_type, source_app, source_url, source_path,
+                original_title, metadata_json, captured_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            id,
+            item_id,
+            source_type,
+            source.source_app,
+            source.source_url,
+            source.source_path,
+            source.original_title,
+            source.metadata_json,
+            captured_at,
+        )
+        .execute(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        Ok(())
+    }
+
+    /// 某个 Item 的全部来源，按捕获时间升序。
+    async fn list_for_item(&mut self, item_id: ItemId) -> Result<Vec<Source>, StorageError> {
+        let item_id = item_id.to_string();
+        let rows = sqlx::query!(
+            "SELECT id, item_id, source_type, source_app, source_url, source_path,
+                    original_title, metadata_json, captured_at
+             FROM item_sources WHERE item_id = ? ORDER BY captured_at ASC, id ASC",
+            item_id
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter()
+            .map(|row| {
+                let corrupt = |e: String| StorageError::Corrupt(e);
+                Ok(Source {
+                    id: row
+                        .id
+                        .parse::<SourceId>()
+                        .map_err(|e| corrupt(e.to_string()))?,
+                    item_id: row
+                        .item_id
+                        .parse::<ItemId>()
+                        .map_err(|e| corrupt(e.to_string()))?,
+                    source_type: SourceType::new(&row.source_type),
+                    source_app: row.source_app,
+                    source_url: row.source_url,
+                    source_path: row.source_path,
+                    original_title: row.original_title,
+                    metadata_json: row.metadata_json,
+                    captured_at: parse_timestamp(&row.captured_at)?,
+                })
+            })
+            .collect()
+    }
+}
+
+#[async_trait]
+impl AttachmentRepository for SqliteTransaction {
+    /// 插入一条附件记录。
+    async fn insert(&mut self, attachment: &Attachment) -> Result<(), StorageError> {
+        let id = attachment.id.to_string();
+        let item_id = attachment.item_id.to_string();
+        let kind = attachment.kind.as_str();
+        let size_bytes = attachment
+            .size_bytes
+            .map(i64::try_from)
+            .transpose()
+            .map_err(|e| StorageError::Constraint(e.to_string()))?;
+        let added_at = format_timestamp(attachment.added_at);
+        sqlx::query!(
+            "INSERT INTO attachments (id, item_id, kind, path, name, mime, size_bytes, added_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            id,
+            item_id,
+            kind,
+            attachment.path,
+            attachment.name,
+            attachment.mime,
+            size_bytes,
+            added_at,
+        )
+        .execute(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        Ok(())
+    }
+
+    /// 某个 Item 的全部附件，按添加时间升序。
+    async fn list_for_item(&mut self, item_id: ItemId) -> Result<Vec<Attachment>, StorageError> {
+        let item_id = item_id.to_string();
+        let rows = sqlx::query!(
+            "SELECT id, item_id, kind, path, name, mime, size_bytes, added_at
+             FROM attachments WHERE item_id = ? ORDER BY added_at ASC, id ASC",
+            item_id
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter()
+            .map(|row| {
+                let corrupt = |e: String| StorageError::Corrupt(e);
+                Ok(Attachment {
+                    id: row
+                        .id
+                        .parse::<AttachmentId>()
+                        .map_err(|e| corrupt(e.to_string()))?,
+                    item_id: row
+                        .item_id
+                        .parse::<ItemId>()
+                        .map_err(|e| corrupt(e.to_string()))?,
+                    kind: AttachmentKind::parse(&row.kind)
+                        .ok_or_else(|| corrupt(format!("未知的附件类型：{}", row.kind)))?,
+                    path: row.path,
+                    name: row.name,
+                    mime: row.mime,
+                    size_bytes: row
+                        .size_bytes
+                        .map(u64::try_from)
+                        .transpose()
+                        .map_err(|e| corrupt(e.to_string()))?,
+                    added_at: parse_timestamp(&row.added_at)?,
+                })
+            })
+            .collect()
     }
 }

@@ -9,14 +9,16 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
+use nivlo_domain::attachment::Attachment;
 use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::{Item, ItemStatus, ItemType};
+use nivlo_domain::source::Source;
 
 use crate::event::EventPublisher;
 use crate::ports::{
-    ItemFilter, ItemRepository, SettingsRepository, StorageError, TodayOrderRepository,
-    Transaction, UnitOfWork,
+    AttachmentRepository, ItemFilter, ItemRepository, SettingsRepository, SourceRepository,
+    StorageError, TodayOrderRepository, Transaction, UnitOfWork,
 };
 
 /// 内存数据库中的全部数据。事务开始时整体克隆为工作副本，提交时整体替换。
@@ -28,6 +30,10 @@ struct FakeData {
     settings: BTreeMap<String, String>,
     /// 每个本地日期的 Today 手动顺序。
     today_order: BTreeMap<NaiveDate, Vec<ItemId>>,
+    /// Item 来源。
+    sources: Vec<Source>,
+    /// 附件记录。
+    attachments: Vec<Attachment>,
 }
 
 /// 内存数据库的共享状态。
@@ -75,6 +81,16 @@ impl FakeUnitOfWork {
     /// 直接放入一个已存在的 Item，跳过 Use Case，用于准备测试数据。
     pub fn seed(&self, item: Item) {
         self.lock().data.items.insert(item.id(), item);
+    }
+
+    /// 已提交的全部来源记录，供测试断言。
+    pub fn committed_sources(&self) -> Vec<Source> {
+        self.lock().data.sources.clone()
+    }
+
+    /// 已提交的全部附件记录，供测试断言。
+    pub fn committed_attachments(&self) -> Vec<Attachment> {
+        self.lock().data.attachments.clone()
     }
 
     /// 已提交的某日 Today 手动顺序，供测试断言。
@@ -127,6 +143,16 @@ impl Transaction for FakeTransaction {
 
     /// 返回 Today 顺序 Repository 视图。
     fn today_order(&mut self) -> &mut dyn TodayOrderRepository {
+        self
+    }
+
+    /// 返回来源 Repository 视图。
+    fn sources(&mut self) -> &mut dyn SourceRepository {
+        self
+    }
+
+    /// 返回附件 Repository 视图。
+    fn attachments(&mut self) -> &mut dyn AttachmentRepository {
         self
     }
 
@@ -335,5 +361,64 @@ impl EventPublisher for RecordingPublisher {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .push(event);
+    }
+}
+
+impl FakeTransaction {
+    /// 外键检查：Item 必须存在，与真实数据库的约束一致。
+    fn require_item(&self, id: ItemId) -> Result<(), StorageError> {
+        if self.working.items.contains_key(&id) {
+            Ok(())
+        } else {
+            Err(StorageError::Constraint(
+                "FOREIGN KEY constraint failed".to_owned(),
+            ))
+        }
+    }
+}
+
+#[async_trait]
+impl SourceRepository for FakeTransaction {
+    /// 插入来源。
+    async fn insert(&mut self, source: &Source) -> Result<(), StorageError> {
+        self.require_item(source.item_id)?;
+        self.working.sources.push(source.clone());
+        Ok(())
+    }
+
+    /// 某个 Item 的来源，按捕获时间升序。
+    async fn list_for_item(&mut self, item_id: ItemId) -> Result<Vec<Source>, StorageError> {
+        let mut found: Vec<Source> = self
+            .working
+            .sources
+            .iter()
+            .filter(|s| s.item_id == item_id)
+            .cloned()
+            .collect();
+        found.sort_by_key(|s| s.captured_at);
+        Ok(found)
+    }
+}
+
+#[async_trait]
+impl AttachmentRepository for FakeTransaction {
+    /// 插入附件。
+    async fn insert(&mut self, attachment: &Attachment) -> Result<(), StorageError> {
+        self.require_item(attachment.item_id)?;
+        self.working.attachments.push(attachment.clone());
+        Ok(())
+    }
+
+    /// 某个 Item 的附件，按添加时间升序。
+    async fn list_for_item(&mut self, item_id: ItemId) -> Result<Vec<Attachment>, StorageError> {
+        let mut found: Vec<Attachment> = self
+            .working
+            .attachments
+            .iter()
+            .filter(|a| a.item_id == item_id)
+            .cloned()
+            .collect();
+        found.sort_by_key(|a| a.added_at);
+        Ok(found)
     }
 }

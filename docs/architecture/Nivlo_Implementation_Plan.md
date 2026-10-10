@@ -115,7 +115,7 @@ Phase 12 Backlog                        → 未排期
 | | 1.10 | 主窗口外壳与 Today 视图 | ✅ |
 | | 1.11 | 常驻性能基线验收 | ⬜ |
 | **P2** | 2.1 | CaptureInput 模型与 Normalizer | ⬜ |
-| | 2.2 | Source 与 Attachment 持久化 | ⬜ |
+| | 2.2 | Source 与 Attachment 持久化 | 🟨 |
 | | 2.3 | Capture Use Case 与默认规则 | ⬜ |
 | | 2.4 | 悬浮窗拖拽捕获（WebView Drop） | ⬜ |
 | | 2.5 | 粘贴捕获 | ⬜ |
@@ -181,7 +181,7 @@ Phase 12 Backlog                        → 未排期
 | ID | 事项 | 推荐方案 | 需在…前定稿 | 状态 |
 |---|---|---|---|---|
 | D-01 | **Today 的定义** | Today = `type=Todo` 且未完成且计划日期 ≤ 今天（过期未完成自动滚入 Today，带「逾期」标记）；外加计划日期 = 今天的 Tip。悬浮窗数字 = Today 中未完成 Todo 数。 | 1.4 | 已决定（2026-10-10，采用推荐方案） |
-| D-02 | **Inbox 的定义** | 采用显式字段 `in_inbox`（布尔）。Capture 产生的 Item 置为 true；任何整理动作（设置计划日期、设置项目、转换类型、手动「移出 Inbox」）置为 false；「推迟到 Inbox」置为 true 并清除计划日期。不采用「无日期且无项目即 Inbox」的推导规则，避免 Note 永远滞留 Inbox。 | 2.2 | 待定 |
+| D-02 | **Inbox 的定义** | 采用显式字段 `in_inbox`（布尔）。Capture 产生的 Item 置为 true；任何整理动作（设置计划日期、设置项目、转换类型、手动「移出 Inbox」）置为 false；「推迟到 Inbox」置为 true 并清除计划日期。不采用「无日期且无项目即 Inbox」的推导规则，避免 Note 永远滞留 Inbox。 | 2.2 | 已决定（2026-10-10，采用推荐方案） |
 | D-03 | **时间存储模型** | 架构文档使用 `scheduled_at: DateTime`，产品文档使用 `scheduled_date`。推荐：计划与截止拆为「本地日期 + 可选本地时间」（`scheduled_date`、`scheduled_time`、`due_date`、`due_time`），按用户本地日历语义解释（跨时区不漂移）；`reminder_at` 存 UTC 时间点。需同步更新架构文档 §8、§31。 | 0.5 | 已决定（2026-10-09，采用推荐方案） |
 | D-04 | **ID 与时间戳格式** | ID 使用 UUIDv7（TEXT）；`created_at` 等审计时间戳存 UTC（RFC 3339 TEXT 或 Unix ms INTEGER，二选一并全库统一）。 | 0.5 | 已决定（2026-10-09：ID 为 UUIDv7 TEXT；审计时间戳为 UTC RFC 3339 TEXT，全库统一） |
 | D-05 | **Project Order** | 产品文档 §21 要求区分 Today Order 与 Project Order。推荐 MVP 中 Project 视图按 优先级 → 计划日期 → 创建时间 排序，手动 Project Order 推迟到 MVP 后（新增 `project_item_order` 表）。 | 3.3 | 待定 |
@@ -556,7 +556,7 @@ Phase 12 Backlog                        → 未排期
   - [x] 拖到 Tomorrow：计划日期变为明天，从 Today 消失，次日（FakeClock）出现在 Today。
   - [x] 推迟后 Today 顺序记录被正确清理。
   - [x] 推迟操作支持 Undo。
-- **完成记录**：2026-10-10 完成（「推迟到 Inbox」仍待 2.2 补齐 `in_inbox`）。
+- **完成记录**：2026-10-10 完成（「推迟到 Inbox」已在 2.2 随 `in_inbox` 补齐）。
   - 自动化：Application 测试（推迟到明天后计划日期变化、顺序表里只剩没被推迟的待办、只发 `ScheduleChanged`；Today / Tomorrow / Later（下周一）/ Inbox / Exact 相对本地"今天"解析；保留原有的具体时间；`next_monday_after` 周五 / 周日 / 周一）；IPC 测试 `reschedule_removes_a_todo_from_today_and_exact_restores_it`（离开 Today、`exact` 精确恢复、非法日期 `INVALID_INPUT`）；`TodayService` 既有的跨午夜测试保证次日（FakeClock）计划为明天的待办出现在 Today；前端 `applyPostponed` 纯逻辑测试与 `postpone-todo.test.tsx`（「⋯」菜单推迟后立即消失并给出带「撤销」的 Toast；只有逾期的多一个「移到今天」；撤销 = 精确恢复计划 + 按改期前的顺序重新保存；失败回滚并提示）。
   - 设计说明：`reschedule_item(id, target)` 的目标是带标签的联合类型（`today` / `tomorrow` / `later` / `inbox` / `exact`），`exact` 兼作撤销；改期时在同一事务内用 `TodayOrderRepository::remove_item` 清掉该待办的全部顺序记录；撤销则由前端用改期前的完整顺序调用 `reorder_today` 把它放回原位。交互有三种入口：行尾「⋯」菜单（键盘可达）、整行右键菜单（新增 `ContextMenu` 基础控件，与 `Menu` 共用菜单项描述）、拖动待办时面板底部出现的「明天 / 下周一 / 收集箱」目标区域（dnd-kit droppable，指针在区域内以区域为准，否则按行排序）。
   - 未在真实窗口验证：拖到底部目标区域的手势只有代码实现，没有自动化测试（jsdom 无法模拟指针拖拽的几何关系），建议下次用真实应用手动确认一次。
@@ -643,7 +643,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 2.2 Source 与 Attachment 持久化
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：2.1；D-02
 - **目标**：每个 Item 天然支持 Source（产品文档 §18），文件默认引用而非复制（架构文档 §34）。
 - **任务**：
@@ -653,10 +653,12 @@ Phase 12 Backlog                        → 未排期
   - Integration 专属字段存入 `metadata_json`。
   - 补齐 1.8 中「推迟到 Inbox」的语义。
 - **验收标准**：
-  - [ ] Storage 测试：Source / Attachment CRUD 及级联删除。
-  - [ ] 删除 Item 时**绝不**删除用户的被引用文件（测试断言文件仍存在）。
+  - [x] Storage 测试：Source / Attachment CRUD 及级联删除。
+  - [x] 删除 Item 时**绝不**删除用户的被引用文件（测试断言文件仍存在）。
   - [ ] 被引用文件被移动或删除后，UI 显示「文件不存在」状态而不报错。
-- **完成记录**：—
+- **完成记录**：2026-10-10 主体完成；「UI 显示文件不存在」要等 2.7 的 Inbox 视图才有界面，保持 🟨。D-02 已决定（采用推荐方案）。
+  - 证据：`migrations/0002_item_source.sql`（`items.in_inbox` + 部分索引、`item_sources`、`attachments`，均随 Item 级联删除）；Domain：`Item` 新增 `in_inbox`，规则按 D-02——安排日期 / 归入项目 / 真正转换类型 / 手动 `leave_inbox` 会离开 Inbox，清除日期或类型没变不算整理，`move_to_inbox` 清除日期并标记待整理（6 个新测试，含快照往返）；Storage 集成测试：`in_inbox` 持久化并被整理清除、Source / Attachment 往返且乱序插入按时间读取、Item 不存在时外键拒绝（`Constraint`）、**删除 Item 级联删除记录但被引用的用户文件原封不动**（测试里读回文件内容，并断言引用类附件 `owns_file()` 为 false）；Application：`reschedule_item` 的 Inbox 目标现在真正设置 `in_inbox`（补齐 1.8 留下的语义），精确恢复撤销后离开 Inbox；`nivlo-capture::reference_exists` 检查被引用文件是否还在（移动 / 删除 / 不存在的盘符 / 空路径都返回 false 而不是报错）。`ItemDto` 新增 `inInbox`。
+  - 待办：没有原始路径的图片复制到 `attachments/` 的写入由 2.3 的 Capture Use Case 完成；Integration 专属字段已有 `metadata_json` 列。
 
 ### 2.3 Capture Use Case 与默认规则
 

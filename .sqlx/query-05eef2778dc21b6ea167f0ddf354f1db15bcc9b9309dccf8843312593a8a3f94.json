@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, item_id, kind, path, name, mime, size_bytes, added_at\n             FROM attachments WHERE item_id = ? ORDER BY added_at ASC, id ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "item_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "kind",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "path",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "mime",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "size_bytes",
+        "ordinal": 6,
+        "type_info": "Integer"
+      },
+      {
+        "name": "added_at",
+        "ordinal": 7,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "05eef2778dc21b6ea167f0ddf354f1db15bcc9b9309dccf8843312593a8a3f94"
+}

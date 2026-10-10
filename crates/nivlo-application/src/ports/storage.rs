@@ -13,8 +13,10 @@
 
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
+use nivlo_domain::attachment::Attachment;
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::{Item, ItemType};
+use nivlo_domain::source::Source;
 
 /// 存储 Adapter 返回的错误。
 ///
@@ -67,6 +69,12 @@ pub trait Transaction: Send {
 
     /// Today 手动顺序的 Repository 视图，与本事务共享同一个连接。
     fn today_order(&mut self) -> &mut dyn TodayOrderRepository;
+
+    /// Item 来源（Source）的 Repository 视图，与本事务共享同一个连接。
+    fn sources(&mut self) -> &mut dyn SourceRepository;
+
+    /// 附件（Attachment）的 Repository 视图，与本事务共享同一个连接。
+    fn attachments(&mut self) -> &mut dyn AttachmentRepository;
 
     /// 提交事务。
     ///
@@ -214,4 +222,40 @@ pub trait TodayOrderRepository: Send {
     ///
     /// 数据库不可用时返回对应的 [`StorageError`]。
     async fn remove_item(&mut self, id: ItemId) -> Result<(), StorageError>;
+}
+
+/// Item 来源的持久化（`item_sources` 表）。记录随 Item 级联删除。
+#[async_trait]
+pub trait SourceRepository: Send {
+    /// 插入一条来源记录。
+    ///
+    /// # Errors
+    ///
+    /// Item 不存在（外键）或数据库不可用时返回对应的 [`StorageError`]。
+    async fn insert(&mut self, source: &Source) -> Result<(), StorageError>;
+
+    /// 某个 Item 的全部来源，按捕获时间升序。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用或记录损坏时返回对应的 [`StorageError`]。
+    async fn list_for_item(&mut self, item_id: ItemId) -> Result<Vec<Source>, StorageError>;
+}
+
+/// 附件的持久化（`attachments` 表）。记录随 Item 级联删除，但**绝不**触碰磁盘上被引用的文件。
+#[async_trait]
+pub trait AttachmentRepository: Send {
+    /// 插入一条附件记录。
+    ///
+    /// # Errors
+    ///
+    /// Item 不存在（外键）或数据库不可用时返回对应的 [`StorageError`]。
+    async fn insert(&mut self, attachment: &Attachment) -> Result<(), StorageError>;
+
+    /// 某个 Item 的全部附件，按添加时间升序。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用或记录损坏时返回对应的 [`StorageError`]。
+    async fn list_for_item(&mut self, item_id: ItemId) -> Result<Vec<Attachment>, StorageError>;
 }

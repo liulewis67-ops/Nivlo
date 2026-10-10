@@ -50,11 +50,11 @@ async fn migrates_from_empty_and_is_idempotent() {
     assert_eq!(db.schema_version().await.unwrap(), None);
 
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(1));
+    assert_eq!(db.schema_version().await.unwrap(), Some(2));
 
     // 再次运行不报错，版本不变。
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(1));
+    assert_eq!(db.schema_version().await.unwrap(), Some(2));
 }
 
 #[tokio::test]
@@ -547,4 +547,176 @@ async fn reorder_today_replaces_the_stored_order_atomically_and_survives_reopen(
         [id(2), id(3), id(1)]
     );
     drop(dir);
+}
+
+/// 一个在 Inbox 里的 Note。
+fn inbox_note(n: u128) -> Item {
+    let mut new = NewItem::new(ItemType::Note, "网页");
+    new.in_inbox = true;
+    Item::create(id(n), new, t(8, 0)).unwrap().0
+}
+
+/// 一条来源记录。
+fn source_for(item: ItemId, n: u128) -> nivlo_domain::source::Source {
+    nivlo_domain::source::Source {
+        id: nivlo_domain::id::SourceId::from_uuid(Uuid::from_u128(1000 + n)),
+        item_id: item,
+        source_type: nivlo_domain::source::SourceType::new("web"),
+        source_app: Some("Chrome".into()),
+        source_url: Some("https://example.com/a".into()),
+        source_path: None,
+        original_title: Some("示例页面".into()),
+        metadata_json: Some(r#"{"k":"v"}"#.into()),
+        captured_at: t(9, n as u32),
+    }
+}
+
+/// 一条附件记录。
+fn attachment_for(
+    item: ItemId,
+    n: u128,
+    kind: nivlo_domain::attachment::AttachmentKind,
+    path: &str,
+) -> nivlo_domain::attachment::Attachment {
+    nivlo_domain::attachment::Attachment {
+        id: nivlo_domain::id::AttachmentId::from_uuid(Uuid::from_u128(2000 + n)),
+        item_id: item,
+        kind,
+        path: path.into(),
+        name: "报告.pdf".into(),
+        mime: Some("application/pdf".into()),
+        size_bytes: Some(4096),
+        added_at: t(10, n as u32),
+    }
+}
+
+#[tokio::test]
+async fn in_inbox_is_stored_and_cleared_by_organizing() {
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&inbox_note(1)).await.unwrap();
+    tx.items()
+        .insert(&simple(2, ItemType::Todo, "普通待办", t(8, 1)))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert!(tx.items().get(id(1)).await.unwrap().unwrap().in_inbox());
+    assert!(!tx.items().get(id(2)).await.unwrap().unwrap().in_inbox());
+
+    // 安排日期后离开 Inbox，并且持久化。
+    let mut note = tx.items().get(id(1)).await.unwrap().unwrap();
+    note.set_scheduled(
+        Some(DatePoint::all_day(
+            NaiveDate::from_ymd_opt(2026, 10, 10).unwrap(),
+        )),
+        t(11, 0),
+    );
+    tx.items().update(&note).await.unwrap();
+    tx.commit().await.unwrap();
+    let mut tx = db.begin().await.unwrap();
+    assert!(!tx.items().get(id(1)).await.unwrap().unwrap().in_inbox());
+}
+
+#[tokio::test]
+async fn source_and_attachment_records_round_trip_in_order() {
+    use nivlo_domain::attachment::AttachmentKind;
+
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&inbox_note(1)).await.unwrap();
+    // 故意乱序插入，读取必须按时间升序。
+    tx.sources().insert(&source_for(id(1), 2)).await.unwrap();
+    tx.sources().insert(&source_for(id(1), 1)).await.unwrap();
+    tx.attachments()
+        .insert(&attachment_for(id(1), 2, AttachmentKind::Stored, "a/b.png"))
+        .await
+        .unwrap();
+    tx.attachments()
+        .insert(&attachment_for(
+            id(1),
+            1,
+            AttachmentKind::Reference,
+            r"C:\用户\文档\报告.pdf",
+        ))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let sources = tx.sources().list_for_item(id(1)).await.unwrap();
+    assert_eq!(sources, vec![source_for(id(1), 1), source_for(id(1), 2)]);
+    let attachments = tx.attachments().list_for_item(id(1)).await.unwrap();
+    assert_eq!(attachments.len(), 2);
+    assert_eq!(attachments[0].kind, AttachmentKind::Reference);
+    assert_eq!(attachments[0].path, r"C:\用户\文档\报告.pdf");
+    assert_eq!(attachments[1].kind, AttachmentKind::Stored);
+    assert_eq!(attachments[0].size_bytes, Some(4096));
+    assert!(tx.sources().list_for_item(id(99)).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn sources_and_attachments_require_an_existing_item() {
+    use nivlo_domain::attachment::AttachmentKind;
+
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    let source = tx.sources().insert(&source_for(id(404), 1)).await;
+    assert!(matches!(source, Err(StorageError::Constraint(_))));
+    let attachment = tx
+        .attachments()
+        .insert(&attachment_for(id(404), 1, AttachmentKind::Reference, "x"))
+        .await;
+    assert!(matches!(attachment, Err(StorageError::Constraint(_))));
+}
+
+#[tokio::test]
+async fn deleting_an_item_cascades_records_but_never_touches_the_referenced_file() {
+    use nivlo_domain::attachment::AttachmentKind;
+
+    let (dir, path, db) = new_db().await;
+    // 用户自己的文件：被引用，不是 Nivlo 的。
+    let user_file = dir.path().join("用户的 报告.pdf");
+    std::fs::write(&user_file, b"%PDF-1.7 precious").unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&inbox_note(1)).await.unwrap();
+    let reference = attachment_for(
+        id(1),
+        1,
+        AttachmentKind::Reference,
+        &user_file.to_string_lossy(),
+    );
+    tx.attachments().insert(&reference).await.unwrap();
+    tx.sources().insert(&source_for(id(1), 1)).await.unwrap();
+    tx.commit().await.unwrap();
+
+    // 目前没有「删除 Item」的 Use Case（3.5），直接用 SQL 触发数据库的级联。
+    let mut conn = SqliteConnectOptions::new()
+        .filename(&path)
+        .foreign_keys(true)
+        .connect()
+        .await
+        .unwrap();
+    sqlx::query("DELETE FROM items WHERE id = ?")
+        .bind(id(1).to_string())
+        .execute(&mut conn)
+        .await
+        .unwrap();
+    conn.close().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert!(tx.sources().list_for_item(id(1)).await.unwrap().is_empty());
+    assert!(
+        tx.attachments()
+            .list_for_item(id(1))
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    // 记录没了，但用户的文件原封不动。
+    assert_eq!(std::fs::read(&user_file).unwrap(), b"%PDF-1.7 precious");
+    // 领域规则：引用类附件不归 Nivlo 所有，只有复制进 attachments/ 的才会被清理。
+    assert!(!reference.owns_file());
 }

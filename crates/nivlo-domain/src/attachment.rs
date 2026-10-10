@@ -19,6 +19,27 @@ pub enum AttachmentKind {
     Stored,
 }
 
+impl AttachmentKind {
+    /// 存储用的文本形式。
+    #[must_use]
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Reference => "reference",
+            Self::Stored => "stored",
+        }
+    }
+
+    /// 解析 [`AttachmentKind::as_str`] 写出的文本；不认识时返回 `None`。
+    #[must_use]
+    pub fn parse(text: &str) -> Option<Self> {
+        match text {
+            "reference" => Some(Self::Reference),
+            "stored" => Some(Self::Stored),
+            _ => None,
+        }
+    }
+}
+
 /// Item 的附件记录。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Attachment {

@@ -575,3 +575,33 @@ fn next_monday_is_strictly_after_the_given_day() {
     assert_eq!(next_monday_after(day(10, 11)), day(10, 12)); // 周日
     assert_eq!(next_monday_after(day(10, 12)), day(10, 19)); // 周一
 }
+
+#[tokio::test]
+async fn rescheduling_to_the_inbox_marks_it_pending_and_a_dated_restore_organizes_it_again() {
+    use super::RescheduleTarget;
+
+    let f = fixture();
+    let todo = f
+        .service
+        .quick_create(ItemType::Todo, "写周报")
+        .await
+        .unwrap();
+    let original = todo.scheduled();
+
+    let moved = f
+        .service
+        .reschedule_item(todo.id(), RescheduleTarget::Inbox)
+        .await
+        .unwrap();
+    assert!(moved.in_inbox());
+    assert_eq!(moved.scheduled(), None);
+
+    // 撤销：精确恢复原来的计划，同时离开 Inbox。
+    let restored = f
+        .service
+        .reschedule_item(todo.id(), RescheduleTarget::Exact(original))
+        .await
+        .unwrap();
+    assert!(!restored.in_inbox());
+    assert_eq!(restored.scheduled(), original);
+}

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE type = 'todo' AND archived_at IS NULL\n               AND completed_at IS NOT NULL AND completed_at >= ? AND completed_at < ?\n             ORDER BY completed_at ASC, id ASC",
+  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE type = 'todo' AND status = 'open' AND archived_at IS NULL\n               AND scheduled_date IS NOT NULL AND scheduled_date <= ?\n             ORDER BY scheduled_date ASC, created_at ASC, id ASC",
   "describe": {
     "columns": [
       {
@@ -69,28 +69,33 @@
         "type_info": "Text"
       },
       {
-        "name": "created_at",
+        "name": "in_inbox",
         "ordinal": 13,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
-        "name": "updated_at",
+        "name": "created_at",
         "ordinal": 14,
         "type_info": "Text"
       },
       {
-        "name": "completed_at",
+        "name": "updated_at",
         "ordinal": 15,
         "type_info": "Text"
       },
       {
-        "name": "archived_at",
+        "name": "completed_at",
         "ordinal": 16,
+        "type_info": "Text"
+      },
+      {
+        "name": "archived_at",
+        "ordinal": 17,
         "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 2
+      "Right": 1
     },
     "nullable": [
       false,
@@ -108,9 +113,10 @@
       true,
       false,
       false,
+      false,
       true,
       true
     ]
   },
-  "hash": "e68bcba21c4e59f6954aa0e74d2b91fb2224e1a81e250b197a25a15c3539f1ff"
+  "hash": "59b9de6ad1345973247dba356a925a22422935601621e05434a1280e1413c9c5"
 }

@@ -34,7 +34,7 @@ pub enum RescheduleTarget {
     Tomorrow,
     /// 稍后：下周一。
     Later,
-    /// 收集箱：清除计划日期（2.2 之后同时标记 `in_inbox`）。
+    /// 收集箱：清除计划日期并标记为待整理（`in_inbox`，D-02）。
     Inbox,
     /// 精确设置（或清除）计划，用于撤销。
     Exact(Option<DatePoint>),
@@ -189,8 +189,8 @@ impl ItemService {
     /// 改期（推迟）：把计划日期移到目标日期，并让 Item 离开 Today 的手动顺序。
     ///
     /// 目标为 Today / Tomorrow / Later 时保留原有的具体时间（如果有）；Later 是**下周一**
-    /// （严格晚于今天的下一个周一，后续可配置）；Inbox 目前只清除计划日期，等 2.2 引入
-    /// `in_inbox` 字段后补齐。`Exact` 用于撤销：原样恢复之前的计划。
+    /// （严格晚于今天的下一个周一，后续可配置）；Inbox 清除计划日期并标记为待整理
+    /// （`in_inbox`，D-02）。`Exact` 用于撤销：原样恢复之前的计划。
     ///
     /// # Errors
     ///
@@ -213,14 +213,16 @@ impl ItemService {
             Some(time) => DatePoint::at(date, time),
             None => DatePoint::all_day(date),
         };
-        let scheduled = match target {
-            RescheduleTarget::Today => Some(on(today)),
-            RescheduleTarget::Tomorrow => Some(on(today.succ_opt().unwrap_or(today))),
-            RescheduleTarget::Later => Some(on(next_monday_after(today))),
-            RescheduleTarget::Inbox => None,
-            RescheduleTarget::Exact(scheduled) => scheduled,
+        let event = match target {
+            RescheduleTarget::Today => item.set_scheduled(Some(on(today)), now),
+            RescheduleTarget::Tomorrow => {
+                item.set_scheduled(Some(on(today.succ_opt().unwrap_or(today))), now)
+            }
+            RescheduleTarget::Later => item.set_scheduled(Some(on(next_monday_after(today))), now),
+            // 放回收集箱：清除日期并标记为待整理（D-02）。
+            RescheduleTarget::Inbox => item.move_to_inbox(now),
+            RescheduleTarget::Exact(scheduled) => item.set_scheduled(scheduled, now),
         };
-        let event = item.set_scheduled(scheduled, now);
         tx.items().update(&item).await?;
         // 无论去哪儿，它在 Today 里的旧位置都不再有意义；回到 Today（撤销）时由调用方重新排序。
         tx.today_order().remove_item(id).await?;

@@ -3,6 +3,6 @@
 mod storage;
 
 pub use storage::{
-    ItemFilter, ItemRepository, SettingsRepository, StorageError, TodayOrderRepository,
-    Transaction, UnitOfWork,
+    AttachmentRepository, ItemFilter, ItemRepository, SettingsRepository, SourceRepository,
+    StorageError, TodayOrderRepository, Transaction, UnitOfWork,
 };

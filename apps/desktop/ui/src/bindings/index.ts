@@ -277,6 +277,8 @@ export type ItemDto = {
 	reminderAt: string | null,
 	/**  所属项目 ID。 */
 	projectId: string | null,
+	/**  是否在 Inbox 里等待整理。 */
+	inInbox: boolean,
 	/**  创建时间（RFC 3339，UTC）。 */
 	createdAt: string,
 	/**  最近更新时间。 */

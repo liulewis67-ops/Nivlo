@@ -254,6 +254,8 @@ pub struct ItemDto {
     pub reminder_at: Option<String>,
     /// 所属项目 ID。
     pub project_id: Option<String>,
+    /// 是否在 Inbox 里等待整理。
+    pub in_inbox: bool,
     /// 创建时间（RFC 3339，UTC）。
     pub created_at: String,
     /// 最近更新时间。
@@ -279,6 +281,7 @@ impl From<&Item> for ItemDto {
             due: item.due().map(Into::into),
             reminder_at: item.reminder_at().map(format_utc),
             project_id: item.project_id().map(|p| p.to_string()),
+            in_inbox: item.in_inbox(),
             created_at: format_utc(item.created_at()),
             updated_at: format_utc(item.updated_at()),
             completed_at: item.completed_at().map(format_utc),

@@ -36,6 +36,8 @@ pub struct NewItem {
     pub reminder_at: Option<DateTime<Utc>>,
     /// 所属项目。
     pub project_id: Option<ProjectId>,
+    /// 是否放进 Inbox（实施计划 D-02）：Capture 产生的 Item 为 `true`，等待整理。
+    pub in_inbox: bool,
 }
 
 impl NewItem {
@@ -51,6 +53,7 @@ impl NewItem {
             due: None,
             reminder_at: None,
             project_id: None,
+            in_inbox: false,
         }
     }
 }
@@ -86,6 +89,8 @@ pub struct ItemSnapshot {
     pub reminder_at: Option<DateTime<Utc>>,
     /// 所属项目。
     pub project_id: Option<ProjectId>,
+    /// 是否在 Inbox 里等待整理。
+    pub in_inbox: bool,
     /// 创建时间。
     pub created_at: DateTime<Utc>,
     /// 最近更新时间。
@@ -122,6 +127,8 @@ pub struct Item {
     reminder_at: Option<DateTime<Utc>>,
     /// 所属项目。
     project_id: Option<ProjectId>,
+    /// 是否在 Inbox 里等待整理（D-02）：显式字段，而不是「没有日期也没有项目」的推导。
+    in_inbox: bool,
     /// 创建时间。
     created_at: DateTime<Utc>,
     /// 最近更新时间。
@@ -205,6 +212,7 @@ impl Item {
             due: new.due,
             reminder_at: new.reminder_at,
             project_id: new.project_id,
+            in_inbox: new.in_inbox,
             created_at: now,
             updated_at: now,
             completed_at: None,
@@ -263,6 +271,7 @@ impl Item {
             due,
             reminder_at: snapshot.reminder_at,
             project_id: snapshot.project_id,
+            in_inbox: snapshot.in_inbox,
             created_at: snapshot.created_at,
             updated_at: snapshot.updated_at,
             completed_at: snapshot.completed_at,
@@ -286,6 +295,7 @@ impl Item {
             due_time: self.due.and_then(|p| p.time()),
             reminder_at: self.reminder_at,
             project_id: self.project_id,
+            in_inbox: self.in_inbox,
             created_at: self.created_at,
             updated_at: self.updated_at,
             completed_at: self.completed_at,
@@ -340,6 +350,10 @@ impl Item {
         project_id: Option<ProjectId>,
         now: DateTime<Utc>,
     ) -> DomainEvent {
+        // 归入项目就是整理过了（D-02）；移出项目不改变 Inbox 状态。
+        if project_id.is_some() {
+            self.in_inbox = false;
+        }
         self.project_id = project_id;
         self.touch(now)
     }
@@ -352,9 +366,32 @@ impl Item {
         scheduled: Option<DatePoint>,
         now: DateTime<Utc>,
     ) -> DomainEvent {
+        // 安排了日期就是整理过了（D-02）；清除日期不改变 Inbox 状态。
+        if scheduled.is_some() {
+            self.in_inbox = false;
+        }
         self.scheduled = scheduled;
         self.updated_at = now;
         DomainEvent::ScheduleChanged { item_id: self.id }
+    }
+
+    /// 放回 Inbox：清除计划日期并标记为待整理（「推迟到 Inbox」，D-02）。
+    ///
+    /// 返回 [`DomainEvent::ScheduleChanged`]，Scheduler 据此取消已有的触发点。
+    pub fn move_to_inbox(&mut self, now: DateTime<Utc>) -> DomainEvent {
+        self.scheduled = None;
+        self.in_inbox = true;
+        self.updated_at = now;
+        DomainEvent::ScheduleChanged { item_id: self.id }
+    }
+
+    /// 手动移出 Inbox：用户明确表示「这条不用再整理了」（D-02）。
+    pub fn leave_inbox(&mut self, now: DateTime<Utc>) -> DomainEvent {
+        if self.in_inbox {
+            self.in_inbox = false;
+            self.updated_at = now;
+        }
+        DomainEvent::ItemUpdated { item_id: self.id }
     }
 
     /// 修改（或清除）截止日期——"最晚什么时候必须完成"。
@@ -414,6 +451,8 @@ impl Item {
                 self.completed_at = None;
             }
             self.item_type = new_type;
+            // 转换类型就是整理过了（D-02）。
+            self.in_inbox = false;
             self.updated_at = now;
         }
         DomainEvent::ItemTypeChanged { item_id: self.id }
@@ -562,6 +601,11 @@ impl Item {
         self.updated_at
     }
 
+    /// 是否在 Inbox 里等待整理。
+    pub fn in_inbox(&self) -> bool {
+        self.in_inbox
+    }
+
     /// 完成时间。
     pub fn completed_at(&self) -> Option<DateTime<Utc>> {
         self.completed_at
@@ -627,6 +671,75 @@ mod tests {
         Item::create(id(), NewItem::new(item_type, "买牛奶"), t0())
             .unwrap()
             .0
+    }
+
+    /// 一个在 Inbox 里的 Note（Capture 的典型产物）。
+    fn inbox_note() -> Item {
+        let mut new = NewItem::new(ItemType::Note, "网页");
+        new.in_inbox = true;
+        Item::create(id(), new, t0()).unwrap().0
+    }
+
+    #[test]
+    fn items_are_not_in_the_inbox_unless_asked() {
+        assert!(!item(ItemType::Todo).in_inbox());
+        assert!(inbox_note().in_inbox());
+    }
+
+    #[test]
+    fn organizing_an_inbox_item_moves_it_out() {
+        // 安排日期。
+        let mut scheduled = inbox_note();
+        let date = chrono::NaiveDate::from_ymd_opt(2026, 10, 10).unwrap();
+        scheduled.set_scheduled(Some(DatePoint::all_day(date)), t1());
+        assert!(!scheduled.in_inbox());
+
+        // 归入项目。
+        let mut projected = inbox_note();
+        projected.set_project(Some(ProjectId::from_uuid(Uuid::from_u128(7))), t1());
+        assert!(!projected.in_inbox());
+
+        // 转换类型。
+        let mut converted = inbox_note();
+        converted.change_type(ItemType::Todo, t1());
+        assert!(!converted.in_inbox());
+
+        // 手动移出。
+        let mut manual = inbox_note();
+        manual.leave_inbox(t1());
+        assert!(!manual.in_inbox());
+        assert_eq!(manual.updated_at(), t1());
+    }
+
+    #[test]
+    fn clearing_or_noop_changes_do_not_leave_the_inbox() {
+        let mut note = inbox_note();
+        note.set_scheduled(None, t1());
+        note.set_project(None, t1());
+        // 类型没变：不算整理。
+        note.change_type(ItemType::Note, t1());
+        assert!(note.in_inbox());
+    }
+
+    #[test]
+    fn moving_to_the_inbox_clears_the_date_and_marks_it_pending() {
+        let mut todo = item(ItemType::Todo);
+        let date = chrono::NaiveDate::from_ymd_opt(2026, 10, 10).unwrap();
+        todo.set_scheduled(Some(DatePoint::all_day(date)), t0());
+
+        let event = todo.move_to_inbox(t1());
+
+        assert_eq!(event, DomainEvent::ScheduleChanged { item_id: id() });
+        assert!(todo.in_inbox());
+        assert_eq!(todo.scheduled(), None);
+    }
+
+    #[test]
+    fn in_inbox_survives_a_snapshot_round_trip() {
+        let note = inbox_note();
+        let restored = Item::restore(note.snapshot()).unwrap();
+        assert!(restored.in_inbox());
+        assert_eq!(restored, note);
     }
 
     #[test]
