@@ -5,9 +5,11 @@ use std::sync::Arc;
 use nivlo_application::error::{AppError, ErrorAction, ErrorCode};
 use nivlo_platform::error::PlatformError;
 use tauri::{AppHandle, Runtime, State, WebviewWindow};
+use tauri_specta::Event;
 
 use crate::app::AppState;
 use crate::dto::{ExpandFloatingRequest, ExpandedLayoutDto, IpcError};
+use crate::events::MainViewRequestedEvent;
 use crate::windows::floating::FloatingHandle;
 use crate::windows::show_main_window;
 
@@ -25,6 +27,48 @@ pub async fn open_main<R: Runtime>(app: AppHandle<R>) -> Result<(), IpcError> {
         app_error.action = Some(ErrorAction::OpenDiagnostics);
         IpcError::from(app_error)
     })
+}
+
+/// 主窗口里可以被直接打开的视图。
+const MAIN_VIEWS: &[&str] = &["inbox", "today", "calendar", "notes", "projects"];
+
+/// 打开主窗口并切换到指定视图（悬浮窗上的收集箱入口）。
+///
+/// 视图先记在应用状态里，再通知已经在运行的主窗口：主窗口可能刚刚才被创建、还没来得及监听事件，
+/// 这时它会在启动时取走记下的视图。
+///
+/// # Errors
+///
+/// 视图名不认识返回 `INVALID_INPUT`；窗口创建或显示失败返回 `WINDOW_UNAVAILABLE`。
+#[tauri::command]
+#[specta::specta]
+pub async fn open_main_at<R: Runtime>(
+    app: AppHandle<R>,
+    state: State<'_, AppState>,
+    view: String,
+) -> Result<(), IpcError> {
+    if !MAIN_VIEWS.contains(&view.as_str()) {
+        return Err(IpcError::from(AppError::new(
+            ErrorCode::InvalidInput,
+            format!("不认识的视图：{view}"),
+        )));
+    }
+    state.runtime.set_pending_main_view(view.clone());
+    open_main(app.clone()).await?;
+    let event = MainViewRequestedEvent { view };
+    if let Err(error) = event.emit_to(&app, crate::windows::MAIN_WINDOW_LABEL) {
+        tracing::warn!(event = "main_view_event_failed", %error, "通知主窗口切换视图失败");
+    }
+    Ok(())
+}
+
+/// 取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。
+#[tauri::command]
+#[specta::specta]
+pub async fn take_pending_main_view(
+    state: State<'_, AppState>,
+) -> Result<Option<String>, IpcError> {
+    Ok(state.runtime.take_pending_main_view())
 }
 
 /// 退出应用：触发有序退出流程（后台任务停止、数据库关闭、日志刷写）。仅主窗口可调用。

@@ -69,7 +69,7 @@ describe("FloatingRoot", () => {
     expect(ipc.lastExpand).toEqual({ width: PANEL_WIDTH_PX, height: PANEL_HEIGHT_PX });
   });
 
-  it("Hover 展开与收起期间不再发起业务数据 IPC：Today 只在启动时取一次，之后只有窗口几何命令", async () => {
+  it("Hover 展开与收起期间不再发起业务数据 IPC：Today 与 Inbox 数量只在启动时各取一次，之后只有窗口几何命令", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
 
@@ -78,7 +78,7 @@ describe("FloatingRoot", () => {
     fireEvent.pointerLeave(root());
     await advance(HOVER_LEAVE_DELAY_MS);
 
-    expect(ipc.calls).toEqual(["getToday", "expandFloating", "collapseFloating"]);
+    expect(ipc.calls).toEqual(["getToday", "getInboxCount", "expandFloating", "collapseFloating"]);
   });
 
   it("鼠标只是路过（展开前就离开）不会发起任何 IPC", async () => {
@@ -90,7 +90,7 @@ describe("FloatingRoot", () => {
     fireEvent.pointerLeave(root());
     await advance(5000);
 
-    expect(ipc.calls).toEqual(["getToday"]);
+    expect(ipc.calls).toEqual(["getToday", "getInboxCount"]);
   });
 
   it("离开后延迟收起，再次进入会取消收起", async () => {
@@ -105,7 +105,7 @@ describe("FloatingRoot", () => {
     await advance(5000);
 
     expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
-    expect(ipc.calls).toEqual(["getToday", "expandFloating"]);
+    expect(ipc.calls).toEqual(["getToday", "getInboxCount", "expandFloating"]);
   });
 
   it("面板收起后回到徽标", async () => {
@@ -148,7 +148,7 @@ describe("FloatingRoot", () => {
     await advance(1);
 
     expect(screen.queryByRole("region", { name: "今日面板" })).not.toBeInTheDocument();
-    expect(ipc.calls).toEqual(["getToday", "expandFloating", "collapseFloating"]);
+    expect(ipc.calls).toEqual(["getToday", "getInboxCount", "expandFloating", "collapseFloating"]);
   });
 
   it("补发离开之后指针又在窗口内移动，会取消收起", async () => {
@@ -254,7 +254,7 @@ describe("FloatingRoot", () => {
     await advance(0);
 
     // 除了 Today 的刷新之外，调用顺序是：展开 → 申请焦点 → 创建 → 归还焦点。
-    expect(ipc.calls.filter((call) => call !== "getToday")).toEqual([
+    expect(ipc.calls.filter((call) => call !== "getToday" && call !== "getInboxCount")).toEqual([
       "expandFloating",
       "beginFloatingInput",
       "quickCreate",

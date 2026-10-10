@@ -4,7 +4,7 @@ import { FEEDBACK_VISIBLE_MS } from "@/features/capture";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import { FloatingRoot } from "./FloatingRoot";
-import { HOVER_LEAVE_DELAY_MS } from "./model/floating-machine";
+import { HOVER_ENTER_DELAY_MS, HOVER_LEAVE_DELAY_MS } from "./model/floating-machine";
 
 /** 悬浮窗根元素。 */
 function root(): HTMLElement {
@@ -154,5 +154,28 @@ describe("拖放捕获（悬浮窗）", () => {
     fireEvent.dragEnter(root(), { dataTransfer: transfer({}) });
     await advance(0);
     expect(screen.queryByText("松手即可收集")).not.toBeInTheDocument();
+  });
+
+  it("面板上显示收集箱数量，点击后请求主窗口打开收集箱", async () => {
+    const ipc = createMemoryIpc();
+    await ipc.capture({
+      input: { kind: "text", text: "待整理" },
+      origin: "drop",
+      sourceApplication: null,
+    });
+    renderWithProviders(<FloatingRoot />, ipc);
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS);
+
+    fireEvent.click(screen.getByRole("button", { name: "收集箱 1" }));
+    await advance(0);
+    expect(ipc.openedViews).toEqual(["inbox"]);
+  });
+
+  it("收集箱是空的时不显示入口", async () => {
+    renderWithProviders(<FloatingRoot />, createMemoryIpc());
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS);
+    expect(screen.queryByRole("button", { name: /^收集箱/ })).not.toBeInTheDocument();
   });
 });

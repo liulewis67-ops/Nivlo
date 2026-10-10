@@ -520,3 +520,41 @@ async fn inbox_lists_captures_with_sources_organizes_in_batch_and_undoes() {
     .unwrap_err();
     assert_eq!(bad["code"], "INVALID_INPUT");
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn main_view_handoff_validates_the_view_and_is_taken_only_once() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    // 没有请求时什么都没有。
+    assert!(
+        invoke(&webview, "take_pending_main_view", json!({}))
+            .unwrap()
+            .is_null()
+    );
+
+    // 不认识的视图被拒绝，并且不会留下待处理的请求。
+    let rejected = invoke(&webview, "open_main_at", json!({ "view": "settings" })).unwrap_err();
+    assert_eq!(rejected["code"], "INVALID_INPUT");
+    assert!(
+        invoke(&webview, "take_pending_main_view", json!({}))
+            .unwrap()
+            .is_null()
+    );
+
+    // 悬浮窗的请求记在状态里，主窗口取走一次之后就清除。
+    let state = tauri::Manager::state::<AppState>(&app);
+    state.runtime.set_pending_main_view("inbox".to_owned());
+    assert_eq!(
+        invoke(&webview, "take_pending_main_view", json!({})).unwrap(),
+        "inbox"
+    );
+    assert!(
+        invoke(&webview, "take_pending_main_view", json!({}))
+            .unwrap()
+            .is_null()
+    );
+}

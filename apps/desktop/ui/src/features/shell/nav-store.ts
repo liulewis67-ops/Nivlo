@@ -3,6 +3,19 @@ import { create } from "zustand";
 /** 主窗口里的视图。 */
 export type MainView = "inbox" | "today" | "calendar" | "notes" | "projects" | "dev";
 
+/** 可以由悬浮窗等外部请求直接打开的视图。 */
+const OPENABLE_VIEWS: readonly MainView[] = ["inbox", "today", "calendar", "notes", "projects"];
+
+/**
+ * 把后端传来的视图名变成 [`MainView`]；不认识的返回 `null`。
+ *
+ * @param name 视图名。
+ * @returns 视图，或 `null`。
+ */
+export function parseMainView(name: string): MainView | null {
+  return OPENABLE_VIEWS.find((view) => view === name) ?? null;
+}
+
 /** 导航 Store 的状态与动作。 */
 type NavState = {
   /** 当前显示的视图。 */

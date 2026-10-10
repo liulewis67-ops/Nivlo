@@ -101,6 +101,20 @@ export interface IpcClient {
   restoreItems(previous: PreviousStateDto[]): Promise<ItemDto[]>;
   /** 打开（必要时创建）并聚焦主窗口。 */
   openMain(): Promise<void>;
+  /** 打开主窗口并切换到指定视图（`inbox` / `today` / `calendar` / `notes` / `projects`）。 */
+  openMainAt(view: string): Promise<void>;
+  /**
+   * 取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `null`。
+   * 主窗口可能刚被创建、还没开始监听事件，所以请求先存在后端。
+   */
+  takePendingMainView(): Promise<string | null>;
+  /**
+   * 订阅「请求主窗口切换视图」事件（主窗口已经在运行时由它通知）。
+   *
+   * @param onRequested 事件到达时的回调，参数是目标视图。
+   * @returns 取消订阅的函数，组件卸载时必须调用。
+   */
+  subscribeMainViewRequested(onRequested: (view: string) => void): () => void;
   /** 退出应用：触发后端的有序退出流程。仅主窗口可调用。 */
   quitApp(): Promise<void>;
   /**
@@ -228,6 +242,12 @@ const tauriIpc: IpcClient = {
   openMain: async () => {
     await call("open_main", commands.openMain());
   },
+  openMainAt: async (view) => {
+    await call("open_main_at", commands.openMainAt(view));
+  },
+  takePendingMainView: () => call("take_pending_main_view", commands.takePendingMainView()),
+  subscribeMainViewRequested: (onRequested) =>
+    listenAll([() => events.mainViewRequested.listen((event) => onRequested(event.payload.view))]),
   quitApp: () => commands.quitApp(),
   startFloatingDrag: async () => {
     await call("start_floating_drag", commands.startFloatingDrag());
@@ -295,6 +315,9 @@ export const ipc: IpcClient = {
   organizeItems: (itemIds, action) => current.organizeItems(itemIds, action),
   restoreItems: (previous) => current.restoreItems(previous),
   openMain: () => current.openMain(),
+  openMainAt: (view) => current.openMainAt(view),
+  takePendingMainView: () => current.takePendingMainView(),
+  subscribeMainViewRequested: (onRequested) => current.subscribeMainViewRequested(onRequested),
   quitApp: () => current.quitApp(),
   startFloatingDrag: () => current.startFloatingDrag(),
   expandFloating: (width, height) => current.expandFloating(width, height),

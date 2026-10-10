@@ -68,6 +68,8 @@ macro_rules! bindings_builder {
                 $crate::commands::today::get_today,
                 $crate::commands::today::reorder_today,
                 $crate::commands::window::open_main::<$runtime>,
+                $crate::commands::window::open_main_at::<$runtime>,
+                $crate::commands::window::take_pending_main_view,
                 $crate::commands::window::quit_app::<$runtime>,
                 $crate::commands::window::start_floating_drag::<$runtime>,
                 $crate::commands::window::expand_floating,
@@ -81,6 +83,7 @@ macro_rules! bindings_builder {
                 $crate::events::FloatingPointerLeftEvent,
                 $crate::events::TodayReorderedEvent,
                 $crate::events::DayChangedEvent,
+                $crate::events::MainViewRequestedEvent,
                 $crate::events::QuickAddRequestedEvent
             ])
     };

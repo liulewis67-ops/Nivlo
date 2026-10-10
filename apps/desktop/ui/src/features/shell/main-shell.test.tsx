@@ -86,6 +86,20 @@ describe("MainShell", () => {
     expect(await screen.findByText("example.com/x")).toBeInTheDocument();
   });
 
+  it("悬浮窗请求打开收集箱：窗口刚创建时取走待处理请求，已在运行时响应事件", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    ipc.setPendingMainView("inbox");
+    renderWithProviders(<MainShell />, ipc);
+    expect(await screen.findByRole("heading", { name: "收集箱" })).toBeInTheDocument();
+
+    act(() => ipc.emitMainViewRequested("calendar"));
+    expect(await screen.findByRole("heading", { name: "日历" })).toBeInTheDocument();
+    // 不认识的视图被忽略。
+    act(() => ipc.emitMainViewRequested("nope"));
+    expect(screen.getByRole("heading", { name: "日历" })).toBeInTheDocument();
+  });
+
   it("显示进度，并在输入框里回车创建待办", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();

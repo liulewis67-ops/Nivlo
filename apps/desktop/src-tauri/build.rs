@@ -19,6 +19,8 @@ const COMMANDS: &[&str] = &[
     "get_today",
     "reorder_today",
     "open_main",
+    "open_main_at",
+    "take_pending_main_view",
     "quit_app",
     "start_floating_drag",
     "expand_floating",

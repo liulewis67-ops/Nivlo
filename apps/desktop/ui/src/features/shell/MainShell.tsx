@@ -1,11 +1,13 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { ipc } from "@/lib/ipc";
 import { DevConsole } from "@/features/dev-console";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { cx } from "@/lib/cx";
 import { ComingSoon } from "./ComingSoon";
 import { NavIcon } from "./NavIcons";
-import { useNavStore } from "./nav-store";
+import { parseMainView, useNavStore } from "./nav-store";
 import type { MainView } from "./nav-store";
 import { ThemeMenu } from "./ThemeMenu";
 
@@ -78,6 +80,24 @@ export function MainShell() {
   const setView = useNavStore((state) => state.setView);
   const remaining = useTodayQuery().data?.remainingCount ?? null;
   const inboxCount = useInboxCountQuery().data ?? null;
+
+  // 悬浮窗请求打开某个视图：窗口刚创建时从后端取走待处理的请求，已经在运行时由事件通知。
+  useEffect(() => {
+    let cancelled = false;
+    void ipc.takePendingMainView().then((name) => {
+      const requested = name === null ? null : parseMainView(name);
+      if (!cancelled && requested !== null) setView(requested);
+    });
+    const unsubscribe = ipc.subscribeMainViewRequested((name) => {
+      const requested = parseMainView(name);
+      if (requested !== null) setView(requested);
+      void ipc.takePendingMainView();
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [setView]);
 
   return (
     <div className="grid h-full grid-cols-[13.5rem_1fr] bg-bg">

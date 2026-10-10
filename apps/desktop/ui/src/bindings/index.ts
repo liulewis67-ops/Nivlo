@@ -152,6 +152,19 @@ export const commands = {
 	 */
 	openMain: () => typedError<null, IpcError>(__TAURI_INVOKE("open_main")),
 	/**
+	 *  打开主窗口并切换到指定视图（悬浮窗上的收集箱入口）。
+	 * 
+	 *  视图先记在应用状态里，再通知已经在运行的主窗口：主窗口可能刚刚才被创建、还没来得及监听事件，
+	 *  这时它会在启动时取走记下的视图。
+	 * 
+	 *  # Errors
+	 * 
+	 *  视图名不认识返回 `INVALID_INPUT`；窗口创建或显示失败返回 `WINDOW_UNAVAILABLE`。
+	 */
+	openMainAt: (view: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_main_at", { view })),
+	/**  取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。 */
+	takePendingMainView: () => typedError<string | null, IpcError>(__TAURI_INVOKE("take_pending_main_view")),
+	/**
 	 *  退出应用：触发有序退出流程（后台任务停止、数据库关闭、日志刷写）。仅主窗口可调用。
 	 * 
 	 *  托盘菜单上线（实施计划 1.9）后，托盘的 Quit 走同一条路径。
@@ -216,6 +229,7 @@ export const events = {
 	floatingPointerLeft: makeEvent<FloatingPointerLeftEvent>("floating_pointer_left"),
 	itemCreated: makeEvent<ItemCreatedEvent>("item_created"),
 	itemUpdated: makeEvent<ItemUpdatedEvent>("item_updated"),
+	mainViewRequested: makeEvent<MainViewRequestedEvent>("main_view_requested"),
 	quickAddRequested: makeEvent<QuickAddRequestedEvent>("quick_add_requested"),
 	todayReordered: makeEvent<TodayReorderedEvent>("today_reordered"),
 };
@@ -444,6 +458,12 @@ export type ListItemsRequest = {
 	includeArchived: boolean,
 	/**  最多返回的条数。 */
 	limit: number | null,
+};
+
+/**  悬浮窗请求主窗口切换到某个视图（如点击悬浮窗上的收集箱数量）。 */
+export type MainViewRequestedEvent = {
+	/**  目标视图：`inbox` / `today` / `calendar` / `notes` / `projects`。 */
+	view: string,
 };
 
 /**  对一批 Item 的整理动作（IPC 表示）。 */

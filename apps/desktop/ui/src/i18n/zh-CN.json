@@ -97,7 +97,12 @@
   },
   "today": {
     "badge": { "label": "今天还剩 {{count}} 项待办" },
-    "panel": { "label": "今日面板", "title": "今天", "openMain": "打开主窗口" },
+    "panel": {
+      "label": "今日面板",
+      "title": "今天",
+      "openMain": "打开主窗口",
+      "inbox": "收集箱 {{count}}"
+    },
     "section": { "todos": "待办", "tips": "提示", "completed": "今日已完成" },
     "overdue": "逾期",
     "page": {

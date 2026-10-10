@@ -52,6 +52,9 @@ pub struct RuntimeHandles {
     shutting_down: AtomicBool,
     /// 悬浮窗的行为句柄；窗口创建之后才能设置，因此用 `OnceLock`。
     floating: OnceLock<Arc<dyn FloatingHandle>>,
+    /// 悬浮窗请求主窗口打开的视图。主窗口可能还没创建 / 还没开始监听事件，所以先存在这里，
+    /// 由主窗口启动时取走（事件只负责通知已经在运行的主窗口）。
+    pending_main_view: Mutex<Option<String>>,
 }
 
 impl RuntimeHandles {
@@ -73,7 +76,23 @@ impl RuntimeHandles {
             log_guard: Mutex::new(log_guard),
             shutting_down: AtomicBool::new(false),
             floating: OnceLock::new(),
+            pending_main_view: Mutex::new(None),
         }
+    }
+
+    /// 记录主窗口应当打开的视图。
+    pub fn set_pending_main_view(&self, view: String) {
+        if let Ok(mut pending) = self.pending_main_view.lock() {
+            *pending = Some(view);
+        }
+    }
+
+    /// 取走（并清除）主窗口应当打开的视图。
+    pub fn take_pending_main_view(&self) -> Option<String> {
+        self.pending_main_view
+            .lock()
+            .ok()
+            .and_then(|mut pending| pending.take())
     }
 
     /// 设置悬浮窗的行为句柄；只能设置一次，重复设置被忽略。

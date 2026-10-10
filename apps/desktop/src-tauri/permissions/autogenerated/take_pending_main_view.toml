@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-take-pending-main-view"
+description = "Enables the take_pending_main_view command without any pre-configured scope."
+commands.allow = ["take_pending_main_view"]
+
+[[permission]]
+identifier = "deny-take-pending-main-view"
+description = "Denies the take_pending_main_view command without any pre-configured scope."
+commands.deny = ["take_pending_main_view"]

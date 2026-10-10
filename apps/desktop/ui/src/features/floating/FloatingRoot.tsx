@@ -4,6 +4,7 @@ import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { useDropCapture } from "@/features/capture";
+import { useInboxCountQuery } from "@/features/inbox";
 import { useTodayQuery } from "@/features/today";
 import { FloatingBadge } from "./FloatingBadge";
 import { TodayPanel } from "./TodayPanel";
@@ -33,6 +34,8 @@ export function FloatingRoot() {
   // 悬浮窗启动时取一次 Today 并保持缓存（staleTime 为无穷）；之后只由后端事件刷新。
   // 放在根组件而不是面板里：面板在 Hover 时才挂载，必须直接读缓存而不是在 Hover 时取数。
   useTodayQuery();
+  // Inbox 数量同理：启动时取一次，之后只由后端事件刷新。
+  useInboxCountQuery();
   const { state, send } = useFloatingMachine();
   const drop = useDropCapture(send);
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);

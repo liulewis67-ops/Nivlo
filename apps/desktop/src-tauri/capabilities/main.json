@@ -13,6 +13,7 @@
     "allow-quick-create",
     "allow-capture",
     "allow-undo-capture",
+    "allow-take-pending-main-view",
     "allow-list-inbox",
     "allow-get-inbox-count",
     "allow-organize-items",

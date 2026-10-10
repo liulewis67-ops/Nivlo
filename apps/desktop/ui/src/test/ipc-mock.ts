@@ -64,6 +64,12 @@ export interface MemoryIpc extends IpcClient {
   setToday(view: TodayViewDto): void;
   /** 模拟后端发出一次数据变更事件（`item_created` / `day_changed` 等）。 */
   emitDataChange(): void;
+  /** 按顺序记录的全部 `openMainAt` 请求的视图。 */
+  readonly openedViews: readonly string[];
+  /** 设置下一次 `takePendingMainView` 返回的视图（模拟主窗口启动时已有待处理请求）。 */
+  setPendingMainView(view: string | null): void;
+  /** 模拟已运行的主窗口收到「切换视图」事件。 */
+  emitMainViewRequested(view: string): void;
   /** 模拟托盘「快速添加」。 */
   emitQuickAddRequested(): void;
   /** 模拟后端看门狗补发"指针已离开"事件。 */
@@ -170,6 +176,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const listeners = new Set<() => void>();
   const pointerLeftListeners = new Set<() => void>();
   const quickAddListeners = new Set<() => void>();
+  const mainViewListeners = new Set<(view: string) => void>();
+  const openedViews: string[] = [];
+  let pendingMainView: string | null = null;
   let pendingFailure = options.failNextCreateWith;
   let openMainCalls = 0;
   let dragStarts = 0;
@@ -602,6 +611,33 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       calls.push("openMain");
       openMainCalls += 1;
       return Promise.resolve();
+    },
+    get openedViews() {
+      return openedViews;
+    },
+    setPendingMainView: (view: string | null) => {
+      pendingMainView = view;
+    },
+    emitMainViewRequested: (view: string) => {
+      for (const notify of mainViewListeners) notify(view);
+    },
+    openMainAt: (view: string) => {
+      calls.push("openMainAt");
+      openedViews.push(view);
+      openMainCalls += 1;
+      return Promise.resolve();
+    },
+    takePendingMainView: () => {
+      calls.push("takePendingMainView");
+      const view = pendingMainView;
+      pendingMainView = null;
+      return Promise.resolve(view);
+    },
+    subscribeMainViewRequested: (onRequested: (view: string) => void) => {
+      mainViewListeners.add(onRequested);
+      return () => {
+        mainViewListeners.delete(onRequested);
+      };
     },
     quitApp: () => Promise.resolve(),
     createItem: (request: CreateItemRequest) => {

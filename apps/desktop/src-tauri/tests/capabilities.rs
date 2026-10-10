@@ -23,6 +23,8 @@ const FLOATING_ALLOWED: &[&str] = &[
     // 撤销一次捕获（D-12 的 `undo` 在捕获场景的具体命令）。
     "undo_capture",
     "open_main",
+    // 悬浮窗请求主窗口打开某个视图（如收集箱）。
+    "open_main_at",
     "reschedule_item",
     "undo",
     "get_inbox_count",

@@ -17,6 +17,7 @@
     "allow-begin-floating-input",
     "allow-end-floating-input",
     "allow-open-main",
+    "allow-open-main-at",
     "allow-start-floating-drag",
     "allow-expand-floating",
     "allow-collapse-floating"

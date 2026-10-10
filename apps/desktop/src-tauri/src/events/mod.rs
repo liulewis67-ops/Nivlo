@@ -50,6 +50,15 @@ pub struct DayChangedEvent {
     pub date: String,
 }
 
+/// 悬浮窗请求主窗口切换到某个视图（如点击悬浮窗上的收集箱数量）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
+#[serde(rename_all = "camelCase")]
+#[tauri_specta(event_name = "main_view_requested")]
+pub struct MainViewRequestedEvent {
+    /// 目标视图：`inbox` / `today` / `calendar` / `notes` / `projects`。
+    pub view: String,
+}
+
 /// 托盘「快速添加」被点击：悬浮窗应展开并进入快速创建。
 #[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
 #[serde(rename_all = "camelCase")]

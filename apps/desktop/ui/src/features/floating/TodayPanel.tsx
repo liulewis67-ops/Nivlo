@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { CaptureFeedbackBar } from "@/features/capture";
 import type { CaptureFeedback } from "@/features/capture";
+import { useInboxCountQuery } from "@/features/inbox";
 import { QuickCreateForm } from "@/features/quick-create";
 import { TodayBoard, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
@@ -53,6 +54,7 @@ export function TodayPanel({
 }: TodayPanelProps) {
   const { t } = useTranslation();
   const view = useTodayQuery().data;
+  const inboxCount = useInboxCountQuery().data ?? 0;
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
     <section
@@ -69,9 +71,16 @@ export function TodayPanel({
             })}
           </span>
         </h2>
-        <Button size="sm" variant="ghost" onClick={() => void ipc.openMain()}>
-          {t("today.panel.openMain")}
-        </Button>
+        <div className="flex items-center gap-1">
+          {inboxCount > 0 && (
+            <Button size="sm" variant="ghost" onClick={() => void ipc.openMainAt("inbox")}>
+              {t("today.panel.inbox", { count: inboxCount })}
+            </Button>
+          )}
+          <Button size="sm" variant="ghost" onClick={() => void ipc.openMain()}>
+            {t("today.panel.openMain")}
+          </Button>
+        </div>
       </header>
       {view !== undefined &&
       (view.todos.length > 0 || view.tips.length > 0 || view.completed.length > 0) ? (
