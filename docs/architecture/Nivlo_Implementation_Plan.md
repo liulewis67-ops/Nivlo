@@ -107,7 +107,7 @@ Phase 12 Backlog                        → 未排期
 | | 1.2 | 悬浮窗 Window Behavior | 🟨 |
 | | 1.3 | Hover 展开与悬浮窗状态机 | ✅ |
 | | 1.4 | Today 查询与缓存 | ✅ |
-| | 1.5 | 悬浮窗 Quick Create | ⬜ |
+| | 1.5 | 悬浮窗 Quick Create | 🟨 |
 | | 1.6 | 完成 / Undo / Optimistic Update | ⬜ |
 | | 1.7 | Today Stack 排序 | ⬜ |
 | | 1.8 | 推迟操作 | ⬜ |
@@ -490,7 +490,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.5 悬浮窗 Quick Create
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：1.4
 - **目标**：实现产品文档 §6.1「先创建，再整理」。
 - **任务**：
@@ -503,7 +503,9 @@ Phase 12 Backlog                        → 未排期
   - [ ] 新 Todo 立即出现在 Today 末尾并已持久化（重启验证）。
   - [ ] Esc 返回 Expanded 状态且不创建任何数据。
   - [ ] 创建结束后焦点不残留在悬浮窗（再次 Hover 不抢焦点）。
-- **完成记录**：—
+- **完成记录**：2026-10-10 代码与自动化测试完成，真实窗口手动验收待补（保持 🟨）。
+  - 自动化：`quick_create` Command（IPC 测试：创建后重新打开同一数据目录仍可读取）；`begin_floating_input` / `end_floating_input`（控制器：失败时恢复不可聚焦、结束后还原前台窗口）；前端 `QuickCreateForm` 与 `quick-create` 模型测试（Enter 创建、Esc 取消不创建、空标题不可提交）；`FloatingRoot` 状态机接入 QuickCreate。
+  - 待手动验证（未勾选）：Hover 到 Enter 3 秒内完成的计时、重启验证、结束后焦点不残留。
 
 ### 1.6 完成 / Undo / Optimistic Update
 
