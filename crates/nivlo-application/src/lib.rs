@@ -15,6 +15,7 @@
 //! 禁止依赖：`tauri`、`sqlx`、`reqwest`、`rquickjs`、`windows`、任何 Adapter crate
 //! （参见后端规范 §3.1）。
 
+pub mod capture;
 pub mod day_change;
 pub mod error;
 pub mod event;

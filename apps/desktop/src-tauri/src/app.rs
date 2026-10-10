@@ -6,6 +6,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
+use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
 use nivlo_application::item::ItemService;
 use nivlo_application::settings::SettingsService;
@@ -26,6 +27,8 @@ pub struct ApplicationServices {
     pub settings: SettingsService,
     /// Today 视图的查询。
     pub today: TodayService,
+    /// 捕获（拖放 / 粘贴 / 快捷键 → Inbox）。
+    pub capture: CaptureService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

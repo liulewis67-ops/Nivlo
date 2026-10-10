@@ -8,6 +8,8 @@
     "allow-get-today",
     "allow-reorder-today",
     "allow-quick-create",
+    "allow-capture",
+    "allow-undo-capture",
     "allow-complete-item",
     "allow-reopen-item",
     "allow-reschedule-item",

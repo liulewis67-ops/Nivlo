@@ -175,6 +175,17 @@ impl Transaction for FakeTransaction {
 
 #[async_trait]
 impl ItemRepository for FakeTransaction {
+    /// 永久删除：级联删除来源与附件、顺序记录。
+    async fn delete(&mut self, id: ItemId) -> Result<(), StorageError> {
+        self.working.items.remove(&id);
+        self.working.sources.retain(|s| s.item_id != id);
+        self.working.attachments.retain(|a| a.item_id != id);
+        for ids in self.working.today_order.values_mut() {
+            ids.retain(|existing| *existing != id);
+        }
+        Ok(())
+    }
+
     /// 插入；ID 重复视为约束冲突。
     async fn insert(&mut self, item: &Item) -> Result<(), StorageError> {
         if self.working.items.contains_key(&item.id()) {
@@ -420,5 +431,78 @@ impl AttachmentRepository for FakeTransaction {
             .collect();
         found.sort_by_key(|a| a.added_at);
         Ok(found)
+    }
+}
+
+/// 内存版 [`AttachmentFiles`](crate::ports::AttachmentFiles)：记录"磁盘"上保存了哪些文件。
+#[derive(Debug, Default)]
+pub struct FakeAttachmentFiles {
+    /// 已保存的文件：相对路径 → 大小。
+    files: Mutex<BTreeMap<String, u64>>,
+    /// 为 `true` 时下一次保存失败（模拟磁盘已满），触发后复位。
+    fail_next_store: Mutex<bool>,
+}
+
+impl FakeAttachmentFiles {
+    /// 创建一个空的"磁盘"。
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// 当前保存的全部文件的相对路径。
+    pub fn stored_paths(&self) -> Vec<String> {
+        self.files
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .keys()
+            .cloned()
+            .collect()
+    }
+
+    /// 让下一次保存失败。
+    pub fn fail_next_store(&self) {
+        *self
+            .fail_next_store
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) = true;
+    }
+}
+
+#[async_trait]
+impl crate::ports::AttachmentFiles for FakeAttachmentFiles {
+    /// 记录一个以附件 ID 命名的文件。
+    async fn store_image(
+        &self,
+        id: nivlo_domain::id::AttachmentId,
+        image: &nivlo_domain::capture::ImageData,
+    ) -> Result<crate::ports::StoredFile, StorageError> {
+        {
+            let mut fail = self
+                .fail_next_store
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            if *fail {
+                *fail = false;
+                return Err(StorageError::Unavailable("模拟的磁盘已满".to_owned()));
+            }
+        }
+        let relative_path = format!("{id}.{}", image.format.extension());
+        let size_bytes = image.bytes.len() as u64;
+        self.files
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .insert(relative_path.clone(), size_bytes);
+        Ok(crate::ports::StoredFile {
+            relative_path,
+            size_bytes,
+        })
+    }
+
+    /// 删除记录；不存在不算错误。
+    async fn remove(&self, relative_path: &str) {
+        self.files
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(relative_path);
     }
 }

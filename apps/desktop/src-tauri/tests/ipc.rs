@@ -23,7 +23,7 @@ use tauri::{App, WebviewWindow, WebviewWindowBuilder};
 /// 在给定数据目录上启动一个带真实 SQLite 的 mock 应用。
 async fn app_on(paths: &AppPaths) -> App<MockRuntime> {
     let database = open_database(paths).await.unwrap();
-    let state: AppState = build_app_state(database, None);
+    let state: AppState = build_app_state(database, paths.attachments_dir(), None);
     mock_builder()
         .invoke_handler(nivlo_desktop_lib::bindings_builder!(MockRuntime).invoke_handler())
         .manage(state)
@@ -382,4 +382,65 @@ async fn reschedule_removes_a_todo_from_today_and_exact_restores_it() {
     )
     .unwrap_err();
     assert_eq!(bad["code"], "INVALID_INPUT");
+}
+
+/// 一个文本捕获请求。
+fn capture_text(text: &str) -> Value {
+    json!({ "request": {
+        "input": { "kind": "text", "text": text }, "origin": "quickAdd", "sourceApplication": null
+    }})
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn capture_is_fast_lands_in_the_inbox_and_undo_restores_the_database() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let list = || {
+        invoke(
+            &webview,
+            "list_items",
+            json!({ "request": { "itemType": null, "includeArchived": false, "limit": null } }),
+        )
+        .unwrap()
+    };
+    let before = list().as_array().unwrap().len();
+
+    // 文本 → Todo，进入 Inbox；测量从调用到返回的耗时（验收：< 100ms）。
+    let started = std::time::Instant::now();
+    let text = invoke(&webview, "capture", capture_text("  整理周报\n第二行  ")).unwrap();
+    let elapsed = started.elapsed();
+    eprintln!("capture latency: {elapsed:?}");
+    assert!(elapsed.as_millis() < 100, "capture took {elapsed:?}");
+    assert_eq!(text["items"][0]["itemType"], "todo");
+    assert_eq!(text["items"][0]["title"], "整理周报");
+    assert_eq!(text["items"][0]["inInbox"], true);
+
+    // 网址 → Note。
+    let url = invoke(
+        &webview,
+        "capture",
+        capture_text("https://www.example.com/docs/a"),
+    )
+    .unwrap();
+    assert_eq!(url["items"][0]["itemType"], "note");
+    assert_eq!(url["items"][0]["title"], "example.com/docs/a");
+    assert_eq!(list().as_array().unwrap().len(), before + 2);
+
+    // 撤销：数据库回到捕获前（只撤销这两次）。
+    for result in [&text, &url] {
+        invoke(
+            &webview,
+            "undo_capture",
+            json!({ "itemIds": result["undoIds"] }),
+        )
+        .unwrap();
+    }
+    assert_eq!(list().as_array().unwrap().len(), before);
+
+    // 没有内容 → INVALID_INPUT。
+    let empty = invoke(&webview, "capture", capture_text("   ")).unwrap_err();
+    assert_eq!(empty["code"], "INVALID_INPUT");
 }

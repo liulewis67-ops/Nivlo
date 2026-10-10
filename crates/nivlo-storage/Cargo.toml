@@ -13,6 +13,7 @@ nivlo-application.workspace = true
 nivlo-domain.workspace = true
 sqlx.workspace = true
 tracing.workspace = true
+tokio = { workspace = true, features = ["rt"] }
 
 [dev-dependencies]
 nivlo-application = { workspace = true, features = ["testing"] }

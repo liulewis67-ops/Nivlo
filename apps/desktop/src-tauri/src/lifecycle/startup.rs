@@ -1,7 +1,9 @@
 //! 启动步骤。拆成独立函数，便于在没有窗口的情况下测试（尤其是 Migration 失败路径）。
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
+use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
 use nivlo_application::item::ItemService;
 use nivlo_application::ports::StorageError;
@@ -10,7 +12,7 @@ use nivlo_application::today::TodayService;
 use nivlo_common::clock::SystemClock;
 use nivlo_common::logging::{LogConfig, LogError, LogGuard, init_logging};
 use nivlo_common::paths::{AppPaths, PathsError};
-use nivlo_storage::Database;
+use nivlo_storage::{Database, FsAttachmentFiles};
 
 use crate::app::{AppState, ApplicationServices, RuntimeHandles};
 
@@ -74,7 +76,11 @@ pub async fn open_database(paths: &AppPaths) -> Result<Database, StorageError> {
 ///
 /// 这是 Composition Root：只有这里同时认识 Application 的 Port 与 Storage 的实现。
 /// 测试传入 `None` 作为日志守卫（全局日志只能初始化一次）。
-pub fn build_app_state(database: Database, log_guard: Option<LogGuard>) -> AppState {
+pub fn build_app_state(
+    database: Database,
+    attachments_dir: PathBuf,
+    log_guard: Option<LogGuard>,
+) -> AppState {
     let event_bus = EventBus::new();
     let clock = Arc::new(SystemClock::new());
     let items = ItemService::new(
@@ -88,11 +94,18 @@ pub fn build_app_state(database: Database, log_guard: Option<LogGuard>) -> AppSt
         clock.clone(),
         Arc::new(event_bus.clone()),
     );
+    let capture = CaptureService::new(
+        Arc::new(database.clone()),
+        clock.clone(),
+        Arc::new(event_bus.clone()),
+        Arc::new(FsAttachmentFiles::new(attachments_dir)),
+    );
     AppState {
         services: ApplicationServices {
             items,
             settings,
             today,
+            capture,
         },
         runtime: RuntimeHandles::new(event_bus, database, clock, log_guard),
     }

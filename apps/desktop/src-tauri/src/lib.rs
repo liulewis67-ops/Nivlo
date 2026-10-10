@@ -55,6 +55,8 @@ macro_rules! bindings_builder {
                 $crate::commands::item::create_item,
                 $crate::commands::item::get_item,
                 $crate::commands::item::list_items,
+                $crate::commands::capture::capture,
+                $crate::commands::capture::undo_capture,
                 $crate::commands::item::quick_create,
                 $crate::commands::item::complete_item,
                 $crate::commands::item::reopen_item,
@@ -124,7 +126,11 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             };
 
             // 阶段 3：装配服务与运行时，启动后台任务，最后才创建窗口。
-            let state = startup::build_app_state(database, Some(environment.log_guard));
+            let state = startup::build_app_state(
+                database,
+                environment.paths.attachments_dir(),
+                Some(environment.log_guard),
+            );
             let forwarder = spawn_forwarder(
                 app.handle().clone(),
                 &state.runtime.event_bus,

@@ -23,6 +23,7 @@ impl UiEventMapper for DefaultUiEventMapper {
             | DomainEvent::ItemReopened { item_id }
             | DomainEvent::ItemArchived { item_id }
             | DomainEvent::ItemUnarchived { item_id }
+            | DomainEvent::ItemDeleted { item_id }
             | DomainEvent::ScheduleChanged { item_id } => {
                 Some(UiEvent::ItemUpdated { item_id: *item_id })
             }

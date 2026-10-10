@@ -10,6 +10,7 @@
 //! 统计，二者不能互相替代。本模块只有数据结构；URL 解析、文件探测等规范化在 `nivlo-capture`。
 
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 /// 一个被捕获的文件（或文件夹）的**引用**：Nivlo 只记住它在哪里，不复制内容。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -157,6 +158,58 @@ impl CaptureRequest {
             source_application: None,
         }
     }
+}
+
+/// 默认标题的最大字符数（按字符而不是字节截断，中文不会被切坏）。
+pub const MAX_DEFAULT_TITLE_CHARS: usize = 80;
+
+/// 图片没有可识别名称时的默认标题。
+const IMAGE_TITLE: &str = "图片";
+
+/// 按字符数截断，超长时以 `…` 结尾（总长度不超过 `max`）。
+fn truncate_chars(text: &str, max: usize) -> String {
+    if text.chars().count() <= max {
+        return text.to_owned();
+    }
+    let kept: String = text.chars().take(max.saturating_sub(1)).collect();
+    format!("{}…", kept.trim_end())
+}
+
+/// URL 的默认标题：去掉 `www.` 的主机 + 路径（不含查询与 fragment，末尾的 `/` 去掉）。
+fn url_title(raw: &str) -> String {
+    let Ok(url) = Url::parse(raw) else {
+        return raw.to_owned();
+    };
+    let host = url.host_str().unwrap_or_default();
+    let host = host.strip_prefix("www.").unwrap_or(host);
+    let path = url.path().trim_end_matches('/');
+    format!("{host}{path}")
+}
+
+/// 由输入生成默认标题（产品文档 §6.1「先创建，再整理」：标题不用用户操心）。
+///
+/// * URL → `主机 + 路径`（`https://www.example.com/docs/a?x=1` → `example.com/docs/a`）；
+/// * 文件 → 文件名；多个文件 → `首个文件名 等 N 个文件`；
+/// * 文本 → 第一行非空内容，超过 [`MAX_DEFAULT_TITLE_CHARS`] 个字符时截断并加 `…`；
+/// * 图片 → `图片`。
+#[must_use]
+pub fn default_title(input: &CaptureInput) -> String {
+    let title = match input {
+        CaptureInput::Url { url } => url_title(url),
+        CaptureInput::File { file } => file.name.clone(),
+        CaptureInput::Files { files } => match files.first() {
+            Some(first) => format!("{} 等 {} 个文件", first.name, files.len()),
+            None => IMAGE_TITLE.to_owned(),
+        },
+        CaptureInput::Text { text } => text
+            .lines()
+            .map(str::trim)
+            .find(|line| !line.is_empty())
+            .unwrap_or_default()
+            .to_owned(),
+        CaptureInput::Image { .. } => IMAGE_TITLE.to_owned(),
+    };
+    truncate_chars(&title, MAX_DEFAULT_TITLE_CHARS)
 }
 
 #[cfg(test)]

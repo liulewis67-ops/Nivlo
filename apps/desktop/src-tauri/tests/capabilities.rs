@@ -20,6 +20,8 @@ const FLOATING_ALLOWED: &[&str] = &[
     "reopen_item",
     "reorder_today",
     "capture",
+    // 撤销一次捕获（D-12 的 `undo` 在捕获场景的具体命令）。
+    "undo_capture",
     "open_main",
     "reschedule_item",
     "undo",

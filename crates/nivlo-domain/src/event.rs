@@ -52,6 +52,11 @@ pub enum DomainEvent {
         /// 变化的 Item。
         item_id: ItemId,
     },
+    /// Item 被永久删除（目前只有撤销一次捕获会这样做）。
+    ItemDeleted {
+        /// 被删除的 Item。
+        item_id: ItemId,
+    },
     /// Today 的手动顺序被调整。
     TodayReordered,
     /// 本地日期发生了切换（过了本地午夜、休眠唤醒或用户修改了系统时间）。
@@ -79,6 +84,7 @@ impl DomainEvent {
             | Self::ItemReopened { item_id }
             | Self::ItemArchived { item_id }
             | Self::ItemUnarchived { item_id }
+            | Self::ItemDeleted { item_id }
             | Self::ScheduleChanged { item_id } => Some(*item_id),
             Self::TodayReordered | Self::DayChanged { .. } | Self::ProjectCreated { .. } => None,
         }

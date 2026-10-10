@@ -121,6 +121,16 @@ pub trait ItemRepository: Send {
     /// 记录不存在时返回 [`StorageError::NotFound`]；违反约束时返回 [`StorageError::Constraint`]。
     async fn update(&mut self, item: &Item) -> Result<(), StorageError>;
 
+    /// 永久删除一个 Item；它的来源、附件、标签关联、Today 顺序记录随外键级联删除。
+    ///
+    /// 只删除**数据库记录**，不触碰磁盘文件——哪些文件该清理由调用方决定
+    /// （被引用的用户文件永远不删，见实施计划 2.2）。Item 不存在时是空操作。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回 [`StorageError::Unavailable`]。
+    async fn delete(&mut self, id: ItemId) -> Result<(), StorageError>;
+
     /// 按 ID 读取 Item；不存在时返回 `Ok(None)`。
     ///
     /// # Errors

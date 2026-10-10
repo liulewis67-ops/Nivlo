@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-undo-capture"
+description = "Enables the undo_capture command without any pre-configured scope."
+commands.allow = ["undo_capture"]
+
+[[permission]]
+identifier = "deny-undo-capture"
+description = "Denies the undo_capture command without any pre-configured scope."
+commands.deny = ["undo_capture"]

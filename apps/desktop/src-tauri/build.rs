@@ -6,6 +6,8 @@ const COMMANDS: &[&str] = &[
     "create_item",
     "get_item",
     "list_items",
+    "capture",
+    "undo_capture",
     "quick_create",
     "complete_item",
     "reopen_item",

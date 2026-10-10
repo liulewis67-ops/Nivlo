@@ -207,6 +207,16 @@ impl ItemRepository for SqliteTransaction {
         Ok(())
     }
 
+    /// 永久删除一个 Item，关联记录由外键级联删除。
+    async fn delete(&mut self, id: ItemId) -> Result<(), StorageError> {
+        let id = id.to_string();
+        sqlx::query!("DELETE FROM items WHERE id = ?", id)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx)?;
+        Ok(())
+    }
+
     /// 整体覆盖已存在的 Item。
     async fn update(&mut self, item: &Item) -> Result<(), StorageError> {
         let s = item.snapshot();

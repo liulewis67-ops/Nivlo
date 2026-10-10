@@ -20,6 +20,7 @@ tokio.workspace = true
 testing = []
 
 [dev-dependencies]
+nivlo-capture.workspace = true
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
 chrono-tz.workspace = true
 uuid.workspace = true

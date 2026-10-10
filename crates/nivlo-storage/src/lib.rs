@@ -11,9 +11,11 @@
 //!
 //! 禁止依赖：`tauri`、其他 Adapter 的内部实现（参见后端规范 §3.1）。
 
+mod attachment_files;
 mod codec;
 mod database;
 mod error;
 mod item_repository;
 
+pub use attachment_files::FsAttachmentFiles;
 pub use database::Database;

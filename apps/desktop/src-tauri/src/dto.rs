@@ -7,11 +7,14 @@
 //! * 本地日期 `YYYY-MM-DD`，本地时间 `HH:MM:SS`（输入也接受 `HH:MM`）；
 //! * UTC 时间点为 RFC 3339。
 
+use base64::Engine;
 use chrono::{DateTime, NaiveDate, NaiveTime, SecondsFormat, Utc};
+use nivlo_application::capture::CaptureResult;
 use nivlo_application::error::{AppError, ErrorCode};
 use nivlo_application::item::RescheduleTarget;
 use nivlo_application::ports::ItemFilter;
 use nivlo_application::today::{TodayEntry, TodayView};
+use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
 use nivlo_domain::id::{ItemId, ProjectId};
 use nivlo_domain::item::{ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority};
 use serde::{Deserialize, Serialize};
@@ -659,5 +662,116 @@ impl TryFrom<RescheduleTargetDto> for RescheduleTarget {
                 Self::Exact(scheduled.map(DatePoint::try_from).transpose()?)
             }
         })
+    }
+}
+
+/// 捕获的内容（IPC 表示）：前端只传原始材料，规范化（识别 URL、探测文件）在后端完成。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum CaptureInputDto {
+    /// 一段文本；整段恰好是一个网址时会被识别为网址。
+    Text {
+        /// 文本内容。
+        text: String,
+    },
+    /// 一组文件 / 文件夹的路径（拖放、粘贴文件）。
+    Files {
+        /// 原始路径。
+        paths: Vec<String>,
+    },
+    /// 一张图片（如粘贴的截图），Base64 编码的字节。
+    Image {
+        /// Base64（标准字母表）编码的图片字节。
+        data_base64: String,
+    },
+}
+
+/// 捕获从哪里来（IPC 表示）。只用于日志与统计。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum CaptureOriginDto {
+    /// 手动输入。
+    Manual,
+    /// 拖放。
+    Drop,
+    /// 粘贴。
+    Paste,
+    /// 快速添加。
+    QuickAdd,
+    /// 全局快捷键。
+    Shortcut,
+}
+
+impl From<CaptureOriginDto> for CaptureOrigin {
+    /// DTO → Domain。
+    fn from(value: CaptureOriginDto) -> Self {
+        match value {
+            CaptureOriginDto::Manual => Self::Manual,
+            CaptureOriginDto::Drop => Self::Drop,
+            CaptureOriginDto::Paste => Self::Paste,
+            CaptureOriginDto::QuickAdd => Self::QuickAdd,
+            CaptureOriginDto::Shortcut => Self::Shortcut,
+        }
+    }
+}
+
+/// 捕获请求（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CaptureRequestDto {
+    /// 内容。
+    pub input: CaptureInputDto,
+    /// 来路。
+    pub origin: CaptureOriginDto,
+    /// 来源应用；识别不了时为 `null`。
+    pub source_application: Option<String>,
+}
+
+impl TryFrom<CaptureRequestDto> for CaptureRequest {
+    type Error = AppError;
+
+    /// DTO → Domain，同时做规范化；没有可捕获的内容或图片无法识别时返回 `INVALID_INPUT`。
+    fn try_from(value: CaptureRequestDto) -> Result<Self, Self::Error> {
+        let empty = || invalid("没有可捕获的内容".to_owned());
+        let input: CaptureInput = match value.input {
+            CaptureInputDto::Text { text } => {
+                nivlo_capture::normalize_text(&text).ok_or_else(empty)?
+            }
+            CaptureInputDto::Files { paths } => {
+                nivlo_capture::normalize_files(&paths).ok_or_else(empty)?
+            }
+            CaptureInputDto::Image { data_base64 } => {
+                let bytes = base64::engine::general_purpose::STANDARD
+                    .decode(data_base64.as_bytes())
+                    .map_err(|_| invalid("图片数据不是有效的 Base64".to_owned()))?;
+                nivlo_capture::image_input(bytes).map_err(|e| invalid(e.to_string()))?
+            }
+        };
+        let mut request = Self::new(input, value.origin.into());
+        request.source_application = value
+            .source_application
+            .map(|app| app.trim().to_owned())
+            .filter(|app| !app.is_empty());
+        Ok(request)
+    }
+}
+
+/// 捕获的结果（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CaptureResultDto {
+    /// 创建的 Item。
+    pub items: Vec<ItemDto>,
+    /// 撤销这次捕获的句柄：传给 `undo_capture`。
+    pub undo_ids: Vec<String>,
+}
+
+impl From<&CaptureResult> for CaptureResultDto {
+    /// Application → DTO。
+    fn from(result: &CaptureResult) -> Self {
+        Self {
+            items: result.items.iter().map(ItemDto::from).collect(),
+            undo_ids: result.undo_ids().iter().map(ToString::to_string).collect(),
+        }
     }
 }

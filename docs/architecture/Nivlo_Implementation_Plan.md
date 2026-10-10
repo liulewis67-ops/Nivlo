@@ -114,9 +114,9 @@ Phase 12 Backlog                        → 未排期
 | | 1.9 | Tray / Single Instance / Autostart / Shutdown | ✅ |
 | | 1.10 | 主窗口外壳与 Today 视图 | ✅ |
 | | 1.11 | 常驻性能基线验收 | ⬜ |
-| **P2** | 2.1 | CaptureInput 模型与 Normalizer | ⬜ |
+| **P2** | 2.1 | CaptureInput 模型与 Normalizer | ✅ |
 | | 2.2 | Source 与 Attachment 持久化 | 🟨 |
-| | 2.3 | Capture Use Case 与默认规则 | ⬜ |
+| | 2.3 | Capture Use Case 与默认规则 | ✅ |
 | | 2.4 | 悬浮窗拖拽捕获（WebView Drop） | ⬜ |
 | | 2.5 | 粘贴捕获 | ⬜ |
 | | 2.6 | 全局快捷键 Quick Create | ⬜ |
@@ -662,7 +662,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 2.3 Capture Use Case 与默认规则
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：2.2
 - **目标**：在 Workflow Engine 出现之前，提供可工作的默认捕获规则，并保证事务性。
 - **任务**：
@@ -670,11 +670,13 @@ Phase 12 Backlog                        → 未排期
   - 默认规则（Phase 5 中会被改写为内置 Generic Workflow）：URL → Note；File → Note（文件引用）；Text → Todo；Image → Note（附件）；全部进入 Inbox。
   - 返回创建结果与 Undo 句柄；Undo 删除本次捕获产生的全部记录。
 - **验收标准**：
-  - [ ] Application 测试覆盖每种输入类型。
-  - [ ] 测试：事务中任一步失败时数据库中不残留任何记录。
-  - [ ] 本地捕获从调用到返回 < 100ms（测试中测量并记录）。
-  - [ ] Undo 后数据库恢复到捕获前状态。
-- **完成记录**：—
+  - [x] Application 测试覆盖每种输入类型。
+  - [x] 测试：事务中任一步失败时数据库中不残留任何记录。
+  - [x] 本地捕获从调用到返回 < 100ms（测试中测量并记录）。
+  - [x] Undo 后数据库恢复到捕获前状态。
+- **完成记录**：2026-10-10 完成。
+  - 证据：`CaptureService.capture` 在**单个事务**中创建 Item + Source + Attachment（默认规则：文本 → Todo，URL / 文件 / 图片 → Note，全部进入 Inbox；多文件每个文件一个 Note，仍是同一事务）；`undo` 在一个事务中删除全部记录并只清理 Nivlo 自己保存的图片文件，被引用的用户文件不动。Application 测试（`capture/tests.rs`）覆盖每种输入类型、Origin 不改变结果、事件仅在提交成功后发布、**提交失败不留任何记录且移除已保存的图片**、写文件失败不创建任何东西、撤销恢复数据库、撤销提交失败不删除任何东西。IPC 集成测试（真实 SQLite）测得**捕获从调用到返回约 1.6ms**（验收 < 100ms，断言在测试中），撤销后列表回到捕获前。
+  - 架构修正：`default_title` 从 `nivlo-capture` 移到 `nivlo-domain`（纯函数，新增 `url` 依赖），`nivlo-capture` 重新导出；`nivlo-application` 不再依赖 `nivlo-capture`（`check-deps` 通过），仅在 dev-dependencies 中用它构造测试输入。
 
 ### 2.4 悬浮窗拖拽捕获（WebView Drop）
 
