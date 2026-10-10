@@ -3,13 +3,7 @@ import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { QuickCreateForm } from "@/features/quick-create";
-import {
-  TodayList,
-  useCompleteTodo,
-  useReorderToday,
-  useRescheduleTodo,
-  useTodayQuery,
-} from "@/features/today";
+import { TodayBoard, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 
@@ -45,9 +39,6 @@ export function TodayPanel({
 }: TodayPanelProps) {
   const { t } = useTranslation();
   const view = useTodayQuery().data;
-  const { complete, reopen } = useCompleteTodo();
-  const move = useReorderToday();
-  const { postpone } = useRescheduleTodo();
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
     <section
@@ -70,13 +61,7 @@ export function TodayPanel({
       </header>
       {view !== undefined &&
       (view.todos.length > 0 || view.tips.length > 0 || view.completed.length > 0) ? (
-        <TodayList
-          view={view}
-          onComplete={(item) => void complete(item)}
-          onMove={(activeId, overId) => void move(activeId, overId)}
-          onPostpone={(item, kind) => void postpone(item, kind)}
-          onReopen={(item) => void reopen(item)}
-        />
+        <TodayBoard view={view} />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-4 text-center">
           <p className="text-sm font-medium text-text">{t("today.empty.title")}</p>

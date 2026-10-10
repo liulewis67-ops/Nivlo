@@ -6,6 +6,7 @@
   "toast": { "dismiss": "关闭提示" },
   "theme": {
     "label": "主题",
+    "current": "主题 · {{preference}}",
     "system": "跟随系统",
     "light": "浅色",
     "dark": "深色"
@@ -32,11 +33,38 @@
     "input": { "label": "标题", "placeholder": "输入标题，回车创建，Esc 取消" }
   },
   "floating": { "label": "拾序悬浮窗", "open": "打开拾序主窗口" },
+  "shell": {
+    "nav": {
+      "label": "主导航",
+      "inbox": "收集箱",
+      "today": "今天",
+      "calendar": "日历",
+      "notes": "笔记",
+      "projects": "项目",
+      "dev": "开发控制台"
+    },
+    "comingSoon": {
+      "inbox": "拖进来、粘贴进来的东西会先落在这里，等你有空再整理。",
+      "calendar": "把待办拖到某一天，安排接下来的日子。",
+      "notes": "随手记下的想法和长文，都收在这里。",
+      "projects": "把相关的待办与笔记归到一个项目里。"
+    }
+  },
   "today": {
     "badge": { "label": "今天还剩 {{count}} 项待办" },
     "panel": { "label": "今日面板", "title": "今天", "openMain": "打开主窗口" },
     "section": { "todos": "待办", "tips": "提示", "completed": "今日已完成" },
     "overdue": "逾期",
+    "page": {
+      "label": "今天",
+      "progress": "今日完成进度",
+      "nothingPlanned": "暂无安排",
+      "allDone": "今天的待办全部完成 🎉",
+      "remaining": "还剩 {{count}} 项",
+      "addLabel": "添加待办",
+      "addPlaceholder": "写下一件今天要做的事，回车添加",
+      "emptyHint": "在上面的输入框写下第一件事，按回车就能加进来。"
+    },
     "complete": "完成「{{title}}」",
     "reopen": "重新打开「{{title}}」",
     "completedToast": "已完成「{{title}}」",

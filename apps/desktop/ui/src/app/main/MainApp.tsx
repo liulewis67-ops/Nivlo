@@ -1,12 +1,10 @@
-import { DevConsole } from "@/features/dev-console";
+import { MainShell } from "@/features/shell";
 
 /**
- * 主窗口的根组件。
- *
- * Phase 0 只挂载开发控制台；Phase 1.10 起替换为带导航的主窗口外壳。
+ * 主窗口的根组件：带导航的外壳（实施计划 1.10）。
  *
  * @returns 主窗口内容。
  */
 export function MainApp() {
-  return <DevConsole />;
+  return <MainShell />;
 }

@@ -89,6 +89,33 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const calls: string[] = [];
   let lastExpand: { width: number; height: number } | null = null;
 
+  /**
+   * 与后端一致：今天创建的 Todo 追加到 Today 末尾，Tip 进入提示；Note 不进 Today。
+   * 这样纯浏览器预览（pnpm dev:ui）里创建的内容也会出现在 Today 中。
+   */
+  function addToToday(item: ItemDto): void {
+    if (item.scheduled === null || item.scheduled.date !== today.date) return;
+    const entry: TodayItemDto = {
+      id: item.id,
+      itemType: item.itemType,
+      title: item.title,
+      status: item.status,
+      priority: item.priority,
+      scheduled: item.scheduled,
+      due: item.due,
+      isOverdue: false,
+    };
+    if (item.itemType === "todo") {
+      today = {
+        ...today,
+        remainingCount: today.remainingCount + 1,
+        todos: [...today.todos, entry],
+      };
+    } else if (item.itemType === "tip") {
+      today = { ...today, tips: [...today.tips, entry] };
+    }
+  }
+
   /** 校验并插入一个 Item，行为对齐后端（标题去空白且非空、有长度上限），并通知订阅者。 */
   function insert(request: CreateItemRequest): Promise<ItemDto> {
     const title = request.title.trim();
@@ -117,6 +144,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       archivedAt: null,
     };
     items.push(item);
+    addToToday(item);
     for (const notify of listeners) notify();
     return Promise.resolve(item);
   }
