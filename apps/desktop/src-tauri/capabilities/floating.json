@@ -6,6 +6,7 @@
   "permissions": [
     "core:event:default",
     "allow-get-today",
+    "allow-reorder-today",
     "allow-quick-create",
     "allow-complete-item",
     "allow-reopen-item",

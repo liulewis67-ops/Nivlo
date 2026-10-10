@@ -32,7 +32,9 @@ export interface MemoryIpc extends IpcClient {
   readonly calls: readonly string[];
   /** 让下一次 `quickCreate` 抛出的错误，用于测试失败路径；触发后自动清除。 */
   failNextQuickCreateWith(error: AppError): void;
-  /** 让下一次 `completeItem` / `reopenItem` 抛出的错误，用于测试回滚；触发后自动清除。 */
+  /** 最近一次 `reorderToday` 收到的 ID 顺序。 */
+  readonly lastReorder: string[] | null;
+  /** 让下一次 `completeItem` / `reopenItem` / `reorderToday` 抛出的错误，用于测试回滚；触发后自动清除。 */
   failNextTransitionWith(error: AppError): void;
   /** 让下一次 `beginFloatingInput` 抛出的错误（模拟窗口无法聚焦）。 */
   failNextBeginInputWith(error: AppError): void;
@@ -72,6 +74,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let quickCreateFailure: AppError | undefined;
   let beginInputFailure: AppError | undefined;
   let transitionFailure: AppError | undefined;
+  let lastReorder: string[] | null = null;
   let today: TodayViewDto = EMPTY_TODAY;
   const calls: string[] = [];
   let lastExpand: { width: number; height: number } | null = null;
@@ -169,6 +172,24 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     failNextTransitionWith: (error: AppError) => {
       transitionFailure = error;
+    },
+    reorderToday: (orderedIds: string[]) => {
+      calls.push("reorderToday");
+      lastReorder = orderedIds;
+      if (transitionFailure !== undefined) {
+        const failure = transitionFailure;
+        transitionFailure = undefined;
+        return Promise.reject(failure);
+      }
+      const byId = new Map(today.todos.map((entry) => [entry.id, entry]));
+      const known = orderedIds.flatMap((id) => byId.get(id) ?? []);
+      const rest = today.todos.filter((entry) => !orderedIds.includes(entry.id));
+      today = { ...today, todos: [...known, ...rest] };
+      for (const notify of listeners) notify();
+      return Promise.resolve();
+    },
+    get lastReorder() {
+      return lastReorder;
     },
     completeItem: (id: string) => transition("completeItem", id, true),
     reopenItem: (id: string) => transition("reopenItem", id, false),

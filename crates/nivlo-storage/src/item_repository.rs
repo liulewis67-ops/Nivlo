@@ -409,4 +409,26 @@ impl TodayOrderRepository for SqliteTransaction {
             })
             .collect()
     }
+
+    /// 整体替换某日的手动顺序：先删后写，同在调用方事务内。
+    async fn set(&mut self, date: NaiveDate, ids: &[ItemId]) -> Result<(), StorageError> {
+        let date = format_date(date);
+        sqlx::query!("DELETE FROM daily_item_order WHERE date = ?", date)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx)?;
+        for (position, id) in (0_i64..).zip(ids) {
+            let id = id.to_string();
+            sqlx::query!(
+                "INSERT INTO daily_item_order (date, item_id, position) VALUES (?, ?, ?)",
+                date,
+                id,
+                position
+            )
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx)?;
+        }
+        Ok(())
+    }
 }

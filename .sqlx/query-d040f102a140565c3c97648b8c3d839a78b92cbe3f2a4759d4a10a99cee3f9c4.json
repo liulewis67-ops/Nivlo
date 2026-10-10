@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM daily_item_order WHERE date = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "d040f102a140565c3c97648b8c3d839a78b92cbe3f2a4759d4a10a99cee3f9c4"
+}

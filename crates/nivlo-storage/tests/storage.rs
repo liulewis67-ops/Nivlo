@@ -456,7 +456,11 @@ async fn today_service_works_end_to_end_on_sqlite() {
     let (_dir, _path, db) = new_db().await;
     // 上海时间 2026-10-09 20:00（UTC 12:00）。
     let clock = FakeClock::new(t(12, 0), Tz::Asia__Shanghai);
-    let service = TodayService::new(Arc::new(db.clone()), Arc::new(clock));
+    let service = TodayService::new(
+        Arc::new(db.clone()),
+        Arc::new(clock),
+        Arc::new(nivlo_application::testing::RecordingPublisher::new()),
+    );
 
     let mut tx = db.begin().await.unwrap();
     tx.items()
@@ -493,4 +497,54 @@ async fn today_service_works_end_to_end_on_sqlite() {
     assert!(view.todos[0].is_overdue);
     assert_eq!(view.completed.len(), 1);
     assert_eq!(view.tips.len(), 1);
+}
+
+#[tokio::test]
+async fn reorder_today_replaces_the_stored_order_atomically_and_survives_reopen() {
+    use std::sync::Arc;
+
+    use chrono_tz::Tz;
+    use nivlo_application::testing::RecordingPublisher;
+    use nivlo_application::today::TodayService;
+    use nivlo_common::clock::FakeClock;
+
+    let (dir, path, db) = new_db().await;
+    let clock = FakeClock::new(t(12, 0), Tz::Asia__Shanghai);
+    let events = Arc::new(RecordingPublisher::new());
+    let service = TodayService::new(Arc::new(db.clone()), Arc::new(clock), events.clone());
+    let mut tx = db.begin().await.unwrap();
+    for n in 1..=3 {
+        tx.items()
+            .insert(&scheduled(
+                simple(n, ItemType::Todo, "x", t(8, n as u32)),
+                10,
+                9,
+            ))
+            .await
+            .unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    service.reorder_today(&[id(3), id(1), id(2)]).await.unwrap();
+    // 再排一次（含一个界面不知道的 id(2)）：旧记录被整体替换，没有残留或重复。
+    service.reorder_today(&[id(2), id(3)]).await.unwrap();
+
+    let today = NaiveDate::from_ymd_opt(2026, 10, 9).unwrap();
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.today_order().get(today).await.unwrap(),
+        [id(2), id(3), id(1)]
+    );
+    drop(tx);
+    assert_eq!(events.events().len(), 2);
+
+    // 重启（关闭后重新打开同一个文件）顺序不变。
+    db.close().await;
+    let reopened = Database::open(&path).await.unwrap();
+    let mut tx = reopened.begin().await.unwrap();
+    assert_eq!(
+        tx.today_order().get(today).await.unwrap(),
+        [id(2), id(3), id(1)]
+    );
+    drop(dir);
 }

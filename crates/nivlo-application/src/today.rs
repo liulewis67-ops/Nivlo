@@ -16,10 +16,12 @@ use std::sync::Arc;
 
 use chrono::NaiveDate;
 use nivlo_common::clock::{Clock, start_of_local_day};
+use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::Item;
 
 use crate::error::AppError;
+use crate::event::EventPublisher;
 use crate::ports::UnitOfWork;
 
 /// Today 中的一个条目。
@@ -58,6 +60,8 @@ pub struct TodayService {
     uow: Arc<dyn UnitOfWork>,
     /// 时钟：决定"今天"与本地日期的 UTC 边界。
     clock: Arc<dyn Clock>,
+    /// 提交成功后发布 `TodayReordered`。
+    events: Arc<dyn EventPublisher>,
 }
 
 /// 把待办按手动顺序排列：先是 `order` 中出现的（保持 `order` 的先后），其余保持输入顺序追加在末尾。
@@ -77,10 +81,41 @@ fn apply_manual_order(todos: Vec<Item>, order: &[ItemId]) -> Vec<Item> {
     ordered
 }
 
+/// 合并新旧顺序，得到要持久化的序列。
+///
+/// `visible` 是用户刚排好的当前待办顺序（已规范化）。`old` 中不在其中、但仍应保留的 ID
+/// （`keep`：今天刚完成的待办，撤销后要回到原位）被插回它们原来所在的位置：
+/// 紧跟在旧顺序里它前面最近的、仍在 `visible` 中的那一项之后；前面没有这样的项则放在最前。
+fn merge_order(old: &[ItemId], visible: &[ItemId], keep: &[ItemId]) -> Vec<ItemId> {
+    let mut merged = visible.to_vec();
+    let mut anchor: Option<ItemId> = None;
+    for id in old {
+        if visible.contains(id) {
+            anchor = Some(*id);
+        } else if keep.contains(id) && !merged.contains(id) {
+            let at = anchor
+                .and_then(|a| merged.iter().position(|m| *m == a))
+                .map_or(0, |i| i + 1);
+            // 同一个锚点后面连续的保留项按旧顺序依次排列，而不是倒过来。
+            let at = merged[at..]
+                .iter()
+                .take_while(|m| keep.contains(m) && !visible.contains(m))
+                .count()
+                + at;
+            merged.insert(at, *id);
+        }
+    }
+    merged
+}
+
 impl TodayService {
     /// 创建服务。
-    pub fn new(uow: Arc<dyn UnitOfWork>, clock: Arc<dyn Clock>) -> Self {
-        Self { uow, clock }
+    pub fn new(
+        uow: Arc<dyn UnitOfWork>,
+        clock: Arc<dyn Clock>,
+        events: Arc<dyn EventPublisher>,
+    ) -> Self {
+        Self { uow, clock, events }
     }
 
     /// 查询今天的视图。
@@ -124,6 +159,57 @@ impl TodayService {
             tips: tips.into_iter().map(entry).collect(),
             completed: completed.into_iter().map(entry).collect(),
         })
+    }
+
+    /// 保存用户在悬浮窗 / 主窗口里拖出来的 Today 顺序。
+    ///
+    /// `ordered_ids` 是界面看到的待办顺序，但界面的快照可能已经过时，所以这里**规范化**：
+    ///
+    /// * 不属于当前 Today 待办的 ID（已完成、已推迟、已删除、重复）被忽略；
+    /// * 当前 Today 里有、但 `ordered_ids` 没有的待办（排序期间刚创建的）按现有顺序追加在末尾，
+    ///   绝不丢失；
+    /// * 今天已完成的待办保留它们原来的位置，撤销完成后回到原位。
+    ///
+    /// 整个过程在一个事务内完成；提交后发布 [`DomainEvent::TodayReordered`]。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误，事务已回滚。
+    pub async fn reorder_today(&self, ordered_ids: &[ItemId]) -> Result<(), AppError> {
+        let timezone = self.clock.timezone();
+        let date = self.clock.today_local();
+        let from = start_of_local_day(date, timezone);
+        let to = start_of_local_day(date.succ_opt().unwrap_or(date), timezone);
+
+        let mut tx = self.uow.begin().await?;
+        let open_todos = tx
+            .items()
+            .list_open_todos_scheduled_on_or_before(date)
+            .await?;
+        let completed = tx.items().list_todos_completed_between(from, to).await?;
+        let old = tx.today_order().get(date).await?;
+
+        let current: Vec<ItemId> = apply_manual_order(open_todos, &old)
+            .iter()
+            .map(Item::id)
+            .collect();
+        let mut visible: Vec<ItemId> = Vec::with_capacity(current.len());
+        for id in ordered_ids {
+            if current.contains(id) && !visible.contains(id) {
+                visible.push(*id);
+            }
+        }
+        for id in &current {
+            if !visible.contains(id) {
+                visible.push(*id);
+            }
+        }
+        let keep: Vec<ItemId> = completed.iter().map(Item::id).collect();
+        let merged = merge_order(&old, &visible, &keep);
+        tx.today_order().set(date, &merged).await?;
+        tx.commit().await?;
+        self.events.publish(DomainEvent::TodayReordered);
+        Ok(())
     }
 }
 

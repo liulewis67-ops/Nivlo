@@ -48,6 +48,10 @@ export interface IpcClient {
   /** 重新打开已完成的 Todo，也是「完成」的撤销。 */
   reopenItem(id: string): Promise<ItemDto>;
   /**
+   * 保存 Today 待办的手动顺序（从上到下的 Item ID）。后端会规范化，不会丢失界面不知道的新待办。
+   */
+  reorderToday(orderedIds: string[]): Promise<void>;
+  /**
    * 读取今天的视图（待办 / 提示 / 今日已完成）。
    *
    * 悬浮窗只在启动时调用一次，之后由数据变更事件驱动刷新；Hover 展开不会调用它。
@@ -156,6 +160,9 @@ const tauriIpc: IpcClient = {
   getItem: (id) => call("get_item", commands.getItem(id)),
   listItems: (request) => call("list_items", commands.listItems(request)),
   quickCreate: (itemType, title) => call("quick_create", commands.quickCreate({ itemType, title })),
+  reorderToday: async (orderedIds) => {
+    await call("reorder_today", commands.reorderToday(orderedIds));
+  },
   completeItem: (id) => call("complete_item", commands.completeItem(id)),
   reopenItem: (id) => call("reopen_item", commands.reopenItem(id)),
   getToday: () => call("get_today", commands.getToday()),
@@ -215,6 +222,7 @@ export const ipc: IpcClient = {
   getItem: (id) => current.getItem(id),
   listItems: (request) => current.listItems(request),
   quickCreate: (itemType, title) => current.quickCreate(itemType, title),
+  reorderToday: (orderedIds) => current.reorderToday(orderedIds),
   completeItem: (id) => current.completeItem(id),
   reopenItem: (id) => current.reopenItem(id),
   getToday: () => current.getToday(),

@@ -198,4 +198,13 @@ pub trait TodayOrderRepository: Send {
     ///
     /// 数据库不可用或记录中的 ID 无法解析时返回对应的 [`StorageError`]。
     async fn get(&mut self, date: NaiveDate) -> Result<Vec<ItemId>, StorageError>;
+
+    /// 用 `ids` 整体替换某个本地日期的手动顺序（position 从 0 开始连续编号）。
+    ///
+    /// 在调用方的事务内执行：删除旧记录与写入新记录要么一起生效要么一起回滚。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用或违反约束（如 Item 不存在）时返回对应的 [`StorageError`]。
+    async fn set(&mut self, date: NaiveDate, ids: &[ItemId]) -> Result<(), StorageError>;
 }

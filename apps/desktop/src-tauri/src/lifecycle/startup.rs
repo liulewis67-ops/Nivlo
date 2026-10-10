@@ -83,7 +83,11 @@ pub fn build_app_state(database: Database, log_guard: Option<LogGuard>) -> AppSt
         Arc::new(event_bus.clone()),
     );
     let settings = SettingsService::new(Arc::new(database.clone()), clock.clone());
-    let today = TodayService::new(Arc::new(database.clone()), clock.clone());
+    let today = TodayService::new(
+        Arc::new(database.clone()),
+        clock.clone(),
+        Arc::new(event_bus.clone()),
+    );
     AppState {
         services: ApplicationServices {
             items,

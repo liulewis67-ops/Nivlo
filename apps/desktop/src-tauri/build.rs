@@ -10,6 +10,7 @@ const COMMANDS: &[&str] = &[
     "complete_item",
     "reopen_item",
     "get_today",
+    "reorder_today",
     "open_main",
     "quit_app",
     "start_floating_drag",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
-import { applyCompleted, applyReopened, findTodo } from "./today-view";
+import { applyCompleted, applyMove, applyReopened, findTodo } from "./today-view";
 
 /** 构造一个待办条目。 */
 function todo(id: string, isOverdue = false): TodayItemDto {
@@ -52,5 +52,21 @@ describe("today-view", () => {
     const done = applyCompleted(VIEW, "a");
     const back = applyReopened(done, todo("a"), 99);
     expect(back.todos.map((t) => t.id)).toEqual(["b", "c", "a"]);
+  });
+});
+
+describe("applyMove", () => {
+  it("向下拖动：放到目标位置，其余顺序不变", () => {
+    expect(applyMove(VIEW, "a", "c").todos.map((t) => t.id)).toEqual(["b", "c", "a"]);
+  });
+
+  it("向上拖动", () => {
+    expect(applyMove(VIEW, "c", "a").todos.map((t) => t.id)).toEqual(["c", "a", "b"]);
+  });
+
+  it("位置没变或 ID 无效时原样返回", () => {
+    expect(applyMove(VIEW, "a", "a")).toBe(VIEW);
+    expect(applyMove(VIEW, "a", "zzz")).toBe(VIEW);
+    expect(applyMove(VIEW, "zzz", "a")).toBe(VIEW);
   });
 });

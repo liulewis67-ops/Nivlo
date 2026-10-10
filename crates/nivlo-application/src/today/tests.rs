@@ -12,11 +12,13 @@ use nivlo_domain::item::{DatePoint, Item, ItemType, NewItem, Priority};
 use uuid::Uuid;
 
 use super::{TodayService, TodayView};
-use crate::testing::FakeUnitOfWork;
+use crate::testing::{FakeUnitOfWork, RecordingPublisher};
+use nivlo_domain::event::DomainEvent;
 
 /// 测试夹具：服务 + 可播种的内存数据库。
 struct Fixture {
     service: TodayService,
+    events: Arc<RecordingPublisher>,
     uow: FakeUnitOfWork,
     clock: FakeClock,
     today: NaiveDate,
@@ -35,9 +37,15 @@ fn fixture(now: DateTime<Utc>, timezone: Tz) -> Fixture {
     let uow = FakeUnitOfWork::new();
     let clock = FakeClock::new(now, timezone);
     let today = now.with_timezone(&timezone).date_naive();
-    let service = TodayService::new(Arc::new(uow.clone()), Arc::new(clock.clone()));
+    let events = Arc::new(RecordingPublisher::new());
+    let service = TodayService::new(
+        Arc::new(uow.clone()),
+        Arc::new(clock.clone()),
+        events.clone(),
+    );
     Fixture {
         service,
+        events,
         uow,
         clock,
         today,
@@ -319,4 +327,92 @@ async fn crossing_local_midnight_switches_the_contents_of_today() {
     );
     assert_eq!(titles(&after.tips), ["明天的提示"]);
     assert!(after.completed.is_empty());
+}
+
+/** 种下三个今天的待办（id 1..=3，创建先后即默认顺序）。 */
+fn seed_three(f: &Fixture) {
+    for (n, title) in [(1, "甲"), (2, "乙"), (3, "丙")] {
+        f.uow
+            .seed(make(n, ItemType::Todo, title, Some(date(10, 9)), n as u32));
+    }
+}
+
+#[tokio::test]
+async fn reorder_persists_the_order_and_publishes_one_event() {
+    let f = utc_fixture();
+    seed_three(&f);
+
+    f.service
+        .reorder_today(&[id(3), id(1), id(2)])
+        .await
+        .unwrap();
+
+    assert_eq!(titles(&today(&f).await.todos), ["丙", "甲", "乙"]);
+    assert_eq!(f.events.events(), vec![DomainEvent::TodayReordered]);
+}
+
+#[tokio::test]
+async fn reorder_appends_todos_the_caller_did_not_know_about() {
+    let f = utc_fixture();
+    seed_three(&f);
+
+    // 界面的快照里没有 id(3)（排序期间刚创建的）：它不能丢，追加在末尾。
+    f.service.reorder_today(&[id(2), id(1)]).await.unwrap();
+
+    assert_eq!(titles(&today(&f).await.todos), ["乙", "甲", "丙"]);
+}
+
+#[tokio::test]
+async fn reorder_ignores_unknown_stale_and_duplicate_ids() {
+    let f = utc_fixture();
+    seed_three(&f);
+    f.uow
+        .seed(make(9, ItemType::Todo, "明天", Some(date(10, 10)), 9));
+
+    f.service
+        .reorder_today(&[id(9), id(2), id(2), id(404), id(1)])
+        .await
+        .unwrap();
+
+    assert_eq!(titles(&today(&f).await.todos), ["乙", "甲", "丙"]);
+    // 顺序表里只剩今天的待办，陈旧 / 未知的 ID 没有被写入。
+    assert_eq!(
+        f.uow.committed_today_order(f.today),
+        vec![id(2), id(1), id(3)]
+    );
+}
+
+#[tokio::test]
+async fn reorder_keeps_the_slot_of_a_todo_completed_today_so_undo_returns_it() {
+    let f = utc_fixture();
+    seed_three(&f);
+    f.service
+        .reorder_today(&[id(1), id(2), id(3)])
+        .await
+        .unwrap();
+    // 乙 今天被完成。
+    let mut done = make(2, ItemType::Todo, "乙", Some(date(10, 9)), 2);
+    done.complete(Utc.with_ymd_and_hms(2026, 10, 9, 10, 0, 0).unwrap())
+        .unwrap();
+    f.uow.seed(done);
+
+    // 用户把 丙 拖到 甲 前面。
+    f.service.reorder_today(&[id(3), id(1)]).await.unwrap();
+
+    // 乙 保留在它原来的前驱 甲 之后，撤销完成后回到这个位置。
+    assert_eq!(
+        f.uow.committed_today_order(f.today),
+        vec![id(3), id(1), id(2)]
+    );
+}
+
+#[test]
+fn merge_order_places_kept_ids_after_their_old_predecessor() {
+    let old = [id(1), id(2), id(3), id(4)];
+    // 2、3 是保留项（今天完成的），1、4 还在列表里且被调换。
+    let merged = super::merge_order(&old, &[id(4), id(1)], &[id(2), id(3)]);
+    assert_eq!(merged, vec![id(4), id(1), id(2), id(3)]);
+    // 没有前驱的保留项放在最前。
+    let merged = super::merge_order(&[id(2), id(1)], &[id(1)], &[id(2)]);
+    assert_eq!(merged, vec![id(2), id(1)]);
 }

@@ -291,3 +291,50 @@ async fn complete_and_reopen_move_a_todo_through_today_and_keep_its_position() {
     assert_eq!(today["todos"][1]["title"], "第二项");
     assert!(today["completed"].as_array().unwrap().is_empty());
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn reorder_today_persists_the_order_and_never_drops_unknown_todos() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let quick = |title: &str| json!({ "request": { "itemType": "todo", "title": title } });
+    let ids = {
+        let app = app_on(&paths).await;
+        let webview = main_webview(&app);
+        let mut ids = Vec::new();
+        for title in ["甲", "乙", "丙"] {
+            let item = invoke(&webview, "quick_create", quick(title)).unwrap();
+            ids.push(item["id"].as_str().unwrap().to_owned());
+        }
+        // 界面只知道 丙、甲：乙 是排序期间新建的，必须追加在末尾而不是丢失。
+        invoke(
+            &webview,
+            "reorder_today",
+            json!({ "orderedIds": [ids[2], ids[0]] }),
+        )
+        .unwrap();
+        let today = invoke(&webview, "get_today", json!({})).unwrap();
+        let titles: Vec<&str> = today["todos"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|t| t["title"].as_str().unwrap())
+            .collect();
+        assert_eq!(titles, ["丙", "甲", "乙"]);
+
+        let bad = invoke(
+            &webview,
+            "reorder_today",
+            json!({ "orderedIds": ["不是ID"] }),
+        )
+        .unwrap_err();
+        assert_eq!(bad["code"], "INVALID_INPUT");
+        ids
+    };
+    // 重新打开同一个数据目录，顺序保持。
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let today = invoke(&webview, "get_today", json!({})).unwrap();
+    assert_eq!(today["todos"][0]["id"], ids[2]);
+    assert_eq!(today["todos"][2]["id"], ids[1]);
+}

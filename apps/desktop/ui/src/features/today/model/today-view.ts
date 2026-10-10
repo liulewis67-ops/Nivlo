@@ -60,3 +60,21 @@ export function applyReopened(view: TodayViewDto, item: TodayItemDto, index: num
     completed: view.completed.filter((done) => done.id !== item.id),
   };
 }
+
+/**
+ * 乐观地把待办 `activeId` 移到 `overId` 所在的位置（拖拽排序结束时调用）。
+ *
+ * @param view 当前视图。
+ * @param activeId 被拖动的 Item ID。
+ * @param overId 放下位置的 Item ID。
+ * @returns 新视图；任一 ID 不在待办中或位置没变时原样返回。
+ */
+export function applyMove(view: TodayViewDto, activeId: string, overId: string): TodayViewDto {
+  const from = view.todos.findIndex((todo) => todo.id === activeId);
+  const to = view.todos.findIndex((todo) => todo.id === overId);
+  const moved = view.todos[from];
+  if (moved === undefined || from === to || to < 0) return view;
+  const todos = view.todos.filter((todo) => todo.id !== activeId);
+  todos.splice(to, 0, moved);
+  return { ...view, todos };
+}

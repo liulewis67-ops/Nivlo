@@ -9,6 +9,7 @@
     "allow-get-item",
     "allow-list-items",
     "allow-get-today",
+    "allow-reorder-today",
     "allow-quick-create",
     "allow-complete-item",
     "allow-reopen-item",

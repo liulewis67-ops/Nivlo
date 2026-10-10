@@ -70,6 +70,17 @@ export const commands = {
 	 */
 	getToday: () => typedError<TodayViewDto, IpcError>(__TAURI_INVOKE("get_today")),
 	/**
+	 *  保存用户拖出来的 Today 顺序（界面看到的待办 ID，从上到下）。
+	 * 
+	 *  后端会规范化：忽略不在 Today 里的 ID，把界面不知道的新待办追加在末尾，
+	 *  所以界面快照过时也不会丢失任何待办。成功后发出 `today_reordered` 事件。
+	 * 
+	 *  # Errors
+	 * 
+	 *  任一 ID 格式不合法返回 `INVALID_INPUT`；存储失败时返回 [`IpcError`]。
+	 */
+	reorderToday: (orderedIds: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("reorder_today", { orderedIds })),
+	/**
 	 *  打开（必要时创建）并聚焦主窗口。悬浮窗与主窗口都可以调用。
 	 * 
 	 *  # Errors

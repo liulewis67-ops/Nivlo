@@ -109,7 +109,7 @@ Phase 12 Backlog                        → 未排期
 | | 1.4 | Today 查询与缓存 | ✅ |
 | | 1.5 | 悬浮窗 Quick Create | 🟨 |
 | | 1.6 | 完成 / Undo / Optimistic Update | ✅ |
-| | 1.7 | Today Stack 排序 | ⬜ |
+| | 1.7 | Today Stack 排序 | ✅ |
 | | 1.8 | 推迟操作 | ⬜ |
 | | 1.9 | Tray / Single Instance / Autostart / Shutdown | ⬜ |
 | | 1.10 | 主窗口外壳与 Today 视图 | ⬜ |
@@ -527,7 +527,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.7 Today Stack 排序
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：1.4
 - **目标**：实现独立于 priority / created_at / due 的 Today 执行顺序（产品文档 §5.3、§21）。
 - **任务**：
@@ -535,11 +535,13 @@ Phase 12 Backlog                        → 未排期
   - 新加入 Today 的 Item 追加到末尾；Item 离开 Today（完成过夜、推迟、删除）时清理顺序记录。
   - 前端使用 dnd-kit（拖拽手柄 ⠿），拖动结束立即持久化；支持键盘排序。
 - **验收标准**：
-  - [ ] 排序后重启，顺序保持不变。
-  - [ ] Storage 测试：排序与新建并发时不丢失 Item；顺序中存在已删除 / 已推迟 Item 时能自动规范化。
-  - [ ] 修改 priority 不影响 Today 顺序。
-  - [ ] 键盘可完成排序。
-- **完成记录**：—
+  - [x] 排序后重启，顺序保持不变。
+  - [x] Storage 测试：排序与新建并发时不丢失 Item；顺序中存在已删除 / 已推迟 Item 时能自动规范化。
+  - [x] 修改 priority 不影响 Today 顺序。
+  - [x] 键盘可完成排序。
+- **完成记录**：2026-10-10 完成。
+  - 自动化：Application 5 个测试（排序持久化并只发一次 `TodayReordered`；界面不知道的新待办追加在末尾不丢失；未知 / 已推迟 / 重复 ID 被忽略且不写入顺序表；今天已完成的待办保留原位置，撤销后回到原位；`merge_order` 纯函数）；SQLite 集成测试 `reorder_today_replaces_the_stored_order_atomically_and_survives_reopen`（整体替换、无残留，关闭后重新打开顺序不变）；IPC 测试 `reorder_today_persists_the_order_and_never_drops_unknown_todos`（含重启）；既有测试 `priority_and_due_date_do_not_affect_the_order` 保证 priority 不影响顺序；前端 `applyMove` 纯逻辑测试，以及 `reorder-todo.test.tsx`：**键盘 Space + ↓ + Space 完成排序**、立即落位并把完整顺序交给后端、失败时恢复原顺序并提示错误。
+  - 设计说明：`reorder_today` 只收 ID 列表，日期取后端当前的本地"今天"（避免界面跨午夜后用过期日期写顺序，对计划里 `reorder_today(date, ids)` 的有意简化）；写入时规范化并整体替换当天顺序，因此离开 Today 的待办（推迟、删除、过夜）的记录在下次排序时被清理，读取时本来就忽略陈旧 ID；dnd-kit 使用 PointerSensor（4px 激活距离，区分点击与拖动）+ KeyboardSensor，读屏播报与操作说明走 i18n；`TodayService` 现在持有事件发布器。同时修复了 `QuickCreateForm` 一个偶发失败的焦点断言（聚焦发生在"启用"之后的下一个 effect）。
 
 ### 1.8 推迟操作
 

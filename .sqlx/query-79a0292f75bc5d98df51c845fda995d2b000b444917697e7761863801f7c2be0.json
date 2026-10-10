@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO daily_item_order (date, item_id, position) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "79a0292f75bc5d98df51c845fda995d2b000b444917697e7761863801f7c2be0"
+}

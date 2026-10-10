@@ -3,7 +3,7 @@ import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { QuickCreateForm } from "@/features/quick-create";
-import { TodayList, useCompleteTodo, useTodayQuery } from "@/features/today";
+import { TodayList, useCompleteTodo, useReorderToday, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 
@@ -40,6 +40,7 @@ export function TodayPanel({
   const { t } = useTranslation();
   const view = useTodayQuery().data;
   const { complete, reopen } = useCompleteTodo();
+  const move = useReorderToday();
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
     <section
@@ -65,6 +66,7 @@ export function TodayPanel({
         <TodayList
           view={view}
           onComplete={(item) => void complete(item)}
+          onMove={(activeId, overId) => void move(activeId, overId)}
           onReopen={(item) => void reopen(item)}
         />
       ) : (

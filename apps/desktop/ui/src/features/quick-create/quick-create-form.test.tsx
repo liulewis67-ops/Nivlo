@@ -29,7 +29,8 @@ describe("QuickCreateForm", () => {
     expect(ipc.calls).toEqual(["beginFloatingInput"]);
 
     await waitFor(() => expect(input).toBeEnabled());
-    expect(input).toHaveFocus();
+    // 聚焦发生在"启用"之后的下一个 effect 里，所以也要等待。
+    await waitFor(() => expect(input).toHaveFocus());
   });
 
   it("输入标题后 Enter 创建，只提交类型与标题，并随后结束", async () => {

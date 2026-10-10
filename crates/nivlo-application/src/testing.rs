@@ -77,6 +77,16 @@ impl FakeUnitOfWork {
         self.lock().data.items.insert(item.id(), item);
     }
 
+    /// 已提交的某日 Today 手动顺序，供测试断言。
+    pub fn committed_today_order(&self, date: NaiveDate) -> Vec<ItemId> {
+        self.lock()
+            .data
+            .today_order
+            .get(&date)
+            .cloned()
+            .unwrap_or_default()
+    }
+
     /// 直接写入某个日期的 Today 手动顺序，用于准备测试数据。
     pub fn seed_today_order(&self, date: NaiveDate, ids: Vec<ItemId>) {
         self.lock().data.today_order.insert(date, ids);
@@ -271,6 +281,12 @@ impl TodayOrderRepository for FakeTransaction {
             .get(&date)
             .cloned()
             .unwrap_or_default())
+    }
+
+    /// 整体替换某日的手动顺序。
+    async fn set(&mut self, date: NaiveDate, ids: &[ItemId]) -> Result<(), StorageError> {
+        self.working.today_order.insert(date, ids.to_vec());
+        Ok(())
     }
 }
 

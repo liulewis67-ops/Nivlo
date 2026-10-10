@@ -15,6 +15,7 @@ sqlx.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+nivlo-application = { workspace = true, features = ["testing"] }
 nivlo-common.workspace = true
 chrono-tz.workspace = true
 tempfile.workspace = true
