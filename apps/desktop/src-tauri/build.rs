@@ -20,6 +20,8 @@ const COMMANDS: &[&str] = &[
     "reorder_today",
     "open_main",
     "open_main_at",
+    "get_shortcut_status",
+    "set_quick_create_shortcut",
     "take_pending_main_view",
     "quit_app",
     "start_floating_drag",

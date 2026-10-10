@@ -152,6 +152,25 @@ export const commands = {
 	 */
 	openMain: () => typedError<null, IpcError>(__TAURI_INVOKE("open_main")),
 	/**
+	 *  读取全局快捷键的当前绑定与注册状态：被其他程序占用时 `conflict` 为 `true`。
+	 * 
+	 *  # Errors
+	 * 
+	 *  应用尚未启动完成时返回 `INVALID_INPUT`。
+	 */
+	getShortcutStatus: () => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("get_shortcut_status")),
+	/**
+	 *  修改 Quick Create 的全局快捷键并保存。
+	 * 
+	 *  新的注册失败时原来的绑定保持不变。
+	 * 
+	 *  # Errors
+	 * 
+	 *  不是合法的快捷键返回 `SHORTCUT_INVALID`；被其他程序占用返回 `SHORTCUT_CONFLICT`；
+	 *  平台不支持返回 `INVALID_INPUT`；保存失败时返回存储错误（快捷键本次运行仍然有效）。
+	 */
+	setQuickCreateShortcut: (accelerator: string) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("set_quick_create_shortcut", { accelerator })),
+	/**
 	 *  打开主窗口并切换到指定视图（悬浮窗上的收集箱入口）。
 	 * 
 	 *  视图先记在应用状态里，再通知已经在运行的主窗口：主窗口可能刚刚才被创建、还没来得及监听事件，
@@ -558,6 +577,16 @@ export type ScheduleTargetDto =
 { kind: "date"; 
 /**  本地日期，`YYYY-MM-DD`。 */
 date: string };
+
+/**  全局快捷键的状态（IPC 表示）。 */
+export type ShortcutStatusDto = {
+	/**  用户的绑定，规范文本如 `Ctrl+Shift+Space`。 */
+	accelerator: string,
+	/**  当前是否已经注册到系统。 */
+	registered: boolean,
+	/**  没注册成功是因为被其他程序占用：界面应提示并引导重新绑定。 */
+	conflict: boolean,
+};
 
 /**  来源（IPC 表示）：这条 Item 来自哪里。 */
 export type SourceDto = {

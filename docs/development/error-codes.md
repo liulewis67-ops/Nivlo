@@ -33,6 +33,8 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 | `STORAGE_CORRUPT` | 存储的数据无法还原为合法对象 | Storage | 动作：`OPEN_DIAGNOSTICS` |
 | `STORAGE_MIGRATION_FAILED` | 数据库迁移失败，业务 Runtime 不会启动 | Storage | 动作：`OPEN_DIAGNOSTICS` |
 | `WINDOW_UNAVAILABLE` | 宿主窗口无法创建或显示（如 WebView2 异常） | Host | 动作：`OPEN_DIAGNOSTICS` |
+| `SHORTCUT_INVALID` | 不是合法的快捷键（没有修饰键、不认识的按键、没有主键等） | Host | 用户重新输入 |
+| `SHORTCUT_CONFLICT` | 快捷键已被其他程序占用 | Host | 用户换一个组合；原来的绑定保持不变 |
 
 ## UI 动作
 

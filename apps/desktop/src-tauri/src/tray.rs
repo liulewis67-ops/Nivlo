@@ -152,14 +152,7 @@ fn perform(app: &AppHandle<Wry>, action: TrayAction) {
                 tracing::warn!(event = "tray_open_main_failed", %error, "托盘打开主窗口失败");
             }
         }
-        TrayAction::QuickAdd => {
-            // 悬浮窗被隐藏时先显示出来，再让它进入快速创建。
-            set_floating_visible(app, true);
-            let event = QuickAddRequestedEvent {};
-            if let Err(error) = event.emit_to(app, FLOATING_WINDOW_LABEL) {
-                tracing::warn!(event = "tray_quick_add_failed", %error, "托盘快速添加失败");
-            }
-        }
+        TrayAction::QuickAdd => request_quick_add(app),
         TrayAction::ToggleFloating => {
             let visible = app
                 .get_webview_window(FLOATING_WINDOW_LABEL)
@@ -171,6 +164,17 @@ fn perform(app: &AppHandle<Wry>, action: TrayAction) {
             // 与主窗口的 quit_app 同一条路径：由 RunEvent::ExitRequested 触发有序退出。
             app.exit(0);
         }
+    }
+}
+
+/// 请求悬浮窗进入快速创建：被隐藏时先显示出来，再通知它展开并聚焦输入。
+///
+/// 托盘「快速添加」与全局快捷键共用这一条路径。
+pub fn request_quick_add(app: &AppHandle<Wry>) {
+    set_floating_visible(app, true);
+    let event = QuickAddRequestedEvent {};
+    if let Err(error) = event.emit_to(app, FLOATING_WINDOW_LABEL) {
+        tracing::warn!(event = "quick_add_request_failed", %error, "请求快速添加失败");
     }
 }
 

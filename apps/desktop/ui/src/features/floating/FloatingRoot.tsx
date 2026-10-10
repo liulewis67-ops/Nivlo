@@ -108,6 +108,7 @@ export function FloatingRoot() {
           layout={layout}
           quickCreateKind={quickCreateKind}
           onQuickCreate={startQuickCreate}
+          onQuickCreateKindChange={setQuickCreateKind}
           onQuickCreateDone={finishQuickCreate}
           dropActive={drop.hovering}
           capture={{

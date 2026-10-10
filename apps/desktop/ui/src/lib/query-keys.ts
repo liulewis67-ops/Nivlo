@@ -13,6 +13,8 @@ export const queryKeys = {
   inbox: () => ["inbox"] as const,
   /** Inbox 数量。 */
   inboxCount: () => ["inbox", "count"] as const,
+  /** 全局快捷键的绑定与注册状态。 */
+  shortcut: () => ["shortcut"] as const,
   /** 单个 Item 详情。 */
   item: (id: string) => ["item", id] as const,
 };

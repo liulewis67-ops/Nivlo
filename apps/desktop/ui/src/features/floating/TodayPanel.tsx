@@ -18,6 +18,8 @@ export type TodayPanelProps = {
   quickCreateKind: ItemTypeDto | null;
   /** 点击 `+ 待办` / `+ 笔记` / `+ 提示` 时调用。 */
   onQuickCreate: (kind: ItemTypeDto) => void;
+  /** 快速创建时按 Tab 切换了类型。 */
+  onQuickCreateKindChange?: ((kind: ItemTypeDto) => void) | undefined;
   /** 快速创建结束（成功、取消或失败）时调用。 */
   onQuickCreateDone: () => void;
   /** 是否有拖拽悬停在面板上：显示「松手即可收集」提示。 */
@@ -48,6 +50,7 @@ export function TodayPanel({
   layout,
   quickCreateKind,
   onQuickCreate,
+  onQuickCreateKindChange,
   onQuickCreateDone,
   dropActive = false,
   capture,
@@ -100,7 +103,11 @@ export function TodayPanel({
           ))}
         </footer>
       ) : (
-        <QuickCreateForm kind={quickCreateKind} onDone={onQuickCreateDone} />
+        <QuickCreateForm
+          kind={quickCreateKind}
+          onKindChange={onQuickCreateKindChange}
+          onDone={onQuickCreateDone}
+        />
       )}
       {dropActive && (
         <div className="nv-drop-zone pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary bg-surface/90">

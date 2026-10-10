@@ -52,6 +52,10 @@ pub enum ErrorCode {
     StorageMigrationFailed,
     /// 宿主窗口无法创建或显示。
     WindowUnavailable,
+    /// 不是合法的快捷键（没有修饰键、不认识的按键等）。
+    ShortcutInvalid,
+    /// 快捷键已被其他程序占用。
+    ShortcutConflict,
 }
 
 impl ErrorCode {
@@ -77,6 +81,8 @@ impl ErrorCode {
         Self::StorageCorrupt,
         Self::StorageMigrationFailed,
         Self::WindowUnavailable,
+        Self::ShortcutInvalid,
+        Self::ShortcutConflict,
     ];
 
     /// 返回稳定的大写错误码字符串（会出现在 IPC 响应中，不得随意修改）。
@@ -102,6 +108,8 @@ impl ErrorCode {
             Self::StorageCorrupt => "STORAGE_CORRUPT",
             Self::StorageMigrationFailed => "STORAGE_MIGRATION_FAILED",
             Self::WindowUnavailable => "WINDOW_UNAVAILABLE",
+            Self::ShortcutInvalid => "SHORTCUT_INVALID",
+            Self::ShortcutConflict => "SHORTCUT_CONFLICT",
         }
     }
 }

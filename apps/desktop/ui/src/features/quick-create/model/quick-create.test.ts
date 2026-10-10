@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canSubmit, normalizeTitle, resolveKey } from "./quick-create";
+import { canSubmit, cycleKind, normalizeTitle, resolveKey } from "./quick-create";
 
 describe("normalizeTitle / canSubmit", () => {
   it("去除首尾空白", () => {
@@ -34,6 +34,23 @@ describe("resolveKey", () => {
 
   it("其他按键没有动作", () => {
     expect(resolveKey({ key: "a", isComposing: false, title: "a" })).toBe("none");
-    expect(resolveKey({ key: "Tab", isComposing: false, title: "a" })).toBe("none");
+  });
+});
+
+describe("Tab 切换类型", () => {
+  it("Tab 向后、Shift+Tab 向前；输入法组合期间忽略", () => {
+    expect(resolveKey({ key: "Tab", isComposing: false, title: "" })).toBe("nextKind");
+    expect(resolveKey({ key: "Tab", isComposing: false, title: "", shiftKey: true })).toBe(
+      "previousKind",
+    );
+    expect(resolveKey({ key: "Tab", isComposing: true, title: "" })).toBe("none");
+  });
+
+  it("cycleKind 在 待办 → 笔记 → 提示 之间循环", () => {
+    expect(cycleKind("todo", false)).toBe("note");
+    expect(cycleKind("note", false)).toBe("tip");
+    expect(cycleKind("tip", false)).toBe("todo");
+    expect(cycleKind("todo", true)).toBe("tip");
+    expect(cycleKind("tip", true)).toBe("note");
   });
 });

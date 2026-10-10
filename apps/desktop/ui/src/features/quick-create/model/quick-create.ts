@@ -1,5 +1,23 @@
+import type { ItemTypeDto } from "@/lib/ipc";
+
 /** 输入框中一次按键对应的动作。 */
-export type KeyAction = "submit" | "cancel" | "none";
+export type KeyAction = "submit" | "cancel" | "nextKind" | "previousKind" | "none";
+
+/** 快速创建可以在这些类型之间切换，按展示顺序。 */
+export const QUICK_CREATE_KINDS: readonly ItemTypeDto[] = ["todo", "note", "tip"];
+
+/**
+ * 在类型之间循环切换（Tab 向后、Shift+Tab 向前）。
+ *
+ * @param kind 当前类型。
+ * @param backwards 是否向前。
+ * @returns 切换后的类型。
+ */
+export function cycleKind(kind: ItemTypeDto, backwards: boolean): ItemTypeDto {
+  const count = QUICK_CREATE_KINDS.length;
+  const at = QUICK_CREATE_KINDS.indexOf(kind);
+  return QUICK_CREATE_KINDS[(at + (backwards ? count - 1 : 1)) % count] ?? kind;
+}
 
 /** 一次按键的相关信息。 */
 export type KeyInput = {
@@ -9,6 +27,8 @@ export type KeyInput = {
   isComposing: boolean;
   /** 输入框当前的文本。 */
   title: string;
+  /** 是否按住 Shift（Shift+Tab 向前切换类型）。 */
+  shiftKey?: boolean;
 };
 
 /**
@@ -35,7 +55,7 @@ export function canSubmit(raw: string): boolean {
 }
 
 /**
- * 把一次按键翻译为动作：Enter 提交、Esc 取消。
+ * 把一次按键翻译为动作：Enter 提交、Esc 取消、Tab / Shift+Tab 切换类型。
  *
  * 中文用户用拼音输入法时，Enter 用来把拼音上屏；这时必须忽略，否则会提交一个半成品标题。
  * 纯逻辑，便于单元测试。
@@ -46,6 +66,7 @@ export function canSubmit(raw: string): boolean {
 export function resolveKey(input: KeyInput): KeyAction {
   if (input.isComposing) return "none";
   if (input.key === "Escape") return "cancel";
+  if (input.key === "Tab") return input.shiftKey === true ? "previousKind" : "nextKind";
   if (input.key === "Enter") return canSubmit(input.title) ? "submit" : "none";
   return "none";
 }

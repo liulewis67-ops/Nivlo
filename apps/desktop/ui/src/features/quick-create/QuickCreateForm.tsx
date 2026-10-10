@@ -6,7 +6,7 @@ import { Input } from "@/components";
 import { ipc } from "@/lib/ipc";
 import type { ItemTypeDto } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
-import { normalizeTitle, resolveKey } from "./model/quick-create";
+import { cycleKind, normalizeTitle, resolveKey } from "./model/quick-create";
 
 /** 输入获得焦点后等待多久确认窗口真的拿到了系统焦点（毫秒）。 */
 const FOCUS_CHECK_DELAY_MS = 500;
@@ -15,6 +15,8 @@ const FOCUS_CHECK_DELAY_MS = 500;
 export type QuickCreateFormProps = {
   /** 要创建的类型。 */
   kind: ItemTypeDto;
+  /** 按 Tab / Shift+Tab 切换类型时调用；不提供时不响应 Tab（保持默认的焦点移动）。 */
+  onKindChange?: ((kind: ItemTypeDto) => void) | undefined;
   /** 结束时调用：无论是创建成功、取消、失去焦点还是无法获得焦点。 */
   onDone: () => void;
 };
@@ -26,7 +28,7 @@ export type QuickCreateFormProps = {
  *
  * 1. 挂载时请求后端 `beginFloatingInput`：记住用户当前的应用、让悬浮窗临时可聚焦并聚焦，
  *    完成后才聚焦输入框；失败（窗口无法聚焦）时提示错误并结束；
- * 2. Enter 创建（输入法组合期间与空标题不提交），Esc 取消；
+ * 2. Enter 创建（输入法组合期间与空标题不提交），Esc 取消，Tab / Shift+Tab 在待办 / 笔记 / 提示之间切换；
  * 3. 窗口失去系统焦点（用户点了别处）视为取消；
  * 4. 卸载时（创建成功 / 取消 / 失败都会卸载）请求 `endFloatingInput`，
  *    后端恢复"不可聚焦"并把焦点还给用户之前的应用。
@@ -36,7 +38,7 @@ export type QuickCreateFormProps = {
  * @param props 类型与结束回调。
  * @returns 输入行。
  */
-export function QuickCreateForm({ kind, onDone }: QuickCreateFormProps) {
+export function QuickCreateForm({ kind, onKindChange, onDone }: QuickCreateFormProps) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [isReady, setIsReady] = useState(false);
@@ -102,8 +104,13 @@ export function QuickCreateForm({ kind, onDone }: QuickCreateFormProps) {
       key: event.key,
       isComposing: event.nativeEvent.isComposing,
       title,
+      shiftKey: event.shiftKey,
     });
-    if (action === "submit" && !create.isPending) {
+    if (action === "nextKind" || action === "previousKind") {
+      if (onKindChange === undefined) return;
+      event.preventDefault();
+      onKindChange(cycleKind(kind, action === "previousKind"));
+    } else if (action === "submit" && !create.isPending) {
       event.preventDefault();
       create.mutate(normalizeTitle(title));
     } else if (action === "cancel") {

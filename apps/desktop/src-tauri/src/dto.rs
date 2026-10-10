@@ -25,6 +25,8 @@ use nivlo_domain::source::Source;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
+use crate::shortcut::ShortcutStatus;
+
 /// IPC 统一的错误结构 `{ code, message, action }`（架构文档 §43）。
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -532,6 +534,29 @@ impl From<ListItemsRequest> for ItemFilter {
             include_archived: request.include_archived,
             in_inbox_only: false,
             limit: request.limit,
+        }
+    }
+}
+
+/// 全局快捷键的状态（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ShortcutStatusDto {
+    /// 用户的绑定，规范文本如 `Ctrl+Shift+Space`。
+    pub accelerator: String,
+    /// 当前是否已经注册到系统。
+    pub registered: bool,
+    /// 没注册成功是因为被其他程序占用：界面应提示并引导重新绑定。
+    pub conflict: bool,
+}
+
+impl From<ShortcutStatus> for ShortcutStatusDto {
+    /// Host → DTO。
+    fn from(value: ShortcutStatus) -> Self {
+        Self {
+            accelerator: value.accelerator,
+            registered: value.registered,
+            conflict: value.conflict,
         }
     }
 }

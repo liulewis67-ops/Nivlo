@@ -16,6 +16,7 @@ pub mod commands;
 pub mod dto;
 pub mod events;
 pub mod lifecycle;
+pub mod shortcut;
 pub mod tray;
 pub mod windows;
 
@@ -68,6 +69,8 @@ macro_rules! bindings_builder {
                 $crate::commands::today::get_today,
                 $crate::commands::today::reorder_today,
                 $crate::commands::window::open_main::<$runtime>,
+                $crate::commands::shortcut::get_shortcut_status,
+                $crate::commands::shortcut::set_quick_create_shortcut,
                 $crate::commands::window::open_main_at::<$runtime>,
                 $crate::commands::window::take_pending_main_view,
                 $crate::commands::window::quit_app::<$runtime>,
@@ -181,6 +184,18 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             // 先还原位置再开始观察移动事件，避免把"还原"本身当成用户拖动。
             tauri::async_runtime::block_on(controller.restore());
             app.state::<AppState>().runtime.set_floating(controller);
+
+            // 全局快捷键不是必需功能：注册失败（被占用）只记录并在界面提示，应用照常运行。
+            {
+                let handle = app.handle().clone();
+                let controller = Arc::new(shortcut::ShortcutController::new(
+                    shortcut::platform_port(),
+                    app.state::<AppState>().services.settings.clone(),
+                    Arc::new(move || tray::request_quick_add(&handle)),
+                ));
+                tauri::async_runtime::block_on(controller.start());
+                app.state::<AppState>().runtime.set_shortcut(controller);
+            }
 
             // 托盘不是必需功能：创建失败只记录，应用继续以悬浮窗运行。
             if let Err(error) = tray::setup(app.handle()) {

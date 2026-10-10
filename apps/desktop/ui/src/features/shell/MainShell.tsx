@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
 import { DevConsole } from "@/features/dev-console";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
+import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { cx } from "@/lib/cx";
 import { ComingSoon } from "./ComingSoon";
@@ -117,7 +118,8 @@ export function MainShell() {
             />
           ))}
         </nav>
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col gap-1">
+          <ShortcutSetting />
           <ThemeMenu />
         </div>
       </aside>

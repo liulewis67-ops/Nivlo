@@ -18,6 +18,7 @@ use nivlo_storage::Database;
 use tauri::async_runtime::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
+use crate::shortcut::ShortcutController;
 use crate::windows::floating::FloatingHandle;
 
 /// Application 层的 Use Case 服务集合。
@@ -55,6 +56,8 @@ pub struct RuntimeHandles {
     /// 悬浮窗请求主窗口打开的视图。主窗口可能还没创建 / 还没开始监听事件，所以先存在这里，
     /// 由主窗口启动时取走（事件只负责通知已经在运行的主窗口）。
     pending_main_view: Mutex<Option<String>>,
+    /// 全局快捷键控制器；窗口创建之后才能构造（回调要用 `AppHandle`），因此用 `OnceLock`。
+    shortcut: OnceLock<Arc<ShortcutController>>,
 }
 
 impl RuntimeHandles {
@@ -77,7 +80,18 @@ impl RuntimeHandles {
             shutting_down: AtomicBool::new(false),
             floating: OnceLock::new(),
             pending_main_view: Mutex::new(None),
+            shortcut: OnceLock::new(),
         }
+    }
+
+    /// 设置全局快捷键控制器；只能设置一次，重复设置被忽略。
+    pub fn set_shortcut(&self, controller: Arc<ShortcutController>) {
+        let _ = self.shortcut.set(controller);
+    }
+
+    /// 全局快捷键控制器；启动完成之前为 `None`。
+    pub fn shortcut(&self) -> Option<Arc<ShortcutController>> {
+        self.shortcut.get().cloned()
     }
 
     /// 记录主窗口应当打开的视图。
@@ -151,6 +165,11 @@ impl RuntimeHandles {
             }
         }
         tracing::info!(event = "shutdown_tasks_stopped", "后台任务已停止");
+
+        // 先取消全局快捷键：退出过程中不应再被它唤起 Quick Create。
+        if let Some(shortcut) = self.shortcut.get() {
+            shortcut.stop();
+        }
 
         // 持久化窗口状态：用户刚拖完就退出时，防抖定时器可能还没来得及保存。
         if let Some(floating) = self.floating.get() {

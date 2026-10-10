@@ -1,6 +1,7 @@
 import { AppError } from "@/lib/errors";
 import type {
   AttachmentDto,
+  ShortcutStatusDto,
   CaptureRequestDto,
   InboxEntryDto,
   OrganizeActionDto,
@@ -70,6 +71,10 @@ export interface MemoryIpc extends IpcClient {
   setPendingMainView(view: string | null): void;
   /** 模拟已运行的主窗口收到「切换视图」事件。 */
   emitMainViewRequested(view: string): void;
+  /** 设置全局快捷键的状态（模拟启动时被占用等）。 */
+  setShortcutStatus(status: ShortcutStatusDto): void;
+  /** 已被其他程序占用的快捷键（规范文本），`setQuickCreateShortcut` 遇到它们抛出 `SHORTCUT_CONFLICT`。 */
+  readonly takenShortcuts: Set<string>;
   /** 模拟托盘「快速添加」。 */
   emitQuickAddRequested(): void;
   /** 模拟后端看门狗补发"指针已离开"事件。 */
@@ -177,6 +182,12 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const pointerLeftListeners = new Set<() => void>();
   const quickAddListeners = new Set<() => void>();
   const mainViewListeners = new Set<(view: string) => void>();
+  const takenShortcuts = new Set<string>();
+  let shortcut: ShortcutStatusDto = {
+    accelerator: "Ctrl+Shift+Space",
+    registered: true,
+    conflict: false,
+  };
   const openedViews: string[] = [];
   let pendingMainView: string | null = null;
   let pendingFailure = options.failNextCreateWith;
@@ -611,6 +622,25 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       calls.push("openMain");
       openMainCalls += 1;
       return Promise.resolve();
+    },
+    takenShortcuts,
+    setShortcutStatus: (status: ShortcutStatusDto) => {
+      shortcut = status;
+    },
+    getShortcutStatus: () => {
+      calls.push("getShortcutStatus");
+      return Promise.resolve(shortcut);
+    },
+    setQuickCreateShortcut: (accelerator: string) => {
+      calls.push("setQuickCreateShortcut");
+      if (!/^(Ctrl|Alt|Shift|Win)(\+(Ctrl|Alt|Shift|Win))*\+[A-Za-z0-9]+$/.test(accelerator)) {
+        return Promise.reject(new AppError("SHORTCUT_INVALID", "无效的快捷键"));
+      }
+      if (takenShortcuts.has(accelerator)) {
+        return Promise.reject(new AppError("SHORTCUT_CONFLICT", "已被占用"));
+      }
+      shortcut = { accelerator, registered: true, conflict: false };
+      return Promise.resolve(shortcut);
     },
     get openedViews() {
       return openedViews;

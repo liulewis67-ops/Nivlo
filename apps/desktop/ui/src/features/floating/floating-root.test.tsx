@@ -108,6 +108,25 @@ describe("FloatingRoot", () => {
     expect(ipc.calls).toEqual(["getToday", "getInboxCount", "expandFloating"]);
   });
 
+  it("快速创建时按 Tab 在待办 / 笔记 / 提示之间切换，创建的就是切换后的类型", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    act(() => ipc.emitQuickAddRequested());
+    await advance(0);
+
+    const input = screen.getByLabelText("标题");
+    fireEvent.keyDown(input, { key: "Tab" });
+    expect(screen.getByText("笔记")).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "Tab", shiftKey: true });
+    fireEvent.keyDown(input, { key: "Tab", shiftKey: true });
+    expect(screen.getByText("提示")).toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: "喝水" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await advance(0);
+    expect(ipc.items[0]).toMatchObject({ itemType: "tip", title: "喝水" });
+  });
+
   it("面板收起后回到徽标", async () => {
     renderWithProviders(<FloatingRoot />, createMemoryIpc());
     fireEvent.pointerEnter(root());
