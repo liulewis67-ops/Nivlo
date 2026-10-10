@@ -9,6 +9,10 @@ export const queryKeys = {
   itemList: (filter: { includeArchived: boolean }) => ["items", "list", filter] as const,
   /** Today 视图（待办 / 提示 / 今日已完成）。 */
   today: () => ["today"] as const,
+  /** Inbox 列表（等待整理的 Item，含来源与附件）。 */
+  inbox: () => ["inbox"] as const,
+  /** Inbox 数量。 */
+  inboxCount: () => ["inbox", "count"] as const,
   /** 单个 Item 详情。 */
   item: (id: string) => ["item", id] as const,
 };

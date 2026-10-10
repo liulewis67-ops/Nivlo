@@ -1,0 +1,153 @@
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { AppError } from "@/lib/errors";
+import { useToastStore } from "@/stores/toast-store";
+import { createMemoryIpc } from "@/test/ipc-mock";
+import type { MemoryIpc } from "@/test/ipc-mock";
+import { renderWithProviders } from "@/test/render";
+import { InboxPage } from "./InboxPage";
+
+/** 往收集箱里放一条文本 / 网址捕获。 */
+async function capture(ipc: MemoryIpc, text: string): Promise<void> {
+  await ipc.capture({
+    input: { kind: "text", text },
+    origin: "drop",
+    sourceApplication: null,
+  });
+}
+
+/** 取一行（按标题）。 */
+function row(title: string): HTMLElement {
+  const item = screen.getByText(title).closest("li");
+  if (item === null) throw new Error(`找不到「${title}」那一行`);
+  return item;
+}
+
+/** 当前 Toast 上的撤销按钮。 */
+function undoToast() {
+  return useToastStore.getState().toasts.at(-1)?.action;
+}
+
+describe("InboxPage", () => {
+  it("没有内容时显示空状态，告诉用户怎么往里放东西", async () => {
+    renderWithProviders(<InboxPage />, createMemoryIpc());
+    expect(await screen.findByText("收集箱是空的")).toBeInTheDocument();
+    expect(screen.getByText(/拖到悬浮窗/)).toBeInTheDocument();
+    expect(screen.getByText("已全部整理")).toBeInTheDocument();
+  });
+
+  it("按捕获时间从新到旧列出，显示来源说明与待整理数量", async () => {
+    const ipc = createMemoryIpc();
+    await capture(ipc, "https://www.example.com/docs/a");
+    await capture(ipc, "整理周报");
+    renderWithProviders(<InboxPage />, ipc);
+
+    const titles = (await screen.findAllByRole("listitem")).map((li) => li.textContent ?? "");
+    expect(titles[0]).toContain("整理周报");
+    expect(titles[1]).toContain("example.com/docs/a");
+    expect(screen.getByText("2 项待整理")).toBeInTheDocument();
+  });
+
+  it("点「今天」：条目立即离开收集箱，并给出可撤销的提示；撤销后回来", async () => {
+    const ipc = createMemoryIpc();
+    await capture(ipc, "整理周报");
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("整理周报");
+
+    fireEvent.click(within(row("整理周报")).getByRole("button", { name: "今天" }));
+    await waitFor(() => expect(screen.queryByText("整理周报")).not.toBeInTheDocument());
+    expect(ipc.organizations).toEqual([
+      { ids: [ipc.items[0]?.id], action: { kind: "schedule", target: { kind: "today" } } },
+    ]);
+    expect(screen.getByText("收集箱是空的")).toBeInTheDocument();
+
+    const toast = useToastStore.getState().toasts.at(-1);
+    expect(toast?.message).toBe("已安排到今天（1 项）");
+    act(() => undoToast()?.onClick());
+    await waitFor(() => expect(screen.getByText("整理周报")).toBeInTheDocument());
+    expect(ipc.restorations).toHaveLength(1);
+  });
+
+  it("更多菜单：转换类型与归档", async () => {
+    const ipc = createMemoryIpc();
+    await capture(ipc, "https://example.com");
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("example.com");
+
+    fireEvent.pointerDown(
+      within(row("example.com")).getByRole("button", { name: "更多整理方式" }),
+      { button: 0, ctrlKey: false },
+    );
+    // 当前是笔记，菜单里只给另外两种类型。
+    expect(await screen.findByRole("menuitem", { name: "转为待办" })).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "转为笔记" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "归档" }));
+    await waitFor(() => expect(ipc.organizations).toHaveLength(1));
+    expect(ipc.organizations[0]?.action).toEqual({ kind: "archive" });
+  });
+
+  it("勾选多条后批量整理：一次调用，整批离开", async () => {
+    const ipc = createMemoryIpc();
+    for (const text of ["一", "二", "三"]) await capture(ipc, text);
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("一");
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "选择：三" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "选择：二" }));
+    expect(screen.getByText("已选 2 项")).toBeInTheDocument();
+
+    const toolbar = screen.getByRole("toolbar", { name: "批量整理" });
+    fireEvent.click(within(toolbar).getByRole("button", { name: "明天" }));
+    await waitFor(() => expect(ipc.organizations).toHaveLength(1));
+    expect(ipc.organizations[0]?.ids).toHaveLength(2);
+    await waitFor(() => expect(screen.queryByText("二")).not.toBeInTheDocument());
+    expect(screen.getByText("一")).toBeInTheDocument();
+    // 整理之后选择被清空。
+    expect(screen.queryByText(/已选/)).not.toBeInTheDocument();
+  });
+
+  it("Shift 点击选中一整段", async () => {
+    const ipc = createMemoryIpc();
+    for (const text of ["甲", "乙", "丙", "丁"]) await capture(ipc, text);
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("甲");
+
+    // 列表从新到旧：丁、丙、乙、甲。
+    fireEvent.click(screen.getByRole("checkbox", { name: "选择：丁" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "选择：乙" }), { shiftKey: true });
+    expect(screen.getByText("已选 3 项")).toBeInTheDocument();
+  });
+
+  it("整理失败：条目回到列表，并提示错误", async () => {
+    const ipc = createMemoryIpc();
+    await capture(ipc, "整理周报");
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("整理周报");
+
+    ipc.failNextOrganizeWith(new AppError("STORAGE_UNAVAILABLE", "boom"));
+    fireEvent.click(within(row("整理周报")).getByRole("button", { name: "今天" }));
+    await waitFor(() =>
+      expect(useToastStore.getState().toasts.some((t) => t.kind === "error")).toBe(true),
+    );
+    expect(await screen.findByText("整理周报")).toBeInTheDocument();
+  });
+
+  it("被引用的文件不在原处：显示「文件不存在」，不报错", async () => {
+    const ipc = createMemoryIpc();
+    await ipc.capture({
+      input: { kind: "files", paths: ["C:\\资料\\报告 final.pdf"] },
+      origin: "drop",
+      sourceApplication: null,
+    });
+    const real = ipc.listInbox.bind(ipc);
+    ipc.listInbox = async () =>
+      (await real()).map((entry) => ({
+        ...entry,
+        attachments: entry.attachments.map((a) => ({ ...a, exists: false })),
+      }));
+    renderWithProviders(<InboxPage />, ipc);
+
+    expect(await screen.findByText("文件不存在")).toBeInTheDocument();
+    expect(screen.getByText("报告 final.pdf")).toBeInTheDocument();
+  });
+});

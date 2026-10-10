@@ -5,16 +5,21 @@ import type {
   CaptureResultDto,
   CreateItemRequest,
   ExpandedLayoutDto,
+  InboxEntryDto,
   IpcError,
   ItemDto,
   ItemTypeDto,
   ListItemsRequest,
+  OrganizeActionDto,
+  OrganizeResultDto,
+  PreviousStateDto,
   RescheduleTargetDto,
   TodayViewDto,
 } from "@/bindings";
 import { toAppError } from "./errors";
 
 export type {
+  AttachmentDto,
   CaptureInputDto,
   CaptureOriginDto,
   CaptureRequestDto,
@@ -23,12 +28,18 @@ export type {
   CreateItemRequest,
   DatePointDto,
   ExpandedLayoutDto,
+  InboxEntryDto,
   ItemDto,
   ItemStatusDto,
   ItemTypeDto,
   ListItemsRequest,
+  OrganizeActionDto,
+  OrganizeResultDto,
+  PreviousStateDto,
   PriorityDto,
   RescheduleTargetDto,
+  ScheduleTargetDto,
+  SourceDto,
   TodayItemDto,
   TodayViewDto,
 } from "@/bindings";
@@ -77,6 +88,17 @@ export interface IpcClient {
   capture(request: CaptureRequestDto): Promise<CaptureResultDto>;
   /** 撤销一次捕获：删除它创建的全部记录（用户被引用的文件不受影响）。 */
   undoCapture(itemIds: string[]): Promise<void>;
+  /** 列出 Inbox：等待整理的 Item（捕获时间从新到旧），附带来源与附件（含被引用文件是否还在）。 */
+  listInbox(): Promise<InboxEntryDto[]>;
+  /** Inbox 里有多少条等待整理。 */
+  getInboxCount(): Promise<number>;
+  /**
+   * 对一批 Item 执行同一个整理动作（一个事务，任何一条失败整批不变）。
+   * 返回整理之后的 Item 与整理之前的状态（传给 [`IpcClient.restoreItems`] 撤销）。
+   */
+  organizeItems(itemIds: string[], action: OrganizeActionDto): Promise<OrganizeResultDto>;
+  /** 精确撤销一次整理：恢复到 [`PreviousStateDto`] 记录的状态。 */
+  restoreItems(previous: PreviousStateDto[]): Promise<ItemDto[]>;
   /** 打开（必要时创建）并聚焦主窗口。 */
   openMain(): Promise<void>;
   /** 退出应用：触发后端的有序退出流程。仅主窗口可调用。 */
@@ -198,6 +220,11 @@ const tauriIpc: IpcClient = {
   undoCapture: async (itemIds) => {
     await call("undo_capture", commands.undoCapture(itemIds));
   },
+  listInbox: () => call("list_inbox", commands.listInbox()),
+  getInboxCount: () => call("get_inbox_count", commands.getInboxCount()),
+  organizeItems: (itemIds, action) =>
+    call("organize_items", commands.organizeItems(itemIds, action)),
+  restoreItems: (previous) => call("restore_items", commands.restoreItems(previous)),
   openMain: async () => {
     await call("open_main", commands.openMain());
   },
@@ -263,6 +290,10 @@ export const ipc: IpcClient = {
   getToday: () => current.getToday(),
   capture: (request) => current.capture(request),
   undoCapture: (itemIds) => current.undoCapture(itemIds),
+  listInbox: () => current.listInbox(),
+  getInboxCount: () => current.getInboxCount(),
+  organizeItems: (itemIds, action) => current.organizeItems(itemIds, action),
+  restoreItems: (previous) => current.restoreItems(previous),
   openMain: () => current.openMain(),
   quitApp: () => current.quitApp(),
   startFloatingDrag: () => current.startFloatingDrag(),

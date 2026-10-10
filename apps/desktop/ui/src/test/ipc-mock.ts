@@ -1,6 +1,11 @@
 import { AppError } from "@/lib/errors";
 import type {
+  AttachmentDto,
   CaptureRequestDto,
+  InboxEntryDto,
+  OrganizeActionDto,
+  PreviousStateDto,
+  SourceDto,
   CreateItemRequest,
   ItemDto,
   IpcClient,
@@ -47,6 +52,12 @@ export interface MemoryIpc extends IpcClient {
   readonly captures: readonly CaptureRequestDto[];
   /** 按顺序记录的全部 `undoCapture` 收到的 ID。 */
   readonly undoneCaptures: readonly string[][];
+  /** 按顺序记录的全部 `organizeItems` 调用。 */
+  readonly organizations: readonly { ids: string[]; action: OrganizeActionDto }[];
+  /** 按顺序记录的全部 `restoreItems` 收到的状态。 */
+  readonly restorations: readonly PreviousStateDto[][];
+  /** 让下一次 `organizeItems` / `restoreItems` 抛出的错误；触发后自动清除。 */
+  failNextOrganizeWith(error: AppError): void;
   /** 让下一次 `capture` 抛出的错误；触发后自动清除。 */
   failNextCaptureWith(error: AppError): void;
   /** 设置下一次及之后 `getToday` 返回的 Today 视图。 */
@@ -59,6 +70,83 @@ export interface MemoryIpc extends IpcClient {
   emitFloatingPointerLeft(): void;
   /** 最近一次 `expandFloating` 请求的尺寸。 */
   readonly lastExpand: { width: number; height: number } | null;
+}
+
+/** 由捕获请求推出来源与附件（与后端默认规则一致的形状）。 */
+function describeProvenance(
+  request: CaptureRequestDto,
+  capturedAt: string,
+): { sources: SourceDto[]; attachments: AttachmentDto[] } {
+  const base = { sourceApp: request.sourceApplication, originalTitle: null, capturedAt };
+  const input = request.input;
+  if (input.kind === "text") {
+    const isUrl = /^https?:\/\/\S+$/.test(input.text.trim());
+    return {
+      sources: [
+        {
+          ...base,
+          sourceType: isUrl ? "web" : "text",
+          sourceUrl: isUrl ? input.text.trim() : null,
+          sourcePath: null,
+        },
+      ],
+      attachments: [],
+    };
+  }
+  if (input.kind === "files") {
+    const path = input.paths[0] ?? "";
+    const name = path.split(/[\\/]/).pop() ?? path;
+    return {
+      sources: [{ ...base, sourceType: "file", sourceUrl: null, sourcePath: path }],
+      attachments: [{ kind: "reference", path, name, mime: null, sizeBytes: null, exists: true }],
+    };
+  }
+  return {
+    sources: [{ ...base, sourceType: "image", sourceUrl: null, sourcePath: null }],
+    attachments: [
+      {
+        kind: "stored",
+        path: "image.png",
+        name: "图片",
+        mime: "image/png",
+        sizeBytes: 1,
+        exists: true,
+      },
+    ],
+  };
+}
+
+/** 把整理动作应用到一个 Item（对齐后端的 D-02 规则）。 */
+function applyOrganize(item: ItemDto, action: OrganizeActionDto, today: string): ItemDto {
+  const now = new Date().toISOString();
+  switch (action.kind) {
+    case "leaveInbox":
+      return { ...item, inInbox: false, updatedAt: now };
+    case "archive":
+      return { ...item, inInbox: false, archivedAt: now, updatedAt: now };
+    case "convertTo":
+      return item.itemType === action.item_type
+        ? item
+        : { ...item, itemType: action.item_type, inInbox: false, updatedAt: now };
+    case "schedule": {
+      const target = action.target;
+      const base = new Date(`${today}T00:00:00Z`);
+      const shift = (days: number): string => {
+        const next = new Date(base);
+        next.setUTCDate(next.getUTCDate() + days);
+        return next.toISOString().slice(0, 10);
+      };
+      const date =
+        target.kind === "today"
+          ? today
+          : target.kind === "tomorrow"
+            ? shift(1)
+            : target.kind === "later"
+              ? shift((8 - base.getUTCDay()) % 7 || 7)
+              : target.date;
+      return { ...item, scheduled: { date, time: null }, inInbox: false, updatedAt: now };
+    }
+  }
 }
 
 /** 创建内存版 IPC 时的可选配置。 */
@@ -97,6 +185,11 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const captures: CaptureRequestDto[] = [];
   const undoneCaptures: string[][] = [];
   let captureFailure: AppError | undefined;
+  let organizeFailure: AppError | undefined;
+  const organizations: { ids: string[]; action: OrganizeActionDto }[] = [];
+  const restorations: PreviousStateDto[][] = [];
+  /** 捕获时记录的来源与附件，供 `listInbox` 返回。 */
+  const provenance = new Map<string, { sources: SourceDto[]; attachments: AttachmentDto[] }>();
   let lastExpand: { width: number; height: number } | null = null;
 
   /**
@@ -216,6 +309,87 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   }
 
   return {
+    get organizations() {
+      return organizations;
+    },
+    get restorations() {
+      return restorations;
+    },
+    failNextOrganizeWith: (error: AppError) => {
+      organizeFailure = error;
+    },
+    listInbox: () => {
+      calls.push("listInbox");
+      const entries: InboxEntryDto[] = items
+        .filter((item) => item.inInbox && item.archivedAt === null)
+        .reverse()
+        .map((item) => ({
+          item,
+          sources: provenance.get(item.id)?.sources ?? [],
+          attachments: provenance.get(item.id)?.attachments ?? [],
+        }));
+      return Promise.resolve(entries);
+    },
+    getInboxCount: () => {
+      calls.push("getInboxCount");
+      return Promise.resolve(items.filter((i) => i.inInbox && i.archivedAt === null).length);
+    },
+    organizeItems: (ids: string[], action: OrganizeActionDto) => {
+      calls.push("organizeItems");
+      organizations.push({ ids, action });
+      if (organizeFailure !== undefined) {
+        const failure = organizeFailure;
+        organizeFailure = undefined;
+        return Promise.reject(failure);
+      }
+      const previous: PreviousStateDto[] = [];
+      const updated: ItemDto[] = [];
+      for (const id of ids) {
+        const at = items.findIndex((item) => item.id === id);
+        const current = items[at];
+        if (current === undefined) {
+          return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+        }
+        previous.push({
+          id,
+          itemType: current.itemType,
+          scheduled: current.scheduled,
+          inInbox: current.inInbox,
+          archived: current.archivedAt !== null,
+        });
+        const next = applyOrganize(current, action, today.date);
+        items[at] = next;
+        updated.push(next);
+      }
+      for (const notify of listeners) notify();
+      return Promise.resolve({ items: updated, previous });
+    },
+    restoreItems: (previous: PreviousStateDto[]) => {
+      calls.push("restoreItems");
+      restorations.push(previous);
+      if (organizeFailure !== undefined) {
+        const failure = organizeFailure;
+        organizeFailure = undefined;
+        return Promise.reject(failure);
+      }
+      const restored: ItemDto[] = [];
+      for (const state of previous) {
+        const at = items.findIndex((item) => item.id === state.id);
+        const current = items[at];
+        if (current === undefined) continue;
+        const next: ItemDto = {
+          ...current,
+          itemType: state.itemType,
+          scheduled: state.scheduled,
+          inInbox: state.inInbox,
+          archivedAt: state.archived ? (current.archivedAt ?? current.updatedAt) : null,
+        };
+        items[at] = next;
+        restored.push(next);
+      }
+      for (const notify of listeners) notify();
+      return Promise.resolve(restored);
+    },
     get captures() {
       return captures;
     },
@@ -240,7 +414,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         input.kind === "text"
           ? (input.text.trim().split(/\r?\n/)[0] ?? "")
           : input.kind === "files"
-            ? (input.paths[0] ?? "")
+            ? (input.paths[0]?.split(/[\\/]/).pop() ?? "")
             : "图片";
       const created = await insert({
         itemType: isPlainText ? "todo" : "note",
@@ -255,6 +429,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       });
       const item = { ...created, inInbox: true };
       items[items.length - 1] = item;
+      provenance.set(item.id, describeProvenance(request, item.createdAt));
       return { items: [item], undoIds: [item.id] };
     },
     undoCapture: (itemIds: string[]) => {

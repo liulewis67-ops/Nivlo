@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { DragEvent } from "react";
 import type { CaptureResultDto, ItemDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
+import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
 import { extractCapture, snapshotDrop } from "./model/extract-drop";
 
@@ -145,7 +146,7 @@ export function useDropCapture(send: (event: DropMachineEvent) => void): DropCap
         undoIdsRef.current = result.undoIds;
         show({ status: "created", items: result.items, undoIds: result.undoIds });
       } catch (error) {
-        show({ status: "failed", message: toAppError(error).message });
+        show({ status: "failed", message: errorMessage(toAppError(error)) });
       }
     })();
   };
@@ -157,7 +158,7 @@ export function useDropCapture(send: (event: DropMachineEvent) => void): DropCap
     if (ids.length === 0) return;
     undoIdsRef.current = [];
     void ipc.undoCapture(ids).catch((error: unknown) => {
-      setFeedback({ status: "failed", message: toAppError(error).message });
+      setFeedback({ status: "failed", message: errorMessage(toAppError(error)) });
       send("holdRequested");
       startDismissTimer();
     });

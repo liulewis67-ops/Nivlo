@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { DevConsole } from "@/features/dev-console";
+import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { cx } from "@/lib/cx";
 import { ComingSoon } from "./ComingSoon";
@@ -66,8 +67,8 @@ function NavButton({ view, isActive, count, onSelect }: NavButtonProps) {
 /**
  * 主窗口外壳：左侧导航 + 右侧当前视图（实施计划 1.10、产品文档 §23）。
  *
- * 目前只有 Today 是完整实现；Inbox / Calendar / Notes / Projects 显示占位页，
- * 随后续阶段逐个替换。Today 的角标取自 Today 查询缓存，和悬浮窗徽标是同一个数字。
+ * Today 与 Inbox 是完整实现；Calendar / Notes / Projects 显示占位页，随后续阶段逐个替换。
+ * Today 的角标取自 Today 查询缓存，和悬浮窗徽标是同一个数字；Inbox 的角标是等待整理的条数。
  *
  * @returns 主窗口内容。
  */
@@ -76,6 +77,7 @@ export function MainShell() {
   const view = useNavStore((state) => state.view);
   const setView = useNavStore((state) => state.setView);
   const remaining = useTodayQuery().data?.remainingCount ?? null;
+  const inboxCount = useInboxCountQuery().data ?? null;
 
   return (
     <div className="grid h-full grid-cols-[13.5rem_1fr] bg-bg">
@@ -90,7 +92,7 @@ export function MainShell() {
               key={item}
               view={item}
               isActive={view === item}
-              count={item === "today" ? remaining : null}
+              count={item === "today" ? remaining : item === "inbox" ? inboxCount : null}
               onSelect={() => setView(item)}
             />
           ))}
@@ -100,13 +102,14 @@ export function MainShell() {
         </div>
       </aside>
       <main className="min-h-0 min-w-0 overflow-hidden">
+        {view === "inbox" && <InboxPage />}
         {view === "today" && <TodayPage />}
         {view === "dev" && (
           <div className="h-full overflow-y-auto">
             <DevConsole />
           </div>
         )}
-        {(view === "inbox" || view === "calendar" || view === "notes" || view === "projects") && (
+        {(view === "calendar" || view === "notes" || view === "projects") && (
           <ComingSoon view={view} />
         )}
       </main>

@@ -143,7 +143,7 @@ describe("拖放捕获（悬浮窗）", () => {
     fireEvent.drop(root(), { dataTransfer: transfer({ "text/plain": "x" }) });
     await advance(0);
 
-    expect(screen.getByRole("status")).toHaveTextContent("没能收集：磁盘已满");
+    expect(screen.getByRole("status")).toHaveTextContent("没能收集：本地数据库暂时不可用。");
     await advance(FEEDBACK_VISIBLE_MS);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });

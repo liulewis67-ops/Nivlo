@@ -60,13 +60,30 @@ describe("MainShell", () => {
     renderWithProviders(<MainShell />, ipc);
     await screen.findByText("写周报");
 
-    await user.click(screen.getByRole("button", { name: "收集箱" }));
-    expect(screen.getByRole("heading", { name: "收集箱" })).toBeInTheDocument();
-    expect(screen.getByText(/拖进来、粘贴进来/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "日历" }));
+    expect(screen.getByRole("heading", { name: "日历" })).toBeInTheDocument();
+    expect(screen.getByText(/把待办拖到某一天/)).toBeInTheDocument();
     expect(screen.queryByText("写周报")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /今天/ }));
     expect(await screen.findByText("写周报")).toBeInTheDocument();
+  });
+
+  it("Inbox 视图列出捕获的内容，侧栏角标显示待整理数量", async () => {
+    const user = userEvent.setup();
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    await ipc.capture({
+      input: { kind: "text", text: "https://example.com/x" },
+      origin: "drop",
+      sourceApplication: null,
+    });
+    renderWithProviders(<MainShell />, ipc);
+
+    const nav = await screen.findByRole("button", { name: /收集箱/ });
+    await waitFor(() => expect(nav).toHaveTextContent("1"));
+    await user.click(nav);
+    expect(await screen.findByText("example.com/x")).toBeInTheDocument();
   });
 
   it("显示进度，并在输入框里回车创建待办", async () => {

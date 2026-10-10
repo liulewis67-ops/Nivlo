@@ -32,6 +32,38 @@
     "kind": { "todo": "待办", "note": "笔记", "tip": "提示" },
     "input": { "label": "标题", "placeholder": "输入标题，回车创建，Esc 取消" }
   },
+  "inbox": {
+    "page": { "label": "收集箱", "allClear": "已全部整理", "pending": "{{count}} 项待整理" },
+    "toolbar": { "label": "批量整理", "selectAll": "全选", "selected": "已选 {{count}} 项" },
+    "select": "选择：{{title}}",
+    "undo": "撤销",
+    "missingFile": "文件不存在",
+    "action": {
+      "today": "今天",
+      "tomorrow": "明天",
+      "later": "下周一",
+      "convert": "转为{{type}}",
+      "convertMenu": "转为…",
+      "leave": "移出收集箱",
+      "archive": "归档",
+      "more": "更多整理方式",
+      "moreShort": "更多"
+    },
+    "done": {
+      "today": "已安排到今天（{{count}} 项）",
+      "tomorrow": "已安排到明天（{{count}} 项）",
+      "later": "已安排到下周一（{{count}} 项）",
+      "todo": "已转为待办（{{count}} 项）",
+      "note": "已转为笔记（{{count}} 项）",
+      "tip": "已转为提示（{{count}} 项）",
+      "leave": "已移出收集箱（{{count}} 项）",
+      "archive": "已归档（{{count}} 项）"
+    },
+    "empty": {
+      "title": "收集箱是空的",
+      "hint": "把链接、文字或图片拖到悬浮窗，它们会先落在这里，等你有空再整理。"
+    }
+  },
   "capture": {
     "drop": { "title": "松手即可收集", "hint": "链接、文字、图片都会先放进收集箱" },
     "saving": "正在收集…",
@@ -58,7 +90,6 @@
       "dev": "开发控制台"
     },
     "comingSoon": {
-      "inbox": "拖进来、粘贴进来的东西会先落在这里，等你有空再整理。",
       "calendar": "把待办拖到某一天，安排接下来的日子。",
       "notes": "随手记下的想法和长文，都收在这里。",
       "projects": "把相关的待办与笔记归到一个项目里。"

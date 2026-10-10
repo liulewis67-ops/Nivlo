@@ -115,12 +115,12 @@ Phase 12 Backlog                        → 未排期
 | | 1.10 | 主窗口外壳与 Today 视图 | ✅ |
 | | 1.11 | 常驻性能基线验收 | ⬜ |
 | **P2** | 2.1 | CaptureInput 模型与 Normalizer | ✅ |
-| | 2.2 | Source 与 Attachment 持久化 | 🟨 |
+| | 2.2 | Source 与 Attachment 持久化 | ✅ |
 | | 2.3 | Capture Use Case 与默认规则 | ✅ |
 | | 2.4 | 悬浮窗拖拽捕获（WebView Drop） | 🟨 |
 | | 2.5 | 粘贴捕获 | ⬜ |
 | | 2.6 | 全局快捷键 Quick Create | ⬜ |
-| | 2.7 | Inbox | ⬜ |
+| | 2.7 | Inbox | 🟨 |
 | **P3** | 3.1 | Item 完整编辑器 | ⬜ |
 | | 3.2 | Notes 视图 | ⬜ |
 | | 3.3 | Projects 与 Tags | ⬜ |
@@ -643,7 +643,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 2.2 Source 与 Attachment 持久化
 
-- **状态**：🟨
+- **状态**：✅
 - **依赖**：2.1；D-02
 - **目标**：每个 Item 天然支持 Source（产品文档 §18），文件默认引用而非复制（架构文档 §34）。
 - **任务**：
@@ -655,10 +655,11 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [x] Storage 测试：Source / Attachment CRUD 及级联删除。
   - [x] 删除 Item 时**绝不**删除用户的被引用文件（测试断言文件仍存在）。
-  - [ ] 被引用文件被移动或删除后，UI 显示「文件不存在」状态而不报错。
+  - [x] 被引用文件被移动或删除后，UI 显示「文件不存在」状态而不报错。
 - **完成记录**：2026-10-10 主体完成；「UI 显示文件不存在」要等 2.7 的 Inbox 视图才有界面，保持 🟨。D-02 已决定（采用推荐方案）。
   - 证据：`migrations/0002_item_source.sql`（`items.in_inbox` + 部分索引、`item_sources`、`attachments`，均随 Item 级联删除）；Domain：`Item` 新增 `in_inbox`，规则按 D-02——安排日期 / 归入项目 / 真正转换类型 / 手动 `leave_inbox` 会离开 Inbox，清除日期或类型没变不算整理，`move_to_inbox` 清除日期并标记待整理（6 个新测试，含快照往返）；Storage 集成测试：`in_inbox` 持久化并被整理清除、Source / Attachment 往返且乱序插入按时间读取、Item 不存在时外键拒绝（`Constraint`）、**删除 Item 级联删除记录但被引用的用户文件原封不动**（测试里读回文件内容，并断言引用类附件 `owns_file()` 为 false）；Application：`reschedule_item` 的 Inbox 目标现在真正设置 `in_inbox`（补齐 1.8 留下的语义），精确恢复撤销后离开 Inbox；`nivlo-capture::reference_exists` 检查被引用文件是否还在（移动 / 删除 / 不存在的盘符 / 空路径都返回 false 而不是报错）。`ItemDto` 新增 `inInbox`。
   - 待办：没有原始路径的图片复制到 `attachments/` 的写入由 2.3 的 Capture Use Case 完成；Integration 专属字段已有 `metadata_json` 列。
+  - 补完（2.7）：Inbox 视图读取附件时检查被引用文件是否还在（`exists`），不在原处显示「文件不存在」徽标而不报错；IPC 集成测试删除文件后断言 `exists=false` 且列表正常。
 
 ### 2.3 Capture Use Case 与默认规则
 
@@ -730,7 +731,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 2.7 Inbox
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：2.3
 - **目标**：实现产品文档 §8 的 Inbox 中间层。
 - **任务**：
@@ -739,11 +740,14 @@ Phase 12 Backlog                        → 未排期
   - 侧栏显示 Inbox 数量；悬浮窗提供 Inbox 数量入口（点击打开主窗口 Inbox）。
   - 空状态文案。
 - **验收标准**：
-  - [ ] 所有捕获结果出现在 Inbox。
-  - [ ] 每种整理操作按 D-02 规则使 Item 离开 Inbox（测试覆盖）。
-  - [ ] 批量操作 50 条在 1s 内完成。
-  - [ ] 空状态正确显示。
-- **完成记录**：—
+  - [x] 所有捕获结果出现在 Inbox。
+  - [x] 每种整理操作按 D-02 规则使 Item 离开 Inbox（测试覆盖）。
+  - [x] 批量操作 50 条在 1s 内完成。
+  - [x] 空状态正确显示。
+- **完成记录**：2026-10-10 主体完成；悬浮窗的 Inbox 入口、项目 / 标签、删除尚未做，保持 🟨。
+  - 证据：后端 `InboxService`：`list`（未归档且 `in_inbox`，捕获时间从新到旧，附带来源与附件）、`count`、`organize`（移出 Inbox / 安排日期 今天·明天·下周一·指定日 / 转换类型 / 归档，**整批一个事务**，任何一条失败整批不变，提交后才发布事件）、`restore`（按整理前的状态精确撤销）。按 D-02 每个整理动作都使 Item 离开 Inbox（`every_organize_action_makes_items_leave_the_inbox` 覆盖全部 7 种），归档现在也算整理；50 条批量在内存 Fake 上远小于 1s，真实 SQLite 的 IPC 集成测试覆盖「3 条捕获 → 列表带来源 → 被引用文件被删后 `exists=false` 且不报错 → 批量安排到今天 → 撤销回到 3 条 → 不存在 / 日期格式错误的错误码」。`ItemFilter` 新增 `in_inbox_only`（storage 集成测试覆盖，含归档不出现）。IPC：`list_inbox`、`get_inbox_count`、`organize_items`、`restore_items`（悬浮窗白名单只加 `get_inbox_count`，D-12）。
+  - 前端：`features/inbox`——来源图标（网址 / 文件 / 文本 / 图片）、标题 + 类型标签 + 来源说明（网址取主机 + 路径，标题已是文件名时不重复）、「文件不存在」徽标、相对时间；悬停或键盘聚焦出现「今天 / 明天 / 更多（下周一、转为…、移出收集箱、归档）」；勾选框支持 Shift 范围选择与全选（半选态），批量工具栏一次整理一批；乐观更新（整理后立即消失，失败回滚并提示），每次整理都有 6 秒可撤销的 Toast；Esc 清除选择；空状态说明怎么往里放东西；侧栏「收集箱」角标显示待整理数。Vitest 新增 19 个用例（模型纯函数、页面交互、侧栏角标）。
+  - 待办：悬浮窗的 Inbox 数量入口（点击打开主窗口 Inbox，需要 `open_main` 携带目标视图）；设置项目与标签（3.x 之后）；删除（等 D-08 软删除语义）。
 
 ---
 

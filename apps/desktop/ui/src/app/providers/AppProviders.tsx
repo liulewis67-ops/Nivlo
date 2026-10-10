@@ -64,6 +64,7 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
       ipc.subscribeDataChanges(() => {
         void client.invalidateQueries({ queryKey: queryKeys.items() });
         void client.invalidateQueries({ queryKey: queryKeys.today() });
+        void client.invalidateQueries({ queryKey: queryKeys.inbox() });
       }),
     [client],
   );
