@@ -16,6 +16,7 @@ import type {
   RescheduleTargetDto,
   ShortcutStatusDto,
   TodayViewDto,
+  UpdateItemRequest,
 } from "@/bindings";
 import { toAppError } from "./errors";
 
@@ -36,6 +37,7 @@ export type {
   ListItemsRequest,
   OrganizeActionDto,
   OrganizeResultDto,
+  PatchDto,
   PreviousStateDto,
   PriorityDto,
   RescheduleTargetDto,
@@ -44,6 +46,7 @@ export type {
   SourceDto,
   TodayItemDto,
   TodayViewDto,
+  UpdateItemRequest,
 } from "@/bindings";
 
 /**
@@ -55,6 +58,18 @@ export type {
 export interface IpcClient {
   /** 创建一个 Item。 */
   createItem(request: CreateItemRequest): Promise<ItemDto>;
+  /** 读取一个 Item 的详情：Item 本身加上来源与附件（含被引用文件是否还在）。 */
+  getItemDetail(id: string): Promise<InboxEntryDto>;
+  /**
+   * 更新一个 Item：只修改请求里出现的字段，在一个事务里完成（详情面板的自动保存）。
+   * 违反领域规则抛出对应错误码，此时没有任何改动。
+   */
+  updateItem(id: string, request: UpdateItemRequest): Promise<ItemDto>;
+  /**
+   * 打开 Item 的来源：网址用默认浏览器，文件在资源管理器里定位。
+   * 文件已不在原处抛出 `SOURCE_FILE_MISSING`；没有可打开的来源抛出 `SOURCE_OPEN_FAILED`。
+   */
+  openItemSource(id: string): Promise<void>;
   /** 按 ID 读取一个 Item。 */
   getItem(id: string): Promise<ItemDto>;
   /** 列出 Item，创建时间从新到旧。 */
@@ -235,6 +250,11 @@ function listenAll(register: Array<() => Promise<() => void>>): () => void {
 const tauriIpc: IpcClient = {
   createItem: (request) => call("create_item", commands.createItem(request)),
   getItem: (id) => call("get_item", commands.getItem(id)),
+  getItemDetail: (id) => call("get_item_detail", commands.getItemDetail(id)),
+  updateItem: (id, request) => call("update_item", commands.updateItem(id, request)),
+  openItemSource: async (id) => {
+    await call("open_item_source", commands.openItemSource(id));
+  },
   listItems: (request) => call("list_items", commands.listItems(request)),
   quickCreate: (itemType, title) => call("quick_create", commands.quickCreate({ itemType, title })),
   rescheduleItem: (id, target) => call("reschedule_item", commands.rescheduleItem(id, target)),
@@ -319,6 +339,9 @@ export function isRunningInTauri(): boolean {
 export const ipc: IpcClient = {
   createItem: (request) => current.createItem(request),
   getItem: (id) => current.getItem(id),
+  getItemDetail: (id) => current.getItemDetail(id),
+  updateItem: (id, request) => current.updateItem(id, request),
+  openItemSource: (id) => current.openItemSource(id),
   listItems: (request) => current.listItems(request),
   quickCreate: (itemType, title) => current.quickCreate(itemType, title),
   rescheduleItem: (id, target) => current.rescheduleItem(id, target),

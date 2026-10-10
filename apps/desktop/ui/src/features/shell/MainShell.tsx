@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
 import { DevConsole } from "@/features/dev-console";
+import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
@@ -81,6 +82,8 @@ export function MainShell() {
   const setView = useNavStore((state) => state.setView);
   const remaining = useTodayQuery().data?.remainingCount ?? null;
   const inboxCount = useInboxCountQuery().data ?? null;
+  /** 详情面板里正在编辑的条目；`null` 表示面板关闭。 */
+  const [openId, setOpenId] = useState<string | null>(null);
 
   // 悬浮窗请求打开某个视图：窗口刚创建时从后端取走待处理的请求，已经在运行时由事件通知。
   useEffect(() => {
@@ -101,40 +104,45 @@ export function MainShell() {
   }, [setView]);
 
   return (
-    <div className="grid h-full grid-cols-[13.5rem_1fr] bg-bg">
-      <aside className="flex min-h-0 flex-col gap-4 border-r border-border bg-surface px-3 py-4">
-        <div className="flex items-center gap-2 px-2">
-          <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
-          <span className="text-lg font-semibold tracking-wide text-text">{t("app.name")}</span>
-        </div>
-        <nav aria-label={t("shell.nav.label")} className="flex flex-col gap-1">
-          {[...NAV_VIEWS, ...DEV_VIEWS].map((item) => (
-            <NavButton
-              key={item}
-              view={item}
-              isActive={view === item}
-              count={item === "today" ? remaining : item === "inbox" ? inboxCount : null}
-              onSelect={() => setView(item)}
-            />
-          ))}
-        </nav>
-        <div className="mt-auto flex flex-col gap-1">
-          <ShortcutSetting />
-          <ThemeMenu />
-        </div>
-      </aside>
-      <main className="min-h-0 min-w-0 overflow-hidden">
-        {view === "inbox" && <InboxPage />}
-        {view === "today" && <TodayPage />}
-        {view === "dev" && (
-          <div className="h-full overflow-y-auto">
-            <DevConsole />
+    <OpenItemContext.Provider value={setOpenId}>
+      <div className="grid h-full grid-cols-[13.5rem_1fr_auto] bg-bg">
+        <aside className="flex min-h-0 flex-col gap-4 border-r border-border bg-surface px-3 py-4">
+          <div className="flex items-center gap-2 px-2">
+            <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
+            <span className="text-lg font-semibold tracking-wide text-text">{t("app.name")}</span>
           </div>
+          <nav aria-label={t("shell.nav.label")} className="flex flex-col gap-1">
+            {[...NAV_VIEWS, ...DEV_VIEWS].map((item) => (
+              <NavButton
+                key={item}
+                view={item}
+                isActive={view === item}
+                count={item === "today" ? remaining : item === "inbox" ? inboxCount : null}
+                onSelect={() => setView(item)}
+              />
+            ))}
+          </nav>
+          <div className="mt-auto flex flex-col gap-1">
+            <ShortcutSetting />
+            <ThemeMenu />
+          </div>
+        </aside>
+        <main className="min-h-0 min-w-0 overflow-hidden">
+          {view === "inbox" && <InboxPage />}
+          {view === "today" && <TodayPage />}
+          {view === "dev" && (
+            <div className="h-full overflow-y-auto">
+              <DevConsole />
+            </div>
+          )}
+          {(view === "calendar" || view === "notes" || view === "projects") && (
+            <ComingSoon view={view} />
+          )}
+        </main>
+        {openId !== null && (
+          <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />
         )}
-        {(view === "calendar" || view === "notes" || view === "projects") && (
-          <ComingSoon view={view} />
-        )}
-      </main>
-    </div>
+      </div>
+    </OpenItemContext.Provider>
   );
 }

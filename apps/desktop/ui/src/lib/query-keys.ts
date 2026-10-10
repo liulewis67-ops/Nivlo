@@ -15,6 +15,10 @@ export const queryKeys = {
   inboxCount: () => ["inbox", "count"] as const,
   /** 全局快捷键的绑定与注册状态。 */
   shortcut: () => ["shortcut"] as const,
-  /** 单个 Item 详情。 */
+  /** 所有单个 Item 查询（含详情）的前缀，用于一次性失效。 */
+  itemsOne: () => ["item"] as const,
+  /** 单个 Item。 */
   item: (id: string) => ["item", id] as const,
+  /** 单个 Item 的详情（含来源与附件）。 */
+  itemDetail: (id: string) => ["item", id, "detail"] as const,
 };

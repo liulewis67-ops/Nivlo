@@ -22,6 +22,7 @@ import { ContextMenu, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto } from "@/lib/ipc";
+import { ItemTitle } from "./ItemTitle";
 import { TodoCheck } from "./TodoCheck";
 import type { PostponeKind } from "./useRescheduleTodo";
 
@@ -159,7 +160,7 @@ function SortableTodo({ item, onComplete, onPostpone }: SortableTodoProps) {
           label={t("today.complete", { title: item.title })}
           onToggle={() => onComplete(item)}
         />
-        <span className="flex-1 truncate">{item.title}</span>
+        <ItemTitle id={item.id} title={item.title} />
         {item.isOverdue && (
           <span className="shrink-0 rounded-sm bg-danger px-1.5 text-xs text-danger-contrast">
             {t("today.overdue")}

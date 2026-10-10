@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
+import { ItemTitle } from "./ItemTitle";
 import { SortableTodoList } from "./SortableTodoList";
 import { TodoCheck } from "./TodoCheck";
 import type { PostponeKind } from "./useRescheduleTodo";
@@ -63,7 +64,7 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
             <li key={item.id} className="flex items-center gap-2 px-2 text-sm text-muted">
               <span aria-hidden="true">{TIP_ICON}</span>
               {timeLabel(item) !== null && <span className="tabular-nums">{timeLabel(item)}</span>}
-              <span className="flex-1 truncate">{item.title}</span>
+              <ItemTitle id={item.id} title={item.title} />
             </li>
           ))}
         </ul>
@@ -80,7 +81,7 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
                 label={t("today.reopen", { title: item.title })}
                 onToggle={() => onReopen(item)}
               />
-              <span className="flex-1 truncate">{item.title}</span>
+              <ItemTitle id={item.id} title={item.title} />
             </li>
           ))}
         </ul>

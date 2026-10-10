@@ -32,6 +32,43 @@
     "kind": { "todo": "待办", "note": "笔记", "tip": "提示" },
     "input": { "label": "标题", "placeholder": "输入标题，回车创建，Tab 换类型" }
   },
+  "detail": {
+    "label": "条目详情",
+    "title": "详情",
+    "close": "关闭详情",
+    "loading": "加载中…",
+    "retry": "重试",
+    "saveFailed": "没能保存：{{reason}}你的修改还留在这里，不会丢。",
+    "status": { "saving": "保存中…", "saved": "已保存" },
+    "contentPlaceholder": "写点什么…（支持 Markdown）",
+    "format": { "plain": "纯文本", "markdown": "Markdown" },
+    "priority": { "none": "无", "low": "低", "medium": "中", "high": "高" },
+    "field": {
+      "type": "类型",
+      "title": "标题",
+      "content": "描述",
+      "format": "格式",
+      "scheduled": "计划日期",
+      "scheduledDate": "计划日期（日）",
+      "scheduledTime": "计划时间",
+      "due": "截止日期",
+      "dueDate": "截止日期（日）",
+      "dueTime": "截止时间",
+      "priority": "优先级"
+    },
+    "source": {
+      "label": "来源",
+      "open": "在浏览器中打开",
+      "reveal": "在文件夹中显示",
+      "type": {
+        "web": "网页链接",
+        "file": "文件",
+        "text": "文字",
+        "image": "图片",
+        "manual": "手动创建"
+      }
+    }
+  },
   "shortcut": {
     "label": "快速创建快捷键",
     "button": "快速创建：{{accelerator}}",

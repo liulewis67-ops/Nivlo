@@ -25,12 +25,17 @@ async function bootstrap(): Promise<void> {
   // 在渲染前就应用主题，避免先闪一下浅色再切到深色。
   applyTheme(useThemeStore.getState().preference);
 
-  let label = "main";
+  let label: string;
   if (isRunningInTauri()) {
     label = getCurrentWindow().label;
   } else {
     const { createMemoryIpc } = await import("@/test/ipc-mock");
-    setIpcClient(createMemoryIpc());
+    const { seedDemoData } = await import("@/test/dev-seed");
+    const memory = createMemoryIpc();
+    await seedDemoData(memory);
+    setIpcClient(memory);
+    // 预览悬浮窗：http://localhost:1420/?window=floating
+    label = new URLSearchParams(window.location.search).get("window") ?? "main";
   }
 
   // 让样式能按窗口区分（悬浮窗需要透明背景）。

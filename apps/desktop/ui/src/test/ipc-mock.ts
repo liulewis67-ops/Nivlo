@@ -1,6 +1,8 @@
 import { AppError } from "@/lib/errors";
 import type {
   AttachmentDto,
+  PatchDto,
+  UpdateItemRequest,
   ShortcutStatusDto,
   CaptureRequestDto,
   InboxEntryDto,
@@ -71,6 +73,14 @@ export interface MemoryIpc extends IpcClient {
   setPendingMainView(view: string | null): void;
   /** 模拟已运行的主窗口收到「切换视图」事件。 */
   emitMainViewRequested(view: string): void;
+  /** 按顺序记录的全部 `updateItem` 请求。 */
+  readonly updates: readonly { id: string; request: UpdateItemRequest }[];
+  /** 让下一次 `updateItem` 抛出的错误（模拟保存失败）；触发后自动清除。 */
+  failNextUpdateWith(error: AppError): void;
+  /** 按顺序记录的 `openItemSource` 请求的 ID。 */
+  readonly openedSources: readonly string[];
+  /** 让下一次 `openItemSource` 抛出的错误（如 `SOURCE_FILE_MISSING`）；触发后自动清除。 */
+  failNextOpenSourceWith(error: AppError): void;
   /** 设置模拟剪贴板的内容；`null` 表示空剪贴板（`captureFromClipboard` 抛出 `CLIPBOARD_EMPTY`）。 */
   setClipboard(content: { text?: string; files?: string[] } | null): void;
   /** 设置全局快捷键的状态（模拟启动时被占用等）。 */
@@ -162,6 +172,12 @@ function applyOrganize(item: ItemDto, action: OrganizeActionDto, today: string):
   }
 }
 
+/** 应用三态修改：缺省 / 保持 → 原值；清除 → null；设置 → 新值。 */
+function applyPatch<T>(patch: PatchDto<T> | undefined, current: T | null): T | null {
+  if (patch === undefined || patch.kind === "keep") return current;
+  return patch.kind === "clear" ? null : patch.value;
+}
+
 /** 创建内存版 IPC 时的可选配置。 */
 export type MemoryIpcOptions = {
   /** 让下一次 `createItem` 抛出的错误，用于测试失败路径；触发后自动清除。 */
@@ -185,6 +201,10 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const quickAddListeners = new Set<() => void>();
   const mainViewListeners = new Set<(view: string) => void>();
   const takenShortcuts = new Set<string>();
+  const updates: { id: string; request: UpdateItemRequest }[] = [];
+  const openedSources: string[] = [];
+  let updateFailure: AppError | undefined;
+  let openSourceFailure: AppError | undefined;
   let clipboard: { text?: string; files?: string[] } | null = null;
   let shortcut: ShortcutStatusDto = {
     accelerator: "Ctrl+Shift+Space",
@@ -629,6 +649,78 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       return Promise.resolve();
     },
     takenShortcuts,
+    get updates() {
+      return updates;
+    },
+    get openedSources() {
+      return openedSources;
+    },
+    failNextUpdateWith: (error: AppError) => {
+      updateFailure = error;
+    },
+    failNextOpenSourceWith: (error: AppError) => {
+      openSourceFailure = error;
+    },
+    getItemDetail: (id: string) => {
+      calls.push("getItemDetail");
+      const item = items.find((candidate) => candidate.id === id);
+      if (item === undefined) {
+        return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+      }
+      return Promise.resolve({
+        item,
+        sources: provenance.get(id)?.sources ?? [],
+        attachments: provenance.get(id)?.attachments ?? [],
+      });
+    },
+    updateItem: (id: string, request: UpdateItemRequest) => {
+      calls.push("updateItem");
+      updates.push({ id, request });
+      if (updateFailure !== undefined) {
+        const failure = updateFailure;
+        updateFailure = undefined;
+        return Promise.reject(failure);
+      }
+      const at = items.findIndex((candidate) => candidate.id === id);
+      const current = items[at];
+      if (current === undefined) {
+        return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+      }
+      if (request.title !== undefined && request.title !== null && request.title.trim() === "") {
+        return Promise.reject(new AppError("ITEM_TITLE_EMPTY", "标题为空"));
+      }
+      const changed = request.itemType !== undefined && request.itemType !== null;
+      const next: ItemDto = {
+        ...current,
+        ...(changed ? { itemType: request.itemType ?? current.itemType, inInbox: false } : {}),
+        ...(request.title === undefined || request.title === null
+          ? {}
+          : { title: request.title.trim() }),
+        ...(request.contentFormat === undefined || request.contentFormat === null
+          ? {}
+          : { contentFormat: request.contentFormat }),
+        ...(request.priority === undefined || request.priority === null
+          ? {}
+          : { priority: request.priority }),
+        content: applyPatch(request.content, current.content),
+        scheduled: applyPatch(request.scheduled, current.scheduled),
+        due: applyPatch(request.due, current.due),
+        updatedAt: new Date().toISOString(),
+      };
+      items[at] = next;
+      for (const notify of listeners) notify();
+      return Promise.resolve(next);
+    },
+    openItemSource: (id: string) => {
+      calls.push("openItemSource");
+      openedSources.push(id);
+      if (openSourceFailure !== undefined) {
+        const failure = openSourceFailure;
+        openSourceFailure = undefined;
+        return Promise.reject(failure);
+      }
+      return Promise.resolve();
+    },
     setClipboard: (content: { text?: string; files?: string[] } | null) => {
       clipboard = content;
     },

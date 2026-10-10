@@ -2,6 +2,7 @@ import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button, Menu } from "@/components";
+import { useOpenItem } from "@/features/detail";
 import type { MenuItemSpec } from "@/components";
 import type { InboxEntryDto, ItemTypeDto } from "@/lib/ipc";
 import { cx } from "@/lib/cx";
@@ -37,6 +38,7 @@ export function InboxRow({ entry, selected, onToggle, onOrganize }: InboxRowProp
   const { t } = useTranslation();
   const { item } = entry;
   const summary = summarizeEntry(entry);
+  const openItem = useOpenItem();
   // 标题已经是文件名 / 网址时，不再重复显示同样的来源说明。
   const detail = [summary.detail, summary.app].filter(
     (part) => part !== null && part !== "" && part !== item.title,
@@ -73,7 +75,17 @@ export function InboxRow({ entry, selected, onToggle, onOrganize }: InboxRowProp
         <SourceIcon kind={summary.kind} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-text">{item.title}</p>
+        {openItem === null ? (
+          <p className="truncate text-sm font-medium text-text">{item.title}</p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openItem(item.id)}
+            className="block w-full truncate text-left text-sm font-medium text-text hover:underline"
+          >
+            {item.title}
+          </button>
+        )}
         <p className="flex min-w-0 items-center gap-2 text-xs text-muted">
           <span className="shrink-0 rounded-sm bg-surface-hover px-1.5 py-0.5">
             {t(`quickCreate.kind.${item.itemType}`)}
