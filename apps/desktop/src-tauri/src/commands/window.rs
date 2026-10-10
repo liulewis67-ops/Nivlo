@@ -63,6 +63,10 @@ pub async fn open_main_at<R: Runtime>(
 }
 
 /// 取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。
+///
+/// # Errors
+///
+/// 不会失败；返回 `Result` 只是为了和其他 Command 保持同一个 IPC 形状。
 #[tauri::command]
 #[specta::specta]
 pub async fn take_pending_main_view(

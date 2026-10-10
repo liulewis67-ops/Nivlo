@@ -162,7 +162,13 @@ export const commands = {
 	 *  视图名不认识返回 `INVALID_INPUT`；窗口创建或显示失败返回 `WINDOW_UNAVAILABLE`。
 	 */
 	openMainAt: (view: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_main_at", { view })),
-	/**  取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。 */
+	/**
+	 *  取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。
+	 * 
+	 *  # Errors
+	 * 
+	 *  不会失败；返回 `Result` 只是为了和其他 Command 保持同一个 IPC 形状。
+	 */
 	takePendingMainView: () => typedError<string | null, IpcError>(__TAURI_INVOKE("take_pending_main_view")),
 	/**
 	 *  退出应用：触发有序退出流程（后台任务停止、数据库关闭、日志刷写）。仅主窗口可调用。
