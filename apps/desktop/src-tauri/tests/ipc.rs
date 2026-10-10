@@ -202,3 +202,60 @@ async fn get_today_returns_todos_scheduled_today_with_the_remaining_count() {
     // DTO 不携带正文。
     assert!(view["todos"][0].get("content").is_none());
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn quick_create_adds_a_todo_to_today_and_rejects_blank_titles() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    let created = invoke(
+        &webview,
+        "quick_create",
+        json!({ "request": { "itemType": "todo", "title": "  写周报 " } }),
+    )
+    .unwrap();
+    assert_eq!(created["title"], "写周报");
+    // 默认计划日期是后端决定的"今天"，与 get_today 的日期一致。
+    let today = invoke(&webview, "get_today", json!({})).unwrap();
+    assert_eq!(created["scheduled"]["date"], today["date"]);
+    assert_eq!(today["remainingCount"], 1);
+
+    // Note 没有日期，不进入 Today。
+    let note = invoke(
+        &webview,
+        "quick_create",
+        json!({ "request": { "itemType": "note", "title": "想法" } }),
+    )
+    .unwrap();
+    assert!(note["scheduled"].is_null());
+    assert_eq!(
+        invoke(&webview, "get_today", json!({})).unwrap()["remainingCount"],
+        1
+    );
+
+    let blank = invoke(
+        &webview,
+        "quick_create",
+        json!({ "request": { "itemType": "todo", "title": "  " } }),
+    )
+    .unwrap_err();
+    assert_eq!(blank["code"], "ITEM_TITLE_EMPTY");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn floating_input_commands_report_an_unavailable_window_before_startup_completes() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    // 测试里没有创建悬浮窗控制器，应得到明确的错误而不是 panic。
+    let begin = invoke(&webview, "begin_floating_input", json!({})).unwrap_err();
+    assert_eq!(begin["code"], "WINDOW_UNAVAILABLE");
+    let end = invoke(&webview, "end_floating_input", json!({})).unwrap_err();
+    assert_eq!(end["code"], "WINDOW_UNAVAILABLE");
+}

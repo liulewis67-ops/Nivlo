@@ -3,6 +3,7 @@ import type {
   CreateItemRequest,
   ItemDto,
   IpcClient,
+  ItemTypeDto,
   ListItemsRequest,
   TodayViewDto,
 } from "@/lib/ipc";
@@ -29,6 +30,10 @@ export interface MemoryIpc extends IpcClient {
   readonly dragStarts: number;
   /** 按顺序记录的全部方法调用名，用于断言"没有发起某些 IPC"。 */
   readonly calls: readonly string[];
+  /** 让下一次 `quickCreate` 抛出的错误，用于测试失败路径；触发后自动清除。 */
+  failNextQuickCreateWith(error: AppError): void;
+  /** 让下一次 `beginFloatingInput` 抛出的错误（模拟窗口无法聚焦）。 */
+  failNextBeginInputWith(error: AppError): void;
   /** 设置下一次及之后 `getToday` 返回的 Today 视图。 */
   setToday(view: TodayViewDto): void;
   /** 模拟后端发出一次数据变更事件（`item_created` / `day_changed` 等）。 */
@@ -62,9 +67,43 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let pendingFailure = options.failNextCreateWith;
   let openMainCalls = 0;
   let dragStarts = 0;
+  let quickCreateFailure: AppError | undefined;
+  let beginInputFailure: AppError | undefined;
   let today: TodayViewDto = EMPTY_TODAY;
   const calls: string[] = [];
   let lastExpand: { width: number; height: number } | null = null;
+
+  /** 校验并插入一个 Item，行为对齐后端（标题去空白且非空、有长度上限），并通知订阅者。 */
+  function insert(request: CreateItemRequest): Promise<ItemDto> {
+    const title = request.title.trim();
+    if (title.length === 0) {
+      return Promise.reject(new AppError("ITEM_TITLE_EMPTY", "标题为空"));
+    }
+    if ([...title].length > MAX_TITLE_CHARS) {
+      return Promise.reject(new AppError("ITEM_TITLE_TOO_LONG", "标题过长"));
+    }
+    const now = new Date().toISOString();
+    const item: ItemDto = {
+      id: crypto.randomUUID(),
+      itemType: request.itemType,
+      title,
+      content: request.content,
+      contentFormat: request.contentFormat ?? "plain",
+      status: "open",
+      priority: request.priority ?? "none",
+      scheduled: request.scheduled,
+      due: request.due,
+      reminderAt: request.reminderAt,
+      projectId: request.projectId,
+      createdAt: now,
+      updatedAt: now,
+      completedAt: null,
+      archivedAt: null,
+    };
+    items.push(item);
+    for (const notify of listeners) notify();
+    return Promise.resolve(item);
+  }
 
   return {
     get items() {
@@ -72,6 +111,46 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     get openMainCalls() {
       return openMainCalls;
+    },
+    failNextQuickCreateWith: (error: AppError) => {
+      quickCreateFailure = error;
+    },
+    failNextBeginInputWith: (error: AppError) => {
+      beginInputFailure = error;
+    },
+    quickCreate: (itemType: ItemTypeDto, title: string) => {
+      calls.push("quickCreate");
+      if (quickCreateFailure !== undefined) {
+        const failure = quickCreateFailure;
+        quickCreateFailure = undefined;
+        return Promise.reject(failure);
+      }
+      // 与后端一致：Todo / Tip 默认今天，Note 没有日期。
+      const scheduled = itemType === "note" ? null : { date: today.date, time: null };
+      return insert({
+        itemType,
+        title,
+        content: null,
+        contentFormat: null,
+        priority: null,
+        scheduled,
+        due: null,
+        reminderAt: null,
+        projectId: null,
+      });
+    },
+    beginFloatingInput: () => {
+      calls.push("beginFloatingInput");
+      if (beginInputFailure !== undefined) {
+        const failure = beginInputFailure;
+        beginInputFailure = undefined;
+        return Promise.reject(failure);
+      }
+      return Promise.resolve();
+    },
+    endFloatingInput: () => {
+      calls.push("endFloatingInput");
+      return Promise.resolve();
     },
     setToday: (view: TodayViewDto) => {
       today = view;
@@ -128,34 +207,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         pendingFailure = undefined;
         return Promise.reject(failure);
       }
-      const title = request.title.trim();
-      if (title.length === 0) {
-        return Promise.reject(new AppError("ITEM_TITLE_EMPTY", "标题为空"));
-      }
-      if ([...title].length > MAX_TITLE_CHARS) {
-        return Promise.reject(new AppError("ITEM_TITLE_TOO_LONG", "标题过长"));
-      }
-      const now = new Date().toISOString();
-      const item: ItemDto = {
-        id: crypto.randomUUID(),
-        itemType: request.itemType,
-        title,
-        content: request.content,
-        contentFormat: request.contentFormat ?? "plain",
-        status: "open",
-        priority: request.priority ?? "none",
-        scheduled: request.scheduled,
-        due: request.due,
-        reminderAt: request.reminderAt,
-        projectId: request.projectId,
-        createdAt: now,
-        updatedAt: now,
-        completedAt: null,
-        archivedAt: null,
-      };
-      items.push(item);
-      for (const notify of listeners) notify();
-      return Promise.resolve(item);
+      return insert(request);
     },
     getItem: (id: string) => {
       calls.push("getItem");

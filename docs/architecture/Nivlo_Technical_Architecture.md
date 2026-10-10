@@ -829,10 +829,11 @@ get_inbox_count
 start_floating_drag
 expand_floating
 collapse_floating
-set_floating_focusable
+begin_floating_input
+end_floating_input
 ```
 
-其中 `reschedule_item`、`undo`、`get_inbox_count` 来自实施计划 D-12：产品文档 §22 要求在悬浮面板内直接推迟、撤销，并显示 Inbox 数量；`start_floating_drag`、`expand_floating`、`collapse_floating`、`set_floating_focusable` 是悬浮窗自身的窗口行为命令，窗口位置、尺寸与焦点始终由 Rust 控制（前端规范 §9）。
+其中 `reschedule_item`、`undo`、`get_inbox_count` 来自实施计划 D-12：产品文档 §22 要求在悬浮面板内直接推迟、撤销，并显示 Inbox 数量；`start_floating_drag`、`expand_floating`、`collapse_floating`、`begin_floating_input`、`end_floating_input` 是悬浮窗自身的窗口行为命令，窗口位置、尺寸与焦点始终由 Rust 控制（前端规范 §9）。
 
 禁止：
 

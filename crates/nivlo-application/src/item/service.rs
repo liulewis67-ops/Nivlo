@@ -13,7 +13,7 @@ use nivlo_common::clock::Clock;
 use nivlo_common::id::new_uuid_v7;
 use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
-use nivlo_domain::item::{Item, NewItem};
+use nivlo_domain::item::{DatePoint, Item, ItemType, NewItem};
 
 use super::input::UpdateItemInput;
 use crate::error::AppError;
@@ -71,6 +71,22 @@ impl ItemService {
                 .publish(DomainEvent::ScheduleChanged { item_id: id });
         }
         Ok(item)
+    }
+
+    /// 快速创建（悬浮窗的 Quick Create，产品文档 §6.1「先创建，再整理」）。
+    ///
+    /// 只需要类型与标题，其余使用默认值：Todo 与 Tip 的计划日期是**今天**（用户本地日期，
+    /// 由注入的时钟决定），Note 没有日期。标题会被去除首尾空白；空标题被拒绝。
+    ///
+    /// # Errors
+    ///
+    /// 同 [`ItemService::create_item`]；标题为空时为 [`crate::error::ErrorCode::ItemTitleEmpty`]。
+    pub async fn quick_create(&self, item_type: ItemType, title: &str) -> Result<Item, AppError> {
+        let mut input = NewItem::new(item_type, title);
+        if matches!(item_type, ItemType::Todo | ItemType::Tip) {
+            input.scheduled = Some(DatePoint::all_day(self.clock.today_local()));
+        }
+        self.create_item(input).await
     }
 
     /// 修改一个 Item 的若干字段。

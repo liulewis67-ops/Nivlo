@@ -42,6 +42,13 @@ pub trait FloatingWindowPort: Send + Sync {
     /// 平台不支持时返回 [`PlatformError::Unsupported`]，其他失败返回 [`PlatformError::Failed`]。
     fn set_focusable(&self, enabled: bool) -> Result<(), PlatformError>;
 
+    /// 让窗口获得键盘焦点（需要先 [`FloatingWindowPort::set_focusable`] 为 `true`）。
+    ///
+    /// # Errors
+    ///
+    /// 系统拒绝激活窗口时返回 [`PlatformError::Failed`]。
+    fn focus(&self) -> Result<(), PlatformError>;
+
     /// 设置窗口是否置顶。
     ///
     /// # Errors

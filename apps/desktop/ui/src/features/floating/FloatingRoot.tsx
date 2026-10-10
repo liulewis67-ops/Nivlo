@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { ExpandedLayoutDto } from "@/lib/ipc";
+import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { useTodayQuery } from "@/features/today";
@@ -34,6 +34,7 @@ export function FloatingRoot() {
   useTodayQuery();
   const { state, send } = useFloatingMachine();
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
+  const [quickCreateKind, setQuickCreateKind] = useState<ItemTypeDto | null>(null);
   const isPanel = needsPanelWindow(state);
   /** 是否曾经展开过：避免启动时对"本来就是收起"的窗口多发一次收起命令。 */
   const hasExpandedRef = useRef(false);
@@ -57,6 +58,22 @@ export function FloatingRoot() {
     };
   }, [isPanel]);
 
+  /**
+   * 进入快速创建：状态机切到 QuickCreate（此时指针离开不会收起面板），并显示输入行。
+   *
+   * @param kind 要创建的类型。
+   */
+  function startQuickCreate(kind: ItemTypeDto): void {
+    setQuickCreateKind(kind);
+    send("quickCreateRequested");
+  }
+
+  /** 快速创建结束：回到展开态；指针已离开时状态机会延迟收起，而不是瞬间消失。 */
+  function finishQuickCreate(): void {
+    setQuickCreateKind(null);
+    send("quickCreateFinished");
+  }
+
   // 后端看门狗发现指针已经离开窗口时补发的事件：弥补 WebView 在指针被快速甩出时漏发 pointerleave。
   useEffect(() => ipc.subscribeFloatingPointerLeft(() => send("pointerLeave")), [send]);
 
@@ -70,7 +87,16 @@ export function FloatingRoot() {
       onPointerMove={() => send("pointerEnter")}
       onPointerLeave={() => send("pointerLeave")}
     >
-      {isPanel ? <TodayPanel layout={layout} /> : <FloatingBadge />}
+      {isPanel ? (
+        <TodayPanel
+          layout={layout}
+          quickCreateKind={quickCreateKind}
+          onQuickCreate={startQuickCreate}
+          onQuickCreateDone={finishQuickCreate}
+        />
+      ) : (
+        <FloatingBadge />
+      )}
     </div>
   );
 }

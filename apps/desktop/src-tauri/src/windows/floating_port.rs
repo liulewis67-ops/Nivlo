@@ -95,6 +95,11 @@ impl<R: Runtime> FloatingWindowPort for TauriFloatingWindow<R> {
         self.window.set_focusable(enabled).map_err(failed)
     }
 
+    /// 让窗口获得键盘焦点。
+    fn focus(&self) -> Result<(), PlatformError> {
+        self.window.set_focus().map_err(failed)
+    }
+
     /// 设置是否置顶。
     fn set_always_on_top(&self, enabled: bool) -> Result<(), PlatformError> {
         self.window.set_always_on_top(enabled).map_err(failed)

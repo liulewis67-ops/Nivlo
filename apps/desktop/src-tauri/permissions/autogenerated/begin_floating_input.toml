@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-begin-floating-input"
+description = "Enables the begin_floating_input command without any pre-configured scope."
+commands.allow = ["begin_floating_input"]
+
+[[permission]]
+identifier = "deny-begin-floating-input"
+description = "Denies the begin_floating_input command without any pre-configured scope."
+commands.deny = ["begin_floating_input"]

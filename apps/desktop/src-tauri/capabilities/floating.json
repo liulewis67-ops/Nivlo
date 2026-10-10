@@ -6,6 +6,9 @@
   "permissions": [
     "core:event:default",
     "allow-get-today",
+    "allow-quick-create",
+    "allow-begin-floating-input",
+    "allow-end-floating-input",
     "allow-open-main",
     "allow-start-floating-drag",
     "allow-expand-floating",

@@ -490,6 +490,16 @@ impl From<nivlo_platform::placement::ExpandedLayout> for ExpandedLayoutDto {
     }
 }
 
+/// 快速创建的请求：只有类型与标题，日期等默认值由后端按产品规则决定。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct QuickCreateRequest {
+    /// 类型。
+    pub item_type: ItemTypeDto,
+    /// 标题（去除首尾空白后不能为空）。
+    pub title: String,
+}
+
 /// 列出 Item 的请求。
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]

@@ -3,6 +3,7 @@
 //! 每种平台能力是一个**独立的小 trait**，不做拥有几十个方法的 God Trait（架构文档 §7.9、ADR-006）：
 //!
 //! * [`floating_window::FloatingWindowPort`]：悬浮窗的位置 / 尺寸 / 置顶 / 焦点。
+//! * [`foreground::ForegroundPort`]：记住并还原用户的前台窗口（Quick Create 结束后还回焦点）。
 //! * [`placement`]：悬浮窗位置的纯计算（吸附、跨显示器、DPI），与具体窗口库无关，便于测试。
 //! * [`error::PlatformError`]：平台能力不足时返回明确的 `Unsupported`，而不是 panic（架构文档 §53）。
 //!
@@ -13,4 +14,5 @@
 
 pub mod error;
 pub mod floating_window;
+pub mod foreground;
 pub mod placement;

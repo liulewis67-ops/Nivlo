@@ -6,12 +6,15 @@ const COMMANDS: &[&str] = &[
     "create_item",
     "get_item",
     "list_items",
+    "quick_create",
     "get_today",
     "open_main",
     "quit_app",
     "start_floating_drag",
     "expand_floating",
     "collapse_floating",
+    "begin_floating_input",
+    "end_floating_input",
 ];
 
 fn main() {

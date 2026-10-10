@@ -27,6 +27,8 @@ const FLOATING_ALLOWED: &[&str] = &[
     "expand_floating",
     "collapse_floating",
     "set_floating_focusable",
+    "begin_floating_input",
+    "end_floating_input",
 ];
 
 /// 解析一个 Capability 文件。

@@ -338,3 +338,86 @@ async fn list_returns_newest_first_and_honors_filters() {
     );
     assert!(todos.iter().all(|i| i.status() == ItemStatus::Open));
 }
+
+#[tokio::test]
+async fn quick_create_gives_todos_and_tips_today_and_notes_no_date() {
+    let f = fixture();
+    let today = f.clock.today_local();
+
+    let todo = f
+        .service
+        .quick_create(ItemType::Todo, "  写周报 ")
+        .await
+        .unwrap();
+    let tip = f
+        .service
+        .quick_create(ItemType::Tip, "服务器维护")
+        .await
+        .unwrap();
+    let note = f
+        .service
+        .quick_create(ItemType::Note, "一个想法")
+        .await
+        .unwrap();
+
+    assert_eq!(todo.title().as_str(), "写周报");
+    assert_eq!(todo.scheduled(), Some(DatePoint::all_day(today)));
+    assert_eq!(tip.scheduled(), Some(DatePoint::all_day(today)));
+    assert_eq!(note.scheduled(), None);
+    assert_eq!(f.uow.committed_items().len(), 3);
+}
+
+#[tokio::test]
+async fn quick_create_uses_the_users_local_date_not_utc() {
+    // UTC 16:30 在上海已经是次日。
+    let uow = FakeUnitOfWork::new();
+    let events = Arc::new(RecordingPublisher::new());
+    let clock = FakeClock::new(
+        Utc.with_ymd_and_hms(2026, 10, 9, 16, 30, 0).unwrap(),
+        chrono_tz::Tz::Asia__Shanghai,
+    );
+    let service = ItemService::new(Arc::new(uow), Arc::new(clock), events);
+
+    let todo = service.quick_create(ItemType::Todo, "x").await.unwrap();
+
+    assert_eq!(
+        todo.scheduled(),
+        Some(DatePoint::all_day(
+            NaiveDate::from_ymd_opt(2026, 10, 10).unwrap()
+        ))
+    );
+}
+
+#[tokio::test]
+async fn quick_create_rejects_blank_titles_without_writing_anything() {
+    let f = fixture();
+    for title in [
+        "", "   ", "
+	",
+    ] {
+        let err = f
+            .service
+            .quick_create(ItemType::Todo, title)
+            .await
+            .unwrap_err();
+        assert_eq!(err.code, ErrorCode::ItemTitleEmpty);
+    }
+    assert!(f.uow.committed_items().is_empty());
+    assert!(f.events.events().is_empty());
+}
+
+#[tokio::test]
+async fn quick_create_publishes_created_and_schedule_events_for_scheduled_types_only() {
+    let f = fixture();
+    let todo = f.service.quick_create(ItemType::Todo, "a").await.unwrap();
+    let note = f.service.quick_create(ItemType::Note, "b").await.unwrap();
+
+    assert_eq!(
+        f.events.events(),
+        vec![
+            DomainEvent::ItemCreated { item_id: todo.id() },
+            DomainEvent::ScheduleChanged { item_id: todo.id() },
+            DomainEvent::ItemCreated { item_id: note.id() },
+        ]
+    );
+}

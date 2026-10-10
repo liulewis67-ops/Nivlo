@@ -110,3 +110,28 @@ fn window_error(error: PlatformError) -> IpcError {
     app_error.action = Some(ErrorAction::OpenDiagnostics);
     IpcError::from(app_error)
 }
+
+/// 开始悬浮窗的文本输入（Quick Create）：悬浮窗临时可聚焦并获得键盘焦点。
+///
+/// 会先记住用户当前的前台窗口，输入结束后由 [`end_floating_input`] 把焦点还回去；
+/// 这是悬浮窗唯一会主动抢焦点的时刻（架构文档 §61 风险 3）。
+///
+/// # Errors
+///
+/// 窗口无法聚焦时返回 `WINDOW_UNAVAILABLE`，此时悬浮窗已恢复为不可聚焦。
+#[tauri::command]
+#[specta::specta]
+pub async fn begin_floating_input(state: State<'_, AppState>) -> Result<(), IpcError> {
+    floating_handle(&state)?.begin_input().map_err(window_error)
+}
+
+/// 结束悬浮窗的文本输入：恢复不可聚焦，并把焦点还给用户之前的应用。可以重复调用。
+///
+/// # Errors
+///
+/// 窗口不可用时返回 `WINDOW_UNAVAILABLE`。
+#[tauri::command]
+#[specta::specta]
+pub async fn end_floating_input(state: State<'_, AppState>) -> Result<(), IpcError> {
+    floating_handle(&state)?.end_input().map_err(window_error)
+}

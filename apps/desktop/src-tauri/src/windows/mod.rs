@@ -18,6 +18,10 @@ use tauri::{
     WindowEvent,
 };
 
+use std::sync::Arc;
+
+use nivlo_platform::foreground::{ForegroundPort, UnsupportedForeground};
+
 use crate::app::AppState;
 
 /// 悬浮窗的 label，与 `capabilities/floating.json` 对应。
@@ -63,6 +67,28 @@ pub fn create_floating_window<R: Runtime, M: Manager<R>>(
     // 悬浮窗出现时不能把焦点从用户正在使用的应用抢走（架构文档 §61 风险 3）。
     .focused(false)
     .build()
+}
+
+/// 创建悬浮窗使用的前台窗口记忆 / 还原：Windows 上用 Win32 实现，其他平台降级为空操作。
+///
+/// 取不到悬浮窗自己的窗口句柄时同样降级（Quick Create 仍可用，只是结束后焦点不会自动还回去）。
+pub fn foreground_port<R: Runtime>(window: &WebviewWindow<R>) -> Arc<dyn ForegroundPort> {
+    #[cfg(target_os = "windows")]
+    {
+        match window.hwnd() {
+            Ok(hwnd) => {
+                return Arc::new(nivlo_platform_windows::foreground::new_windows_foreground(
+                    hwnd.0 as isize,
+                ));
+            }
+            Err(error) => {
+                tracing::warn!(event = "floating_hwnd_unavailable", %error, "无法获取悬浮窗句柄，不还原前台窗口");
+            }
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    let _ = window;
+    Arc::new(UnsupportedForeground)
 }
 
 /// 显示并聚焦主窗口；尚未创建时先创建。

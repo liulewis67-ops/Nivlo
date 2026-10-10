@@ -2,26 +2,41 @@ import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { QuickCreateForm } from "@/features/quick-create";
 import { TodayList, useTodayQuery } from "@/features/today";
-import type { ExpandedLayoutDto } from "@/lib/ipc";
+import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 
 /** [`TodayPanel`] 的 Props。 */
 export type TodayPanelProps = {
   /** 展开方向：面板从徽标所在的角"长出来"，据此设置动画的 transform-origin；展开完成前为 `null`。 */
   layout: ExpandedLayoutDto | null;
+  /** 正在快速创建的类型；`null` 表示没有在创建，底部显示三个添加按钮。 */
+  quickCreateKind: ItemTypeDto | null;
+  /** 点击 `+ 待办` / `+ 笔记` / `+ 提示` 时调用。 */
+  onQuickCreate: (kind: ItemTypeDto) => void;
+  /** 快速创建结束（成功、取消或失败）时调用。 */
+  onQuickCreateDone: () => void;
 };
+
+/** 底部添加按钮对应的类型，按展示顺序排列。 */
+const QUICK_CREATE_KINDS: ItemTypeDto[] = ["todo", "note", "tip"];
 
 /**
  * 悬浮窗展开后的 Today 面板。
  *
- * 目前是面板外壳：标题、空状态与"打开主窗口"。Today 列表在实施计划 1.4 接入——
- * 到那时 Hover 展开只使用已缓存的 Today 数据渲染，不触发任何业务数据的 IPC。
+ * 标题、Today 列表（只读缓存，Hover 展开不取数）与底部的快速创建。完成、排序、推迟在
+ * 实施计划 1.6 ~ 1.8 加入。
  *
  * @param props 展开方向。
  * @returns 面板元素。
  */
-export function TodayPanel({ layout }: TodayPanelProps) {
+export function TodayPanel({
+  layout,
+  quickCreateKind,
+  onQuickCreate,
+  onQuickCreateDone,
+}: TodayPanelProps) {
   const { t } = useTranslation();
   const view = useTodayQuery().data;
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
@@ -52,6 +67,17 @@ export function TodayPanel({ layout }: TodayPanelProps) {
           <p className="text-sm font-medium text-text">{t("today.empty.title")}</p>
           <p className="text-xs text-muted">{t("today.empty.hint")}</p>
         </div>
+      )}
+      {quickCreateKind === null ? (
+        <footer className="flex gap-2 border-t border-border px-3 py-2">
+          {QUICK_CREATE_KINDS.map((kind) => (
+            <Button key={kind} size="sm" variant="ghost" onClick={() => onQuickCreate(kind)}>
+              {t(`quickCreate.add.${kind}`)}
+            </Button>
+          ))}
+        </footer>
+      ) : (
+        <QuickCreateForm kind={quickCreateKind} onDone={onQuickCreateDone} />
       )}
     </section>
   );

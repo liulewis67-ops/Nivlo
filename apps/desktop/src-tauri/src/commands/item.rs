@@ -3,7 +3,9 @@
 use tauri::State;
 
 use crate::app::AppState;
-use crate::dto::{CreateItemRequest, IpcError, ItemDto, ListItemsRequest, parse_item_id};
+use crate::dto::{
+    CreateItemRequest, IpcError, ItemDto, ListItemsRequest, QuickCreateRequest, parse_item_id,
+};
 
 /// 创建一个 Item。
 ///
@@ -21,6 +23,28 @@ pub async fn create_item(
         .services
         .items
         .create_item(request.try_into()?)
+        .await?;
+    Ok(ItemDto::from(&item))
+}
+
+/// 快速创建一个 Item（悬浮窗的 Quick Create）：只需要类型与标题。
+///
+/// 默认值由后端决定：Todo 与 Tip 的计划日期是今天（用户本地日期），Note 没有日期。
+/// 悬浮窗只拥有这个命令，没有完整的 `create_item`（最小权限，架构文档 §13）。
+///
+/// # Errors
+///
+/// 标题为空返回 `ITEM_TITLE_EMPTY`，其余同 `create_item`。
+#[tauri::command]
+#[specta::specta]
+pub async fn quick_create(
+    state: State<'_, AppState>,
+    request: QuickCreateRequest,
+) -> Result<ItemDto, IpcError> {
+    let item = state
+        .services
+        .items
+        .quick_create(request.item_type.into(), &request.title)
         .await?;
     Ok(ItemDto::from(&item))
 }

@@ -13,6 +13,7 @@ use std::time::Duration;
 use nivlo_application::settings::{SettingsService, keys};
 use nivlo_platform::error::PlatformError;
 use nivlo_platform::floating_window::FloatingWindowPort;
+use nivlo_platform::foreground::ForegroundPort;
 use nivlo_platform::placement::{
     COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, ExpandedLayout, Placement, Point,
     Rect, default_placement, expand_bounds, placement_for_bounds, resolve_position,
@@ -52,6 +53,20 @@ pub trait FloatingHandle: Send + Sync {
     ///
     /// 窗口调用失败时返回 [`PlatformError`]。
     fn collapse(&self) -> Result<(), PlatformError>;
+
+    /// 开始文本输入（Quick Create）：记住用户当前的前台窗口，让悬浮窗临时可聚焦并获得键盘焦点。
+    ///
+    /// # Errors
+    ///
+    /// 窗口无法聚焦时返回 [`PlatformError`]；此时悬浮窗已恢复为不可聚焦，调用方应放弃输入。
+    fn begin_input(&self) -> Result<(), PlatformError>;
+
+    /// 结束文本输入：悬浮窗恢复为不可聚焦，并把焦点还给用户之前的窗口。可以重复调用。
+    ///
+    /// # Errors
+    ///
+    /// 窗口调用失败时返回 [`PlatformError`]；还原前台窗口失败只记录日志、不视为错误。
+    fn end_input(&self) -> Result<(), PlatformError>;
 }
 
 /// 悬浮窗位置控制器。
@@ -60,6 +75,8 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     me: Weak<Self>,
     /// 窗口行为 Port。
     port: Arc<P>,
+    /// 前台窗口的记忆 / 还原：Quick Create 结束后把焦点还给用户之前的应用。
+    foreground: Arc<dyn ForegroundPort>,
     /// 设置服务，用于保存 / 读取位置与置顶偏好。
     settings: SettingsService,
     /// 看门狗发现指针已离开窗口时调用（宿主据此通知前端补发 `pointerLeave`）。
@@ -96,10 +113,12 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
         runtime: Handle,
         shutdown: CancellationToken,
         on_pointer_outside: Arc<dyn Fn() + Send + Sync>,
+        foreground: Arc<dyn ForegroundPort>,
     ) -> Arc<Self> {
         Arc::new_cyclic(|me| Self {
             me: me.clone(),
             port,
+            foreground,
             settings,
             on_pointer_outside,
             runtime,
@@ -319,6 +338,36 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
         // 先清掉 collapsed 再移动：移动产生的事件会被当作"自己的移动"（expected）而忽略，
         // 不会误触发一次吸附。
         self.move_to_rect(collapsed)
+    }
+
+    /// 开始文本输入：先记住前台窗口，再让悬浮窗可聚焦并聚焦。
+    ///
+    /// 任何一步失败都把窗口恢复为不可聚焦，避免悬浮窗留在"可被激活"的状态里，
+    /// 之后单击就会抢走别的应用的焦点。
+    fn begin_input(&self) -> Result<(), PlatformError> {
+        if let Err(error) = self.foreground.remember() {
+            tracing::warn!(event = "floating_foreground_remember_failed", %error, "记住前台窗口失败");
+        }
+        let result = self
+            .port
+            .set_focusable(true)
+            .and_then(|()| self.port.focus());
+        if result.is_err()
+            && let Err(error) = self.port.set_focusable(false)
+        {
+            tracing::warn!(event = "floating_unfocusable_failed", %error, "恢复悬浮窗不可聚焦失败");
+        }
+        result
+    }
+
+    /// 结束文本输入：恢复不可聚焦，再把焦点还给之前的窗口。
+    fn end_input(&self) -> Result<(), PlatformError> {
+        let result = self.port.set_focusable(false);
+        // 还原失败（用户已关闭那个应用、系统拒绝等）不影响悬浮窗本身，只记录。
+        if let Err(error) = self.foreground.restore() {
+            tracing::warn!(event = "floating_foreground_restore_failed", %error, "还原前台窗口失败");
+        }
+        result
     }
 
     /// 记录一次移动，并（重新）启动防抖定时器。

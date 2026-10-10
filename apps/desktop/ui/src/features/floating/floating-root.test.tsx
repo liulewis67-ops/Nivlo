@@ -233,4 +233,84 @@ describe("FloatingRoot", () => {
 
     expect(screen.getByText("今天还没有安排")).toBeInTheDocument();
   });
+
+  /** 把悬浮窗展开到面板态。 */
+  async function openPanel(ipc: ReturnType<typeof createMemoryIpc>): Promise<void> {
+    renderWithProviders(<FloatingRoot />, ipc);
+    await advance(0);
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS);
+  }
+
+  it("点击「+ 待办」进入快速创建，Enter 创建后回到展开态，面板保持展开", async () => {
+    const ipc = createMemoryIpc();
+    await openPanel(ipc);
+
+    fireEvent.click(screen.getByRole("button", { name: "+ 待办" }));
+    await advance(0);
+    const input = screen.getByRole("textbox", { name: "标题" });
+    fireEvent.change(input, { target: { value: "写周报" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await advance(0);
+
+    // 除了 Today 的刷新之外，调用顺序是：展开 → 申请焦点 → 创建 → 归还焦点。
+    expect(ipc.calls.filter((call) => call !== "getToday")).toEqual([
+      "expandFloating",
+      "beginFloatingInput",
+      "quickCreate",
+      "endFloatingInput",
+    ]);
+    // Today 在启动时取一次，创建成功后由数据变更事件触发再取一次。
+    expect(ipc.calls.filter((call) => call === "getToday")).toHaveLength(2);
+    expect(ipc.items.map((item) => item.title)).toEqual(["写周报"]);
+    // 回到展开态：输入行消失、添加按钮回来、面板仍在。
+    expect(screen.queryByRole("textbox", { name: "标题" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "+ 待办" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
+  });
+
+  it("三个按钮分别创建待办、笔记与提示", async () => {
+    const ipc = createMemoryIpc();
+    await openPanel(ipc);
+
+    for (const [label, title] of [
+      ["+ 笔记", "一个想法"],
+      ["+ 提示", "服务器维护"],
+    ] as const) {
+      fireEvent.click(screen.getByRole("button", { name: label }));
+      await advance(0);
+      const input = screen.getByRole("textbox", { name: "标题" });
+      fireEvent.change(input, { target: { value: title } });
+      fireEvent.keyDown(input, { key: "Enter" });
+      await advance(0);
+    }
+
+    expect(ipc.items.map((item) => [item.itemType, item.title])).toEqual([
+      ["note", "一个想法"],
+      ["tip", "服务器维护"],
+    ]);
+  });
+
+  it("快速创建期间指针离开不会收起面板；取消后再延迟收起", async () => {
+    const ipc = createMemoryIpc();
+    await openPanel(ipc);
+    fireEvent.click(screen.getByRole("button", { name: "+ 待办" }));
+    await advance(0);
+
+    fireEvent.pointerLeave(root());
+    await advance(10_000);
+    expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
+    expect(ipc.calls).not.toContain("collapseFloating");
+
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "标题" }), { key: "Escape" });
+    await advance(0);
+    // 取消后指针已经在外面：先回到展开态，延迟之后才收起。
+    expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
+    await advance(HOVER_LEAVE_DELAY_MS);
+
+    expect(screen.queryByRole("region", { name: "今日面板" })).not.toBeInTheDocument();
+    expect(ipc.calls).toContain("endFloatingInput");
+    expect(ipc.calls).toContain("collapseFloating");
+    expect(ipc.items).toHaveLength(0);
+  });
 });

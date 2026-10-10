@@ -5,6 +5,7 @@ import type {
   ExpandedLayoutDto,
   IpcError,
   ItemDto,
+  ItemTypeDto,
   ListItemsRequest,
   TodayViewDto,
 } from "@/bindings";
@@ -38,6 +39,11 @@ export interface IpcClient {
   /** 列出 Item，创建时间从新到旧。 */
   listItems(request: ListItemsRequest): Promise<ItemDto[]>;
   /**
+   * 快速创建（悬浮窗 Quick Create）：只需要类型与标题，日期等默认值由后端决定
+   * （Todo 与 Tip 的计划日期是今天，Note 没有日期）。
+   */
+  quickCreate(itemType: ItemTypeDto, title: string): Promise<ItemDto>;
+  /**
    * 读取今天的视图（待办 / 提示 / 今日已完成）。
    *
    * 悬浮窗只在启动时调用一次，之后由数据变更事件驱动刷新；Hover 展开不会调用它。
@@ -62,6 +68,13 @@ export interface IpcClient {
   expandFloating(width: number, height: number): Promise<ExpandedLayoutDto>;
   /** 把悬浮窗收起回徽标，位置与展开前一致。 */
   collapseFloating(): Promise<void>;
+  /**
+   * 开始悬浮窗的文本输入：后端记住用户当前的前台窗口，悬浮窗临时可聚焦并获得键盘焦点。
+   * 必须与 [`IpcClient.endFloatingInput`] 成对使用。
+   */
+  beginFloatingInput(): Promise<void>;
+  /** 结束文本输入：悬浮窗恢复不可聚焦，焦点还给用户之前的应用。可重复调用。 */
+  endFloatingInput(): Promise<void>;
   /**
    * 订阅"悬浮窗指针已离开"事件。
    *
@@ -138,6 +151,7 @@ const tauriIpc: IpcClient = {
   createItem: (request) => call("create_item", commands.createItem(request)),
   getItem: (id) => call("get_item", commands.getItem(id)),
   listItems: (request) => call("list_items", commands.listItems(request)),
+  quickCreate: (itemType, title) => call("quick_create", commands.quickCreate({ itemType, title })),
   getToday: () => call("get_today", commands.getToday()),
   openMain: async () => {
     await call("open_main", commands.openMain());
@@ -150,6 +164,12 @@ const tauriIpc: IpcClient = {
     call("expand_floating", commands.expandFloating({ width, height })),
   collapseFloating: async () => {
     await call("collapse_floating", commands.collapseFloating());
+  },
+  beginFloatingInput: async () => {
+    await call("begin_floating_input", commands.beginFloatingInput());
+  },
+  endFloatingInput: async () => {
+    await call("end_floating_input", commands.endFloatingInput());
   },
   subscribeFloatingPointerLeft: (onLeft) =>
     listenAll([() => events.floatingPointerLeft.listen(() => onLeft())]),
@@ -188,12 +208,15 @@ export const ipc: IpcClient = {
   createItem: (request) => current.createItem(request),
   getItem: (id) => current.getItem(id),
   listItems: (request) => current.listItems(request),
+  quickCreate: (itemType, title) => current.quickCreate(itemType, title),
   getToday: () => current.getToday(),
   openMain: () => current.openMain(),
   quitApp: () => current.quitApp(),
   startFloatingDrag: () => current.startFloatingDrag(),
   expandFloating: (width, height) => current.expandFloating(width, height),
   collapseFloating: () => current.collapseFloating(),
+  beginFloatingInput: () => current.beginFloatingInput(),
+  endFloatingInput: () => current.endFloatingInput(),
   subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),
   subscribeDataChanges: (onChange) => current.subscribeDataChanges(onChange),
 };

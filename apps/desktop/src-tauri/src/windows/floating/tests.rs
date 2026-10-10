@@ -7,6 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use chrono::{TimeZone, Utc};
 use nivlo_application::testing::FakeUnitOfWork;
 use nivlo_common::clock::FakeClock;
+use nivlo_platform::foreground::ForegroundPort;
 use nivlo_platform::placement::{Edge, MonitorInfo, Rect};
 
 use super::*;
@@ -22,6 +23,8 @@ struct FakeState {
     monitors: Vec<MonitorInfo>,
     moves: Vec<Point>,
     cursor: Point,
+    focused: bool,
+    fail_focus: bool,
     always_on_top: Option<bool>,
     focusable: Option<bool>,
 }
@@ -40,6 +43,8 @@ impl FakePort {
                 monitors,
                 moves: Vec::new(),
                 cursor: Point { x: 0, y: 0 },
+                focused: false,
+                fail_focus: false,
                 always_on_top: None,
                 focusable: None,
             }),
@@ -91,6 +96,14 @@ impl FloatingWindowPort for FakePort {
         lock(&self.state).focusable = Some(enabled);
         Ok(())
     }
+    fn focus(&self) -> Result<(), PlatformError> {
+        let mut state = lock(&self.state);
+        if state.fail_focus {
+            return Err(PlatformError::Failed("无法聚焦".into()));
+        }
+        state.focused = true;
+        Ok(())
+    }
     fn set_always_on_top(&self, enabled: bool) -> Result<(), PlatformError> {
         lock(&self.state).always_on_top = Some(enabled);
         Ok(())
@@ -114,6 +127,24 @@ impl FloatingWindowPort for FakePort {
     }
     fn monitors(&self) -> Result<Vec<MonitorInfo>, PlatformError> {
         Ok(lock(&self.state).monitors.clone())
+    }
+}
+
+/// 假的前台窗口记忆 / 还原：只记录调用次数。
+#[derive(Default)]
+struct FakeForeground {
+    remembered: AtomicU64,
+    restored: AtomicU64,
+}
+
+impl ForegroundPort for FakeForeground {
+    fn remember(&self) -> Result<(), PlatformError> {
+        self.remembered.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+    fn restore(&self) -> Result<(), PlatformError> {
+        self.restored.fetch_add(1, Ordering::SeqCst);
+        Ok(())
     }
 }
 
@@ -141,6 +172,8 @@ fn single() -> Vec<MonitorInfo> {
 struct Fixture {
     controller: Arc<FloatingController<FakePort>>,
     port: Arc<FakePort>,
+    /// 记录前台窗口记忆 / 还原调用的假实现。
+    foreground: Arc<FakeForeground>,
     /// 看门狗触发 `on_pointer_outside` 的次数。
     pointer_outside: Arc<AtomicU64>,
     uow: FakeUnitOfWork,
@@ -158,6 +191,7 @@ async fn fixture(monitors: Vec<MonitorInfo>, start: (i32, i32), saved: &[(&str, 
     let port = FakePort::new(monitors, start.0, start.1);
     let shutdown = CancellationToken::new();
     let pointer_outside = Arc::new(AtomicU64::new(0));
+    let foreground = Arc::new(FakeForeground::default());
     let counter = pointer_outside.clone();
     let controller = FloatingController::new(
         port.clone(),
@@ -167,10 +201,12 @@ async fn fixture(monitors: Vec<MonitorInfo>, start: (i32, i32), saved: &[(&str, 
         Arc::new(move || {
             counter.fetch_add(1, Ordering::SeqCst);
         }),
+        foreground.clone(),
     );
     Fixture {
         controller,
         port,
+        foreground,
         pointer_outside,
         uow,
         shutdown,
@@ -529,4 +565,49 @@ async fn watchdog_exits_on_shutdown() {
     advance(Duration::from_millis(1000)).await;
 
     assert_eq!(f.pointer_outside.load(Ordering::SeqCst), 0);
+}
+
+#[tokio::test(start_paused = true)]
+async fn begin_input_remembers_the_foreground_then_makes_the_window_focusable_and_focused() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    assert_eq!(lock(&f.port.state).focusable, Some(false));
+
+    f.controller.begin_input().unwrap();
+
+    assert_eq!(f.foreground.remembered.load(Ordering::SeqCst), 1);
+    assert_eq!(lock(&f.port.state).focusable, Some(true));
+    assert!(lock(&f.port.state).focused);
+}
+
+#[tokio::test(start_paused = true)]
+async fn end_input_makes_the_window_unfocusable_again_and_gives_focus_back() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.begin_input().unwrap();
+
+    f.controller.end_input().unwrap();
+
+    assert_eq!(lock(&f.port.state).focusable, Some(false));
+    assert_eq!(f.foreground.restored.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test(start_paused = true)]
+async fn end_input_without_begin_is_harmless() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.end_input().unwrap();
+    assert_eq!(lock(&f.port.state).focusable, Some(false));
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_failed_focus_leaves_the_window_unfocusable() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    lock(&f.port.state).fail_focus = true;
+
+    assert!(f.controller.begin_input().is_err());
+
+    // 不能留下一个"可被激活"的悬浮窗：否则下次单击就会抢走别的应用的焦点。
+    assert_eq!(lock(&f.port.state).focusable, Some(false));
 }

@@ -26,6 +26,11 @@
       "empty": "还没有任何 Item，先创建一个吧。"
     }
   },
+  "quickCreate": {
+    "add": { "todo": "+ 待办", "note": "+ 笔记", "tip": "+ 提示" },
+    "kind": { "todo": "待办", "note": "笔记", "tip": "提示" },
+    "input": { "label": "标题", "placeholder": "输入标题，回车创建，Esc 取消" }
+  },
   "floating": { "label": "拾序悬浮窗", "open": "打开拾序主窗口" },
   "today": {
     "badge": { "label": "今天还剩 {{count}} 项待办" },

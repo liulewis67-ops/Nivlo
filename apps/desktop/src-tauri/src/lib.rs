@@ -53,12 +53,15 @@ macro_rules! bindings_builder {
                 $crate::commands::item::create_item,
                 $crate::commands::item::get_item,
                 $crate::commands::item::list_items,
+                $crate::commands::item::quick_create,
                 $crate::commands::today::get_today,
                 $crate::commands::window::open_main::<$runtime>,
                 $crate::commands::window::quit_app::<$runtime>,
                 $crate::commands::window::start_floating_drag::<$runtime>,
                 $crate::commands::window::expand_floating,
                 $crate::commands::window::collapse_floating,
+                $crate::commands::window::begin_floating_input,
+                $crate::commands::window::end_floating_input,
             ])
             .events($crate::tauri_specta::collect_events![
                 $crate::events::ItemCreatedEvent,
@@ -123,6 +126,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             app.manage(state);
 
             let floating = windows::create_floating_window(app)?;
+            let foreground = windows::foreground_port(&floating);
             let controller = FloatingController::new(
                 Arc::new(TauriFloatingWindow::new(floating)),
                 app.state::<AppState>().services.settings.clone(),
@@ -142,6 +146,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                         }
                     })
                 },
+                foreground,
             );
             // 先还原位置再开始观察移动事件，避免把"还原"本身当成用户拖动。
             tauri::async_runtime::block_on(controller.restore());

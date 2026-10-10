@@ -31,6 +31,17 @@ export const commands = {
 	 */
 	listItems: (request: ListItemsRequest) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("list_items", { request })),
 	/**
+	 *  快速创建一个 Item（悬浮窗的 Quick Create）：只需要类型与标题。
+	 * 
+	 *  默认值由后端决定：Todo 与 Tip 的计划日期是今天（用户本地日期），Note 没有日期。
+	 *  悬浮窗只拥有这个命令，没有完整的 `create_item`（最小权限，架构文档 §13）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  标题为空返回 `ITEM_TITLE_EMPTY`，其余同 `create_item`。
+	 */
+	quickCreate: (request: QuickCreateRequest) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("quick_create", { request })),
+	/**
 	 *  读取今天的视图：待办（已按 Today Order 排序，含逾期）、提示与今日已完成。
 	 * 
 	 *  悬浮窗只在**启动时**调用一次，之后由事件（`item_created`、`item_updated`、
@@ -87,6 +98,25 @@ export const commands = {
 	 *  窗口不可用时返回 `WINDOW_UNAVAILABLE`。
 	 */
 	collapseFloating: () => typedError<null, IpcError>(__TAURI_INVOKE("collapse_floating")),
+	/**
+	 *  开始悬浮窗的文本输入（Quick Create）：悬浮窗临时可聚焦并获得键盘焦点。
+	 * 
+	 *  会先记住用户当前的前台窗口，输入结束后由 [`end_floating_input`] 把焦点还回去；
+	 *  这是悬浮窗唯一会主动抢焦点的时刻（架构文档 §61 风险 3）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  窗口无法聚焦时返回 `WINDOW_UNAVAILABLE`，此时悬浮窗已恢复为不可聚焦。
+	 */
+	beginFloatingInput: () => typedError<null, IpcError>(__TAURI_INVOKE("begin_floating_input")),
+	/**
+	 *  结束悬浮窗的文本输入：恢复不可聚焦，并把焦点还给用户之前的应用。可以重复调用。
+	 * 
+	 *  # Errors
+	 * 
+	 *  窗口不可用时返回 `WINDOW_UNAVAILABLE`。
+	 */
+	endFloatingInput: () => typedError<null, IpcError>(__TAURI_INVOKE("end_floating_input")),
 };
 
 /** Events */
@@ -260,6 +290,14 @@ export type PriorityDto =
 "medium" | 
 /**  高。 */
 "high";
+
+/**  快速创建的请求：只有类型与标题，日期等默认值由后端按产品规则决定。 */
+export type QuickCreateRequest = {
+	/**  类型。 */
+	itemType: ItemTypeDto,
+	/**  标题（去除首尾空白后不能为空）。 */
+	title: string,
+};
 
 /**  Today 中的一个条目（只含展示所需的字段，不含正文，保持载荷精简）。 */
 export type TodayItemDto = {

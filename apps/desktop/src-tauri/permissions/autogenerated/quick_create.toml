@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-quick-create"
+description = "Enables the quick_create command without any pre-configured scope."
+commands.allow = ["quick_create"]
+
+[[permission]]
+identifier = "deny-quick-create"
+description = "Denies the quick_create command without any pre-configured scope."
+commands.deny = ["quick_create"]
