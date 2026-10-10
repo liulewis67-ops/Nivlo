@@ -71,6 +71,8 @@ export interface MemoryIpc extends IpcClient {
   setPendingMainView(view: string | null): void;
   /** 模拟已运行的主窗口收到「切换视图」事件。 */
   emitMainViewRequested(view: string): void;
+  /** 设置模拟剪贴板的内容；`null` 表示空剪贴板（`captureFromClipboard` 抛出 `CLIPBOARD_EMPTY`）。 */
+  setClipboard(content: { text?: string; files?: string[] } | null): void;
   /** 设置全局快捷键的状态（模拟启动时被占用等）。 */
   setShortcutStatus(status: ShortcutStatusDto): void;
   /** 已被其他程序占用的快捷键（规范文本），`setQuickCreateShortcut` 遇到它们抛出 `SHORTCUT_CONFLICT`。 */
@@ -183,6 +185,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const quickAddListeners = new Set<() => void>();
   const mainViewListeners = new Set<(view: string) => void>();
   const takenShortcuts = new Set<string>();
+  let clipboard: { text?: string; files?: string[] } | null = null;
   let shortcut: ShortcutStatusDto = {
     accelerator: "Ctrl+Shift+Space",
     registered: true,
@@ -328,7 +331,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     return Promise.resolve(itemFromToday(found, complete ? "done" : "open"));
   }
 
-  return {
+  const memory: MemoryIpc = {
     get organizations() {
       return organizations;
     },
@@ -450,6 +453,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       const item = { ...created, inInbox: true };
       items[items.length - 1] = item;
       provenance.set(item.id, describeProvenance(request, item.createdAt));
+      // 与后端一致：事件在记录完整落库之后才发出，列表重取时能看到 Inbox 标记与来源。
+      for (const notify of listeners) notify();
       return { items: [item], undoIds: [item.id] };
     },
     undoCapture: (itemIds: string[]) => {
@@ -624,6 +629,22 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       return Promise.resolve();
     },
     takenShortcuts,
+    setClipboard: (content: { text?: string; files?: string[] } | null) => {
+      clipboard = content;
+    },
+    captureFromClipboard: () => {
+      calls.push("captureFromClipboard");
+      const files = clipboard?.files ?? [];
+      const text = clipboard?.text ?? "";
+      if (files.length === 0 && text.trim() === "") {
+        return Promise.reject(new AppError("CLIPBOARD_EMPTY", "剪贴板为空"));
+      }
+      return memory.capture(
+        files.length > 0
+          ? { input: { kind: "files", paths: files }, origin: "paste", sourceApplication: null }
+          : { input: { kind: "text", text }, origin: "paste", sourceApplication: null },
+      );
+    },
     setShortcutStatus: (status: ShortcutStatusDto) => {
       shortcut = status;
     },
@@ -701,4 +722,5 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       };
     },
   };
+  return memory;
 }

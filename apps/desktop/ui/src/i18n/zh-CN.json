@@ -82,6 +82,9 @@
   "capture": {
     "drop": { "title": "松手即可收集", "hint": "链接、文字、图片都会先放进收集箱" },
     "saving": "正在收集…",
+    "paste": "粘贴",
+    "pasted": "已收集：{{title}}",
+    "pastedMany": "已收集 {{count}} 项",
     "created": "已创建：{{title}}",
     "createdMany": "已创建 {{count}} 项",
     "undo": "撤销",
@@ -89,7 +92,7 @@
     "dismiss": "知道了",
     "failed": "没能收集：{{message}}",
     "unsupported": {
-      "files": "暂时还不能直接收集文件，请先复制文件路径后粘贴（文件拖放即将支持）。",
+      "files": "暂时还不能直接拖入文件。请在资源管理器里复制文件，再点「粘贴」。",
       "empty": "这个内容没法收集，试试拖入链接、文字或图片。"
     }
   },
@@ -184,7 +187,9 @@
     "STORAGE_MIGRATION_FAILED": "数据库升级失败。",
     "WINDOW_UNAVAILABLE": "无法打开窗口，请查看诊断信息。",
     "SHORTCUT_INVALID": "这不是一个可用的快捷键：需要至少一个修饰键（Ctrl / Alt / Shift / Win）加一个按键。",
-    "SHORTCUT_CONFLICT": "这个快捷键已被其他程序占用，换一个试试。"
+    "SHORTCUT_CONFLICT": "这个快捷键已被其他程序占用，换一个试试。",
+    "CLIPBOARD_UNAVAILABLE": "暂时读取不到剪贴板，可能被其他程序占用，请稍后重试。",
+    "CLIPBOARD_EMPTY": "剪贴板里没有可以收集的内容，先复制点什么吧。"
   },
   "errorAction": { "OPEN_DIAGNOSTICS": "打开诊断信息" }
 }

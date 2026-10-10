@@ -12,6 +12,7 @@
 
 pub mod app;
 pub mod autostart;
+pub mod clipboard;
 pub mod commands;
 pub mod dto;
 pub mod events;
@@ -58,6 +59,7 @@ macro_rules! bindings_builder {
                 $crate::commands::item::list_items,
                 $crate::commands::capture::capture,
                 $crate::commands::capture::undo_capture,
+                $crate::commands::capture::capture_from_clipboard,
                 $crate::commands::inbox::list_inbox,
                 $crate::commands::inbox::get_inbox_count,
                 $crate::commands::inbox::organize_items,

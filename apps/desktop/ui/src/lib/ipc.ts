@@ -88,6 +88,11 @@ export interface IpcClient {
    * 返回创建的 Item 与撤销句柄（传给 [`IpcClient.undoCapture`]）。
    */
   capture(request: CaptureRequestDto): Promise<CaptureResultDto>;
+  /**
+   * 读取剪贴板并捕获（用户按了粘贴）：文件 → 文本 → 图片。
+   * 剪贴板里没有可收集的内容抛出 `CLIPBOARD_EMPTY`，读取失败抛出 `CLIPBOARD_UNAVAILABLE`。
+   */
+  captureFromClipboard(): Promise<CaptureResultDto>;
   /** 撤销一次捕获：删除它创建的全部记录（用户被引用的文件不受影响）。 */
   undoCapture(itemIds: string[]): Promise<void>;
   /** 列出 Inbox：等待整理的 Item（捕获时间从新到旧），附带来源与附件（含被引用文件是否还在）。 */
@@ -243,6 +248,7 @@ const tauriIpc: IpcClient = {
   undoCapture: async (itemIds) => {
     await call("undo_capture", commands.undoCapture(itemIds));
   },
+  captureFromClipboard: () => call("capture_from_clipboard", commands.captureFromClipboard()),
   listInbox: () => call("list_inbox", commands.listInbox()),
   getInboxCount: () => call("get_inbox_count", commands.getInboxCount()),
   organizeItems: (itemIds, action) =>
@@ -322,6 +328,7 @@ export const ipc: IpcClient = {
   getToday: () => current.getToday(),
   capture: (request) => current.capture(request),
   undoCapture: (itemIds) => current.undoCapture(itemIds),
+  captureFromClipboard: () => current.captureFromClipboard(),
   listInbox: () => current.listInbox(),
   getInboxCount: () => current.getInboxCount(),
   organizeItems: (itemIds, action) => current.organizeItems(itemIds, action),

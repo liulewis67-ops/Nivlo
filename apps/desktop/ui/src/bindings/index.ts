@@ -50,6 +50,18 @@ export const commands = {
 	 */
 	undoCapture: (itemIds: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("undo_capture", { itemIds })),
 	/**
+	 *  把剪贴板里的内容收进 Inbox（用户按了粘贴）：文件 → 文本 → 图片，优先级见
+	 *  [`nivlo_capture::normalize_clipboard`]。
+	 * 
+	 *  读取剪贴板可能因为被其他程序占用而短暂重试，所以放在阻塞线程里，不占用异步运行时。
+	 * 
+	 *  # Errors
+	 * 
+	 *  剪贴板里没有可收集的内容返回 `CLIPBOARD_EMPTY`；读取失败（被占用、平台不支持）返回
+	 *  `CLIPBOARD_UNAVAILABLE`；存储失败返回 `STORAGE_UNAVAILABLE`，此时没有留下任何数据。
+	 */
+	captureFromClipboard: () => typedError<CaptureResultDto, IpcError>(__TAURI_INVOKE("capture_from_clipboard")),
+	/**
 	 *  列出 Inbox：等待整理的 Item，捕获时间从新到旧，附带来源与附件（含被引用文件是否还在）。
 	 * 
 	 *  # Errors

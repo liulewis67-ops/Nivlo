@@ -31,6 +31,8 @@ export type TodayPanelProps = {
     onEdit: () => void;
     onDismiss: () => void;
     onHoldChange: (held: boolean) => void;
+    /** 点「粘贴」：读取剪贴板并收进 Inbox。 */
+    onPaste: () => void;
   };
 };
 
@@ -95,17 +97,23 @@ export function TodayPanel({
         </div>
       )}
       {quickCreateKind === null ? (
-        <footer className="flex gap-2 border-t border-border px-3 py-2">
+        <footer className="flex items-center gap-2 border-t border-border px-3 py-2">
           {QUICK_CREATE_KINDS.map((kind) => (
             <Button key={kind} size="sm" variant="ghost" onClick={() => onQuickCreate(kind)}>
               {t(`quickCreate.add.${kind}`)}
             </Button>
           ))}
+          {capture !== undefined && (
+            <Button size="sm" variant="ghost" className="ml-auto" onClick={capture.onPaste}>
+              {t("capture.paste")}
+            </Button>
+          )}
         </footer>
       ) : (
         <QuickCreateForm
           kind={quickCreateKind}
           onKindChange={onQuickCreateKindChange}
+          onPasteNonText={capture?.onPaste}
           onDone={onQuickCreateDone}
         />
       )}

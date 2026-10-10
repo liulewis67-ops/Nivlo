@@ -8,6 +8,7 @@ const COMMANDS: &[&str] = &[
     "list_items",
     "capture",
     "undo_capture",
+    "capture_from_clipboard",
     "list_inbox",
     "get_inbox_count",
     "organize_items",

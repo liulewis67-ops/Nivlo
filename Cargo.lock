@@ -2566,6 +2566,7 @@ name = "nivlo-platform-windows"
 version = "0.1.0"
 dependencies = [
  "nivlo-platform",
+ "tempfile",
  "windows",
 ]
 

@@ -22,6 +22,8 @@ const FLOATING_ALLOWED: &[&str] = &[
     "capture",
     // 撤销一次捕获（D-12 的 `undo` 在捕获场景的具体命令）。
     "undo_capture",
+    // 用户在悬浮窗上点「粘贴」：只在这个明确的动作里读取剪贴板（架构文档 §17）。
+    "capture_from_clipboard",
     "open_main",
     // 悬浮窗请求主窗口打开某个视图（如收集箱）。
     "open_main_at",

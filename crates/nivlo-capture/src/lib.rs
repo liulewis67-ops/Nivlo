@@ -162,6 +162,22 @@ pub fn normalize_files<P: AsRef<Path>>(paths: &[P]) -> Option<CaptureInput> {
     }
 }
 
+/// 把剪贴板里的内容规范化为输入（实施计划 2.5）。
+///
+/// 优先级：**文件 → 文本 → 图片**。同时有文本和图片时用文本：从 Excel / 网页复制一段内容时，
+/// 剪贴板里往往既有文字也有渲染出来的图片，用户想粘贴的是文字；截图只有图片，会落到最后一档。
+/// 图片字节不是支持的格式时跳过它（而不是报错），剪贴板里什么可用的都没有时返回 `None`。
+#[must_use]
+pub fn normalize_clipboard(
+    files: &[String],
+    text: Option<&str>,
+    image: Option<Vec<u8>>,
+) -> Option<CaptureInput> {
+    normalize_files(files)
+        .or_else(|| text.and_then(normalize_text))
+        .or_else(|| image.and_then(|bytes| image_input(bytes).ok()))
+}
+
 /// 按魔数识别图片格式。
 #[must_use]
 pub fn sniff_image(bytes: &[u8]) -> Option<ImageFormat> {

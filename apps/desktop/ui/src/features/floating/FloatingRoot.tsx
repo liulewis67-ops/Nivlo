@@ -120,6 +120,11 @@ export function FloatingRoot() {
             },
             onDismiss: drop.dismiss,
             onHoldChange: drop.pauseDismiss,
+            // 快速创建输入框里粘贴的不是文字（文件 / 图片）：收进 Inbox 并结束这次快速创建。
+            onPaste: () => {
+              drop.pasteFromClipboard();
+              if (quickCreateKind !== null) finishQuickCreate();
+            },
           }}
         />
       ) : (

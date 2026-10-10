@@ -249,3 +249,39 @@ fn a_moved_or_deleted_reference_is_reported_as_missing_without_error() {
     assert!(!reference_exists(r"Z:\永远不存在的盘\x.txt"));
     assert!(!reference_exists(""));
 }
+
+#[test]
+fn clipboard_prefers_files_then_text_then_image() {
+    let files = vec!["C:\\资料\\报告 final.pdf".to_owned()];
+    assert!(matches!(
+        normalize_clipboard(&files, Some("文字"), Some(PNG_HEAD.to_vec())),
+        Some(CaptureInput::File { .. })
+    ));
+    // 文本和图片同时存在（如从 Excel 复制）：用文本。
+    assert_eq!(
+        normalize_clipboard(&[], Some("  整理周报 "), Some(PNG_HEAD.to_vec())),
+        normalize_text("整理周报")
+    );
+    // 只有图片（截图）。
+    assert!(matches!(
+        normalize_clipboard(&[], None, Some(PNG_HEAD.to_vec())),
+        Some(CaptureInput::Image { .. })
+    ));
+}
+
+#[test]
+fn clipboard_recognizes_a_url_and_ignores_blank_text_and_unknown_images() {
+    assert!(matches!(
+        normalize_clipboard(&[], Some("https://example.com/a"), None),
+        Some(CaptureInput::Url { .. })
+    ));
+    // 空白文本不算；不认识的图片字节被跳过；什么都没有就是 None。
+    assert_eq!(normalize_clipboard(&[], Some("   \n"), None), None);
+    assert_eq!(normalize_clipboard(&[], None, Some(vec![1, 2, 3, 4])), None);
+    // 文本是空白、图片可用：回落到图片。
+    assert!(matches!(
+        normalize_clipboard(&[], Some(" "), Some(PNG_HEAD.to_vec())),
+        Some(CaptureInput::Image { .. })
+    ));
+    assert_eq!(normalize_clipboard(&[], None, None), None);
+}

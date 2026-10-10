@@ -13,6 +13,7 @@
     "allow-quick-create",
     "allow-capture",
     "allow-undo-capture",
+    "allow-capture-from-clipboard",
     "allow-take-pending-main-view",
     "allow-get-shortcut-status",
     "allow-set-quick-create-shortcut",

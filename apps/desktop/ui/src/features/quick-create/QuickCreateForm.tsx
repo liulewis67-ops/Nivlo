@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
+import type { ClipboardEvent, KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components";
 import { ipc } from "@/lib/ipc";
@@ -17,6 +17,11 @@ export type QuickCreateFormProps = {
   kind: ItemTypeDto;
   /** 按 Tab / Shift+Tab 切换类型时调用；不提供时不响应 Tab（保持默认的焦点移动）。 */
   onKindChange?: ((kind: ItemTypeDto) => void) | undefined;
+  /**
+   * 在输入框里粘贴了**不是文字**的内容（文件 / 图片）时调用；不提供时按浏览器默认处理。
+   * 普通文本的粘贴仍然是输入行为（实施计划 2.5）。
+   */
+  onPasteNonText?: (() => void) | undefined;
   /** 结束时调用：无论是创建成功、取消、失去焦点还是无法获得焦点。 */
   onDone: () => void;
 };
@@ -29,6 +34,7 @@ export type QuickCreateFormProps = {
  * 1. 挂载时请求后端 `beginFloatingInput`：记住用户当前的应用、让悬浮窗临时可聚焦并聚焦，
  *    完成后才聚焦输入框；失败（窗口无法聚焦）时提示错误并结束；
  * 2. Enter 创建（输入法组合期间与空标题不提交），Esc 取消，Tab / Shift+Tab 在待办 / 笔记 / 提示之间切换；
+ *    粘贴文字是普通输入，粘贴文件 / 图片则收进 Inbox；
  * 3. 窗口失去系统焦点（用户点了别处）视为取消；
  * 4. 卸载时（创建成功 / 取消 / 失败都会卸载）请求 `endFloatingInput`，
  *    后端恢复"不可聚焦"并把焦点还给用户之前的应用。
@@ -38,7 +44,12 @@ export type QuickCreateFormProps = {
  * @param props 类型与结束回调。
  * @returns 输入行。
  */
-export function QuickCreateForm({ kind, onKindChange, onDone }: QuickCreateFormProps) {
+export function QuickCreateForm({
+  kind,
+  onKindChange,
+  onPasteNonText,
+  onDone,
+}: QuickCreateFormProps) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [isReady, setIsReady] = useState(false);
@@ -119,6 +130,18 @@ export function QuickCreateForm({ kind, onKindChange, onDone }: QuickCreateFormP
     }
   }
 
+  /**
+   * 粘贴：纯文字照常进入输入框；没有文字（剪贴板里是文件或图片）时改为收进 Inbox。
+   *
+   * @param event 粘贴事件。
+   */
+  function handlePaste(event: ClipboardEvent<HTMLInputElement>): void {
+    if (onPasteNonText === undefined) return;
+    if (event.clipboardData.getData("text/plain").length > 0) return;
+    event.preventDefault();
+    onPasteNonText();
+  }
+
   return (
     <div className="flex items-center gap-2 border-t border-border px-3 py-2">
       <span className="shrink-0 rounded-sm bg-surface-hover px-1.5 py-0.5 text-xs text-muted">
@@ -132,6 +155,7 @@ export function QuickCreateForm({ kind, onKindChange, onDone }: QuickCreateFormP
         disabled={!isReady || create.isPending}
         onChange={(event) => setTitle(event.target.value)}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         className="h-8"
       />
     </div>

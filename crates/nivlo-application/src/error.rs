@@ -56,6 +56,10 @@ pub enum ErrorCode {
     ShortcutInvalid,
     /// 快捷键已被其他程序占用。
     ShortcutConflict,
+    /// 剪贴板里没有可以收集的内容。
+    ClipboardEmpty,
+    /// 无法读取剪贴板（被其他程序占用，或当前平台不支持）。
+    ClipboardUnavailable,
 }
 
 impl ErrorCode {
@@ -83,6 +87,8 @@ impl ErrorCode {
         Self::WindowUnavailable,
         Self::ShortcutInvalid,
         Self::ShortcutConflict,
+        Self::ClipboardEmpty,
+        Self::ClipboardUnavailable,
     ];
 
     /// 返回稳定的大写错误码字符串（会出现在 IPC 响应中，不得随意修改）。
@@ -110,6 +116,8 @@ impl ErrorCode {
             Self::WindowUnavailable => "WINDOW_UNAVAILABLE",
             Self::ShortcutInvalid => "SHORTCUT_INVALID",
             Self::ShortcutConflict => "SHORTCUT_CONFLICT",
+            Self::ClipboardEmpty => "CLIPBOARD_EMPTY",
+            Self::ClipboardUnavailable => "CLIPBOARD_UNAVAILABLE",
         }
     }
 }

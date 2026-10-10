@@ -1,6 +1,7 @@
 //! 捕获相关的 Command。
 
-use nivlo_domain::capture::CaptureRequest;
+use nivlo_application::error::{AppError, ErrorCode};
+use nivlo_domain::capture::{CaptureOrigin, CaptureRequest};
 use tauri::State;
 
 use crate::app::AppState;
@@ -42,4 +43,41 @@ pub async fn undo_capture(
         .collect::<Result<Vec<_>, _>>()?;
     state.services.capture.undo(&ids).await?;
     Ok(())
+}
+
+/// 把剪贴板里的内容收进 Inbox（用户按了粘贴）：文件 → 文本 → 图片，优先级见
+/// [`nivlo_capture::normalize_clipboard`]。
+///
+/// 读取剪贴板可能因为被其他程序占用而短暂重试，所以放在阻塞线程里，不占用异步运行时。
+///
+/// # Errors
+///
+/// 剪贴板里没有可收集的内容返回 `CLIPBOARD_EMPTY`；读取失败（被占用、平台不支持）返回
+/// `CLIPBOARD_UNAVAILABLE`；存储失败返回 `STORAGE_UNAVAILABLE`，此时没有留下任何数据。
+#[tauri::command]
+#[specta::specta]
+pub async fn capture_from_clipboard(
+    state: State<'_, AppState>,
+) -> Result<CaptureResultDto, IpcError> {
+    let unavailable =
+        |reason: String| IpcError::from(AppError::new(ErrorCode::ClipboardUnavailable, reason));
+    let content =
+        tauri::async_runtime::spawn_blocking(|| crate::clipboard::platform_clipboard().read())
+            .await
+            .map_err(|error| unavailable(error.to_string()))?
+            .map_err(|error| unavailable(error.to_string()))?;
+    let input =
+        nivlo_capture::normalize_clipboard(&content.files, content.text.as_deref(), content.image)
+            .ok_or_else(|| {
+                IpcError::from(AppError::new(
+                    ErrorCode::ClipboardEmpty,
+                    "剪贴板里没有可收集的内容".to_owned(),
+                ))
+            })?;
+    let result = state
+        .services
+        .capture
+        .capture(CaptureRequest::new(input, CaptureOrigin::Paste))
+        .await?;
+    Ok(CaptureResultDto::from(&result))
 }

@@ -150,4 +150,47 @@ describe("InboxPage", () => {
     expect(await screen.findByText("文件不存在")).toBeInTheDocument();
     expect(screen.getByText("报告 final.pdf")).toBeInTheDocument();
   });
+
+  it("点「粘贴」收进收集箱，并给出可撤销的提示", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setClipboard({ text: "整理周报" });
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("收集箱是空的");
+
+    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    expect(await screen.findByText("整理周报")).toBeInTheDocument();
+    const toast = useToastStore.getState().toasts.at(-1);
+    expect(toast?.message).toBe("已收集：整理周报");
+
+    act(() => toast?.action?.onClick());
+    await waitFor(() => expect(ipc.undoneCaptures).toHaveLength(1));
+  });
+
+  it("焦点不在输入框时按 Ctrl+V 粘贴；在输入框里按则是普通输入", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setClipboard({ text: "来自剪贴板" });
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("收集箱是空的");
+
+    const input = document.createElement("input");
+    document.body.appendChild(input);
+    fireEvent.keyDown(input, { key: "v", ctrlKey: true });
+    expect(ipc.calls).not.toContain("captureFromClipboard");
+    input.remove();
+
+    fireEvent.keyDown(document.body, { key: "v", ctrlKey: true });
+    expect(await screen.findByText("来自剪贴板")).toBeInTheDocument();
+    expect(ipc.calls.filter((call) => call === "captureFromClipboard")).toHaveLength(1);
+  });
+
+  it("剪贴板是空的：提示原因", async () => {
+    renderWithProviders(<InboxPage />, createMemoryIpc());
+    await screen.findByText("收集箱是空的");
+    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    await waitFor(() =>
+      expect(useToastStore.getState().toasts.at(-1)?.message).toContain(
+        "剪贴板里没有可以收集的内容",
+      ),
+    );
+  });
 });

@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, createEvent, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FEEDBACK_VISIBLE_MS } from "@/features/capture";
 import { createMemoryIpc } from "@/test/ipc-mock";
@@ -131,7 +131,7 @@ describe("拖放捕获（悬浮窗）", () => {
     fireEvent.drop(root(), { dataTransfer: transfer({}, [file]) });
     await advance(0);
 
-    expect(screen.getByRole("status")).toHaveTextContent("暂时还不能直接收集文件");
+    expect(screen.getByRole("status")).toHaveTextContent("暂时还不能直接拖入文件");
     expect(ipc.captures).toHaveLength(0);
   });
 
@@ -177,5 +177,75 @@ describe("拖放捕获（悬浮窗）", () => {
     fireEvent.pointerEnter(root());
     await advance(HOVER_ENTER_DELAY_MS);
     expect(screen.queryByRole("button", { name: /^收集箱/ })).not.toBeInTheDocument();
+  });
+
+  it("点「粘贴」：读取剪贴板收进收集箱，并显示可撤销的反馈", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setClipboard({ text: "https://example.com/a" });
+    renderWithProviders(<FloatingRoot />, ipc);
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS);
+
+    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    await advance(0);
+    expect(ipc.calls.filter((call) => call === "captureFromClipboard")).toHaveLength(1);
+    expect(ipc.captures[0]).toMatchObject({ origin: "paste" });
+    expect(screen.getByRole("status")).toHaveTextContent("已创建：https://example.com/a");
+
+    fireEvent.click(screen.getByRole("button", { name: "撤销" }));
+    await advance(0);
+    expect(ipc.items).toHaveLength(0);
+  });
+
+  it("剪贴板是空的：反馈里说明原因，不创建任何东西", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS);
+
+    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    await advance(0);
+    expect(screen.getByRole("status")).toHaveTextContent("剪贴板里没有可以收集的内容");
+    expect(ipc.items).toHaveLength(0);
+  });
+
+  it("只有用户点了粘贴才读取剪贴板：悬停、拖放、快速创建都不会读取", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS);
+    fireEvent.drop(root(), { dataTransfer: transfer({ "text/plain": "x" }) });
+    await advance(0);
+    act(() => ipc.emitQuickAddRequested());
+    await advance(0);
+    expect(ipc.calls).not.toContain("captureFromClipboard");
+  });
+
+  it("快速创建输入框里：粘贴文字是普通输入；粘贴文件 / 图片则收进收集箱并结束快速创建", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setClipboard({ files: ["C:\\资料\\报告.pdf"] });
+    renderWithProviders(<FloatingRoot />, ipc);
+    act(() => ipc.emitQuickAddRequested());
+    await advance(0);
+    const input = screen.getByLabelText("标题");
+
+    // 纯文字：不拦截，由输入框自己处理（没有读取剪贴板）。
+    const textPaste = createEvent.paste(input, {
+      clipboardData: { getData: () => "一些文字", types: ["text/plain"] },
+    });
+    fireEvent(input, textPaste);
+    expect(textPaste.defaultPrevented).toBe(false);
+    expect(ipc.calls).not.toContain("captureFromClipboard");
+
+    // 没有文字（文件）：拦截并收进收集箱。
+    const filePaste = createEvent.paste(input, {
+      clipboardData: { getData: () => "", types: ["Files"] },
+    });
+    fireEvent(input, filePaste);
+    await advance(0);
+    expect(filePaste.defaultPrevented).toBe(true);
+    expect(ipc.calls).toContain("captureFromClipboard");
+    expect(ipc.captures[0]?.input).toMatchObject({ kind: "files" });
+    expect(screen.queryByLabelText("标题")).not.toBeInTheDocument();
   });
 });

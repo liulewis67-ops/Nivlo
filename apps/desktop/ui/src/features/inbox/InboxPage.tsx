@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Menu } from "@/components";
+import { usePasteCapture } from "@/features/capture";
 import type { ItemTypeDto } from "@/lib/ipc";
 import { useInboxQuery } from "./api";
 import { InboxRow } from "./InboxRow";
@@ -26,6 +27,32 @@ export function InboxPage() {
   const { t } = useTranslation();
   const entries = useInboxQuery().data;
   const { organize } = useOrganize();
+  const paste = usePasteCapture();
+
+  // Ctrl+V（macOS 为 Cmd+V）：焦点不在输入框里时，把剪贴板收进 Inbox。
+  // 只响应用户按下的粘贴快捷键，没有任何监听剪贴板的行为。
+  useEffect(() => {
+    /**
+     * 全局按键：粘贴快捷键且不是在可编辑元素里时触发粘贴捕获。
+     *
+     * @param event 键盘事件。
+     */
+    const onKeyDown = (event: globalThis.KeyboardEvent): void => {
+      if (event.defaultPrevented || event.key.toLowerCase() !== "v") return;
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+      ) {
+        return;
+      }
+      event.preventDefault();
+      void paste();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [paste]);
   const [picked, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
 
@@ -95,9 +122,14 @@ export function InboxPage() {
       <header className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-8 pt-7 pb-3">
         <div className="flex items-baseline justify-between gap-4">
           <h1 className="text-2xl font-semibold text-text">{t("shell.nav.inbox")}</h1>
-          <span className="text-sm text-muted tabular-nums">
-            {count === 0 ? t("inbox.page.allClear") : t("inbox.page.pending", { count })}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted tabular-nums">
+              {count === 0 ? t("inbox.page.allClear") : t("inbox.page.pending", { count })}
+            </span>
+            <Button size="sm" onClick={() => void paste()}>
+              {t("capture.paste")}
+            </Button>
+          </div>
         </div>
         {count > 0 && (
           <div
