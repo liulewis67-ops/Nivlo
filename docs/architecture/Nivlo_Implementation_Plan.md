@@ -627,7 +627,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 2.1 CaptureInput 模型与 Normalizer
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.5
 - **目标**：所有入口统一成 `CaptureInput`，且明确 `CaptureOrigin ≠ CaptureInput`。
 - **任务**：
@@ -635,9 +635,11 @@ Phase 12 Backlog                        → 未排期
   - `nivlo-capture`：URL 解析与规范化；文件元数据（名称、扩展名、大小、MIME 探测）；文本规范化（文本仅为单个 URL 时识别为 `Url`）；多文件；图片（二进制 + 格式）。
   - 由输入生成默认标题的规则（URL → 主机 + 路径；文件 → 文件名；长文本 → 首行截断）。
 - **验收标准**：
-  - [ ] 基于 fixtures 的单元测试：纯 URL 文本识别为 Url；无扩展名文件的 MIME 探测；含中文与空格的 Windows 路径；超长文本标题截断。
-  - [ ] `nivlo-capture` 不依赖 Tauri。
-- **完成记录**：—
+  - [x] 基于 fixtures 的单元测试：纯 URL 文本识别为 Url；无扩展名文件的 MIME 探测；含中文与空格的 Windows 路径；超长文本标题截断。
+  - [x] `nivlo-capture` 不依赖 Tauri。
+- **完成记录**：2026-10-10 完成。
+  - 证据：`cargo test -p nivlo-capture` 14 个测试通过，文本用例来自 `fixtures/capture/text-cases.json`（14 条：纯 URL、首尾空白、大写主机与默认端口、根路径、fragment、中文路径编码、句子里夹 URL / 两个 URL / 多行 / `javascript:` / `file:` / 无协议主机都保持为文本、空白文本）；Windows 路径含中文与空格（`C:Users张三我的 文档季度 报告 final.PDF`）、末尾分隔符与 UNC 路径、隐藏文件 / 无扩展名；**无扩展名文件按魔数探测 MIME**（PNG / PDF / 文本 / 二进制）；512 字节读取上限把一个汉字切成两半时仍判为文本；文件夹；单个 / 多个 / 重复路径；五种图片格式与未知字节被拒绝；默认标题（URL → 主机 + 路径、文件名、「首个 等 N 个文件」、文本首行、图片）；超长文本 / emoji / 超长 URL 按**字符**截断。`nivlo-domain` 新增 `capture` 模块（`CaptureInput` / `CaptureOrigin` / `CaptureRequest` / `FileRef` / `ImageData`，serde 往返测试，图片的 `Debug` 不输出像素）。`check-deps` 通过，`nivlo-capture` 只依赖 `nivlo-domain`、`url`、`mime_guess`、`thiserror`。
+  - 设计说明：只有「整段文本恰好是一个 http(s) 网址」才识别为 URL，宁可当文本也不吞掉用户的话；文件只保存引用与元数据（探测失败时仍返回引用，被引用文件随时可能被移走）；`CaptureOrigin` 与 `CaptureInput` 分开建模，Origin 只用于日志 / 统计。
 
 ### 2.2 Source 与 Attachment 持久化
 

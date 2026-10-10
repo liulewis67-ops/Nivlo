@@ -10,6 +10,7 @@
 //! （参见后端规范 §3.1）。
 
 pub mod attachment;
+pub mod capture;
 pub mod error;
 pub mod event;
 pub mod id;

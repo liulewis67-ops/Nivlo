@@ -13,6 +13,9 @@ use tauri_plugin_dialog::{
 /// 传给自启进程的参数，便于日后区分"用户手动启动"与"开机启动"。
 pub const AUTOSTART_ARG: &str = "--autostarted";
 
+/// 设置了这个环境变量就不弹首次运行询问（自动化脚本使用，不会记录「已询问」）。
+pub const SKIP_PROMPT_ENV: &str = "NIVLO_SKIP_FIRST_RUN_PROMPTS";
+
 /// 对话框文案。
 // TODO(P7.5): 接入 i18n 后改为从资源文件读取（实施计划 D-06）。
 mod text {
@@ -43,6 +46,10 @@ fn is_enable_choice(result: &MessageDialogResult) -> bool {
 /// 对话框是非阻塞的：这里读取设置、弹出对话框后立即返回，用户回答后在回调里记录并启用。
 /// 所有失败只记录日志——自启是便利功能，不能影响启动。
 pub async fn prompt_once(app: AppHandle<Wry>, settings: SettingsService) {
+    // 自动化测量（scripts/perf）与端到端测试不能被模态对话框打断。
+    if std::env::var_os(SKIP_PROMPT_ENV).is_some() {
+        return;
+    }
     match settings.get(keys::AUTOSTART_PROMPTED).await {
         Ok(value) if !should_prompt(value.as_deref()) => return,
         Ok(_) => {}

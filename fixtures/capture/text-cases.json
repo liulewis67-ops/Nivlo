@@ -1,0 +1,16 @@
+[
+  { "name": "plain url", "input": "https://example.com/docs/page", "kind": "url", "value": "https://example.com/docs/page" },
+  { "name": "url with surrounding whitespace and newline", "input": "  https://example.com/a \n", "kind": "url", "value": "https://example.com/a" },
+  { "name": "uppercase host and default port are normalized", "input": "HTTPS://Example.COM:443/Path?q=1", "kind": "url", "value": "https://example.com/Path?q=1" },
+  { "name": "bare host gets a root path", "input": "http://example.com", "kind": "url", "value": "http://example.com/" },
+  { "name": "fragment is kept", "input": "https://example.com/a#section-2", "kind": "url", "value": "https://example.com/a#section-2" },
+  { "name": "chinese path is percent-encoded", "input": "https://example.com/文档", "kind": "url", "value": "https://example.com/%E6%96%87%E6%A1%A3" },
+  { "name": "sentence containing a url stays text", "input": "看看这个 https://example.com/a 很不错", "kind": "text", "value": "看看这个 https://example.com/a 很不错" },
+  { "name": "two urls stay text", "input": "https://a.com https://b.com", "kind": "text", "value": "https://a.com https://b.com" },
+  { "name": "multi-line text whose first line is a url stays text", "input": "https://example.com\n补充说明", "kind": "text", "value": "https://example.com\n补充说明" },
+  { "name": "javascript scheme is not a url", "input": "javascript:alert(1)", "kind": "text", "value": "javascript:alert(1)" },
+  { "name": "file scheme is not a url", "input": "file:///C:/secret.txt", "kind": "text", "value": "file:///C:/secret.txt" },
+  { "name": "scheme-less host stays text", "input": "example.com/path", "kind": "text", "value": "example.com/path" },
+  { "name": "plain chinese text", "input": "  买牛奶和鸡蛋  ", "kind": "text", "value": "买牛奶和鸡蛋" },
+  { "name": "blank text is nothing", "input": " \t\n ", "kind": "none", "value": "" }
+]
