@@ -42,6 +42,23 @@ export const commands = {
 	 */
 	quickCreate: (request: QuickCreateRequest) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("quick_create", { request })),
 	/**
+	 *  完成一个 Todo。完成不清理 Today 顺序，撤销后回到原来的位置。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不合法返回 `INVALID_INPUT`，不存在返回 `ITEM_NOT_FOUND`，
+	 *  不是待办 / 已完成 / 已归档分别返回对应的领域错误码。
+	 */
+	completeItem: (id: string) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("complete_item", { id })),
+	/**
+	 *  重新打开已完成的 Todo（"完成"的撤销）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  同 `complete_item`；尚未完成时返回 `ITEM_NOT_COMPLETED`。
+	 */
+	reopenItem: (id: string) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("reopen_item", { id })),
+	/**
 	 *  读取今天的视图：待办（已按 Today Order 排序，含逾期）、提示与今日已完成。
 	 * 
 	 *  悬浮窗只在**启动时**调用一次，之后由事件（`item_created`、`item_updated`、

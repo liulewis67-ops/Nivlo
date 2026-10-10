@@ -7,6 +7,8 @@ const COMMANDS: &[&str] = &[
     "get_item",
     "list_items",
     "quick_create",
+    "complete_item",
+    "reopen_item",
     "get_today",
     "open_main",
     "quit_app",

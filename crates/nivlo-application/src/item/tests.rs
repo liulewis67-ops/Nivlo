@@ -421,3 +421,53 @@ async fn quick_create_publishes_created_and_schedule_events_for_scheduled_types_
         ]
     );
 }
+
+#[tokio::test]
+async fn complete_then_reopen_round_trips_and_publishes_events() {
+    let f = fixture();
+    let todo = f
+        .service
+        .quick_create(ItemType::Todo, "写周报")
+        .await
+        .unwrap();
+    f.events.clear();
+
+    let done = f.service.complete_item(todo.id()).await.unwrap();
+    assert_eq!(done.status(), ItemStatus::Done);
+    assert_eq!(done.completed_at(), Some(f.clock.now_utc()));
+
+    let reopened = f.service.reopen_item(todo.id()).await.unwrap();
+    assert_eq!(reopened.status(), ItemStatus::Open);
+    assert_eq!(reopened.completed_at(), None);
+    assert_eq!(
+        f.events.events(),
+        vec![
+            DomainEvent::ItemCompleted { item_id: todo.id() },
+            DomainEvent::ItemReopened { item_id: todo.id() },
+        ]
+    );
+}
+
+#[tokio::test]
+async fn complete_and_reopen_reject_invalid_transitions_without_events() {
+    let f = fixture();
+    let todo = f.service.quick_create(ItemType::Todo, "a").await.unwrap();
+    let note = f.service.quick_create(ItemType::Note, "b").await.unwrap();
+    f.events.clear();
+
+    let err = f.service.reopen_item(todo.id()).await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::ItemNotCompleted);
+    let err = f.service.complete_item(note.id()).await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::ItemNotCompletable);
+    f.service.complete_item(todo.id()).await.unwrap();
+    f.events.clear();
+    let err = f.service.complete_item(todo.id()).await.unwrap_err();
+    assert_eq!(err.code, ErrorCode::ItemAlreadyCompleted);
+    let err = f
+        .service
+        .complete_item(ItemId::from_uuid(uuid::Uuid::nil()))
+        .await
+        .unwrap_err();
+    assert_eq!(err.code, ErrorCode::ItemNotFound);
+    assert!(f.events.events().is_empty());
+}

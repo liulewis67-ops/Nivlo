@@ -7,6 +7,8 @@
     "core:event:default",
     "allow-get-today",
     "allow-quick-create",
+    "allow-complete-item",
+    "allow-reopen-item",
     "allow-begin-floating-input",
     "allow-end-floating-input",
     "allow-open-main",

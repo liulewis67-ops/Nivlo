@@ -108,7 +108,7 @@ Phase 12 Backlog                        → 未排期
 | | 1.3 | Hover 展开与悬浮窗状态机 | ✅ |
 | | 1.4 | Today 查询与缓存 | ✅ |
 | | 1.5 | 悬浮窗 Quick Create | 🟨 |
-| | 1.6 | 完成 / Undo / Optimistic Update | ⬜ |
+| | 1.6 | 完成 / Undo / Optimistic Update | ✅ |
 | | 1.7 | Today Stack 排序 | ⬜ |
 | | 1.8 | 推迟操作 | ⬜ |
 | | 1.9 | Tray / Single Instance / Autostart / Shutdown | ⬜ |
@@ -509,7 +509,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.6 完成 / Undo / Optimistic Update
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：1.4；D-07
 - **目标**：实现架构文档 §15 的 optimistic update 流程。
 - **任务**：
@@ -518,10 +518,12 @@ Phase 12 Backlog                        → 未排期
   - Undo Toast（约 5 秒），撤销后恢复状态与原排序位置。
   - 按 D-07 处理已完成 Todo 的展示。
 - **验收标准**：
-  - [ ] 测试：模拟 IPC 失败时 UI 回滚并显示错误 Toast。
-  - [ ] 测试：Undo 后 Item 状态与 Today 中的位置均恢复。
-  - [ ] 徽标计数随完成 / 撤销正确变化。
-- **完成记录**：—
+  - [x] 测试：模拟 IPC 失败时 UI 回滚并显示错误 Toast。
+  - [x] 测试：Undo 后 Item 状态与 Today 中的位置均恢复。
+  - [x] 徽标计数随完成 / 撤销正确变化。
+- **完成记录**：2026-10-10 完成。
+  - 自动化：Application 测试（完成 / 重新打开往返并发布 `ItemCompleted` / `ItemReopened`；非法转换——已完成再完成、未完成就重开、Note 完成、不存在——被拒绝且不发布事件）；IPC 测试 `complete_and_reopen_move_a_todo_through_today_and_keep_its_position`（完成后进入 `completed`、计数减一，撤销后回到**原来的位置**，因为完成不清理 `daily_item_order`）；前端 `today-view` 纯逻辑测试（完成 / 撤销往返得到与原视图完全相同的结果，含计数与逾期标记）与 `complete-todo.test.tsx`（勾选后立即移入「今日已完成」并出现带「撤销」的 Toast；点撤销后放回；**IPC 失败时界面回滚并显示错误 Toast**；取消勾选已完成条目会重新打开）。
+  - 设计说明：optimistic update 在 `useCompleteTodo`：取消进行中的查询 → 快照 → 改缓存 → IPC → 失败恢复快照并重新查询；Toast Store 新增可选 `action`（「撤销」，5 秒）；`reopen_item` 同时承担 D-12 里 `undo` 在「完成」场景的职责，已加入 floating / main Capability 与白名单上限测试；D-07 的「隐藏已完成」开关留到设置页（3.5）。
 
 ### 1.7 Today Stack 排序
 

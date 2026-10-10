@@ -16,6 +16,8 @@ const FLOATING_ALLOWED: &[&str] = &[
     "get_today",
     "quick_create",
     "complete_item",
+    // 完成的撤销（D-12 的 `undo` 在 Item 完成场景的具体命令）。
+    "reopen_item",
     "reorder_today",
     "capture",
     "open_main",

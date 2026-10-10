@@ -259,3 +259,35 @@ async fn floating_input_commands_report_an_unavailable_window_before_startup_com
     let end = invoke(&webview, "end_floating_input", json!({})).unwrap_err();
     assert_eq!(end["code"], "WINDOW_UNAVAILABLE");
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn complete_and_reopen_move_a_todo_through_today_and_keep_its_position() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let quick = |title: &str| json!({ "request": { "itemType": "todo", "title": title } });
+
+    let first = invoke(&webview, "quick_create", quick("第一项")).unwrap();
+    invoke(&webview, "quick_create", quick("第二项")).unwrap();
+    let id = first["id"].as_str().unwrap();
+
+    let done = invoke(&webview, "complete_item", json!({ "id": id })).unwrap();
+    assert_eq!(done["status"], "done");
+    let today = invoke(&webview, "get_today", json!({})).unwrap();
+    assert_eq!(today["remainingCount"], 1);
+    assert_eq!(today["completed"][0]["title"], "第一项");
+
+    // 重复完成被领域规则拒绝。
+    let again = invoke(&webview, "complete_item", json!({ "id": id })).unwrap_err();
+    assert_eq!(again["code"], "ITEM_ALREADY_COMPLETED");
+
+    // 撤销：回到 Today，且仍排在第二项之前。
+    invoke(&webview, "reopen_item", json!({ "id": id })).unwrap();
+    let today = invoke(&webview, "get_today", json!({})).unwrap();
+    assert_eq!(today["remainingCount"], 2);
+    assert_eq!(today["todos"][0]["title"], "第一项");
+    assert_eq!(today["todos"][1]["title"], "第二项");
+    assert!(today["completed"].as_array().unwrap().is_empty());
+}

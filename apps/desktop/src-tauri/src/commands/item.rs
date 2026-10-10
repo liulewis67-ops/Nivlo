@@ -75,3 +75,36 @@ pub async fn list_items(
     let items = state.services.items.list_items(request.into()).await?;
     Ok(items.iter().map(ItemDto::from).collect())
 }
+
+/// 完成一个 Todo。完成不清理 Today 顺序，撤销后回到原来的位置。
+///
+/// # Errors
+///
+/// ID 格式不合法返回 `INVALID_INPUT`，不存在返回 `ITEM_NOT_FOUND`，
+/// 不是待办 / 已完成 / 已归档分别返回对应的领域错误码。
+#[tauri::command]
+#[specta::specta]
+pub async fn complete_item(state: State<'_, AppState>, id: String) -> Result<ItemDto, IpcError> {
+    let item = state
+        .services
+        .items
+        .complete_item(parse_item_id(&id)?)
+        .await?;
+    Ok(ItemDto::from(&item))
+}
+
+/// 重新打开已完成的 Todo（"完成"的撤销）。
+///
+/// # Errors
+///
+/// 同 `complete_item`；尚未完成时返回 `ITEM_NOT_COMPLETED`。
+#[tauri::command]
+#[specta::specta]
+pub async fn reopen_item(state: State<'_, AppState>, id: String) -> Result<ItemDto, IpcError> {
+    let item = state
+        .services
+        .items
+        .reopen_item(parse_item_id(&id)?)
+        .await?;
+    Ok(ItemDto::from(&item))
+}

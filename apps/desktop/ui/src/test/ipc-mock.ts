@@ -32,6 +32,8 @@ export interface MemoryIpc extends IpcClient {
   readonly calls: readonly string[];
   /** 让下一次 `quickCreate` 抛出的错误，用于测试失败路径；触发后自动清除。 */
   failNextQuickCreateWith(error: AppError): void;
+  /** 让下一次 `completeItem` / `reopenItem` 抛出的错误，用于测试回滚；触发后自动清除。 */
+  failNextTransitionWith(error: AppError): void;
   /** 让下一次 `beginFloatingInput` 抛出的错误（模拟窗口无法聚焦）。 */
   failNextBeginInputWith(error: AppError): void;
   /** 设置下一次及之后 `getToday` 返回的 Today 视图。 */
@@ -69,6 +71,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let dragStarts = 0;
   let quickCreateFailure: AppError | undefined;
   let beginInputFailure: AppError | undefined;
+  let transitionFailure: AppError | undefined;
   let today: TodayViewDto = EMPTY_TODAY;
   const calls: string[] = [];
   let lastExpand: { width: number; height: number } | null = null;
@@ -105,6 +108,55 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     return Promise.resolve(item);
   }
 
+  /**
+   * 完成 / 重新打开：只作用于 Today 视图（Mock 里 Today 由测试直接设置）。
+   * 重新打开时条目回到待办末尾，近似后端「顺序记录保留」的效果。
+   */
+  function transition(name: string, id: string, complete: boolean): Promise<ItemDto> {
+    calls.push(name);
+    if (transitionFailure !== undefined) {
+      const failure = transitionFailure;
+      transitionFailure = undefined;
+      return Promise.reject(failure);
+    }
+    const source = complete ? today.todos : today.completed;
+    const found = source.find((entry) => entry.id === id);
+    if (found === undefined) {
+      return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+    }
+    today = complete
+      ? {
+          ...today,
+          remainingCount: today.remainingCount - 1,
+          todos: today.todos.filter((entry) => entry.id !== id),
+          completed: [...today.completed, { ...found, status: "done" }],
+        }
+      : {
+          ...today,
+          remainingCount: today.remainingCount + 1,
+          todos: [...today.todos, { ...found, status: "open" }],
+          completed: today.completed.filter((entry) => entry.id !== id),
+        };
+    for (const notify of listeners) notify();
+    return Promise.resolve({
+      id,
+      itemType: "todo",
+      title: found.title,
+      content: null,
+      contentFormat: "plain",
+      status: complete ? "done" : "open",
+      priority: found.priority,
+      scheduled: found.scheduled,
+      due: found.due,
+      reminderAt: null,
+      projectId: null,
+      createdAt: "2026-10-10T00:00:00.000Z",
+      updatedAt: "2026-10-10T00:00:00.000Z",
+      completedAt: complete ? "2026-10-10T00:00:00.000Z" : null,
+      archivedAt: null,
+    });
+  }
+
   return {
     get items() {
       return items;
@@ -115,6 +167,11 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     failNextQuickCreateWith: (error: AppError) => {
       quickCreateFailure = error;
     },
+    failNextTransitionWith: (error: AppError) => {
+      transitionFailure = error;
+    },
+    completeItem: (id: string) => transition("completeItem", id, true),
+    reopenItem: (id: string) => transition("reopenItem", id, false),
     failNextBeginInputWith: (error: AppError) => {
       beginInputFailure = error;
     },

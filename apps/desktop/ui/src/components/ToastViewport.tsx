@@ -23,18 +23,30 @@ export function ToastViewport() {
   const dismiss = useToastStore((state) => state.dismiss);
 
   return (
-    <div className="pointer-events-none fixed right-4 bottom-4 z-(--nv-z-toast) flex flex-col gap-2">
+    <div className="pointer-events-none fixed right-3 bottom-3 z-(--nv-z-toast) flex flex-col gap-2">
       {toasts.map((toast) => (
         <div
           key={toast.id}
           role={toast.kind === "error" ? "alert" : "status"}
           className={cx(
-            "pointer-events-auto flex max-w-80 items-start gap-3 rounded-md border border-l-4 border-border",
+            "pointer-events-auto flex max-w-[min(20rem,calc(100vw-1.5rem))] items-start gap-3 rounded-md border border-l-4 border-border",
             "bg-surface px-3 py-2 text-sm text-text shadow-lg",
             KIND_CLASSES[toast.kind],
           )}
         >
           <span className="flex-1">{toast.message}</span>
+          {toast.action !== undefined && (
+            <button
+              type="button"
+              className="shrink-0 font-medium text-primary hover:underline"
+              onClick={() => {
+                toast.action?.onClick();
+                dismiss(toast.id);
+              }}
+            >
+              {toast.action.label}
+            </button>
+          )}
           <button
             type="button"
             aria-label={t("toast.dismiss")}

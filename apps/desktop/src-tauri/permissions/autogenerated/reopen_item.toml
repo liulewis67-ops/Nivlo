@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reopen-item"
+description = "Enables the reopen_item command without any pre-configured scope."
+commands.allow = ["reopen_item"]
+
+[[permission]]
+identifier = "deny-reopen-item"
+description = "Denies the reopen_item command without any pre-configured scope."
+commands.deny = ["reopen_item"]

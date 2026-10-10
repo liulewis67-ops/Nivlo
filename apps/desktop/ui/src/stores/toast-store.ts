@@ -3,6 +3,14 @@ import { create } from "zustand";
 /** Toast 的类别，决定样式与无障碍角色。 */
 export type ToastKind = "info" | "success" | "error";
 
+/** Toast 上的一个操作按钮（如「撤销」）。 */
+export type ToastAction = {
+  /** 已翻译的按钮文案。 */
+  label: string;
+  /** 点击时调用；调用后 Toast 自动关闭。 */
+  onClick: () => void;
+};
+
 /** 一条 Toast。 */
 export type ToastItem = {
   /** 唯一 ID。 */
@@ -11,6 +19,8 @@ export type ToastItem = {
   kind: ToastKind;
   /** 已翻译的展示文案。 */
   message: string;
+  /** 可选的操作按钮。 */
+  action?: ToastAction;
 };
 
 /** 不指定时的自动消失时长（毫秒）。 */
@@ -21,7 +31,7 @@ type ToastState = {
   /** 当前显示的 Toast。 */
   toasts: ToastItem[];
   /** 显示一条 Toast，并在 `durationMs` 后自动关闭；返回它的 ID。 */
-  push: (kind: ToastKind, message: string, durationMs?: number) => number;
+  push: (kind: ToastKind, message: string, durationMs?: number, action?: ToastAction) => number;
   /** 立即关闭一条 Toast。 */
   dismiss: (id: number) => void;
 };
@@ -39,9 +49,11 @@ const timers = new Map<number, ReturnType<typeof setTimeout>>();
  */
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
-  push: (kind, message, durationMs = DEFAULT_TOAST_DURATION_MS) => {
+  push: (kind, message, durationMs = DEFAULT_TOAST_DURATION_MS, action) => {
     const id = nextId++;
-    set((state) => ({ toasts: [...state.toasts, { id, kind, message }] }));
+    const toast: ToastItem =
+      action === undefined ? { id, kind, message } : { id, kind, message, action };
+    set((state) => ({ toasts: [...state.toasts, toast] }));
     timers.set(
       id,
       setTimeout(() => get().dismiss(id), durationMs),

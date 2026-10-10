@@ -54,6 +54,8 @@ macro_rules! bindings_builder {
                 $crate::commands::item::get_item,
                 $crate::commands::item::list_items,
                 $crate::commands::item::quick_create,
+                $crate::commands::item::complete_item,
+                $crate::commands::item::reopen_item,
                 $crate::commands::today::get_today,
                 $crate::commands::window::open_main::<$runtime>,
                 $crate::commands::window::quit_app::<$runtime>,

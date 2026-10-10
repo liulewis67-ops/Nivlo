@@ -9,8 +9,10 @@
 
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use nivlo_common::clock::Clock;
 use nivlo_common::id::new_uuid_v7;
+use nivlo_domain::error::DomainError;
 use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::{DatePoint, Item, ItemType, NewItem};
@@ -160,6 +162,51 @@ impl ItemService {
         for event in events {
             self.events.publish(event);
         }
+        Ok(item)
+    }
+
+    /// 完成一个 Todo。
+    ///
+    /// 完成**不会**清理 `daily_item_order`：撤销（[`ItemService::reopen_item`]）后
+    /// Item 回到 Today 原来的位置。
+    ///
+    /// # Errors
+    ///
+    /// * [`crate::error::ErrorCode::ItemNotFound`] - Item 不存在。
+    /// * `ITEM_NOT_COMPLETABLE` / `ITEM_ALREADY_COMPLETED` / `ITEM_ARCHIVED` - 领域规则拒绝。
+    /// * 存储错误，事务已回滚。
+    pub async fn complete_item(&self, id: ItemId) -> Result<Item, AppError> {
+        self.transition(id, |item, now| item.complete(now)).await
+    }
+
+    /// 重新打开已完成的 Todo（也是"完成"的撤销）。
+    ///
+    /// # Errors
+    ///
+    /// * [`crate::error::ErrorCode::ItemNotFound`] - Item 不存在。
+    /// * `ITEM_NOT_COMPLETED` / `ITEM_ARCHIVED` - 领域规则拒绝。
+    /// * 存储错误，事务已回滚。
+    pub async fn reopen_item(&self, id: ItemId) -> Result<Item, AppError> {
+        self.transition(id, |item, now| item.reopen(now)).await
+    }
+
+    /// 读取 Item、执行一次状态转换、写回并在提交后发布事件。
+    async fn transition(
+        &self,
+        id: ItemId,
+        apply: impl FnOnce(&mut Item, DateTime<Utc>) -> Result<DomainEvent, DomainError>,
+    ) -> Result<Item, AppError> {
+        let now = self.clock.now_utc();
+        let mut tx = self.uow.begin().await?;
+        let mut item = tx
+            .items()
+            .get(id)
+            .await?
+            .ok_or_else(|| AppError::item_not_found(id))?;
+        let event = apply(&mut item, now)?;
+        tx.items().update(&item).await?;
+        tx.commit().await?;
+        self.events.publish(event);
         Ok(item)
     }
 

@@ -43,6 +43,10 @@ export interface IpcClient {
    * （Todo 与 Tip 的计划日期是今天，Note 没有日期）。
    */
   quickCreate(itemType: ItemTypeDto, title: string): Promise<ItemDto>;
+  /** 完成一个 Todo（完成不改变它在 Today 中的位置记录，撤销后回到原位）。 */
+  completeItem(id: string): Promise<ItemDto>;
+  /** 重新打开已完成的 Todo，也是「完成」的撤销。 */
+  reopenItem(id: string): Promise<ItemDto>;
   /**
    * 读取今天的视图（待办 / 提示 / 今日已完成）。
    *
@@ -152,6 +156,8 @@ const tauriIpc: IpcClient = {
   getItem: (id) => call("get_item", commands.getItem(id)),
   listItems: (request) => call("list_items", commands.listItems(request)),
   quickCreate: (itemType, title) => call("quick_create", commands.quickCreate({ itemType, title })),
+  completeItem: (id) => call("complete_item", commands.completeItem(id)),
+  reopenItem: (id) => call("reopen_item", commands.reopenItem(id)),
   getToday: () => call("get_today", commands.getToday()),
   openMain: async () => {
     await call("open_main", commands.openMain());
@@ -209,6 +215,8 @@ export const ipc: IpcClient = {
   getItem: (id) => current.getItem(id),
   listItems: (request) => current.listItems(request),
   quickCreate: (itemType, title) => current.quickCreate(itemType, title),
+  completeItem: (id) => current.completeItem(id),
+  reopenItem: (id) => current.reopenItem(id),
   getToday: () => current.getToday(),
   openMain: () => current.openMain(),
   quitApp: () => current.quitApp(),

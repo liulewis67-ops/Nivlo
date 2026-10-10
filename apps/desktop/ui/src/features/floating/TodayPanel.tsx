@@ -3,7 +3,7 @@ import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { QuickCreateForm } from "@/features/quick-create";
-import { TodayList, useTodayQuery } from "@/features/today";
+import { TodayList, useCompleteTodo, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 
@@ -25,8 +25,8 @@ const QUICK_CREATE_KINDS: ItemTypeDto[] = ["todo", "note", "tip"];
 /**
  * 悬浮窗展开后的 Today 面板。
  *
- * 标题、Today 列表（只读缓存，Hover 展开不取数）与底部的快速创建。完成、排序、推迟在
- * 实施计划 1.6 ~ 1.8 加入。
+ * 标题、Today 列表（只读缓存，Hover 展开不取数）与底部的快速创建。完成 / 撤销（1.6）；排序、推迟在
+ * 实施计划 1.7、1.8 加入。
  *
  * @param props 展开方向。
  * @returns 面板元素。
@@ -39,6 +39,7 @@ export function TodayPanel({
 }: TodayPanelProps) {
   const { t } = useTranslation();
   const view = useTodayQuery().data;
+  const { complete, reopen } = useCompleteTodo();
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
     <section
@@ -61,7 +62,11 @@ export function TodayPanel({
       </header>
       {view !== undefined &&
       (view.todos.length > 0 || view.tips.length > 0 || view.completed.length > 0) ? (
-        <TodayList view={view} />
+        <TodayList
+          view={view}
+          onComplete={(item) => void complete(item)}
+          onReopen={(item) => void reopen(item)}
+        />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-4 text-center">
           <p className="text-sm font-medium text-text">{t("today.empty.title")}</p>

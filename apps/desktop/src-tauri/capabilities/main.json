@@ -10,6 +10,8 @@
     "allow-list-items",
     "allow-get-today",
     "allow-quick-create",
+    "allow-complete-item",
+    "allow-reopen-item",
     "allow-open-main",
     "allow-quit-app"
   ]

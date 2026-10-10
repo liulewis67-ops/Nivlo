@@ -294,6 +294,14 @@ impl RecordingPublisher {
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
     }
+
+    /// 清空已记录的事件，便于只断言之后发生的事。
+    pub fn clear(&self) {
+        self.events
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clear();
+    }
 }
 
 impl EventPublisher for RecordingPublisher {
