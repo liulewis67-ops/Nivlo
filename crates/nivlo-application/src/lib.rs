@@ -3,6 +3,7 @@
 //! * [`ports`]：Application 需要外部世界提供的能力（存储、时钟等）的 trait。
 //!   Port 在本层定义，由 Adapter crate 实现（后端规范 §4.2）。
 //! * [`item::ItemService`]：Item 的创建 / 更新 / 读取 / 列表 Use Case。
+//! * [`inbox::InboxService`]：Inbox 的列表（带来源与附件）与批量整理 / 撤销。
 //! * [`today::TodayService`]：Today 视图（待办 / 提示 / 今日已完成）的查询。
 //! * [`day_change`]：本地日期切换监视器。
 //! * [`settings::SettingsService`]：业务设置（键值）的读写。
@@ -19,6 +20,7 @@ pub mod capture;
 pub mod day_change;
 pub mod error;
 pub mod event;
+pub mod inbox;
 pub mod item;
 pub mod ports;
 pub mod settings;

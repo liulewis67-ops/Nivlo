@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
+use nivlo_application::inbox::InboxService;
 use nivlo_application::item::ItemService;
 use nivlo_application::settings::SettingsService;
 use nivlo_application::today::TodayService;
@@ -29,6 +30,8 @@ pub struct ApplicationServices {
     pub today: TodayService,
     /// 捕获（拖放 / 粘贴 / 快捷键 → Inbox）。
     pub capture: CaptureService,
+    /// Inbox（列表与批量整理）。
+    pub inbox: InboxService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

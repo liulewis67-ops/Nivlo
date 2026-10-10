@@ -8,7 +8,7 @@
 //! * **今日已完成**：今天（本地日期）完成的 Todo，以删除线显示在底部，次日不再出现；
 //! * 悬浮窗的数字 = 待办的数量（不含已完成与提示）。
 //!
-//! 待办的顺序是用户手动排好的 Today Order（\`daily_item_order\`），而不是 priority / created_at / due
+//! 待办的顺序是用户手动排好的 Today Order（`daily_item_order`），而不是 priority / created_at / due
 //! （产品文档 §5.3）；没有手动顺序记录的待办（新加入 Today、逾期滚入的）追加在末尾，
 //! 彼此按计划日期、创建时间排序。
 

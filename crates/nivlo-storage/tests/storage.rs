@@ -720,3 +720,35 @@ async fn deleting_an_item_cascades_records_but_never_touches_the_referenced_file
     // 领域规则：引用类附件不归 Nivlo 所有，只有复制进 attachments/ 的才会被清理。
     assert!(!reference.owns_file());
 }
+
+#[tokio::test]
+async fn in_inbox_only_filter_returns_pending_items_and_ignores_archived() {
+    let (_dir, _path, db) = new_db().await;
+    let inbox_item = |n: u128, title: &str, in_inbox: bool, minute: u32| {
+        let mut new = NewItem::new(ItemType::Note, title);
+        new.in_inbox = in_inbox;
+        Item::create(id(n), new, t(8, minute)).unwrap().0
+    };
+    let pending = inbox_item(1, "待整理", true, 0);
+    let organized = inbox_item(2, "已整理", false, 1);
+    let mut archived = inbox_item(3, "已归档", true, 2);
+    archived.archive(t(9, 0)).unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    for item in [&pending, &organized, &archived] {
+        tx.items().insert(item).await.unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let listed = tx
+        .items()
+        .list(&ItemFilter {
+            in_inbox_only: true,
+            ..ItemFilter::default()
+        })
+        .await
+        .unwrap();
+    let titles: Vec<String> = listed.iter().map(|i| i.title().to_string()).collect();
+    assert_eq!(titles, ["待整理"]);
+}

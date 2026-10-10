@@ -41,7 +41,7 @@ pub enum RescheduleTarget {
 }
 
 /// 严格晚于 `date` 的下一个周一（今天是周一则为 7 天后）。
-pub(super) fn next_monday_after(date: NaiveDate) -> NaiveDate {
+pub(crate) fn next_monday_after(date: NaiveDate) -> NaiveDate {
     let days = 7 - i64::from(date.weekday().num_days_from_monday());
     date + Duration::days(days)
 }

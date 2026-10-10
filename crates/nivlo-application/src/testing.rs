@@ -273,6 +273,7 @@ impl ItemRepository for FakeTransaction {
             .values()
             .filter(|i| filter.item_type.is_none_or(|t| i.item_type() == t))
             .filter(|i| filter.include_archived || !i.is_archived())
+            .filter(|i| !filter.in_inbox_only || i.in_inbox())
             .cloned()
             .collect();
         items.sort_by(|a, b| {

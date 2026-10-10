@@ -362,6 +362,7 @@ impl ItemRepository for SqliteTransaction {
     async fn list(&mut self, filter: &ItemFilter) -> Result<Vec<Item>, StorageError> {
         let item_type = filter.item_type.map(|t| t.as_str());
         let include_archived = i64::from(filter.include_archived);
+        let in_inbox_only = i64::from(filter.in_inbox_only);
         // SQLite 中 LIMIT -1 表示不限制。
         let limit = filter.limit.map_or(-1_i64, i64::from);
         // created_at 为固定宽度文本，排序即时间序；id（UUIDv7）作为同一毫秒内的稳定次序。
@@ -373,10 +374,12 @@ impl ItemRepository for SqliteTransaction {
              FROM items
              WHERE (?1 IS NULL OR type = ?1)
                AND (?2 = 1 OR archived_at IS NULL)
+               AND (?3 = 0 OR in_inbox = 1)
              ORDER BY created_at DESC, id DESC
-             LIMIT ?3",
+             LIMIT ?4",
             item_type,
             include_archived,
+            in_inbox_only,
             limit
         )
         .fetch_all(&mut *self.tx)

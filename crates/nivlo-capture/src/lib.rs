@@ -76,8 +76,8 @@ pub fn normalize_url(raw: &str) -> Result<String, CaptureError> {
     Ok(url.to_string())
 }
 
-/// 取路径的最后一段作为名称；同时识别 `\` 与 `/`，所以 Windows 路径在任何平台上都能解析，
-/// 末尾的分隔符会被忽略（`C:\a\b\` → `b`）。
+/// 取路径的最后一段作为名称；同时识别 `` 与 `/`，所以 Windows 路径在任何平台上都能解析，
+/// 末尾的分隔符会被忽略（`C:\a\b` → `b`）。
 fn file_name_of(path: &str) -> String {
     path.split(['\\', '/'])
         .rfind(|segment| !segment.is_empty())

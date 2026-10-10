@@ -50,6 +50,40 @@ export const commands = {
 	 */
 	undoCapture: (itemIds: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("undo_capture", { itemIds })),
 	/**
+	 *  列出 Inbox：等待整理的 Item，捕获时间从新到旧，附带来源与附件（含被引用文件是否还在）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储错误（`STORAGE_UNAVAILABLE` / `STORAGE_CORRUPT`）。
+	 */
+	listInbox: () => typedError<InboxEntryDto[], IpcError>(__TAURI_INVOKE("list_inbox")),
+	/**
+	 *  Inbox 里有多少条等待整理（侧栏与悬浮窗的数字）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储错误。
+	 */
+	getInboxCount: () => typedError<number, IpcError>(__TAURI_INVOKE("get_inbox_count")),
+	/**
+	 *  对一批 Item 执行同一个整理动作（安排日期 / 转换类型 / 归档 / 移出 Inbox）。
+	 * 
+	 *  一个事务：任何一条失败整批不变。返回整理之后的 Item，以及整理之前的状态（用于撤销）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 或日期格式不对返回 `INVALID_INPUT`；Item 不存在返回 `ITEM_NOT_FOUND`；存储错误时没有任何改动。
+	 */
+	organizeItems: (itemIds: string[], action: OrganizeActionDto) => typedError<OrganizeResultDto, IpcError>(__TAURI_INVOKE("organize_items", { itemIds, action })),
+	/**
+	 *  精确撤销一次整理：把每个 Item 恢复到整理之前的状态。
+	 * 
+	 *  # Errors
+	 * 
+	 *  参数格式不对返回 `INVALID_INPUT`；Item 已不存在返回 `ITEM_NOT_FOUND`；存储错误时没有任何改动。
+	 */
+	restoreItems: (previous: PreviousStateDto[]) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("restore_items", { previous })),
+	/**
 	 *  快速创建一个 Item（悬浮窗的 Quick Create）：只需要类型与标题。
 	 * 
 	 *  默认值由后端决定：Todo 与 Tip 的计划日期是今天（用户本地日期），Note 没有日期。
@@ -187,6 +221,22 @@ export const events = {
 };
 
 /* Types */
+/**  附件（IPC 表示）。 */
+export type AttachmentDto = {
+	/**  `reference`（引用用户的文件）或 `stored`（Nivlo 保存的图片）。 */
+	kind: string,
+	/**  路径：引用时是原始路径；保存的图片是相对 `attachments/` 的文件名。 */
+	path: string,
+	/**  展示用文件名。 */
+	name: string,
+	/**  MIME 类型。 */
+	mime: string | null,
+	/**  文件大小（字节）。 */
+	sizeBytes: number | null,
+	/**  被引用的文件现在是否还在；保存的图片恒为 `true`。展示「文件不存在」状态用，不会因此报错。 */
+	exists: boolean,
+};
+
 /**  捕获的内容（IPC 表示）：前端只传原始材料，规范化（识别 URL、探测文件）在后端完成。 */
 export type CaptureInputDto = 
 /**  一段文本；整段恰好是一个网址时会被识别为网址。 */
@@ -302,6 +352,16 @@ export type HorizontalAnchorDto =
 /**  徽标在面板右侧，面板向左展开。 */
 "right";
 
+/**  Inbox 中的一条（IPC 表示）。 */
+export type InboxEntryDto = {
+	/**  Item。 */
+	item: ItemDto,
+	/**  来源。 */
+	sources: SourceDto[],
+	/**  附件。 */
+	attachments: AttachmentDto[],
+};
+
 /**  IPC 统一的错误结构 `{ code, message, action }`（架构文档 §43）。 */
 export type IpcError = {
 	/**  稳定的大写错误码，前端据此分支并作为 i18n key。 */
@@ -386,6 +446,43 @@ export type ListItemsRequest = {
 	limit: number | null,
 };
 
+/**  对一批 Item 的整理动作（IPC 表示）。 */
+export type OrganizeActionDto = 
+/**  手动移出 Inbox。 */
+{ kind: "leaveInbox" } | 
+/**  安排日期。 */
+{ kind: "schedule"; 
+/**  目标日期。 */
+target: ScheduleTargetDto } | 
+/**  转换类型。 */
+{ kind: "convertTo"; 
+/**  新类型。 */
+item_type: ItemTypeDto } | 
+/**  归档。 */
+{ kind: "archive" };
+
+/**  一次批量整理的结果（IPC 表示）。 */
+export type OrganizeResultDto = {
+	/**  整理之后的 Item。 */
+	items: ItemDto[],
+	/**  整理之前的状态：传给 `restore_items` 撤销。 */
+	previous: PreviousStateDto[],
+};
+
+/**  整理之前的状态（IPC 表示），原样交给 `restore_items` 撤销。 */
+export type PreviousStateDto = {
+	/**  Item ID。 */
+	id: string,
+	/**  原来的类型。 */
+	itemType: ItemTypeDto,
+	/**  原来的计划日期。 */
+	scheduled: DatePointDto | null,
+	/**  原来是否在 Inbox 里。 */
+	inInbox: boolean,
+	/**  原来是否已归档。 */
+	archived: boolean,
+};
+
 /**  优先级。 */
 export type PriorityDto = 
 /**  未设置。 */
@@ -422,6 +519,35 @@ export type RescheduleTargetDto =
 { kind: "exact"; 
 /**  要设置的计划；`null` 表示清除。 */
 scheduled: DatePointDto | null };
+
+/**  安排日期的目标（IPC 表示）。 */
+export type ScheduleTargetDto = 
+/**  今天。 */
+{ kind: "today" } | 
+/**  明天。 */
+{ kind: "tomorrow" } | 
+/**  稍后（下周一）。 */
+{ kind: "later" } | 
+/**  指定某一天。 */
+{ kind: "date"; 
+/**  本地日期，`YYYY-MM-DD`。 */
+date: string };
+
+/**  来源（IPC 表示）：这条 Item 来自哪里。 */
+export type SourceDto = {
+	/**  来源类型：`web` / `file` / `text` / `image` / `manual` 等。 */
+	sourceType: string,
+	/**  来源应用；未知时为 `null`。 */
+	sourceApp: string | null,
+	/**  来源网址。 */
+	sourceUrl: string | null,
+	/**  来源文件路径。 */
+	sourcePath: string | null,
+	/**  来源原始标题。 */
+	originalTitle: string | null,
+	/**  捕获时间（RFC 3339）。 */
+	capturedAt: string,
+};
 
 /**  Today 中的一个条目（只含展示所需的字段，不含正文，保持载荷精简）。 */
 export type TodayItemDto = {

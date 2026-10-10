@@ -11,12 +11,17 @@ use base64::Engine;
 use chrono::{DateTime, NaiveDate, NaiveTime, SecondsFormat, Utc};
 use nivlo_application::capture::CaptureResult;
 use nivlo_application::error::{AppError, ErrorCode};
+use nivlo_application::inbox::{
+    InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
+};
 use nivlo_application::item::RescheduleTarget;
 use nivlo_application::ports::ItemFilter;
 use nivlo_application::today::{TodayEntry, TodayView};
+use nivlo_domain::attachment::Attachment;
 use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
 use nivlo_domain::id::{ItemId, ProjectId};
 use nivlo_domain::item::{ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority};
+use nivlo_domain::source::Source;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
@@ -525,7 +530,230 @@ impl From<ListItemsRequest> for ItemFilter {
         Self {
             item_type: request.item_type.map(Into::into),
             include_archived: request.include_archived,
+            in_inbox_only: false,
             limit: request.limit,
+        }
+    }
+}
+
+/// 来源（IPC 表示）：这条 Item 来自哪里。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceDto {
+    /// 来源类型：`web` / `file` / `text` / `image` / `manual` 等。
+    pub source_type: String,
+    /// 来源应用；未知时为 `null`。
+    pub source_app: Option<String>,
+    /// 来源网址。
+    pub source_url: Option<String>,
+    /// 来源文件路径。
+    pub source_path: Option<String>,
+    /// 来源原始标题。
+    pub original_title: Option<String>,
+    /// 捕获时间（RFC 3339）。
+    pub captured_at: String,
+}
+
+impl From<&Source> for SourceDto {
+    /// Domain → DTO。
+    fn from(value: &Source) -> Self {
+        Self {
+            source_type: value.source_type.as_str().to_owned(),
+            source_app: value.source_app.clone(),
+            source_url: value.source_url.clone(),
+            source_path: value.source_path.clone(),
+            original_title: value.original_title.clone(),
+            captured_at: format_utc(value.captured_at),
+        }
+    }
+}
+
+/// 附件（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AttachmentDto {
+    /// `reference`（引用用户的文件）或 `stored`（Nivlo 保存的图片）。
+    pub kind: String,
+    /// 路径：引用时是原始路径；保存的图片是相对 `attachments/` 的文件名。
+    pub path: String,
+    /// 展示用文件名。
+    pub name: String,
+    /// MIME 类型。
+    pub mime: Option<String>,
+    /// 文件大小（字节）。
+    pub size_bytes: Option<f64>,
+    /// 被引用的文件现在是否还在；保存的图片恒为 `true`。展示「文件不存在」状态用，不会因此报错。
+    pub exists: bool,
+}
+
+impl AttachmentDto {
+    /// Domain → DTO，同时检查被引用的文件是否还在。
+    #[must_use]
+    pub fn from_attachment(value: &Attachment) -> Self {
+        let exists = if value.owns_file() {
+            true
+        } else {
+            nivlo_capture::reference_exists(&value.path)
+        };
+        #[allow(clippy::cast_precision_loss)]
+        let size_bytes = value.size_bytes.map(|size| size as f64);
+        Self {
+            kind: value.kind.as_str().to_owned(),
+            path: value.path.clone(),
+            name: value.name.clone(),
+            mime: value.mime.clone(),
+            size_bytes,
+            exists,
+        }
+    }
+}
+
+/// Inbox 中的一条（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct InboxEntryDto {
+    /// Item。
+    pub item: ItemDto,
+    /// 来源。
+    pub sources: Vec<SourceDto>,
+    /// 附件。
+    pub attachments: Vec<AttachmentDto>,
+}
+
+impl From<&InboxEntry> for InboxEntryDto {
+    /// Application → DTO。
+    fn from(value: &InboxEntry) -> Self {
+        Self {
+            item: ItemDto::from(&value.item),
+            sources: value.sources.iter().map(SourceDto::from).collect(),
+            attachments: value
+                .attachments
+                .iter()
+                .map(AttachmentDto::from_attachment)
+                .collect(),
+        }
+    }
+}
+
+/// 安排日期的目标（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum ScheduleTargetDto {
+    /// 今天。
+    Today,
+    /// 明天。
+    Tomorrow,
+    /// 稍后（下周一）。
+    Later,
+    /// 指定某一天。
+    Date {
+        /// 本地日期，`YYYY-MM-DD`。
+        date: String,
+    },
+}
+
+/// 对一批 Item 的整理动作（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum OrganizeActionDto {
+    /// 手动移出 Inbox。
+    LeaveInbox,
+    /// 安排日期。
+    Schedule {
+        /// 目标日期。
+        target: ScheduleTargetDto,
+    },
+    /// 转换类型。
+    ConvertTo {
+        /// 新类型。
+        item_type: ItemTypeDto,
+    },
+    /// 归档。
+    Archive,
+}
+
+impl TryFrom<OrganizeActionDto> for OrganizeAction {
+    type Error = AppError;
+
+    /// DTO → Application；日期格式不对时返回 `INVALID_INPUT`。
+    fn try_from(value: OrganizeActionDto) -> Result<Self, Self::Error> {
+        Ok(match value {
+            OrganizeActionDto::LeaveInbox => Self::LeaveInbox,
+            OrganizeActionDto::Schedule { target } => Self::Schedule(match target {
+                ScheduleTargetDto::Today => ScheduleTarget::Today,
+                ScheduleTargetDto::Tomorrow => ScheduleTarget::Tomorrow,
+                ScheduleTargetDto::Later => ScheduleTarget::Later,
+                ScheduleTargetDto::Date { date } => ScheduleTarget::Date(
+                    NaiveDate::parse_from_str(&date, "%Y-%m-%d")
+                        .map_err(|_| invalid(format!("无效的日期：{date}")))?,
+                ),
+            }),
+            OrganizeActionDto::ConvertTo { item_type } => Self::ConvertTo(item_type.into()),
+            OrganizeActionDto::Archive => Self::Archive,
+        })
+    }
+}
+
+/// 整理之前的状态（IPC 表示），原样交给 `restore_items` 撤销。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct PreviousStateDto {
+    /// Item ID。
+    pub id: String,
+    /// 原来的类型。
+    pub item_type: ItemTypeDto,
+    /// 原来的计划日期。
+    pub scheduled: Option<DatePointDto>,
+    /// 原来是否在 Inbox 里。
+    pub in_inbox: bool,
+    /// 原来是否已归档。
+    pub archived: bool,
+}
+
+impl From<&PreviousState> for PreviousStateDto {
+    /// Application → DTO。
+    fn from(value: &PreviousState) -> Self {
+        Self {
+            id: value.id.to_string(),
+            item_type: value.item_type.into(),
+            scheduled: value.scheduled.map(DatePointDto::from),
+            in_inbox: value.in_inbox,
+            archived: value.archived,
+        }
+    }
+}
+
+impl TryFrom<PreviousStateDto> for PreviousState {
+    type Error = AppError;
+
+    /// DTO → Application；ID 或日期格式不对时返回 `INVALID_INPUT`。
+    fn try_from(value: PreviousStateDto) -> Result<Self, Self::Error> {
+        Ok(Self {
+            id: parse_item_id(&value.id)?,
+            item_type: value.item_type.into(),
+            scheduled: value.scheduled.map(DatePoint::try_from).transpose()?,
+            in_inbox: value.in_inbox,
+            archived: value.archived,
+        })
+    }
+}
+
+/// 一次批量整理的结果（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct OrganizeResultDto {
+    /// 整理之后的 Item。
+    pub items: Vec<ItemDto>,
+    /// 整理之前的状态：传给 `restore_items` 撤销。
+    pub previous: Vec<PreviousStateDto>,
+}
+
+impl From<&OrganizeOutcome> for OrganizeResultDto {
+    /// Application → DTO。
+    fn from(value: &OrganizeOutcome) -> Self {
+        Self {
+            items: value.items.iter().map(ItemDto::from).collect(),
+            previous: value.previous.iter().map(PreviousStateDto::from).collect(),
         }
     }
 }

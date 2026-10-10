@@ -9,11 +9,11 @@
 //! | URL | Note | 标题是主机 + 路径，内容是完整网址 |
 //! | 文件 | Note | 一个文件一条 Note，附件是**引用**（不复制） |
 //! | 多个文件 | 每个文件一条 Note | 在同一个事务里一起创建 |
-//! | 图片 | Note | 附件是复制到 \`attachments/\` 的文件（没有原始路径可引用） |
+//! | 图片 | Note | 附件是复制到 `attachments/` 的文件（没有原始路径可引用） |
 //!
 //! 同时记录 Source（来自哪里）。整个过程是**一个事务**：Item、Source、Attachment 要么全部落库，
 //! 要么什么都不留下；已经写到磁盘上的图片文件在失败时会被清理。成功后返回创建的 Item，
-//! 调用方可以用它们的 ID 调用 [\`CaptureService::undo\`] 把数据库恢复到捕获之前。
+//! 调用方可以用它们的 ID 调用 [`CaptureService::undo`] 把数据库恢复到捕获之前。
 
 use std::sync::Arc;
 use std::time::Instant;
@@ -59,7 +59,7 @@ struct Planned {
 
 /// 来源草稿。
 struct SourceDraft {
-    /// 来源类型（\`web\` / \`file\` / \`text\` / \`image\`）。
+    /// 来源类型（`web` / `file` / `text` / `image`）。
     source_type: &'static str,
     /// 来源 URL。
     url: Option<String>,
@@ -71,13 +71,13 @@ struct SourceDraft {
 enum AttachmentDraft {
     /// 引用用户的文件。
     Reference(FileRef),
-    /// 需要复制到 \`attachments/\` 的图片。
+    /// 需要复制到 `attachments/` 的图片。
     Image(nivlo_domain::capture::ImageData),
 }
 
 /// 一个已经写到磁盘、还没提交数据库的附件，失败时要清理。
 struct StoredAttachment {
-    /// 相对 \`attachments/\` 的路径。
+    /// 相对 `attachments/` 的路径。
     relative_path: String,
 }
 
@@ -204,13 +204,13 @@ impl CaptureService {
     /// 捕获一次输入，创建 Item + Source + Attachment。
     ///
     /// 事务性：任何一步失败都不会在数据库里留下记录，已经写到磁盘的图片文件也会被清理。
-    /// 提交成功后才发布 [\`DomainEvent::ItemCreated\`]。来路（\`origin\`）只写入日志，
+    /// 提交成功后才发布 [`DomainEvent::ItemCreated`]。来路（`origin`）只写入日志，
     /// 不影响创建什么。
     ///
     /// # Errors
     ///
     /// * 领域规则错误（如标题不合法）映射为对应错误码。
-    /// * 存储 / 文件错误（\`STORAGE_UNAVAILABLE\` 等），此时没有留下任何数据。
+    /// * 存储 / 文件错误（`STORAGE_UNAVAILABLE` 等），此时没有留下任何数据。
     pub async fn capture(&self, request: CaptureRequest) -> Result<CaptureResult, AppError> {
         let started = Instant::now();
         let now = self.clock.now_utc();
@@ -244,7 +244,7 @@ impl CaptureService {
         Ok(CaptureResult { items })
     }
 
-    /// 在单个事务里写入全部记录；图片文件在事务开始之前写好并记录到 \`stored\`。
+    /// 在单个事务里写入全部记录；图片文件在事务开始之前写好并记录到 `stored`。
     async fn write_all(
         &self,
         request: &CaptureRequest,

@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
+use nivlo_application::inbox::InboxService;
 use nivlo_application::item::ItemService;
 use nivlo_application::ports::StorageError;
 use nivlo_application::settings::SettingsService;
@@ -100,12 +101,18 @@ pub fn build_app_state(
         Arc::new(event_bus.clone()),
         Arc::new(FsAttachmentFiles::new(attachments_dir)),
     );
+    let inbox = InboxService::new(
+        Arc::new(database.clone()),
+        clock.clone(),
+        Arc::new(event_bus.clone()),
+    );
     AppState {
         services: ApplicationServices {
             items,
             settings,
             today,
             capture,
+            inbox,
         },
         runtime: RuntimeHandles::new(event_bus, database, clock, log_guard),
     }

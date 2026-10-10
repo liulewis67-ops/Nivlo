@@ -98,6 +98,8 @@ pub struct ItemFilter {
     pub item_type: Option<ItemType>,
     /// 是否包含已归档的 Item。
     pub include_archived: bool,
+    /// 只返回仍在 Inbox 中等待整理的 Item（`in_inbox`，D-02）。
+    pub in_inbox_only: bool,
     /// 最多返回的条数；`None` 表示不限制。
     pub limit: Option<u32>,
 }

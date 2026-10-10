@@ -394,6 +394,17 @@ impl Item {
         DomainEvent::ItemUpdated { item_id: self.id }
     }
 
+    /// 原样恢复 Inbox 标记：只用于撤销整理动作，让 Item 回到整理之前的状态。
+    ///
+    /// 与 [`Item::leave_inbox`] / [`Item::move_to_inbox`] 不同，它不清除计划日期，也不当作一次新的整理。
+    pub fn restore_inbox_flag(&mut self, in_inbox: bool, now: DateTime<Utc>) -> DomainEvent {
+        if self.in_inbox != in_inbox {
+            self.in_inbox = in_inbox;
+            self.updated_at = now;
+        }
+        DomainEvent::ItemUpdated { item_id: self.id }
+    }
+
     /// 修改（或清除）截止日期——"最晚什么时候必须完成"。
     ///
     /// 截止日期与计划日期语义不同，二者互不约束先后顺序（架构文档 §32）。
@@ -512,6 +523,8 @@ impl Item {
             return Err(DomainError::AlreadyArchived);
         }
         self.archived_at = Some(now);
+        // 归档是一种整理：不会再留在 Inbox 里等待处理（D-02）。
+        self.in_inbox = false;
         self.updated_at = now;
         Ok(DomainEvent::ItemArchived { item_id: self.id })
     }

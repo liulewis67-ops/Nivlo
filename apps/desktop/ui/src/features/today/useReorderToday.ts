@@ -9,7 +9,7 @@ import { applyMove } from "./model/today-view";
  * Today 待办的拖拽 / 键盘排序，带 optimistic update：先改缓存让列表立即落位，
  * 再持久化；失败则恢复缓存、提示错误并重新查询。
  *
- * @returns \`move(activeId, overId)\`：把 \`activeId\` 放到 \`overId\` 的位置并保存。
+ * @returns `move(activeId, overId)`：把 `activeId` 放到 `overId` 的位置并保存。
  */
 export function useReorderToday(): (activeId: string, overId: string) => Promise<void> {
   const queryClient = useQueryClient();

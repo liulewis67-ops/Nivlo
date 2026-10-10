@@ -444,3 +444,79 @@ async fn capture_is_fast_lands_in_the_inbox_and_undo_restores_the_database() {
     let empty = invoke(&webview, "capture", capture_text("   ")).unwrap_err();
     assert_eq!(empty["code"], "INVALID_INPUT");
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn inbox_lists_captures_with_sources_organizes_in_batch_and_undoes() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    let note = invoke(&webview, "capture", capture_text("https://example.com/a")).unwrap();
+    let todo = invoke(&webview, "capture", capture_text("整理周报")).unwrap();
+    let file = dir.path().join("报告 final.txt");
+    std::fs::write(&file, "hello").unwrap();
+    let files = invoke(
+        &webview,
+        "capture",
+        json!({ "request": {
+            "input": { "kind": "files", "paths": [file.to_string_lossy()] },
+            "origin": "drop", "sourceApplication": null
+        }}),
+    )
+    .unwrap();
+
+    let inbox = invoke(&webview, "list_inbox", json!({})).unwrap();
+    let entries = inbox.as_array().unwrap();
+    assert_eq!(entries.len(), 3);
+    // 最新的在前；每条都带来源。
+    assert_eq!(entries[0]["item"]["id"], files["items"][0]["id"]);
+    assert_eq!(entries[2]["sources"][0]["sourceType"], "web");
+    assert_eq!(entries[1]["sources"][0]["sourceType"], "text");
+    assert_eq!(entries[0]["attachments"][0]["kind"], "reference");
+    assert_eq!(entries[0]["attachments"][0]["exists"], true);
+    assert_eq!(invoke(&webview, "get_inbox_count", json!({})).unwrap(), 3);
+
+    // 被引用的文件被移走后：显示「不存在」，不报错，也不影响列表。
+    std::fs::remove_file(&file).unwrap();
+    let inbox = invoke(&webview, "list_inbox", json!({})).unwrap();
+    assert_eq!(inbox[0]["attachments"][0]["exists"], false);
+
+    // 批量：两条安排到今天 → 离开 Inbox。
+    let ids = json!([note["items"][0]["id"], todo["items"][0]["id"]]);
+    let organized = invoke(
+        &webview,
+        "organize_items",
+        json!({ "itemIds": ids, "action": { "kind": "schedule", "target": { "kind": "today" } } }),
+    )
+    .unwrap();
+    assert_eq!(organized["items"].as_array().unwrap().len(), 2);
+    assert_eq!(organized["items"][0]["inInbox"], false);
+    assert_eq!(invoke(&webview, "get_inbox_count", json!({})).unwrap(), 1);
+
+    // 撤销：回到整理之前。
+    invoke(
+        &webview,
+        "restore_items",
+        json!({ "previous": organized["previous"] }),
+    )
+    .unwrap();
+    assert_eq!(invoke(&webview, "get_inbox_count", json!({})).unwrap(), 3);
+
+    // 错误：Item 不存在、日期格式不对。
+    let missing = invoke(
+        &webview,
+        "organize_items",
+        json!({ "itemIds": ["0190a000-0000-7000-8000-000000000001"], "action": { "kind": "archive" } }),
+    )
+    .unwrap_err();
+    assert_eq!(missing["code"], "ITEM_NOT_FOUND");
+    let bad = invoke(
+        &webview,
+        "organize_items",
+        json!({ "itemIds": ids, "action": { "kind": "schedule", "target": { "kind": "date", "date": "明天" } } }),
+    )
+    .unwrap_err();
+    assert_eq!(bad["code"], "INVALID_INPUT");
+}

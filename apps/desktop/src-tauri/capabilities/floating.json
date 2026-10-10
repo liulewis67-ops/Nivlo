@@ -10,6 +10,7 @@
     "allow-quick-create",
     "allow-capture",
     "allow-undo-capture",
+    "allow-get-inbox-count",
     "allow-complete-item",
     "allow-reopen-item",
     "allow-reschedule-item",
