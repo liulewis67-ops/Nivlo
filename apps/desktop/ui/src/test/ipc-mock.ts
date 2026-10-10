@@ -46,6 +46,8 @@ export interface MemoryIpc extends IpcClient {
   setToday(view: TodayViewDto): void;
   /** 模拟后端发出一次数据变更事件（`item_created` / `day_changed` 等）。 */
   emitDataChange(): void;
+  /** 模拟托盘「快速添加」。 */
+  emitQuickAddRequested(): void;
   /** 模拟后端看门狗补发"指针已离开"事件。 */
   emitFloatingPointerLeft(): void;
   /** 最近一次 `expandFloating` 请求的尺寸。 */
@@ -72,6 +74,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const items: ItemDto[] = [];
   const listeners = new Set<() => void>();
   const pointerLeftListeners = new Set<() => void>();
+  const quickAddListeners = new Set<() => void>();
   let pendingFailure = options.failNextCreateWith;
   let openMainCalls = 0;
   let dragStarts = 0;
@@ -296,6 +299,15 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     emitFloatingPointerLeft: () => {
       for (const notify of pointerLeftListeners) notify();
+    },
+    emitQuickAddRequested: () => {
+      for (const notify of quickAddListeners) notify();
+    },
+    subscribeQuickAddRequested: (onRequested: () => void) => {
+      quickAddListeners.add(onRequested);
+      return () => {
+        quickAddListeners.delete(onRequested);
+      };
     },
     subscribeFloatingPointerLeft: (onLeft: () => void) => {
       pointerLeftListeners.add(onLeft);

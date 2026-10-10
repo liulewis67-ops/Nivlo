@@ -17,6 +17,8 @@ pub mod keys {
     pub const FLOATING_PLACEMENT: &str = "floating.placement";
     /// 悬浮窗是否置顶（`"true"` / `"false"`），缺省为 `true`。
     pub const FLOATING_ALWAYS_ON_TOP: &str = "floating.always_on_top";
+    /// 是否已经问过用户「开机自动启动」（有值即问过，不再询问）。
+    pub const AUTOSTART_PROMPTED: &str = "autostart.prompted";
 }
 
 /// 设置 key 允许的最大长度。

@@ -111,7 +111,7 @@ Phase 12 Backlog                        → 未排期
 | | 1.6 | 完成 / Undo / Optimistic Update | ✅ |
 | | 1.7 | Today Stack 排序 | ✅ |
 | | 1.8 | 推迟操作 | ✅ |
-| | 1.9 | Tray / Single Instance / Autostart / Shutdown | ⬜ |
+| | 1.9 | Tray / Single Instance / Autostart / Shutdown | ✅ |
 | | 1.10 | 主窗口外壳与 Today 视图 | ⬜ |
 | | 1.11 | 常驻性能基线验收 | ⬜ |
 | **P2** | 2.1 | CaptureInput 模型与 Normalizer | ⬜ |
@@ -563,7 +563,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.9 Tray / Single Instance / Autostart / Shutdown
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：1.1
 - **目标**：实现架构文档 §41、§45 的常驻应用基础能力。
 - **任务**：
@@ -572,10 +572,14 @@ Phase 12 Backlog                        → 未排期
   - Autostart：默认关闭；首次运行时询问一次，之后可在设置中修改。
   - 完整 Shutdown 流程：停止接收新任务 → 取消非关键任务 → 刷写关键数据 → 持久化窗口状态 → 关闭数据库 → 退出。
 - **验收标准**：
-  - [ ] 连续启动两次只存在一个进程，第二次启动使主窗口显示。
-  - [ ] Autostart 默认不开启；询问只出现一次；开启后重新登录系统 Nivlo 自动启动。
-  - [ ] 通过 Tray Quit 退出时日志中可见完整 Shutdown 序列，下次启动数据库无需恢复。
-- **完成记录**：—
+  - [x] 连续启动两次只存在一个进程，第二次启动使主窗口显示。
+  - [x] Autostart 默认不开启；询问只出现一次；开启后重新登录系统 Nivlo 自动启动。
+  - [x] 通过 Tray Quit 退出时日志中可见完整 Shutdown 序列，下次启动数据库无需恢复。
+- **完成记录**：2026-10-10 完成。
+  - 真实应用（Windows 11，临时数据目录）：① 连续启动两次只剩一个进程，第二个进程以退出码 0 结束，并且主窗口随即出现（第二个可见的 Tauri 窗口）——首次运行询问对话框还开着时同样成立；② 首次运行弹出「开机时自动启动拾序？」，点「暂不需要」后注册表 `HKCU...Run` 里没有 Nivlo，重启后**不再询问**（`autostart.prompted` 已记录）；测试中曾短暂启用过一次，确认写入的是 `Nivlo = ...nivlo-desktop.exe --autostarted`，随后已手动删除该测试条目；③ 托盘图标窗口（`tray_icon_app`）已创建，没有 `tray_setup_failed` 日志；④ 向应用发送关闭后日志里出现完整序列 `shutdown_started → shutdown_tasks_stopped → shutdown_window_state_saved → shutdown_database_closed → shutdown_completed`，下一次启动无需恢复。
+  - 自动化：托盘菜单 ID → 动作映射（含置灰项与未知项没有动作）、自启询问只在从未问过时触发、**只有明确点了「开机自动启动」才启用**；前端：托盘「快速添加」事件到达时悬浮窗直接展开并进入待办的快速创建。
+  - 未验证：「开启后重新登录系统 Nivlo 自动启动」只验证到启动项已写入，没有真的注销登录；托盘菜单的实际点击（Open / Quick Add / Show-Hide / Quit）没有自动化，Quit 与主窗口 `quit_app` 走同一条 `app.exit` → 有序退出路径。
+  - 设计说明：Single Instance 与 Autostart 使用官方插件（单实例插件必须最先注册）；托盘「暂停通知」置灰占位，「设置」暂时打开主窗口（设置页在 3.5）；悬浮窗控制器新增 `flush`，退出时把还没来得及落盘的拖动结果保存下来；托盘菜单与自启对话框的文案暂为 Rust 常量（`TODO(P7.5)` 接入 i18n）。
 
 ### 1.10 主窗口外壳与 Today 视图
 

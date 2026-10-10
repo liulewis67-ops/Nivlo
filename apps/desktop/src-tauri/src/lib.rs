@@ -11,10 +11,12 @@
 //! 业务规则不在这里实现，都在 `nivlo-domain` / `nivlo-application`。
 
 pub mod app;
+pub mod autostart;
 pub mod commands;
 pub mod dto;
 pub mod events;
 pub mod lifecycle;
+pub mod tray;
 pub mod windows;
 
 use std::error::Error;
@@ -72,7 +74,8 @@ macro_rules! bindings_builder {
                 $crate::events::ItemUpdatedEvent,
                 $crate::events::FloatingPointerLeftEvent,
                 $crate::events::TodayReorderedEvent,
-                $crate::events::DayChangedEvent
+                $crate::events::DayChangedEvent,
+                $crate::events::QuickAddRequestedEvent
             ])
     };
 }
@@ -89,6 +92,16 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     let builder = bindings_builder!(Wry);
 
     let app = tauri::Builder::default()
+        // 单实例插件必须最先注册：第二次启动只唤起已有进程的主窗口，然后立即退出。
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Err(error) = windows::show_main_window(app) {
+                tracing::warn!(event = "single_instance_show_failed", %error, "唤起主窗口失败");
+            }
+        }))
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![autostart::AUTOSTART_ARG]),
+        ))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(builder.invoke_handler())
@@ -155,6 +168,16 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             // 先还原位置再开始观察移动事件，避免把"还原"本身当成用户拖动。
             tauri::async_runtime::block_on(controller.restore());
             app.state::<AppState>().runtime.set_floating(controller);
+
+            // 托盘不是必需功能：创建失败只记录，应用继续以悬浮窗运行。
+            if let Err(error) = tray::setup(app.handle()) {
+                tracing::warn!(event = "tray_setup_failed", %error, "创建托盘失败");
+            }
+            // 首次运行询问一次是否开机自启（默认关闭）。
+            tauri::async_runtime::spawn(autostart::prompt_once(
+                app.handle().clone(),
+                app.state::<AppState>().services.settings.clone(),
+            ));
             tracing::info!(event = "startup_completed", "启动完成");
             Ok(())
         })

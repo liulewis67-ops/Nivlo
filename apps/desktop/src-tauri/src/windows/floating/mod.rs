@@ -54,6 +54,9 @@ pub trait FloatingHandle: Send + Sync {
     /// 窗口调用失败时返回 [`PlatformError`]。
     fn collapse(&self) -> Result<(), PlatformError>;
 
+    /// 立即把还没来得及落盘的窗口状态（拖动后的吸附位置）保存下来。退出流程在关闭数据库之前调用。
+    fn flush(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>>;
+
     /// 开始文本输入（Quick Create）：记住用户当前的前台窗口，让悬浮窗临时可聚焦并获得键盘焦点。
     ///
     /// # Errors
@@ -295,6 +298,11 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
 }
 
 impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
+    /// 退出前保存位置：等价于立即「结算」一次；展开期间或位置没变时是空操作。
+    fn flush(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>> {
+        Box::pin(self.settle())
+    }
+
     /// 展开为面板：面板朝屏幕内侧展开，完整位于当前显示器工作区内。
     ///
     /// 重复调用（例如进入 Quick Create 后面板变高）会基于**同一个**收起态外框重新计算，

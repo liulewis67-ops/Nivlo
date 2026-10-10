@@ -101,6 +101,13 @@ export interface IpcClient {
    */
   subscribeFloatingPointerLeft(onLeft: () => void): () => void;
   /**
+   * 订阅「托盘快速添加」事件：悬浮窗应展开并进入快速创建（默认创建待办）。
+   *
+   * @param onRequested 事件到达时的回调。
+   * @returns 取消订阅的函数，组件卸载时必须调用。
+   */
+  subscribeQuickAddRequested(onRequested: () => void): () => void;
+  /**
    * 订阅"数据发生了变化"的后端事件：Item 创建 / 更新、Today 顺序调整、本地日期切换。
    *
    * @param onChange 事件到达时的回调；事件只是"该刷新了"的信号，调用方应当让相关查询缓存失效。
@@ -194,6 +201,8 @@ const tauriIpc: IpcClient = {
   },
   subscribeFloatingPointerLeft: (onLeft) =>
     listenAll([() => events.floatingPointerLeft.listen(() => onLeft())]),
+  subscribeQuickAddRequested: (onRequested) =>
+    listenAll([() => events.quickAddRequested.listen(() => onRequested())]),
   subscribeDataChanges: (onChange) =>
     listenAll([
       () => events.itemCreated.listen(() => onChange()),
@@ -243,5 +252,6 @@ export const ipc: IpcClient = {
   beginFloatingInput: () => current.beginFloatingInput(),
   endFloatingInput: () => current.endFloatingInput(),
   subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),
+  subscribeQuickAddRequested: (onRequested) => current.subscribeQuickAddRequested(onRequested),
   subscribeDataChanges: (onChange) => current.subscribeDataChanges(onChange),
 };

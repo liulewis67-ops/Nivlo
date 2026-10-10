@@ -49,3 +49,9 @@ pub struct DayChangedEvent {
     /// 新的本地日期，`YYYY-MM-DD`。
     pub date: String,
 }
+
+/// 托盘「快速添加」被点击：悬浮窗应展开并进入快速创建。
+#[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
+#[serde(rename_all = "camelCase")]
+#[tauri_specta(event_name = "quick_add_requested")]
+pub struct QuickAddRequestedEvent {}

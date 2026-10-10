@@ -314,3 +314,28 @@ describe("FloatingRoot", () => {
     expect(ipc.items).toHaveLength(0);
   });
 });
+
+describe("托盘快速添加", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("收到事件时直接展开并进入待办的快速创建，不需要 Hover", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    expect(screen.queryByRole("region", { name: "今日面板" })).not.toBeInTheDocument();
+
+    act(() => {
+      ipc.emitQuickAddRequested();
+    });
+    await advance(0);
+
+    expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "标题" })).toBeInTheDocument();
+    expect(ipc.calls).toContain("beginFloatingInput");
+  });
+});

@@ -24,10 +24,12 @@ nivlo-platform-macos = { path = "crates/nivlo-platform-macos" }
 nivlo-platform-linux = { path = "crates/nivlo-platform-linux" }
 nivlo-common = { path = "crates/nivlo-common" }
 
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-build = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
 tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
 specta = { version = "=2.0.0-rc.25", features = ["derive"] }
 specta-typescript = "0.0.12"

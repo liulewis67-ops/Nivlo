@@ -107,7 +107,7 @@ impl RuntimeHandles {
     ///
     /// 1. 取消后台任务并等待它们结束（含"停止接收新的 Workflow"）；
     /// 2. 刷写关键写入——所有写入都在已提交事务中，这里无待刷数据；
-    /// 3. 持久化窗口状态、停止 Scheduler——对应组件在 TODO 所列子阶段加入；
+    /// 3. 持久化窗口状态；停止 Scheduler 在 Phase 4（见下方 TODO）加入；
     /// 4. 关闭数据库（刷写 WAL）；
     /// 5. 最后释放日志守卫。
     pub async fn shutdown(&self) {
@@ -127,7 +127,11 @@ impl RuntimeHandles {
         }
         tracing::info!(event = "shutdown_tasks_stopped", "后台任务已停止");
 
-        // TODO(P1.2): 持久化悬浮窗位置等窗口状态。
+        // 持久化窗口状态：用户刚拖完就退出时，防抖定时器可能还没来得及保存。
+        if let Some(floating) = self.floating.get() {
+            floating.flush().await;
+            tracing::info!(event = "shutdown_window_state_saved", "窗口状态已保存");
+        }
         // TODO(P4.4): 停止 Scheduler Actor。
 
         self.database.close().await;

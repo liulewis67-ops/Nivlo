@@ -74,6 +74,16 @@ export function FloatingRoot() {
     send("quickCreateFinished");
   }
 
+  // 托盘「快速添加」：不管当前是收起还是展开，直接进入待办的快速创建。
+  useEffect(
+    () =>
+      ipc.subscribeQuickAddRequested(() => {
+        setQuickCreateKind("todo");
+        send("quickCreateRequested");
+      }),
+    [send],
+  );
+
   // 后端看门狗发现指针已经离开窗口时补发的事件：弥补 WebView 在指针被快速甩出时漏发 pointerleave。
   useEffect(() => ipc.subscribeFloatingPointerLeft(() => send("pointerLeave")), [send]);
 

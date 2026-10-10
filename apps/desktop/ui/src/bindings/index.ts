@@ -163,6 +163,7 @@ export const events = {
 	floatingPointerLeft: makeEvent<FloatingPointerLeftEvent>("floating_pointer_left"),
 	itemCreated: makeEvent<ItemCreatedEvent>("item_created"),
 	itemUpdated: makeEvent<ItemUpdatedEvent>("item_updated"),
+	quickAddRequested: makeEvent<QuickAddRequestedEvent>("quick_add_requested"),
 	todayReordered: makeEvent<TodayReorderedEvent>("today_reordered"),
 };
 
@@ -328,6 +329,9 @@ export type PriorityDto =
 "medium" | 
 /**  高。 */
 "high";
+
+/**  托盘「快速添加」被点击：悬浮窗应展开并进入快速创建。 */
+export type QuickAddRequestedEvent = Record<string, never>;
 
 /**  快速创建的请求：只有类型与标题，日期等默认值由后端按产品规则决定。 */
 export type QuickCreateRequest = {
