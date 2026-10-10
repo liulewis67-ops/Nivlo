@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
+import { useDropCapture } from "@/features/capture";
 import { useTodayQuery } from "@/features/today";
 import { FloatingBadge } from "./FloatingBadge";
 import { TodayPanel } from "./TodayPanel";
@@ -33,6 +34,7 @@ export function FloatingRoot() {
   // 放在根组件而不是面板里：面板在 Hover 时才挂载，必须直接读缓存而不是在 Hover 时取数。
   useTodayQuery();
   const { state, send } = useFloatingMachine();
+  const drop = useDropCapture(send);
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
   const [quickCreateKind, setQuickCreateKind] = useState<ItemTypeDto | null>(null);
   const isPanel = needsPanelWindow(state);
@@ -96,6 +98,7 @@ export function FloatingRoot() {
       // 指针仍在窗口内移动说明它没有离开；补发 pointerEnter 以取消因漏发 pointerleave 而误启动的收起。
       onPointerMove={() => send("pointerEnter")}
       onPointerLeave={() => send("pointerLeave")}
+      {...drop.handlers}
     >
       {isPanel ? (
         <TodayPanel
@@ -103,6 +106,17 @@ export function FloatingRoot() {
           quickCreateKind={quickCreateKind}
           onQuickCreate={startQuickCreate}
           onQuickCreateDone={finishQuickCreate}
+          dropActive={drop.hovering}
+          capture={{
+            feedback: drop.feedback,
+            onUndo: drop.undo,
+            onEdit: () => {
+              drop.dismiss();
+              void ipc.openMain();
+            },
+            onDismiss: drop.dismiss,
+            onHoldChange: drop.pauseDismiss,
+          }}
         />
       ) : (
         <FloatingBadge />

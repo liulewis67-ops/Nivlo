@@ -101,3 +101,17 @@ html[data-window="floating"] body {
 .nv-panel-in {
   animation: nv-panel-in var(--nv-duration-normal) var(--nv-ease-standard);
 }
+
+/* 拖拽悬停提示：只用 opacity，尊重"减少动态效果"。 */
+@keyframes nv-drop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.nv-drop-zone {
+  animation: nv-drop-in var(--nv-duration-fast, 120ms) var(--nv-ease-standard);
+}

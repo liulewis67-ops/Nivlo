@@ -32,6 +32,20 @@
     "kind": { "todo": "待办", "note": "笔记", "tip": "提示" },
     "input": { "label": "标题", "placeholder": "输入标题，回车创建，Esc 取消" }
   },
+  "capture": {
+    "drop": { "title": "松手即可收集", "hint": "链接、文字、图片都会先放进收集箱" },
+    "saving": "正在收集…",
+    "created": "已创建：{{title}}",
+    "createdMany": "已创建 {{count}} 项",
+    "undo": "撤销",
+    "edit": "编辑",
+    "dismiss": "知道了",
+    "failed": "没能收集：{{message}}",
+    "unsupported": {
+      "files": "暂时还不能直接收集文件，请先复制文件路径后粘贴（文件拖放即将支持）。",
+      "empty": "这个内容没法收集，试试拖入链接、文字或图片。"
+    }
+  },
   "floating": { "label": "拾序悬浮窗", "open": "打开拾序主窗口" },
   "shell": {
     "nav": {

@@ -31,6 +31,25 @@ export const commands = {
 	 */
 	listItems: (request: ListItemsRequest) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("list_items", { request })),
 	/**
+	 *  捕获一次输入（文本 / URL / 文件 / 图片），创建 Item + Source + Attachment 并放进 Inbox。
+	 * 
+	 *  整个过程是一个事务；失败时不留下任何记录。返回创建的 Item 与撤销句柄。
+	 * 
+	 *  # Errors
+	 * 
+	 *  没有可捕获的内容、图片无法识别返回 `INVALID_INPUT`；存储失败返回
+	 *  `STORAGE_UNAVAILABLE`，此时没有留下任何数据。
+	 */
+	capture: (request: CaptureRequestDto) => typedError<CaptureResultDto, IpcError>(__TAURI_INVOKE("capture", { request })),
+	/**
+	 *  撤销一次捕获：删除它创建的全部 Item 及其来源 / 附件记录（用户被引用的文件不受影响）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不合法返回 `INVALID_INPUT`；存储失败时没有删除任何东西。
+	 */
+	undoCapture: (itemIds: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("undo_capture", { itemIds })),
+	/**
 	 *  快速创建一个 Item（悬浮窗的 Quick Create）：只需要类型与标题。
 	 * 
 	 *  默认值由后端决定：Todo 与 Tip 的计划日期是今天（用户本地日期），Note 没有日期。
@@ -168,6 +187,52 @@ export const events = {
 };
 
 /* Types */
+/**  捕获的内容（IPC 表示）：前端只传原始材料，规范化（识别 URL、探测文件）在后端完成。 */
+export type CaptureInputDto = 
+/**  一段文本；整段恰好是一个网址时会被识别为网址。 */
+{ kind: "text"; 
+/**  文本内容。 */
+text: string } | 
+/**  一组文件 / 文件夹的路径（拖放、粘贴文件）。 */
+{ kind: "files"; 
+/**  原始路径。 */
+paths: string[] } | 
+/**  一张图片（如粘贴的截图），Base64 编码的字节。 */
+{ kind: "image"; 
+/**  Base64（标准字母表）编码的图片字节。 */
+data_base64: string };
+
+/**  捕获从哪里来（IPC 表示）。只用于日志与统计。 */
+export type CaptureOriginDto = 
+/**  手动输入。 */
+"manual" | 
+/**  拖放。 */
+"drop" | 
+/**  粘贴。 */
+"paste" | 
+/**  快速添加。 */
+"quickAdd" | 
+/**  全局快捷键。 */
+"shortcut";
+
+/**  捕获请求（IPC 表示）。 */
+export type CaptureRequestDto = {
+	/**  内容。 */
+	input: CaptureInputDto,
+	/**  来路。 */
+	origin: CaptureOriginDto,
+	/**  来源应用；识别不了时为 `null`。 */
+	sourceApplication: string | null,
+};
+
+/**  捕获的结果（IPC 表示）。 */
+export type CaptureResultDto = {
+	/**  创建的 Item。 */
+	items: ItemDto[],
+	/**  撤销这次捕获的句柄：传给 `undo_capture`。 */
+	undoIds: string[],
+};
+
 /**  内容格式。 */
 export type ContentFormatDto = 
 /**  纯文本。 */

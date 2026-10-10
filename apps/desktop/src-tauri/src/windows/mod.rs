@@ -64,6 +64,9 @@ pub fn create_floating_window<R: Runtime, M: Manager<R>>(
     .always_on_top(true)
     .skip_taskbar(true)
     .resizable(false)
+    // D-10（ADR-011）：关闭 Tauri 原生拖放，让 WebView2 把浏览器拖来的链接 / 文本 / 图片
+    // 以 HTML5 drop 事件交给页面；原生拖放开启时这些内容根本到不了前端。
+    .disable_drag_drop_handler()
     // 悬浮窗出现时不能把焦点从用户正在使用的应用抢走（架构文档 §61 风险 3）。
     .focused(false)
     .build()

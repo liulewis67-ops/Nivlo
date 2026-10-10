@@ -9,7 +9,10 @@ export type FloatingEvent =
   | "quickCreateFinished"
   | "dragEnter"
   | "dragLeave"
-  | "dropped";
+  | "dropped"
+  /** 需要让面板保持展开（如捕获后的「已创建」反馈）；直到收到 `holdReleased`。 */
+  | "holdRequested"
+  | "holdReleased";
 
 /** 指针进入后多久展开（毫秒）：太短会在鼠标"路过"时误展开（产品文档 §5.4 建议 200~300ms）。 */
 export const HOVER_ENTER_DELAY_MS = 250;
@@ -82,6 +85,8 @@ export function createFloatingMachine(options: FloatingMachineOptions = {}): Flo
   let pointerInside = false;
   /** 进入拖放悬停之前的状态，拖放结束后回到它。 */
   let stateBeforeDrag: "collapsed" | "expanded" = "collapsed";
+  /** 是否有调用方要求面板保持展开；期间不会因指针离开而收起。 */
+  let held = false;
   let enterTimer: ReturnType<typeof setTimeout> | undefined;
   let leaveTimer: ReturnType<typeof setTimeout> | undefined;
   const listeners = new Set<() => void>();
@@ -110,7 +115,7 @@ export function createFloatingMachine(options: FloatingMachineOptions = {}): Flo
     clearTimers();
     leaveTimer = setTimeout(() => {
       leaveTimer = undefined;
-      if (state === "expanded" && !pointerInside) transition("collapsed");
+      if (state === "expanded" && !pointerInside && !held) transition("collapsed");
     }, leaveDelayMs);
   }
 
@@ -118,7 +123,7 @@ export function createFloatingMachine(options: FloatingMachineOptions = {}): Flo
    * 回到拖放之前的状态；指针已不在窗口内且之前是展开态时，延迟收起而不是立刻消失。
    */
   function restoreAfterDrag(): void {
-    transition(stateBeforeDrag);
+    transition(held ? "expanded" : stateBeforeDrag);
     if (state === "expanded" && !pointerInside) scheduleCollapse();
   }
 
@@ -169,6 +174,19 @@ export function createFloatingMachine(options: FloatingMachineOptions = {}): Flo
             stateBeforeDrag = state;
             transition("dragHover");
           }
+          return;
+        }
+        case "holdRequested": {
+          held = true;
+          if (state === "collapsed") {
+            clearTimers();
+            transition("expanded");
+          }
+          return;
+        }
+        case "holdReleased": {
+          held = false;
+          if (state === "expanded" && !pointerInside) scheduleCollapse();
           return;
         }
         case "dragLeave":

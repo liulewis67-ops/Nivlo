@@ -1,5 +1,6 @@
 import { AppError } from "@/lib/errors";
 import type {
+  CaptureRequestDto,
   CreateItemRequest,
   ItemDto,
   IpcClient,
@@ -42,6 +43,12 @@ export interface MemoryIpc extends IpcClient {
   failNextTransitionWith(error: AppError): void;
   /** 让下一次 `beginFloatingInput` 抛出的错误（模拟窗口无法聚焦）。 */
   failNextBeginInputWith(error: AppError): void;
+  /** 按顺序记录的全部 `capture` 请求。 */
+  readonly captures: readonly CaptureRequestDto[];
+  /** 按顺序记录的全部 `undoCapture` 收到的 ID。 */
+  readonly undoneCaptures: readonly string[][];
+  /** 让下一次 `capture` 抛出的错误；触发后自动清除。 */
+  failNextCaptureWith(error: AppError): void;
   /** 设置下一次及之后 `getToday` 返回的 Today 视图。 */
   setToday(view: TodayViewDto): void;
   /** 模拟后端发出一次数据变更事件（`item_created` / `day_changed` 等）。 */
@@ -87,6 +94,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const postponed = new Map<string, TodayItemDto>();
   let today: TodayViewDto = EMPTY_TODAY;
   const calls: string[] = [];
+  const captures: CaptureRequestDto[] = [];
+  const undoneCaptures: string[][] = [];
+  let captureFailure: AppError | undefined;
   let lastExpand: { width: number; height: number } | null = null;
 
   /**
@@ -206,6 +216,57 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   }
 
   return {
+    get captures() {
+      return captures;
+    },
+    get undoneCaptures() {
+      return undoneCaptures;
+    },
+    failNextCaptureWith: (error: AppError) => {
+      captureFailure = error;
+    },
+    capture: async (request: CaptureRequestDto) => {
+      calls.push("capture");
+      captures.push(request);
+      if (captureFailure !== undefined) {
+        const failure = captureFailure;
+        captureFailure = undefined;
+        throw failure;
+      }
+      // 与后端默认规则一致：文本 → Todo，其余 → Note；全部进入 Inbox，没有计划日期。
+      const input = request.input;
+      const isPlainText = input.kind === "text" && !/^https?:\/\/\S+$/.test(input.text.trim());
+      const title =
+        input.kind === "text"
+          ? (input.text.trim().split(/\r?\n/)[0] ?? "")
+          : input.kind === "files"
+            ? (input.paths[0] ?? "")
+            : "图片";
+      const created = await insert({
+        itemType: isPlainText ? "todo" : "note",
+        title,
+        content: null,
+        contentFormat: null,
+        priority: null,
+        scheduled: null,
+        due: null,
+        reminderAt: null,
+        projectId: null,
+      });
+      const item = { ...created, inInbox: true };
+      items[items.length - 1] = item;
+      return { items: [item], undoIds: [item.id] };
+    },
+    undoCapture: (itemIds: string[]) => {
+      calls.push("undoCapture");
+      undoneCaptures.push(itemIds);
+      for (const id of itemIds) {
+        const at = items.findIndex((item) => item.id === id);
+        if (at >= 0) items.splice(at, 1);
+      }
+      for (const notify of listeners) notify();
+      return Promise.resolve();
+    },
     get items() {
       return items;
     },

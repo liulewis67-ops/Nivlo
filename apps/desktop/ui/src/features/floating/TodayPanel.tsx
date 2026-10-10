@@ -2,6 +2,8 @@ import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { CaptureFeedbackBar } from "@/features/capture";
+import type { CaptureFeedback } from "@/features/capture";
 import { QuickCreateForm } from "@/features/quick-create";
 import { TodayBoard, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
@@ -17,6 +19,16 @@ export type TodayPanelProps = {
   onQuickCreate: (kind: ItemTypeDto) => void;
   /** 快速创建结束（成功、取消或失败）时调用。 */
   onQuickCreateDone: () => void;
+  /** 是否有拖拽悬停在面板上：显示「松手即可收集」提示。 */
+  dropActive?: boolean;
+  /** 捕获反馈（「已创建 ✓ 撤销 编辑」）与它的操作；没有反馈时 `feedback` 为 `null`。 */
+  capture?: {
+    feedback: CaptureFeedback | null;
+    onUndo: () => void;
+    onEdit: () => void;
+    onDismiss: () => void;
+    onHoldChange: (held: boolean) => void;
+  };
 };
 
 /** 底部添加按钮对应的类型，按展示顺序排列。 */
@@ -36,6 +48,8 @@ export function TodayPanel({
   quickCreateKind,
   onQuickCreate,
   onQuickCreateDone,
+  dropActive = false,
+  capture,
 }: TodayPanelProps) {
   const { t } = useTranslation();
   const view = useTodayQuery().data;
@@ -78,6 +92,21 @@ export function TodayPanel({
         </footer>
       ) : (
         <QuickCreateForm kind={quickCreateKind} onDone={onQuickCreateDone} />
+      )}
+      {dropActive && (
+        <div className="nv-drop-zone pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary bg-surface/90">
+          <p className="text-sm font-semibold text-primary">{t("capture.drop.title")}</p>
+          <p className="text-xs text-muted">{t("capture.drop.hint")}</p>
+        </div>
+      )}
+      {capture?.feedback != null && !dropActive && (
+        <CaptureFeedbackBar
+          feedback={capture.feedback}
+          onUndo={capture.onUndo}
+          onEdit={capture.onEdit}
+          onDismiss={capture.onDismiss}
+          onHoldChange={capture.onHoldChange}
+        />
       )}
     </section>
   );

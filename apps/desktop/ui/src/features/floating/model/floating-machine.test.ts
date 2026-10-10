@@ -218,4 +218,39 @@ describe("createFloatingMachine", () => {
       expect(needsPanelWindow("dragHover")).toBe(true);
     });
   });
+
+  describe("保持展开（捕获后的反馈）", () => {
+    it("拖放前就请求保持：松手后进入展开态而不是回到收起", () => {
+      machine.send("dragEnter");
+      machine.send("holdRequested");
+      machine.send("dropped");
+      expect(machine.getState()).toBe("expanded");
+    });
+
+    it("保持期间指针离开也不会收起；释放后才延迟收起", () => {
+      machine.send("dragEnter");
+      machine.send("holdRequested");
+      machine.send("dropped");
+      machine.send("pointerLeave");
+      vi.advanceTimersByTime(HOVER_LEAVE_DELAY_MS * 4);
+      expect(machine.getState()).toBe("expanded");
+      machine.send("holdReleased");
+      vi.advanceTimersByTime(HOVER_LEAVE_DELAY_MS);
+      expect(machine.getState()).toBe("collapsed");
+    });
+
+    it("指针仍在窗口内时释放保持不会收起", () => {
+      machine.send("pointerEnter");
+      vi.advanceTimersByTime(HOVER_ENTER_DELAY_MS);
+      machine.send("holdRequested");
+      machine.send("holdReleased");
+      vi.advanceTimersByTime(HOVER_LEAVE_DELAY_MS * 2);
+      expect(machine.getState()).toBe("expanded");
+    });
+
+    it("收起态下请求保持会展开面板", () => {
+      machine.send("holdRequested");
+      expect(machine.getState()).toBe("expanded");
+    });
+  });
 });

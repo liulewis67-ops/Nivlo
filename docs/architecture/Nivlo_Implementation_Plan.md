@@ -117,7 +117,7 @@ Phase 12 Backlog                        → 未排期
 | **P2** | 2.1 | CaptureInput 模型与 Normalizer | ✅ |
 | | 2.2 | Source 与 Attachment 持久化 | 🟨 |
 | | 2.3 | Capture Use Case 与默认规则 | ✅ |
-| | 2.4 | 悬浮窗拖拽捕获（WebView Drop） | ⬜ |
+| | 2.4 | 悬浮窗拖拽捕获（WebView Drop） | 🟨 |
 | | 2.5 | 粘贴捕获 | ⬜ |
 | | 2.6 | 全局快捷键 Quick Create | ⬜ |
 | | 2.7 | Inbox | ⬜ |
@@ -189,7 +189,7 @@ Phase 12 Backlog                        → 未排期
 | D-07 | **已完成 Todo 在 Today 中的展示** | 当天完成的 Todo 以删除线显示在 Today 列表底部，次日不再显示；提供「隐藏已完成」开关。 | 1.6 | 已决定（2026-10-10，采用推荐方案） |
 | D-08 | **删除语义** | 增加 `deleted_at` 软删除，进入回收站，30 天后自动清除；与 `archived_at`（归档，长期保留）区分。 | 3.5 | 待定 |
 | D-09 | **FTS 索引同步方式** | 使用 SQLite Trigger 同步 FTS5 表（与业务写入同一事务，不会不一致），而不是通过 Domain Event 异步更新。FTS5 使用 `trigram` tokenizer 以支持中文子串搜索。 | 3.4 | 待定 |
-| D-10 | **WebView 拖拽方案** | Tauri 2 在 Windows 上启用原生 `dragDropEnabled` 时会拦截 HTML5 drop（只能拿到文件路径，拿不到浏览器拖来的 URL / 文本）。需在 2.4 开头做技术验证，从「Tauri 原生文件拖放 + HTML5 drop」的组合方案中选定一个，必要时将 10.1 Native Drop 提前。 | 2.4 | 待定 |
+| D-10 | **WebView 拖拽方案** | Tauri 2 在 Windows 上启用原生 `dragDropEnabled` 时会拦截 HTML5 drop（只能拿到文件路径，拿不到浏览器拖来的 URL / 文本）。需在 2.4 开头做技术验证，从「Tauri 原生文件拖放 + HTML5 drop」的组合方案中选定一个，必要时将 10.1 Native Drop 提前。 | 2.4 | 已决定（2026-10-10：悬浮窗使用 HTML5 Drop，文件拖放由 10.1 Native Drop 解决，见 ADR-011；待真机验证） |
 | D-11 | **Workflow 字段映射模板语法** | 采用最小模板语法 `{{ path.to.var }}`（仅变量插值与少量过滤器，如 `| default`、`| trim`），不引入完整模板引擎。 | 5.3 | 待定 |
 | D-12 | **悬浮窗 IPC 白名单补充** | 架构文档 §13 的 floating 白名单没有推迟（改期）能力，但产品文档 §22 要求在悬浮面板直接推迟。推荐在 floating 白名单中增加 `reschedule_item`、`undo`、`get_inbox_count`，并同步更新架构文档 §13。 | 1.1 | 已决定（2026-10-09，采用推荐方案，已同步架构文档 §13） |
 
@@ -680,7 +680,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 2.4 悬浮窗拖拽捕获（WebView Drop）
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：2.3；D-10
 - **目标**：实现产品文档 §7 的 Drag & Drop，以及「Drop → Created ✓」的 1 秒级体验（产品文档 §27.1）。
 - **任务**：
@@ -689,12 +689,14 @@ Phase 12 Backlog                        → 未排期
   - DragHover 状态与视觉反馈；Drop 后显示「Created ✓ [Undo] [Edit]」。
   - 建立并填写兼容矩阵 `docs/development/drop-matrix.md`：Chrome / Edge / Firefox 的链接与地址栏、资源管理器单文件 / 多文件 / 文件夹、VS Code 选中文本、Word 选中文本、浏览器中的图片。
 - **验收标准**：
-  - [ ] D-10 已定稿并有 ADR 记录。
+  - [x] D-10 已定稿并有 ADR 记录。
   - [ ] 核心来源成功：资源管理器文件（单 / 多）、Chrome 与 Edge 的链接、浏览器选中文本。
   - [ ] 兼容矩阵中每一项都有结果；失败项列入 10.1 的输入。
   - [ ] Drop 到出现「Created ✓」反馈 < 1s。
   - [ ] Drop 完成后悬浮窗不长期占有焦点。
-- **完成记录**：—
+- **完成记录**：2026-10-10 主体完成；真机兼容矩阵尚未执行，保持 🟨。
+  - 证据：D-10 定稿并写入 ADR-011（悬浮窗 `disable_drag_drop_handler()`，使用 HTML5 Drop；文件拖放留给 10.1）。前端 `features/capture`：`extract-drop.ts`（链接 uri-list / x-moz-url、文本、图片文件 → Base64 图片；非图片文件拿不到路径时明确返回 unsupported，而不是丢弃或伪造）、`useDropCapture`（dragenter 计数防子元素闪烁、drop 时同步快照、连续拖放丢弃过期结果）、`CaptureFeedbackBar`（「已创建 ✓ [撤销] [编辑]」，`role=status`，指针停留时不自动消失）。状态机新增 `holdRequested` / `holdReleased`：松手后面板保持展开直到反馈消失，不会在松手瞬间收起。悬浮窗始终不可聚焦，拖放不抢焦点。Vitest 新增 20 余个用例（提取、状态机保持展开、悬浮窗端到端：拖入提示、放下链接 / 文本、撤销、编辑、失败、不支持的文件、无类型拖拽不响应）；IPC 层捕获耗时约 1.6ms（2.3 已测）。
+  - 待办：`docs/development/drop-matrix.md` 的「真机」列需要在 Windows 11 上手动拖放后填写；资源管理器文件（单 / 多 / 文件夹）预期失败，列入 10.1 的输入；「Drop → Created ✓ < 1s」与「悬浮窗不长期占有焦点」需真机确认。
 
 ### 2.5 粘贴捕获
 

@@ -1,6 +1,8 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { commands, events } from "@/bindings";
 import type {
+  CaptureRequestDto,
+  CaptureResultDto,
   CreateItemRequest,
   ExpandedLayoutDto,
   IpcError,
@@ -13,6 +15,10 @@ import type {
 import { toAppError } from "./errors";
 
 export type {
+  CaptureInputDto,
+  CaptureOriginDto,
+  CaptureRequestDto,
+  CaptureResultDto,
   ContentFormatDto,
   CreateItemRequest,
   DatePointDto,
@@ -64,6 +70,13 @@ export interface IpcClient {
    * 悬浮窗只在启动时调用一次，之后由数据变更事件驱动刷新；Hover 展开不会调用它。
    */
   getToday(): Promise<TodayViewDto>;
+  /**
+   * 捕获一次输入（拖放 / 粘贴 / 快捷键）：在一个事务里创建 Item + 来源 + 附件并放进 Inbox。
+   * 返回创建的 Item 与撤销句柄（传给 [`IpcClient.undoCapture`]）。
+   */
+  capture(request: CaptureRequestDto): Promise<CaptureResultDto>;
+  /** 撤销一次捕获：删除它创建的全部记录（用户被引用的文件不受影响）。 */
+  undoCapture(itemIds: string[]): Promise<void>;
   /** 打开（必要时创建）并聚焦主窗口。 */
   openMain(): Promise<void>;
   /** 退出应用：触发后端的有序退出流程。仅主窗口可调用。 */
@@ -181,6 +194,10 @@ const tauriIpc: IpcClient = {
   completeItem: (id) => call("complete_item", commands.completeItem(id)),
   reopenItem: (id) => call("reopen_item", commands.reopenItem(id)),
   getToday: () => call("get_today", commands.getToday()),
+  capture: (request) => call("capture", commands.capture(request)),
+  undoCapture: async (itemIds) => {
+    await call("undo_capture", commands.undoCapture(itemIds));
+  },
   openMain: async () => {
     await call("open_main", commands.openMain());
   },
@@ -244,6 +261,8 @@ export const ipc: IpcClient = {
   completeItem: (id) => current.completeItem(id),
   reopenItem: (id) => current.reopenItem(id),
   getToday: () => current.getToday(),
+  capture: (request) => current.capture(request),
+  undoCapture: (itemIds) => current.undoCapture(itemIds),
   openMain: () => current.openMain(),
   quitApp: () => current.quitApp(),
   startFloatingDrag: () => current.startFloatingDrag(),
