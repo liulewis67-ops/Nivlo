@@ -3,6 +3,7 @@ import { cx } from "@/lib/cx";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
 import { SortableTodoList } from "./SortableTodoList";
 import { TodoCheck } from "./TodoCheck";
+import type { PostponeKind } from "./useRescheduleTodo";
 
 /** 提示条目前的图标。 */
 const TIP_ICON = "💡";
@@ -15,6 +16,8 @@ export type TodayListProps = {
   onComplete: (item: TodayItemDto) => void;
   /** 拖拽 / 键盘排序结束：`activeId` 被放到了 `overId` 的位置。 */
   onMove: (activeId: string, overId: string) => void;
+  /** 把一条待办推迟到某个目标。 */
+  onPostpone: (item: TodayItemDto, kind: PostponeKind) => void;
   /** 取消勾选一条今日已完成的待办时调用。 */
   onReopen: (item: TodayItemDto) => void;
 };
@@ -34,12 +37,12 @@ function timeLabel(item: TodayItemDto): string | null {
  * Today 列表：待办（逾期的带标记）、提示、今日已完成（删除线，位于底部）。
  *
  * 只负责展示后端给出的结果，不在前端判断"哪些 Item 属于 Today"或排序（前端规范 §1）。
- * 勾选、取消勾选、拖拽排序由回调处理；推迟在实施计划 1.8 加入。
+ * 勾选、取消勾选、拖拽排序与推迟都由回调处理。
  *
  * @param props 后端返回的 Today 视图与完成 / 重新打开回调。
  * @returns 列表元素；没有任何内容时返回 `null`，由调用方显示空状态。
  */
-export function TodayList({ view, onComplete, onMove, onReopen }: TodayListProps) {
+export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: TodayListProps) {
   const { t } = useTranslation();
   if (view.todos.length === 0 && view.tips.length === 0 && view.completed.length === 0) {
     return null;
@@ -47,7 +50,12 @@ export function TodayList({ view, onComplete, onMove, onReopen }: TodayListProps
   return (
     <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
       {view.todos.length > 0 && (
-        <SortableTodoList todos={view.todos} onComplete={onComplete} onMove={onMove} />
+        <SortableTodoList
+          todos={view.todos}
+          onComplete={onComplete}
+          onMove={onMove}
+          onPostpone={onPostpone}
+        />
       )}
       {view.tips.length > 0 && (
         <ul aria-label={t("today.section.tips")} className="flex flex-col gap-1">

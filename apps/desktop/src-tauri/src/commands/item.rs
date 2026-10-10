@@ -4,7 +4,8 @@ use tauri::State;
 
 use crate::app::AppState;
 use crate::dto::{
-    CreateItemRequest, IpcError, ItemDto, ListItemsRequest, QuickCreateRequest, parse_item_id,
+    CreateItemRequest, IpcError, ItemDto, ListItemsRequest, QuickCreateRequest,
+    RescheduleTargetDto, parse_item_id,
 };
 
 /// 创建一个 Item。
@@ -105,6 +106,28 @@ pub async fn reopen_item(state: State<'_, AppState>, id: String) -> Result<ItemD
         .services
         .items
         .reopen_item(parse_item_id(&id)?)
+        .await?;
+    Ok(ItemDto::from(&item))
+}
+
+/// 改期（推迟）一个 Item：今天 / 明天 / 稍后（下周一）/ 收集箱，或精确恢复（撤销）。
+///
+/// Item 同时离开 Today 的手动顺序；成功后界面通过 `item_updated` 事件刷新。
+///
+/// # Errors
+///
+/// ID 或日期格式不合法返回 `INVALID_INPUT`，不存在返回 `ITEM_NOT_FOUND`。
+#[tauri::command]
+#[specta::specta]
+pub async fn reschedule_item(
+    state: State<'_, AppState>,
+    id: String,
+    target: RescheduleTargetDto,
+) -> Result<ItemDto, IpcError> {
+    let item = state
+        .services
+        .items
+        .reschedule_item(parse_item_id(&id)?, target.try_into()?)
         .await?;
     Ok(ItemDto::from(&item))
 }

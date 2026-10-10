@@ -5,6 +5,8 @@ import type {
   IpcClient,
   ItemTypeDto,
   ListItemsRequest,
+  RescheduleTargetDto,
+  TodayItemDto,
   TodayViewDto,
 } from "@/lib/ipc";
 
@@ -32,6 +34,8 @@ export interface MemoryIpc extends IpcClient {
   readonly calls: readonly string[];
   /** 让下一次 `quickCreate` 抛出的错误，用于测试失败路径；触发后自动清除。 */
   failNextQuickCreateWith(error: AppError): void;
+  /** 按顺序记录的全部 `rescheduleItem` 调用。 */
+  readonly reschedules: readonly { id: string; target: RescheduleTargetDto }[];
   /** 最近一次 `reorderToday` 收到的 ID 顺序。 */
   readonly lastReorder: string[] | null;
   /** 让下一次 `completeItem` / `reopenItem` / `reorderToday` 抛出的错误，用于测试回滚；触发后自动清除。 */
@@ -75,6 +79,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let beginInputFailure: AppError | undefined;
   let transitionFailure: AppError | undefined;
   let lastReorder: string[] | null = null;
+  const reschedules: { id: string; target: RescheduleTargetDto }[] = [];
+  /** 被推迟出 Today 的条目，供「精确恢复」放回。 */
+  const postponed = new Map<string, TodayItemDto>();
   let today: TodayViewDto = EMPTY_TODAY;
   const calls: string[] = [];
   let lastExpand: { width: number; height: number } | null = null;
@@ -111,6 +118,27 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     return Promise.resolve(item);
   }
 
+  /** 由 Today 条目构造一个 `ItemDto`（Mock 里 Item 与 Today 视图是分开维护的）。 */
+  function itemFromToday(entry: TodayItemDto, status: "open" | "done"): ItemDto {
+    return {
+      id: entry.id,
+      itemType: "todo",
+      title: entry.title,
+      content: null,
+      contentFormat: "plain",
+      status,
+      priority: entry.priority,
+      scheduled: entry.scheduled,
+      due: entry.due,
+      reminderAt: null,
+      projectId: null,
+      createdAt: "2026-10-10T00:00:00.000Z",
+      updatedAt: "2026-10-10T00:00:00.000Z",
+      completedAt: status === "done" ? "2026-10-10T00:00:00.000Z" : null,
+      archivedAt: null,
+    };
+  }
+
   /**
    * 完成 / 重新打开：只作用于 Today 视图（Mock 里 Today 由测试直接设置）。
    * 重新打开时条目回到待办末尾，近似后端「顺序记录保留」的效果。
@@ -141,23 +169,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
           completed: today.completed.filter((entry) => entry.id !== id),
         };
     for (const notify of listeners) notify();
-    return Promise.resolve({
-      id,
-      itemType: "todo",
-      title: found.title,
-      content: null,
-      contentFormat: "plain",
-      status: complete ? "done" : "open",
-      priority: found.priority,
-      scheduled: found.scheduled,
-      due: found.due,
-      reminderAt: null,
-      projectId: null,
-      createdAt: "2026-10-10T00:00:00.000Z",
-      updatedAt: "2026-10-10T00:00:00.000Z",
-      completedAt: complete ? "2026-10-10T00:00:00.000Z" : null,
-      archivedAt: null,
-    });
+    return Promise.resolve(itemFromToday(found, complete ? "done" : "open"));
   }
 
   return {
@@ -172,6 +184,42 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     failNextTransitionWith: (error: AppError) => {
       transitionFailure = error;
+    },
+    rescheduleItem: (id: string, target: RescheduleTargetDto) => {
+      calls.push("rescheduleItem");
+      reschedules.push({ id, target });
+      if (transitionFailure !== undefined) {
+        const failure = transitionFailure;
+        transitionFailure = undefined;
+        return Promise.reject(failure);
+      }
+      const inToday = today.todos.find((entry) => entry.id === id);
+      const away = postponed.get(id);
+      const found = inToday ?? away;
+      if (found === undefined) {
+        return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+      }
+      // Mock 只模拟「离开 Today」与「精确恢复」两种效果。
+      if (target.kind === "exact" && inToday === undefined) {
+        postponed.delete(id);
+        today = {
+          ...today,
+          remainingCount: today.remainingCount + 1,
+          todos: [...today.todos, found],
+        };
+      } else if (target.kind !== "today" && target.kind !== "exact") {
+        postponed.set(id, found);
+        today = {
+          ...today,
+          remainingCount: today.remainingCount - 1,
+          todos: today.todos.filter((entry) => entry.id !== id),
+        };
+      }
+      for (const notify of listeners) notify();
+      return Promise.resolve(itemFromToday(found, "open"));
+    },
+    get reschedules() {
+      return reschedules;
     },
     reorderToday: (orderedIds: string[]) => {
       calls.push("reorderToday");

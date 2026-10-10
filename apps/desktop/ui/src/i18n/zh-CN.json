@@ -41,6 +41,22 @@
     "reopen": "重新打开「{{title}}」",
     "completedToast": "已完成「{{title}}」",
     "undo": "撤销",
+    "postpone": {
+      "menu": {
+        "today": "移到今天",
+        "tomorrow": "推迟到明天",
+        "later": "推迟到下周一",
+        "inbox": "放回收集箱"
+      },
+      "toast": {
+        "today": "「{{title}}」已移到今天",
+        "tomorrow": "「{{title}}」已推迟到明天",
+        "later": "「{{title}}」已推迟到下周一",
+        "inbox": "「{{title}}」已放回收集箱"
+      },
+      "zone": { "tomorrow": "明天", "later": "下周一", "inbox": "收集箱" },
+      "more": "「{{title}}」的更多操作"
+    },
     "reorder": {
       "handle": "拖动以调整「{{title}}」的顺序",
       "instructions": "按空格键拿起，用上下方向键移动，再按空格键放下，按 Esc 取消。",

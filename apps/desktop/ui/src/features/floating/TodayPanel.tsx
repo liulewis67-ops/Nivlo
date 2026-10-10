@@ -3,7 +3,13 @@ import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { QuickCreateForm } from "@/features/quick-create";
-import { TodayList, useCompleteTodo, useReorderToday, useTodayQuery } from "@/features/today";
+import {
+  TodayList,
+  useCompleteTodo,
+  useReorderToday,
+  useRescheduleTodo,
+  useTodayQuery,
+} from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 
@@ -41,12 +47,13 @@ export function TodayPanel({
   const view = useTodayQuery().data;
   const { complete, reopen } = useCompleteTodo();
   const move = useReorderToday();
+  const { postpone } = useRescheduleTodo();
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
     <section
       aria-label={t("today.panel.label")}
       style={{ transformOrigin: origin }}
-      className="nv-panel-in flex h-full w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+      className="nv-panel-in relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
     >
       <header className="flex items-center justify-between border-b border-border px-3 py-2">
         <h2 className="text-sm font-semibold text-text">
@@ -67,6 +74,7 @@ export function TodayPanel({
           view={view}
           onComplete={(item) => void complete(item)}
           onMove={(activeId, overId) => void move(activeId, overId)}
+          onPostpone={(item, kind) => void postpone(item, kind)}
           onReopen={(item) => void reopen(item)}
         />
       ) : (

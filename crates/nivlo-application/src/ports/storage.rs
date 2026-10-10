@@ -207,4 +207,11 @@ pub trait TodayOrderRepository: Send {
     ///
     /// 数据库不可用或违反约束（如 Item 不存在）时返回对应的 [`StorageError`]。
     async fn set(&mut self, date: NaiveDate, ids: &[ItemId]) -> Result<(), StorageError>;
+
+    /// 删除某个 Item 在**所有日期**的顺序记录（它离开了 Today：推迟、改期……）。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn remove_item(&mut self, id: ItemId) -> Result<(), StorageError>;
 }

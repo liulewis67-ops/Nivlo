@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
-import { applyCompleted, applyMove, applyReopened, findTodo } from "./today-view";
+import { applyCompleted, applyMove, applyPostponed, applyReopened, findTodo } from "./today-view";
 
 /** 构造一个待办条目。 */
 function todo(id: string, isOverdue = false): TodayItemDto {
@@ -68,5 +68,25 @@ describe("applyMove", () => {
     expect(applyMove(VIEW, "a", "a")).toBe(VIEW);
     expect(applyMove(VIEW, "a", "zzz")).toBe(VIEW);
     expect(applyMove(VIEW, "zzz", "a")).toBe(VIEW);
+  });
+});
+
+describe("applyPostponed", () => {
+  it("移出待办、计数减一，已完成区不受影响", () => {
+    const next = applyPostponed(VIEW, "b");
+    expect(next.todos.map((t) => t.id)).toEqual(["a", "c"]);
+    expect(next.remainingCount).toBe(2);
+    expect(next.completed).toEqual([]);
+  });
+
+  it("推迟后撤销能放回原位", () => {
+    const position = findTodo(VIEW, "b");
+    if (position === null) throw new Error("not found");
+    const back = applyReopened(applyPostponed(VIEW, "b"), position.item, position.index);
+    expect(back).toEqual(VIEW);
+  });
+
+  it("不在待办里的 ID 原样返回", () => {
+    expect(applyPostponed(VIEW, "zzz")).toBe(VIEW);
   });
 });

@@ -9,6 +9,7 @@
 
 use chrono::{DateTime, NaiveDate, NaiveTime, SecondsFormat, Utc};
 use nivlo_application::error::{AppError, ErrorCode};
+use nivlo_application::item::RescheduleTarget;
 use nivlo_application::ports::ItemFilter;
 use nivlo_application::today::{TodayEntry, TodayView};
 use nivlo_domain::id::{ItemId, ProjectId};
@@ -619,5 +620,41 @@ mod tests {
             parse_item_id("nope").unwrap_err().code,
             ErrorCode::InvalidInput
         );
+    }
+}
+
+/// 改期的目标。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum RescheduleTargetDto {
+    /// 今天。
+    Today,
+    /// 明天。
+    Tomorrow,
+    /// 稍后（下周一）。
+    Later,
+    /// 收集箱（清除计划日期）。
+    Inbox,
+    /// 精确设置（或清除）计划，用于撤销。
+    Exact {
+        /// 要设置的计划；`null` 表示清除。
+        scheduled: Option<DatePointDto>,
+    },
+}
+
+impl TryFrom<RescheduleTargetDto> for RescheduleTarget {
+    type Error = AppError;
+
+    /// DTO → Application；`Exact` 里的日期格式不对时返回 `INVALID_INPUT`。
+    fn try_from(value: RescheduleTargetDto) -> Result<Self, Self::Error> {
+        Ok(match value {
+            RescheduleTargetDto::Today => Self::Today,
+            RescheduleTargetDto::Tomorrow => Self::Tomorrow,
+            RescheduleTargetDto::Later => Self::Later,
+            RescheduleTargetDto::Inbox => Self::Inbox,
+            RescheduleTargetDto::Exact { scheduled } => {
+                Self::Exact(scheduled.map(DatePoint::try_from).transpose()?)
+            }
+        })
     }
 }

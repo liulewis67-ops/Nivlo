@@ -338,3 +338,48 @@ async fn reorder_today_persists_the_order_and_never_drops_unknown_todos() {
     assert_eq!(today["todos"][0]["id"], ids[2]);
     assert_eq!(today["todos"][2]["id"], ids[1]);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn reschedule_removes_a_todo_from_today_and_exact_restores_it() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let quick = |title: &str| json!({ "request": { "itemType": "todo", "title": title } });
+    let first = invoke(&webview, "quick_create", quick("第一项")).unwrap();
+    invoke(&webview, "quick_create", quick("第二项")).unwrap();
+    let id = first["id"].as_str().unwrap();
+    let original = first["scheduled"].clone();
+
+    let moved = invoke(
+        &webview,
+        "reschedule_item",
+        json!({ "id": id, "target": { "kind": "tomorrow" } }),
+    )
+    .unwrap();
+    assert_ne!(moved["scheduled"]["date"], original["date"]);
+    let today = invoke(&webview, "get_today", json!({})).unwrap();
+    assert_eq!(today["remainingCount"], 1);
+    assert_eq!(today["todos"][0]["title"], "第二项");
+
+    // 撤销：精确恢复原来的计划。
+    invoke(
+        &webview,
+        "reschedule_item",
+        json!({ "id": id, "target": { "kind": "exact", "scheduled": original } }),
+    )
+    .unwrap();
+    assert_eq!(
+        invoke(&webview, "get_today", json!({})).unwrap()["remainingCount"],
+        2
+    );
+
+    let bad = invoke(
+        &webview,
+        "reschedule_item",
+        json!({ "id": id, "target": { "kind": "exact", "scheduled": { "date": "nope", "time": null } } }),
+    )
+    .unwrap_err();
+    assert_eq!(bad["code"], "INVALID_INPUT");
+}

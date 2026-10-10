@@ -110,7 +110,7 @@ Phase 12 Backlog                        → 未排期
 | | 1.5 | 悬浮窗 Quick Create | 🟨 |
 | | 1.6 | 完成 / Undo / Optimistic Update | ✅ |
 | | 1.7 | Today Stack 排序 | ✅ |
-| | 1.8 | 推迟操作 | ⬜ |
+| | 1.8 | 推迟操作 | ✅ |
 | | 1.9 | Tray / Single Instance / Autostart / Shutdown | ⬜ |
 | | 1.10 | 主窗口外壳与 Today 视图 | ⬜ |
 | | 1.11 | 常驻性能基线验收 | ⬜ |
@@ -545,7 +545,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 1.8 推迟操作
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：1.7；D-02（仅「推迟到 Inbox」需要）
 - **目标**：实现产品文档 §22，在悬浮面板中无需打开编辑器即可改期。
 - **任务**：
@@ -553,10 +553,13 @@ Phase 12 Backlog                        → 未排期
   - 交互：右键菜单 + 拖动到面板中出现的目标区域。
   - 「推迟到 Inbox」在 Inbox 字段落地（2.2）之前先只清除计划日期，2.2 完成后补齐。
 - **验收标准**：
-  - [ ] 拖到 Tomorrow：计划日期变为明天，从 Today 消失，次日（FakeClock）出现在 Today。
-  - [ ] 推迟后 Today 顺序记录被正确清理。
-  - [ ] 推迟操作支持 Undo。
-- **完成记录**：—
+  - [x] 拖到 Tomorrow：计划日期变为明天，从 Today 消失，次日（FakeClock）出现在 Today。
+  - [x] 推迟后 Today 顺序记录被正确清理。
+  - [x] 推迟操作支持 Undo。
+- **完成记录**：2026-10-10 完成（「推迟到 Inbox」仍待 2.2 补齐 `in_inbox`）。
+  - 自动化：Application 测试（推迟到明天后计划日期变化、顺序表里只剩没被推迟的待办、只发 `ScheduleChanged`；Today / Tomorrow / Later（下周一）/ Inbox / Exact 相对本地"今天"解析；保留原有的具体时间；`next_monday_after` 周五 / 周日 / 周一）；IPC 测试 `reschedule_removes_a_todo_from_today_and_exact_restores_it`（离开 Today、`exact` 精确恢复、非法日期 `INVALID_INPUT`）；`TodayService` 既有的跨午夜测试保证次日（FakeClock）计划为明天的待办出现在 Today；前端 `applyPostponed` 纯逻辑测试与 `postpone-todo.test.tsx`（「⋯」菜单推迟后立即消失并给出带「撤销」的 Toast；只有逾期的多一个「移到今天」；撤销 = 精确恢复计划 + 按改期前的顺序重新保存；失败回滚并提示）。
+  - 设计说明：`reschedule_item(id, target)` 的目标是带标签的联合类型（`today` / `tomorrow` / `later` / `inbox` / `exact`），`exact` 兼作撤销；改期时在同一事务内用 `TodayOrderRepository::remove_item` 清掉该待办的全部顺序记录；撤销则由前端用改期前的完整顺序调用 `reorder_today` 把它放回原位。交互有三种入口：行尾「⋯」菜单（键盘可达）、整行右键菜单（新增 `ContextMenu` 基础控件，与 `Menu` 共用菜单项描述）、拖动待办时面板底部出现的「明天 / 下周一 / 收集箱」目标区域（dnd-kit droppable，指针在区域内以区域为准，否则按行排序）。
+  - 未在真实窗口验证：拖到底部目标区域的手势只有代码实现，没有自动化测试（jsdom 无法模拟指针拖拽的几何关系），建议下次用真实应用手动确认一次。
 
 ### 1.9 Tray / Single Instance / Autostart / Shutdown
 

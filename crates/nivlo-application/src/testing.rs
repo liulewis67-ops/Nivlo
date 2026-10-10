@@ -288,6 +288,14 @@ impl TodayOrderRepository for FakeTransaction {
         self.working.today_order.insert(date, ids.to_vec());
         Ok(())
     }
+
+    /// 从所有日期的顺序里去掉某个 Item。
+    async fn remove_item(&mut self, id: ItemId) -> Result<(), StorageError> {
+        for ids in self.working.today_order.values_mut() {
+            ids.retain(|existing| *existing != id);
+        }
+        Ok(())
+    }
 }
 
 /// 记录所有发布事件的 [`EventPublisher`]，供测试断言。

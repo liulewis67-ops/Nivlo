@@ -471,3 +471,107 @@ async fn complete_and_reopen_reject_invalid_transitions_without_events() {
     assert_eq!(err.code, ErrorCode::ItemNotFound);
     assert!(f.events.events().is_empty());
 }
+
+/// 日期简写。
+fn day(m: u32, d: u32) -> NaiveDate {
+    NaiveDate::from_ymd_opt(2026, m, d).unwrap()
+}
+
+#[tokio::test]
+async fn reschedule_moves_the_plan_and_drops_the_item_from_the_today_order() {
+    use super::RescheduleTarget;
+
+    let f = fixture(); // 2026-10-09，周五
+    let todo = f
+        .service
+        .quick_create(ItemType::Todo, "写周报")
+        .await
+        .unwrap();
+    let other = f
+        .service
+        .quick_create(ItemType::Todo, "回邮件")
+        .await
+        .unwrap();
+    f.uow
+        .seed_today_order(day(10, 9), vec![todo.id(), other.id()]);
+    f.events.clear();
+
+    let moved = f
+        .service
+        .reschedule_item(todo.id(), RescheduleTarget::Tomorrow)
+        .await
+        .unwrap();
+
+    assert_eq!(moved.scheduled(), Some(DatePoint::all_day(day(10, 10))));
+    // 顺序记录里只剩没被推迟的那一项。
+    assert_eq!(f.uow.committed_today_order(day(10, 9)), vec![other.id()]);
+    assert_eq!(
+        f.events.events(),
+        vec![DomainEvent::ScheduleChanged { item_id: todo.id() }]
+    );
+}
+
+#[tokio::test]
+async fn reschedule_targets_resolve_relative_to_the_local_today() {
+    use super::RescheduleTarget;
+
+    let f = fixture();
+    let todo = f.service.quick_create(ItemType::Todo, "a").await.unwrap();
+    let scheduled = |target| {
+        let service = f.service.clone();
+        let id = todo.id();
+        async move {
+            service
+                .reschedule_item(id, target)
+                .await
+                .unwrap()
+                .scheduled()
+        }
+    };
+
+    // 周五之后的"下周一"是 10-12；今天是周一时是 7 天后（见 next_monday_after 测试）。
+    assert_eq!(
+        scheduled(RescheduleTarget::Later).await,
+        Some(DatePoint::all_day(day(10, 12)))
+    );
+    assert_eq!(
+        scheduled(RescheduleTarget::Today).await,
+        Some(DatePoint::all_day(day(10, 9)))
+    );
+    assert_eq!(scheduled(RescheduleTarget::Inbox).await, None);
+    let exact = DatePoint::all_day(day(11, 3));
+    assert_eq!(
+        scheduled(RescheduleTarget::Exact(Some(exact))).await,
+        Some(exact)
+    );
+}
+
+#[tokio::test]
+async fn reschedule_keeps_a_specific_time_of_day() {
+    use chrono::NaiveTime;
+
+    use super::RescheduleTarget;
+
+    let f = fixture();
+    let mut new = NewItem::new(ItemType::Todo, "站会");
+    let nine = NaiveTime::from_hms_opt(9, 30, 0).unwrap();
+    new.scheduled = Some(DatePoint::at(day(10, 9), nine));
+    let todo = f.service.create_item(new).await.unwrap();
+
+    let moved = f
+        .service
+        .reschedule_item(todo.id(), RescheduleTarget::Tomorrow)
+        .await
+        .unwrap();
+
+    assert_eq!(moved.scheduled(), Some(DatePoint::at(day(10, 10), nine)));
+}
+
+#[test]
+fn next_monday_is_strictly_after_the_given_day() {
+    use super::service::next_monday_after;
+
+    assert_eq!(next_monday_after(day(10, 9)), day(10, 12)); // 周五
+    assert_eq!(next_monday_after(day(10, 11)), day(10, 12)); // 周日
+    assert_eq!(next_monday_after(day(10, 12)), day(10, 19)); // 周一
+}

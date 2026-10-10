@@ -9,7 +9,7 @@
 
 use std::sync::Arc;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc};
 use nivlo_common::clock::Clock;
 use nivlo_common::id::new_uuid_v7;
 use nivlo_domain::error::DomainError;
@@ -24,6 +24,27 @@ use crate::ports::{ItemFilter, UnitOfWork};
 
 /// 创建 Item 的输入。直接复用领域的 [`NewItem`]，字段含义见其文档。
 pub type CreateItemInput = NewItem;
+
+/// 改期的目标。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RescheduleTarget {
+    /// 今天。
+    Today,
+    /// 明天。
+    Tomorrow,
+    /// 稍后：下周一。
+    Later,
+    /// 收集箱：清除计划日期（2.2 之后同时标记 `in_inbox`）。
+    Inbox,
+    /// 精确设置（或清除）计划，用于撤销。
+    Exact(Option<DatePoint>),
+}
+
+/// 严格晚于 `date` 的下一个周一（今天是周一则为 7 天后）。
+pub(super) fn next_monday_after(date: NaiveDate) -> NaiveDate {
+    let days = 7 - i64::from(date.weekday().num_days_from_monday());
+    date + Duration::days(days)
+}
 
 /// Item 的 Use Case 集合。
 #[derive(Clone)]
@@ -162,6 +183,49 @@ impl ItemService {
         for event in events {
             self.events.publish(event);
         }
+        Ok(item)
+    }
+
+    /// 改期（推迟）：把计划日期移到目标日期，并让 Item 离开 Today 的手动顺序。
+    ///
+    /// 目标为 Today / Tomorrow / Later 时保留原有的具体时间（如果有）；Later 是**下周一**
+    /// （严格晚于今天的下一个周一，后续可配置）；Inbox 目前只清除计划日期，等 2.2 引入
+    /// `in_inbox` 字段后补齐。`Exact` 用于撤销：原样恢复之前的计划。
+    ///
+    /// # Errors
+    ///
+    /// * [`crate::error::ErrorCode::ItemNotFound`] - Item 不存在。
+    /// * 存储错误，事务已回滚。
+    pub async fn reschedule_item(
+        &self,
+        id: ItemId,
+        target: RescheduleTarget,
+    ) -> Result<Item, AppError> {
+        let now = self.clock.now_utc();
+        let today = self.clock.today_local();
+        let mut tx = self.uow.begin().await?;
+        let mut item = tx
+            .items()
+            .get(id)
+            .await?
+            .ok_or_else(|| AppError::item_not_found(id))?;
+        let on = |date: NaiveDate| match item.scheduled().and_then(|s| s.time()) {
+            Some(time) => DatePoint::at(date, time),
+            None => DatePoint::all_day(date),
+        };
+        let scheduled = match target {
+            RescheduleTarget::Today => Some(on(today)),
+            RescheduleTarget::Tomorrow => Some(on(today.succ_opt().unwrap_or(today))),
+            RescheduleTarget::Later => Some(on(next_monday_after(today))),
+            RescheduleTarget::Inbox => None,
+            RescheduleTarget::Exact(scheduled) => scheduled,
+        };
+        let event = item.set_scheduled(scheduled, now);
+        tx.items().update(&item).await?;
+        // 无论去哪儿，它在 Today 里的旧位置都不再有意义；回到 Today（撤销）时由调用方重新排序。
+        tx.today_order().remove_item(id).await?;
+        tx.commit().await?;
+        self.events.publish(event);
         Ok(item)
     }
 

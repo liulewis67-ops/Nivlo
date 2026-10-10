@@ -431,4 +431,14 @@ impl TodayOrderRepository for SqliteTransaction {
         }
         Ok(())
     }
+
+    /// 删除某个 Item 的全部顺序记录。
+    async fn remove_item(&mut self, id: ItemId) -> Result<(), StorageError> {
+        let id = id.to_string();
+        sqlx::query!("DELETE FROM daily_item_order WHERE item_id = ?", id)
+            .execute(&mut *self.tx)
+            .await
+            .map_err(map_sqlx)?;
+        Ok(())
+    }
 }

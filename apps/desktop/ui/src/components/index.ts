@@ -2,6 +2,8 @@ export { Button } from "./Button";
 export type { ButtonProps, ButtonSize, ButtonVariant } from "./Button";
 export { Checkbox } from "./Checkbox";
 export type { CheckboxProps } from "./Checkbox";
+export { ContextMenu } from "./ContextMenu";
+export type { ContextMenuProps } from "./ContextMenu";
 export { Input, Textarea } from "./Input";
 export type { InputProps, TextareaProps } from "./Input";
 export { Menu } from "./Menu";

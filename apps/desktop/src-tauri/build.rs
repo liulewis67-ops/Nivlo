@@ -9,6 +9,7 @@ const COMMANDS: &[&str] = &[
     "quick_create",
     "complete_item",
     "reopen_item",
+    "reschedule_item",
     "get_today",
     "reorder_today",
     "open_main",

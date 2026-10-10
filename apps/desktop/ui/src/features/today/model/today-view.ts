@@ -78,3 +78,19 @@ export function applyMove(view: TodayViewDto, activeId: string, overId: string):
   todos.splice(to, 0, moved);
   return { ...view, todos };
 }
+
+/**
+ * 乐观地把一条待办从 Today 移走（推迟到明天 / 下周 / 收集箱）：移出待办、计数减一。
+ *
+ * @param view 当前视图。
+ * @param id 被推迟的 Item ID。
+ * @returns 新视图；该条目不在待办列表中时原样返回。
+ */
+export function applyPostponed(view: TodayViewDto, id: string): TodayViewDto {
+  if (findTodo(view, id) === null) return view;
+  return {
+    ...view,
+    remainingCount: Math.max(0, view.remainingCount - 1),
+    todos: view.todos.filter((todo) => todo.id !== id),
+  };
+}

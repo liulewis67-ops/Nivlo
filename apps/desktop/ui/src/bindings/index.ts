@@ -59,6 +59,16 @@ export const commands = {
 	 */
 	reopenItem: (id: string) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("reopen_item", { id })),
 	/**
+	 *  改期（推迟）一个 Item：今天 / 明天 / 稍后（下周一）/ 收集箱，或精确恢复（撤销）。
+	 * 
+	 *  Item 同时离开 Today 的手动顺序；成功后界面通过 `item_updated` 事件刷新。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 或日期格式不合法返回 `INVALID_INPUT`，不存在返回 `ITEM_NOT_FOUND`。
+	 */
+	rescheduleItem: (id: string, target: RescheduleTargetDto) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("reschedule_item", { id, target })),
+	/**
 	 *  读取今天的视图：待办（已按 Today Order 排序，含逾期）、提示与今日已完成。
 	 * 
 	 *  悬浮窗只在**启动时**调用一次，之后由事件（`item_created`、`item_updated`、
@@ -326,6 +336,21 @@ export type QuickCreateRequest = {
 	/**  标题（去除首尾空白后不能为空）。 */
 	title: string,
 };
+
+/**  改期的目标。 */
+export type RescheduleTargetDto = 
+/**  今天。 */
+{ kind: "today" } | 
+/**  明天。 */
+{ kind: "tomorrow" } | 
+/**  稍后（下周一）。 */
+{ kind: "later" } | 
+/**  收集箱（清除计划日期）。 */
+{ kind: "inbox" } | 
+/**  精确设置（或清除）计划，用于撤销。 */
+{ kind: "exact"; 
+/**  要设置的计划；`null` 表示清除。 */
+scheduled: DatePointDto | null };
 
 /**  Today 中的一个条目（只含展示所需的字段，不含正文，保持载荷精简）。 */
 export type TodayItemDto = {

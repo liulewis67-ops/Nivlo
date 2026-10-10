@@ -13,6 +13,7 @@
     "allow-quick-create",
     "allow-complete-item",
     "allow-reopen-item",
+    "allow-reschedule-item",
     "allow-open-main",
     "allow-quit-app"
   ]
