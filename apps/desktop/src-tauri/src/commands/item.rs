@@ -4,8 +4,8 @@ use tauri::State;
 
 use crate::app::AppState;
 use crate::dto::{
-    CreateItemRequest, IpcError, ItemDto, ListItemsRequest, QuickCreateRequest,
-    RescheduleTargetDto, parse_item_id,
+    CreateItemRequest, InboxEntryDto, IpcError, ItemDto, ListItemsRequest, QuickCreateRequest,
+    RescheduleTargetDto, UpdateItemRequest, parse_item_id,
 };
 
 /// 创建一个 Item。
@@ -128,6 +128,48 @@ pub async fn reschedule_item(
         .services
         .items
         .reschedule_item(parse_item_id(&id)?, target.try_into()?)
+        .await?;
+    Ok(ItemDto::from(&item))
+}
+
+/// 读取一个 Item 的详情：Item 本身加上它的来源与附件（含被引用文件是否还在）。
+///
+/// # Errors
+///
+/// ID 格式不合法返回 `INVALID_INPUT`，不存在返回 `ITEM_NOT_FOUND`。
+#[tauri::command]
+#[specta::specta]
+pub async fn get_item_detail(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<InboxEntryDto, IpcError> {
+    let detail = state
+        .services
+        .items
+        .get_item_detail(parse_item_id(&id)?)
+        .await?;
+    Ok(InboxEntryDto::from(&detail))
+}
+
+/// 更新一个 Item（详情面板的自动保存）：只修改请求里出现的字段，在一个事务里完成。
+///
+/// 转换类型遵循领域规则（离开 Todo 清除完成状态 / 截止日期 / 优先级等）。
+///
+/// # Errors
+///
+/// 请求格式不合法返回 `INVALID_INPUT`；Item 不存在返回 `ITEM_NOT_FOUND`；违反领域规则
+/// （标题为空、字段不适用于该类型、已归档等）返回对应错误码；存储失败时没有任何改动。
+#[tauri::command]
+#[specta::specta]
+pub async fn update_item(
+    state: State<'_, AppState>,
+    id: String,
+    request: UpdateItemRequest,
+) -> Result<ItemDto, IpcError> {
+    let item = state
+        .services
+        .items
+        .update_item(parse_item_id(&id)?, request.try_into()?)
         .await?;
     Ok(ItemDto::from(&item))
 }

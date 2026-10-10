@@ -14,7 +14,7 @@ use nivlo_application::error::{AppError, ErrorCode};
 use nivlo_application::inbox::{
     InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
 };
-use nivlo_application::item::RescheduleTarget;
+use nivlo_application::item::{Patch, RescheduleTarget, UpdateItemInput};
 use nivlo_application::ports::ItemFilter;
 use nivlo_application::today::{TodayEntry, TodayView};
 use nivlo_domain::attachment::Attachment;
@@ -535,6 +535,78 @@ impl From<ListItemsRequest> for ItemFilter {
             in_inbox_only: false,
             limit: request.limit,
         }
+    }
+}
+
+/// 对可清除字段的三态修改（IPC 表示）：保持 / 清除 / 设置为新值。
+///
+/// 普通的可空字段无法区分「不修改」与「清除」，所以显式区分。缺省（字段没有出现）是保持原值。
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum PatchDto<T> {
+    /// 保持原值。
+    #[default]
+    Keep,
+    /// 清除字段。
+    Clear,
+    /// 设置为新值。
+    Set {
+        /// 新值。
+        value: T,
+    },
+}
+
+/// 更新 Item 的请求：所有字段默认「不修改」。
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase", default)]
+pub struct UpdateItemRequest {
+    /// 转换类型；会按领域规则清理新类型不再适用的字段。
+    pub item_type: Option<ItemTypeDto>,
+    /// 新标题。
+    pub title: Option<String>,
+    /// 内容的修改。
+    pub content: PatchDto<String>,
+    /// 内容格式。
+    pub content_format: Option<ContentFormatDto>,
+    /// 优先级。
+    pub priority: Option<PriorityDto>,
+    /// 计划日期的修改。
+    pub scheduled: PatchDto<DatePointDto>,
+    /// 截止日期的修改。
+    pub due: PatchDto<DatePointDto>,
+    /// 提醒时间点（RFC 3339）的修改。
+    pub reminder_at: PatchDto<String>,
+}
+
+/// 把 IPC 三态修改转换成 Application 的 [`Patch`]。
+fn patch<T, U>(
+    value: PatchDto<T>,
+    convert: impl FnOnce(T) -> Result<U, AppError>,
+) -> Result<Patch<U>, AppError> {
+    Ok(match value {
+        PatchDto::Keep => Patch::Keep,
+        PatchDto::Clear => Patch::Clear,
+        PatchDto::Set { value } => Patch::Set(convert(value)?),
+    })
+}
+
+impl TryFrom<UpdateItemRequest> for UpdateItemInput {
+    type Error = AppError;
+
+    /// DTO → Application；日期或时间点格式不对时返回 `INVALID_INPUT`。
+    fn try_from(request: UpdateItemRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            item_type: request.item_type.map(Into::into),
+            title: request.title,
+            content: patch(request.content, Ok)?,
+            content_format: request.content_format.map(Into::into),
+            priority: request.priority.map(Into::into),
+            scheduled: patch(request.scheduled, DatePoint::try_from)?,
+            due: patch(request.due, DatePoint::try_from)?,
+            reminder_at: patch(request.reminder_at, |text| parse_utc(&text))?,
+            // 项目在 3.3 之后才有界面与管理；详情面板暂不修改。
+            project_id: Patch::Keep,
+        })
     }
 }
 

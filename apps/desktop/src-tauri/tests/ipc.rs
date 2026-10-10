@@ -558,3 +558,135 @@ async fn main_view_handoff_validates_the_view_and_is_taken_only_once() {
             .is_null()
     );
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn update_item_patches_only_what_is_sent_enforces_domain_rules_and_persists() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let created = invoke(&webview, "create_item", todo_request("写周报")).unwrap();
+    let id = created["id"].clone();
+
+    // 只改标题与内容：其他字段（优先级、计划日期）保持。
+    let updated = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": id, "request": {
+            "title": "  写周报（终稿） ",
+            "content": { "kind": "set", "value": "## 要点\n- 登录超时" },
+            "contentFormat": "markdown"
+        }}),
+    )
+    .unwrap();
+    assert_eq!(updated["title"], "写周报（终稿）");
+    assert_eq!(updated["content"], "## 要点\n- 登录超时");
+    assert_eq!(updated["contentFormat"], "markdown");
+    assert_eq!(updated["priority"], "high");
+    assert_eq!(updated["scheduled"]["date"], "2026-10-12");
+
+    // 清除计划日期；设置截止日期与优先级。
+    let updated = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": id, "request": {
+            "scheduled": { "kind": "clear" },
+            "due": { "kind": "set", "value": { "date": "2026-10-20", "time": "18:00" } },
+            "priority": "low"
+        }}),
+    )
+    .unwrap();
+    assert!(updated["scheduled"].is_null());
+    assert_eq!(updated["due"]["date"], "2026-10-20");
+    assert_eq!(updated["due"]["time"], "18:00:00");
+    assert_eq!(updated["priority"], "low");
+
+    // 领域规则：空标题被拒绝；改成笔记后截止日期与优先级被清理；给笔记设置截止日期被拒绝。
+    let empty = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": id, "request": { "title": "   " } }),
+    )
+    .unwrap_err();
+    assert_eq!(empty["code"], "ITEM_TITLE_EMPTY");
+    let note = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": id, "request": { "itemType": "note" } }),
+    )
+    .unwrap();
+    assert_eq!(note["itemType"], "note");
+    assert!(note["due"].is_null());
+    assert_eq!(note["priority"], "none");
+    let rejected = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": id, "request": { "due": { "kind": "set", "value": { "date": "2026-10-20", "time": null } } } }),
+    )
+    .unwrap_err();
+    assert_eq!(rejected["code"], "ITEM_FIELD_NOT_APPLICABLE");
+    let bad_date = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": id, "request": { "scheduled": { "kind": "set", "value": { "date": "明天", "time": null } } } }),
+    )
+    .unwrap_err();
+    assert_eq!(bad_date["code"], "INVALID_INPUT");
+
+    // 被拒绝的修改没有留下任何痕迹；重启后修改仍在。
+    let state = tauri::Manager::state::<AppState>(&app);
+    state.runtime.shutdown().await;
+    drop(webview);
+    drop(app);
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let detail = invoke(&webview, "get_item_detail", json!({ "id": id })).unwrap();
+    assert_eq!(detail["item"]["title"], "写周报（终稿）");
+    assert_eq!(detail["item"]["itemType"], "note");
+    assert_eq!(detail["item"]["content"], "## 要点\n- 登录超时");
+    assert!(detail["sources"].as_array().unwrap().is_empty());
+
+    let missing = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": "0190a000-0000-7000-8000-000000000001", "request": { "title": "x" } }),
+    )
+    .unwrap_err();
+    assert_eq!(missing["code"], "ITEM_NOT_FOUND");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn open_item_source_reports_missing_files_and_items_without_a_source() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    // 手动创建的 Item 没有来源。
+    let manual = invoke(&webview, "create_item", todo_request("没有来源")).unwrap();
+    let error = invoke(&webview, "open_item_source", json!({ "id": manual["id"] })).unwrap_err();
+    assert_eq!(error["code"], "SOURCE_OPEN_FAILED");
+
+    // 引用的文件被移走：明确的「文件不存在」，而不是笼统的失败。
+    let file = dir.path().join("报告.txt");
+    std::fs::write(&file, "x").unwrap();
+    let captured = invoke(
+        &webview,
+        "capture",
+        json!({ "request": {
+            "input": { "kind": "files", "paths": [file.to_string_lossy()] },
+            "origin": "paste", "sourceApplication": null
+        }}),
+    )
+    .unwrap();
+    std::fs::remove_file(&file).unwrap();
+    let error = invoke(
+        &webview,
+        "open_item_source",
+        json!({ "id": captured["items"][0]["id"] }),
+    )
+    .unwrap_err();
+    assert_eq!(error["code"], "SOURCE_FILE_MISSING");
+}

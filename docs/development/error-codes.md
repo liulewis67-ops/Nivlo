@@ -34,6 +34,8 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 | `STORAGE_MIGRATION_FAILED` | 数据库迁移失败，业务 Runtime 不会启动 | Storage | 动作：`OPEN_DIAGNOSTICS` |
 | `WINDOW_UNAVAILABLE` | 宿主窗口无法创建或显示（如 WebView2 异常） | Host | 动作：`OPEN_DIAGNOSTICS` |
 | `SHORTCUT_INVALID` | 不是合法的快捷键（没有修饰键、不认识的按键、没有主键等） | Host | 用户重新输入 |
+| `SOURCE_FILE_MISSING` | 来源指向的文件已经不在原处（被移动或删除） | Host | UI 提示「文件不存在」 |
+| `SOURCE_OPEN_FAILED` | 无法打开来源：没有可打开的来源、网址不是 http(s)、或系统打开失败 | Host | |
 | `CLIPBOARD_UNAVAILABLE` | 无法读取剪贴板（被其他程序占用且重试后仍失败，或当前平台不支持） | Host | 用户稍后重试 |
 | `CLIPBOARD_EMPTY` | 用户粘贴时，剪贴板里没有可以收集的内容（空的、只有不认识的格式） | Host | 用户先复制点什么 |
 | `SHORTCUT_CONFLICT` | 快捷键已被其他程序占用 | Host | 用户换一个组合；原来的绑定保持不变 |

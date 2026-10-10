@@ -60,6 +60,10 @@ pub enum ErrorCode {
     ClipboardEmpty,
     /// 无法读取剪贴板（被其他程序占用，或当前平台不支持）。
     ClipboardUnavailable,
+    /// 来源指向的文件已经不在原处。
+    SourceFileMissing,
+    /// 无法打开来源（没有可打开的来源、网址不合法，或系统打开失败）。
+    SourceOpenFailed,
 }
 
 impl ErrorCode {
@@ -89,6 +93,8 @@ impl ErrorCode {
         Self::ShortcutConflict,
         Self::ClipboardEmpty,
         Self::ClipboardUnavailable,
+        Self::SourceFileMissing,
+        Self::SourceOpenFailed,
     ];
 
     /// 返回稳定的大写错误码字符串（会出现在 IPC 响应中，不得随意修改）。
@@ -118,6 +124,8 @@ impl ErrorCode {
             Self::ShortcutConflict => "SHORTCUT_CONFLICT",
             Self::ClipboardEmpty => "CLIPBOARD_EMPTY",
             Self::ClipboardUnavailable => "CLIPBOARD_UNAVAILABLE",
+            Self::SourceFileMissing => "SOURCE_FILE_MISSING",
+            Self::SourceOpenFailed => "SOURCE_OPEN_FAILED",
         }
     }
 }

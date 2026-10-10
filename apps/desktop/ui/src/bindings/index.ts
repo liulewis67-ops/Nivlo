@@ -31,6 +31,38 @@ export const commands = {
 	 */
 	listItems: (request: ListItemsRequest) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("list_items", { request })),
 	/**
+	 *  读取一个 Item 的详情：Item 本身加上它的来源与附件（含被引用文件是否还在）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不合法返回 `INVALID_INPUT`，不存在返回 `ITEM_NOT_FOUND`。
+	 */
+	getItemDetail: (id: string) => typedError<InboxEntryDto, IpcError>(__TAURI_INVOKE("get_item_detail", { id })),
+	/**
+	 *  更新一个 Item（详情面板的自动保存）：只修改请求里出现的字段，在一个事务里完成。
+	 * 
+	 *  转换类型遵循领域规则（离开 Todo 清除完成状态 / 截止日期 / 优先级等）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  请求格式不合法返回 `INVALID_INPUT`；Item 不存在返回 `ITEM_NOT_FOUND`；违反领域规则
+	 *  （标题为空、字段不适用于该类型、已归档等）返回对应错误码；存储失败时没有任何改动。
+	 */
+	updateItem: (id: string, request: UpdateItemRequest) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("update_item", { id, request })),
+	/**
+	 *  打开 Item 的来源：网址用默认浏览器打开，文件在资源管理器里定位。
+	 * 
+	 *  前端只传 Item ID，**不传网址或路径**：要打开什么由后端从已保存的来源 / 附件里决定
+	 *  （没有「打开任意路径」的通用能力，ADR-010）。网址只允许 http(s)。
+	 * 
+	 *  # Errors
+	 * 
+	 *  * `ITEM_NOT_FOUND` - Item 不存在。
+	 *  * `SOURCE_FILE_MISSING` - 来源是文件，但它已经不在原处（UI 提示「文件不存在」）。
+	 *  * `SOURCE_OPEN_FAILED` - 没有可打开的来源、网址不是 http(s)，或系统打开失败。
+	 */
+	openItemSource: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_item_source", { id })),
+	/**
 	 *  捕获一次输入（文本 / URL / 文件 / 图片），创建 Item + Source + Attachment 并放进 Inbox。
 	 * 
 	 *  整个过程是一个事务；失败时不留下任何记录。返回创建的 Item 与撤销句柄。
@@ -526,6 +558,21 @@ export type OrganizeResultDto = {
 	previous: PreviousStateDto[],
 };
 
+/**
+ *  对可清除字段的三态修改（IPC 表示）：保持 / 清除 / 设置为新值。
+ * 
+ *  普通的可空字段无法区分「不修改」与「清除」，所以显式区分。缺省（字段没有出现）是保持原值。
+ */
+export type PatchDto<T> = 
+/**  保持原值。 */
+{ kind: "keep" } | 
+/**  清除字段。 */
+{ kind: "clear" } | 
+/**  设置为新值。 */
+{ kind: "set"; 
+/**  新值。 */
+value: T };
+
 /**  整理之前的状态（IPC 表示），原样交给 `restore_items` 撤销。 */
 export type PreviousStateDto = {
 	/**  Item ID。 */
@@ -651,6 +698,26 @@ export type TodayViewDto = {
 	tips: TodayItemDto[],
 	/**  今天已完成的待办。 */
 	completed: TodayItemDto[],
+};
+
+/**  更新 Item 的请求：所有字段默认「不修改」。 */
+export type UpdateItemRequest = {
+	/**  转换类型；会按领域规则清理新类型不再适用的字段。 */
+	itemType?: ItemTypeDto | null,
+	/**  新标题。 */
+	title?: string | null,
+	/**  内容的修改。 */
+	content?: PatchDto<string>,
+	/**  内容格式。 */
+	contentFormat?: ContentFormatDto | null,
+	/**  优先级。 */
+	priority?: PriorityDto | null,
+	/**  计划日期的修改。 */
+	scheduled?: PatchDto<DatePointDto>,
+	/**  截止日期的修改。 */
+	due?: PatchDto<DatePointDto>,
+	/**  提醒时间点（RFC 3339）的修改。 */
+	reminderAt?: PatchDto<string>,
 };
 
 /**  展开后面板相对徽标的垂直方向。 */

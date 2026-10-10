@@ -20,6 +20,7 @@ use nivlo_domain::item::{DatePoint, Item, ItemType, NewItem};
 use super::input::UpdateItemInput;
 use crate::error::AppError;
 use crate::event::EventPublisher;
+use crate::inbox::InboxEntry;
 use crate::ports::{ItemFilter, UnitOfWork};
 
 /// 创建 Item 的输入。直接复用领域的 [`NewItem`]，字段含义见其文档。
@@ -288,6 +289,28 @@ impl ItemService {
             .get(id)
             .await?
             .ok_or_else(|| AppError::item_not_found(id))
+    }
+
+    /// 读取一个 Item 的详情：Item 本身加上它的来源与附件（详情面板用）。
+    ///
+    /// # Errors
+    ///
+    /// * [`crate::error::ErrorCode::ItemNotFound`] - Item 不存在。
+    /// * 存储错误。
+    pub async fn get_item_detail(&self, id: ItemId) -> Result<InboxEntry, AppError> {
+        let mut tx = self.uow.begin().await?;
+        let item = tx
+            .items()
+            .get(id)
+            .await?
+            .ok_or_else(|| AppError::item_not_found(id))?;
+        let sources = tx.sources().list_for_item(id).await?;
+        let attachments = tx.attachments().list_for_item(id).await?;
+        Ok(InboxEntry {
+            item,
+            sources,
+            attachments,
+        })
     }
 
     /// 按过滤条件列出 Item，创建时间从新到旧。

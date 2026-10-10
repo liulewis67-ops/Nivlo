@@ -8,5 +8,6 @@ pub mod capture;
 pub mod inbox;
 pub mod item;
 pub mod shortcut;
+pub mod source;
 pub mod today;
 pub mod window;

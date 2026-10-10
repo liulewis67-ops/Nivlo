@@ -17,6 +17,7 @@ pub mod commands;
 pub mod dto;
 pub mod events;
 pub mod lifecycle;
+pub mod open;
 pub mod shortcut;
 pub mod tray;
 pub mod windows;
@@ -57,6 +58,9 @@ macro_rules! bindings_builder {
                 $crate::commands::item::create_item,
                 $crate::commands::item::get_item,
                 $crate::commands::item::list_items,
+                $crate::commands::item::get_item_detail,
+                $crate::commands::item::update_item,
+                $crate::commands::source::open_item_source::<$runtime>,
                 $crate::commands::capture::capture,
                 $crate::commands::capture::undo_capture,
                 $crate::commands::capture::capture_from_clipboard,
