@@ -1559,13 +1559,13 @@ Phase 12 Backlog                        → 未排期
 
 ### 10.5 原生电源 / 时钟事件
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：4.5
 - **任务**：
   - 监听 `WM_POWERBROADCAST`、`WM_TIMECHANGE`，向 Scheduler 发送 `Resume`，替代 4.5 中的偏差检测（保留偏差检测作为兜底）。
 - **验收标准**：
   - [ ] 唤醒后 Reconcile 在 2s 内触发（日志证据）。
-- **完成记录**：—
+- **完成记录**：2026-10-12（进行中）：`nivlo-platform-windows::power::PowerEventListener`——专用线程里的**隐藏顶层窗口**（`WM_POWERBROADCAST` / `WM_TIMECHANGE` 是广播给顶层窗口的，消息专用窗口收不到）；`PBT_APMRESUMEAUTOMATIC` / `PBT_APMRESUMESUSPEND` → `Resumed`，`WM_TIMECHANGE` → `TimeChanged`，进入睡眠等其他电源消息被忽略；释放时关窗并 join 线程；回调里只做通知。桌面端启动时接上：事件到达 → 记一条 `scheduler_native_wake` 日志并 `Control::wake()`，Scheduler 随即 Reconcile；原有的偏差检测保留作兜底；其他平台不启动监听。测试向隐藏窗口 `SendMessage` 系统会发的消息，验证回调、过滤与干净退出（`tests/power.rs`）。**未验证**：验收「唤醒后 Reconcile 在 2s 内触发（日志证据）」需要真机休眠 / 唤醒一次并查看日志里的 `scheduler_native_wake`；消息是自己合成的，没有经过真实的系统广播。
 
 ### 10.6 原生通知激活
 

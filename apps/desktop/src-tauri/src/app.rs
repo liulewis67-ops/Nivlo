@@ -81,6 +81,8 @@ pub struct RuntimeHandles {
     shortcut: OnceLock<Arc<ShortcutController>>,
     /// 应用目录布局；启动时登记，导出诊断包 / 备份时使用。
     paths: OnceLock<nivlo_common::paths::AppPaths>,
+    /// 需要和应用同寿命的系统监听器（电源事件窗口等）；退出时一并释放。
+    keep_alive: Mutex<Vec<Box<dyn std::any::Any + Send>>>,
     /// Script Worker（QuickJS 沙箱线程）；退出时停止并等待线程结束。
     script_worker: OnceLock<nivlo_script::ScriptWorker>,
     /// 后台补全队列的接收端：由启动流程取走并交给后台任务（只能取一次）。
@@ -113,8 +115,17 @@ impl RuntimeHandles {
             enrichment_queue: Mutex::new(None),
             paths: OnceLock::new(),
             script_worker: OnceLock::new(),
+            keep_alive: Mutex::new(Vec::new()),
             scheduler_control: Arc::new(nivlo_scheduler::Control::new()),
         }
+    }
+
+    /// 让一个系统监听器活到应用退出（释放它会停止监听）。
+    pub fn keep_alive(&self, item: Box<dyn std::any::Any + Send>) {
+        self.keep_alive
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(item);
     }
 
     /// 登记 Script Worker（只能登记一次），返回给 Executor 用的句柄。
@@ -265,6 +276,11 @@ impl RuntimeHandles {
         if let Some(worker) = self.script_worker.get() {
             worker.shutdown();
         }
+        // 停止系统监听器（电源事件窗口与线程）。
+        self.keep_alive
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clear();
 
         self.database.close().await;
         tracing::info!(event = "shutdown_database_closed", "数据库已关闭");

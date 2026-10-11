@@ -23,6 +23,7 @@ pub mod integration_service;
 pub mod lifecycle;
 pub mod native_i18n;
 pub mod open;
+pub mod power;
 pub mod scheduling;
 pub mod script_grants;
 pub mod shortcut;
@@ -338,6 +339,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
             // Scheduler：提醒 / Tip / 截止的触发与唤醒后的 Reconcile；通知是尽力而为的，不影响启动。
             scheduling::spawn(app.handle(), &app.state::<AppState>());
+            // 系统休眠恢复 / 时间被改动：立刻唤醒 Scheduler 去 Reconcile（偏差检测仍作为兜底）。
+            power::start(&app.state::<AppState>());
 
             // 托盘不是必需功能：创建失败只记录，应用继续以悬浮窗运行。
             let lang = tauri::async_runtime::block_on(native_i18n::current(
