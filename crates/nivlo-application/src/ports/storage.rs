@@ -206,6 +206,23 @@ pub trait ItemRepository: Send {
     ///
     /// 任一记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
     async fn list(&mut self, filter: &ItemFilter) -> Result<Vec<Item>, StorageError>;
+
+    /// 全文搜索（实施计划 3.4）：在标题、正文与来源（原始标题 / 网址 / 路径）里按子串匹配，
+    /// 忽略大小写；中文也按子串匹配（「登录」能找到「修复登录超时」）。
+    ///
+    /// `text` 按空白拆成多个词，每个词都要出现（AND）；少于 3 个字符的词索引无法匹配，
+    /// 会被忽略——除非所有词都很短，此时把整段文字当作一个子串扫描。
+    /// 标题命中的排在前面，其次按相关度与最近更新。`text` 为空白时返回空列表。
+    ///
+    /// # Errors
+    ///
+    /// 记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
+    async fn search(
+        &mut self,
+        text: &str,
+        include_archived: bool,
+        limit: u32,
+    ) -> Result<Vec<Item>, StorageError>;
 }
 
 /// 业务设置的持久化操作（键值对，值为字符串，通常是 JSON）。

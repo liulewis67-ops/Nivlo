@@ -327,6 +327,60 @@ impl ItemRepository for FakeTransaction {
         }
         Ok(items)
     }
+
+    /// 搜索：忽略大小写的子串匹配（标题 / 正文 / 来源），所有词都要出现；标题命中在前。
+    async fn search(
+        &mut self,
+        text: &str,
+        include_archived: bool,
+        limit: u32,
+    ) -> Result<Vec<Item>, StorageError> {
+        let terms: Vec<String> = text.split_whitespace().map(str::to_lowercase).collect();
+        if terms.is_empty() {
+            return Ok(Vec::new());
+        }
+        let mut found: Vec<(bool, Item)> = Vec::new();
+        for item in self.working.items.values() {
+            if !include_archived && item.is_archived() {
+                continue;
+            }
+            let title = item.title().as_str().to_lowercase();
+            let mut haystack = format!("{title}\n{}", item.content().unwrap_or("").to_lowercase());
+            for source in self
+                .working
+                .sources
+                .iter()
+                .filter(|s| s.item_id == item.id())
+            {
+                for part in [
+                    &source.original_title,
+                    &source.source_url,
+                    &source.source_path,
+                ]
+                .into_iter()
+                .flatten()
+                {
+                    haystack.push('\n');
+                    haystack.push_str(&part.to_lowercase());
+                }
+            }
+            if terms.iter().all(|term| haystack.contains(term.as_str())) {
+                let in_title = terms.iter().any(|term| title.contains(term.as_str()));
+                found.push((in_title, item.clone()));
+            }
+        }
+        found.sort_by(|(a_title, a), (b_title, b)| {
+            b_title
+                .cmp(a_title)
+                .then(b.updated_at().cmp(&a.updated_at()))
+                .then(b.id().cmp(&a.id()))
+        });
+        Ok(found
+            .into_iter()
+            .map(|(_, item)| item)
+            .take(limit as usize)
+            .collect())
+    }
 }
 
 #[async_trait]

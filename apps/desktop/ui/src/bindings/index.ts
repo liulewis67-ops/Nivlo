@@ -31,6 +31,16 @@ export const commands = {
 	 */
 	listItems: (request: ListItemsRequest) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("list_items", { request })),
 	/**
+	 *  全文搜索（Ctrl+K）：标题、正文与来源里包含 `query` 的未归档 Item，标题命中的在前。
+	 * 
+	 *  空白查询返回空列表。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	searchItems: (query: string) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("search_items", { query })),
+	/**
 	 *  读取一个 Item 的详情：Item 本身加上它的来源与附件（含被引用文件是否还在）。
 	 * 
 	 *  # Errors

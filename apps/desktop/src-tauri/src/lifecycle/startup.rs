@@ -142,7 +142,7 @@ mod tests {
         let paths = AppPaths::from_root(dir.path().join("Nivlo"));
         paths.ensure_dirs().unwrap();
         let database = open_database(&paths).await.unwrap();
-        assert_eq!(database.schema_version().await.unwrap(), Some(2));
+        assert_eq!(database.schema_version().await.unwrap(), Some(3));
     }
 
     #[tokio::test]

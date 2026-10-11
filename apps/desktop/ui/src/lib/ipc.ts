@@ -128,6 +128,11 @@ export interface IpcClient {
   organizeItems(itemIds: string[], action: OrganizeActionDto): Promise<OrganizeResultDto>;
   /** 精确撤销一次整理：恢复到 [`PreviousStateDto`] 记录的状态。 */
   restoreItems(previous: PreviousStateDto[]): Promise<ItemDto[]>;
+  /**
+   * 全文搜索（Ctrl+K）：标题、正文与来源里包含 `query` 的未归档条目，标题命中的在前，最多 50 条。
+   * 空白查询返回空列表。
+   */
+  searchItems(query: string): Promise<ItemDto[]>;
   /** 列出项目（创建时间从早到晚）与各自未完成的 Item 数量；默认不含已归档的。 */
   listProjects(includeArchived: boolean): Promise<ProjectDto[]>;
   /** 创建项目。名称为空抛出 `NAME_EMPTY`，过长抛出 `NAME_TOO_LONG`。 */
@@ -281,6 +286,7 @@ const tauriIpc: IpcClient = {
     await call("open_item_source", commands.openItemSource(id));
   },
   listItems: (request) => call("list_items", commands.listItems(request)),
+  searchItems: (query) => call("search_items", commands.searchItems(query)),
   listProjects: (includeArchived) => call("list_projects", commands.listProjects(includeArchived)),
   createProject: (name) => call("create_project", commands.createProject(name)),
   renameProject: (id, name) => call("rename_project", commands.renameProject(id, name)),
@@ -377,6 +383,7 @@ export const ipc: IpcClient = {
   updateItem: (id, request) => current.updateItem(id, request),
   openItemSource: (id) => current.openItemSource(id),
   listItems: (request) => current.listItems(request),
+  searchItems: (query) => current.searchItems(query),
   listProjects: (includeArchived) => current.listProjects(includeArchived),
   createProject: (name) => current.createProject(name),
   renameProject: (id, name) => current.renameProject(id, name),

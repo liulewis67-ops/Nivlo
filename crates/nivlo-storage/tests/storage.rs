@@ -50,11 +50,11 @@ async fn migrates_from_empty_and_is_idempotent() {
     assert_eq!(db.schema_version().await.unwrap(), None);
 
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(2));
+    assert_eq!(db.schema_version().await.unwrap(), Some(3));
 
     // 再次运行不报错，版本不变。
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(2));
+    assert_eq!(db.schema_version().await.unwrap(), Some(3));
 }
 
 #[tokio::test]

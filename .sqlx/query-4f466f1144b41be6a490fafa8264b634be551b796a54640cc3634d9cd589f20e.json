@@ -1,0 +1,122 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",\n                        items.content, items.content_format AS \"content_format!\",\n                        items.status AS \"status!\", items.priority AS \"priority!\",\n                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,\n                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",\n                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",\n                        items.completed_at, items.archived_at\n                 FROM items_fts JOIN items ON items.id = items_fts.item_id\n                 WHERE items_fts MATCH ?1 AND (?2 = 1 OR items.archived_at IS NULL)\n                 ORDER BY bm25(items_fts, 0.0, 8.0, 1.0, 2.0), items.updated_at DESC, items.id DESC\n                 LIMIT ?3",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "item_type!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "title!",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "content",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "content_format!",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "status!",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "priority!",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "scheduled_date",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "scheduled_time",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "due_date",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "due_time",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "reminder_at",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "project_id",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "in_inbox!",
+        "ordinal": 13,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at!",
+        "ordinal": 14,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at!",
+        "ordinal": 15,
+        "type_info": "Text"
+      },
+      {
+        "name": "completed_at",
+        "ordinal": 16,
+        "type_info": "Text"
+      },
+      {
+        "name": "archived_at",
+        "ordinal": 17,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "4f466f1144b41be6a490fafa8264b634be551b796a54640cc3634d9cd589f20e"
+}

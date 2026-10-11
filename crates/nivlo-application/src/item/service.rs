@@ -23,6 +23,9 @@ use crate::event::EventPublisher;
 use crate::inbox::InboxEntry;
 use crate::ports::{ItemFilter, UnitOfWork};
 
+/// 一次搜索最多返回的条数。
+pub const SEARCH_LIMIT: u32 = 50;
+
 /// 创建 Item 的输入。直接复用领域的 [`NewItem`]，字段含义见其文档。
 pub type CreateItemInput = NewItem;
 
@@ -319,6 +322,20 @@ impl ItemService {
             attachments,
             tags,
         })
+    }
+
+    /// 全文搜索（Ctrl+K）：标题、正文与来源里包含 `query` 的未归档 Item，最多 `SEARCH_LIMIT` 条。
+    /// 空白查询返回空列表，不访问数据库。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误（含 [`crate::error::ErrorCode::StorageCorrupt`]）。
+    pub async fn search_items(&self, query: &str) -> Result<Vec<Item>, AppError> {
+        if query.trim().is_empty() {
+            return Ok(Vec::new());
+        }
+        let mut tx = self.uow.begin().await?;
+        Ok(tx.items().search(query, false, SEARCH_LIMIT).await?)
     }
 
     /// 按过滤条件列出 Item，创建时间从新到旧。

@@ -864,6 +864,33 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         ? Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`))
         : Promise.resolve(found);
     },
+    searchItems: (query: string) => {
+      calls.push("searchItems");
+      const terms = query
+        .toLowerCase()
+        .split(/s+/)
+        .filter((term) => term !== "");
+      if (terms.length === 0) return Promise.resolve([]);
+      const matches = items
+        .filter((item) => item.archivedAt === null)
+        .map((item) => {
+          const title = item.title.toLowerCase();
+          const text = `${title}
+${(item.content ?? "").toLowerCase()}`;
+          return {
+            item,
+            inTitle: terms.some((term) => title.includes(term)),
+            ok: terms.every((term) => text.includes(term)),
+          };
+        })
+        .filter((match) => match.ok)
+        .sort(
+          (a, b) =>
+            Number(b.inTitle) - Number(a.inTitle) ||
+            b.item.updatedAt.localeCompare(a.item.updatedAt),
+        );
+      return Promise.resolve(matches.slice(0, 50).map((match) => match.item));
+    },
     get projects() {
       return projects;
     },

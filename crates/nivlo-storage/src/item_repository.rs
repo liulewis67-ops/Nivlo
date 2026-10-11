@@ -419,6 +419,94 @@ impl ItemRepository for SqliteTransaction {
         .map_err(map_sqlx)?;
         rows.into_iter().map(row_to_item).collect()
     }
+
+    /// 全文搜索：词都不短时走 FTS5（trigram），否则退化为 LIKE 扫描。
+    async fn search(
+        &mut self,
+        text: &str,
+        include_archived: bool,
+        limit: u32,
+    ) -> Result<Vec<Item>, StorageError> {
+        let include_archived = i64::from(include_archived);
+        let limit = i64::from(limit);
+        let terms: Vec<&str> = text.split_whitespace().collect();
+        if terms.is_empty() {
+            return Ok(Vec::new());
+        }
+        // trigram 至少要 3 个字符才能匹配；更短的词丢掉，剩下的词做 AND。
+        let long_terms: Vec<&str> = terms
+            .iter()
+            .copied()
+            .filter(|term| term.chars().count() >= 3)
+            .collect();
+        let rows = if long_terms.is_empty() {
+            let pattern = like_pattern(&terms.join(" "));
+            sqlx::query_as!(
+                ItemRow,
+                "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",
+                        items.content, items.content_format AS \"content_format!\",
+                        items.status AS \"status!\", items.priority AS \"priority!\",
+                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,
+                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",
+                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",
+                        items.completed_at, items.archived_at
+                 FROM items_fts JOIN items ON items.id = items_fts.item_id
+                 WHERE (items_fts.title LIKE ?1 ESCAPE '\\'
+                        OR items_fts.content LIKE ?1 ESCAPE '\\'
+                        OR items_fts.source_text LIKE ?1 ESCAPE '\\')
+                   AND (?2 = 1 OR items.archived_at IS NULL)
+                 ORDER BY (items_fts.title LIKE ?1 ESCAPE '\\') DESC, items.updated_at DESC, items.id DESC
+                 LIMIT ?3",
+                pattern,
+                include_archived,
+                limit
+            )
+            .fetch_all(&mut *self.tx)
+            .await
+        } else {
+            // 每个词作为一个短语（引号内的引号翻倍），词之间 AND。
+            let query = long_terms
+                .iter()
+                .map(|term| format!("\"{}\"", term.replace('"', "\"\"")))
+                .collect::<Vec<_>>()
+                .join(" AND ");
+            sqlx::query_as!(
+                ItemRow,
+                "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",
+                        items.content, items.content_format AS \"content_format!\",
+                        items.status AS \"status!\", items.priority AS \"priority!\",
+                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,
+                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",
+                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",
+                        items.completed_at, items.archived_at
+                 FROM items_fts JOIN items ON items.id = items_fts.item_id
+                 WHERE items_fts MATCH ?1 AND (?2 = 1 OR items.archived_at IS NULL)
+                 ORDER BY bm25(items_fts, 0.0, 8.0, 1.0, 2.0), items.updated_at DESC, items.id DESC
+                 LIMIT ?3",
+                query,
+                include_archived,
+                limit
+            )
+            .fetch_all(&mut *self.tx)
+            .await
+        }
+        .map_err(map_sqlx)?;
+        rows.into_iter().map(row_to_item).collect()
+    }
+}
+
+/// 把用户输入变成 LIKE 的「包含」模式：转义 `\`、`%`、`_`。
+fn like_pattern(text: &str) -> String {
+    let mut pattern = String::with_capacity(text.len() + 2);
+    pattern.push('%');
+    for c in text.chars() {
+        if matches!(c, '\\' | '%' | '_') {
+            pattern.push('\\');
+        }
+        pattern.push(c);
+    }
+    pattern.push('%');
+    pattern
 }
 
 #[async_trait]

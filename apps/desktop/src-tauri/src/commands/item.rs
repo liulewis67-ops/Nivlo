@@ -173,3 +173,20 @@ pub async fn update_item(
         .await?;
     Ok(ItemDto::from(&item))
 }
+
+/// 全文搜索（Ctrl+K）：标题、正文与来源里包含 `query` 的未归档 Item，标题命中的在前。
+///
+/// 空白查询返回空列表。
+///
+/// # Errors
+///
+/// 存储失败时返回 [`IpcError`]。
+#[tauri::command]
+#[specta::specta]
+pub async fn search_items(
+    state: State<'_, AppState>,
+    query: String,
+) -> Result<Vec<ItemDto>, IpcError> {
+    let items = state.services.items.search_items(&query).await?;
+    Ok(items.iter().map(ItemDto::from).collect())
+}
