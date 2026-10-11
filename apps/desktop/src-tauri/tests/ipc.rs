@@ -1038,3 +1038,45 @@ async fn get_calendar_returns_scheduled_and_due_entries_and_unscheduled_todos() 
     );
     let _ = (scheduled_id, with_due_id);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn quick_create_accepts_a_plan_parsed_from_the_title() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    let created = invoke(
+        &webview,
+        "quick_create",
+        json!({ "request": {
+            "itemType": "todo", "title": "Review PR",
+            "scheduled": { "date": "2026-10-15", "time": "15:30" }
+        }}),
+    )
+    .unwrap();
+    assert_eq!(created["title"], "Review PR");
+    assert_eq!(created["scheduled"]["date"], "2026-10-15");
+    assert_eq!(created["scheduled"]["time"], "15:30:00");
+
+    // 日期格式不对被拒绝，什么都没创建。
+    let rejected = invoke(
+        &webview,
+        "quick_create",
+        json!({ "request": {
+            "itemType": "todo", "title": "坏日期",
+            "scheduled": { "date": "明天", "time": null }
+        }}),
+    )
+    .unwrap_err();
+    assert_eq!(rejected["code"], "INVALID_INPUT");
+    // 不带计划时仍走默认规则（今天）。
+    let plain = invoke(
+        &webview,
+        "quick_create",
+        json!({ "request": { "itemType": "note", "title": "想法" } }),
+    )
+    .unwrap();
+    assert!(plain["scheduled"].is_null());
+}

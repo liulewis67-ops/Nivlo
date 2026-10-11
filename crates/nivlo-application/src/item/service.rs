@@ -117,6 +117,23 @@ impl ItemService {
         self.create_item(input).await
     }
 
+    /// 带指定计划的快速创建：用户在标题里写了「明天下午 3 点」之类的日期短语，前端解析后
+    /// 把计划一起交给后端（实施计划 6.7）。其余规则与 [`ItemService::quick_create`] 相同。
+    ///
+    /// # Errors
+    ///
+    /// 同 [`ItemService::create_item`]。
+    pub async fn quick_create_scheduled(
+        &self,
+        item_type: ItemType,
+        title: &str,
+        scheduled: DatePoint,
+    ) -> Result<Item, AppError> {
+        let mut input = NewItem::new(item_type, title);
+        input.scheduled = Some(scheduled);
+        self.create_item(input).await
+    }
+
     /// 修改一个 Item 的若干字段。
     ///
     /// 先转换类型（如有），再设置其他字段，这样"Todo 转 Note 同时清除截止日期"这类组合修改

@@ -916,6 +916,8 @@ export type QuickCreateRequest = {
 	itemType: ItemTypeDto,
 	/**  标题（去除首尾空白后不能为空）。 */
 	title: string,
+	/**  计划（用户在标题里写了日期短语，由前端解析后传来）；缺省时用默认规则（今天 / 没有日期）。 */
+	scheduled?: DatePointDto | null,
 };
 
 /**  改期的目标。 */

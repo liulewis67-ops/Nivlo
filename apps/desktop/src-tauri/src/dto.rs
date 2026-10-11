@@ -540,6 +540,9 @@ pub struct QuickCreateRequest {
     pub item_type: ItemTypeDto,
     /// 标题（去除首尾空白后不能为空）。
     pub title: String,
+    /// 计划（用户在标题里写了日期短语，由前端解析后传来）；缺省时用默认规则（今天 / 没有日期）。
+    #[serde(default)]
+    pub scheduled: Option<DatePointDto>,
 }
 
 /// 列表的排序方式（IPC 表示）。

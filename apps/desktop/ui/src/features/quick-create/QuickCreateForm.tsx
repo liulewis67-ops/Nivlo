@@ -6,7 +6,10 @@ import { Input } from "@/components";
 import { ipc } from "@/lib/ipc";
 import type { ItemTypeDto } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
+import { parseDatePhrase } from "./model/date-phrase";
+import type { DatePhraseResult } from "./model/date-phrase";
 import { cycleKind, normalizeTitle, resolveKey } from "./model/quick-create";
+import { format } from "date-fns";
 
 /** 输入获得焦点后等待多久确认窗口真的拿到了系统焦点（毫秒）。 */
 const FOCUS_CHECK_DELAY_MS = 500;
@@ -22,6 +25,11 @@ export type QuickCreateFormProps = {
    * 普通文本的粘贴仍然是输入行为（实施计划 2.5）。
    */
   onPasteNonText?: (() => void) | undefined;
+  /**
+   * 今天（`YYYY-MM-DD`，用户本地日期，取自后端的 Today 视图），用来解析标题里的日期短语；
+   * 没有时用本机日期。
+   */
+  today?: string | undefined;
   /** 结束时调用：无论是创建成功、取消、失去焦点还是无法获得焦点。 */
   onDone: () => void;
 };
@@ -48,11 +56,14 @@ export function QuickCreateForm({
   kind,
   onKindChange,
   onPasteNonText,
+  today,
   onDone,
 }: QuickCreateFormProps) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [isReady, setIsReady] = useState(false);
+  /** 用户取消了对哪一段日期短语的识别（短语文字本身变了就重新识别）。 */
+  const [dismissed, setDismissed] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   /** 保持 `onDone` 的最新引用，避免把它放进 effect 依赖导致重复申请焦点。 */
   const onDoneRef = useRef(onDone);
@@ -60,8 +71,10 @@ export function QuickCreateForm({
     onDoneRef.current = onDone;
   });
 
+  const parsed = parseTitle(title, today, dismissed);
   const create = useMutation({
-    mutationFn: (value: string) => ipc.quickCreate(kind, value),
+    mutationFn: (value: { title: string; scheduled: DatePhraseResult["schedule"] | null }) =>
+      ipc.quickCreate(kind, value.title, value.scheduled),
     onSuccess: () => onDoneRef.current(),
   });
 
@@ -111,6 +124,19 @@ export function QuickCreateForm({
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    // 光标在末尾、刚识别出的日期短语也在末尾时，第一下退格只是取消识别（标题文字保持不变）。
+    const input = event.currentTarget;
+    if (
+      event.key === "Backspace" &&
+      parsed !== null &&
+      parsed.endsAtTail &&
+      input.selectionStart === title.length &&
+      input.selectionEnd === title.length
+    ) {
+      event.preventDefault();
+      setDismissed(phraseText(title, parsed));
+      return;
+    }
     const action = resolveKey({
       key: event.key,
       isComposing: event.nativeEvent.isComposing,
@@ -123,7 +149,11 @@ export function QuickCreateForm({
       onKindChange(cycleKind(kind, action === "previousKind"));
     } else if (action === "submit" && !create.isPending) {
       event.preventDefault();
-      create.mutate(normalizeTitle(title));
+      create.mutate(
+        parsed === null
+          ? { title: normalizeTitle(title), scheduled: null }
+          : { title: parsed.title, scheduled: parsed.schedule },
+      );
     } else if (action === "cancel") {
       event.preventDefault();
       onDone();
@@ -143,21 +173,87 @@ export function QuickCreateForm({
   }
 
   return (
-    <div className="flex items-center gap-2 border-t border-border px-3 py-2">
-      <span className="shrink-0 rounded-sm bg-surface-hover px-1.5 py-0.5 text-xs text-muted">
-        {t(`quickCreate.kind.${kind}`)}
-      </span>
-      <Input
-        ref={inputRef}
-        aria-label={t("quickCreate.input.label")}
-        placeholder={t("quickCreate.input.placeholder")}
-        value={title}
-        disabled={!isReady || create.isPending}
-        onChange={(event) => setTitle(event.target.value)}
-        onKeyDown={handleKeyDown}
-        onPaste={handlePaste}
-        className="h-8"
-      />
+    <div className="flex flex-col gap-1.5 border-t border-border px-3 py-2">
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 rounded-sm bg-surface-hover px-1.5 py-0.5 text-xs text-muted">
+          {t(`quickCreate.kind.${kind}`)}
+        </span>
+        <Input
+          ref={inputRef}
+          aria-label={t("quickCreate.input.label")}
+          placeholder={t("quickCreate.input.placeholder")}
+          value={title}
+          disabled={!isReady || create.isPending}
+          onChange={(event) => setTitle(event.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          className="h-8"
+        />
+      </div>
+      {parsed !== null && (
+        <div
+          role="status"
+          className="flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs text-text"
+        >
+          <svg
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-primary"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          >
+            <rect x="2.5" y="3.5" width="11" height="10" rx="1.5" />
+            <path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" />
+          </svg>
+          <span className="min-w-0 flex-1 truncate">
+            {t("quickCreate.parsed.label", { label: parsed.label })}
+          </span>
+          <span className="shrink-0 text-muted">{t("quickCreate.parsed.hint")}</span>
+          <button
+            type="button"
+            aria-label={t("quickCreate.parsed.cancel")}
+            // mousedown 而不是 click：避免输入框失焦被当成「取消快速创建」。
+            onMouseDown={(event) => {
+              event.preventDefault();
+              setDismissed(phraseText(title, parsed));
+              inputRef.current?.focus();
+            }}
+            className="flex size-4 shrink-0 items-center justify-center rounded text-muted hover:bg-primary/20 hover:text-text"
+          >
+            {"✕"}
+          </button>
+        </div>
+      )}
     </div>
   );
+}
+
+/**
+ * 被识别出来的短语原文（日期与时间用「|」连接）：用来判断用户取消的是不是同一段短语。
+ *
+ * @param text 输入框文本。
+ * @param result 识别结果。
+ * @returns 短语原文。
+ */
+function phraseText(text: string, result: DatePhraseResult): string {
+  return result.spans.map(([start, end]) => text.slice(start, end)).join("|");
+}
+
+/**
+ * 解析标题里的日期短语；用户已经取消了的那一段不再识别。
+ *
+ * @param title 输入框文本。
+ * @param today 今天；缺省用本机日期。
+ * @param dismissed 用户取消识别的短语原文。
+ * @returns 识别结果，或 `null`。
+ */
+function parseTitle(
+  title: string,
+  today: string | undefined,
+  dismissed: string | null,
+): DatePhraseResult | null {
+  const result = parseDatePhrase(title, today ?? format(new Date(), "yyyy-MM-dd"));
+  return result === null || phraseText(title, result) === dismissed ? null : result;
 }

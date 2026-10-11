@@ -7,6 +7,7 @@ import type {
   CaptureRequestDto,
   CaptureResultDto,
   CreateItemRequest,
+  DatePointDto,
   ExpandedLayoutDto,
   InboxEntryDto,
   IpcError,
@@ -100,7 +101,11 @@ export interface IpcClient {
    * 快速创建（悬浮窗 Quick Create）：只需要类型与标题，日期等默认值由后端决定
    * （Todo 与 Tip 的计划日期是今天，Note 没有日期）。
    */
-  quickCreate(itemType: ItemTypeDto, title: string): Promise<ItemDto>;
+  quickCreate(
+    itemType: ItemTypeDto,
+    title: string,
+    scheduled?: DatePointDto | null,
+  ): Promise<ItemDto>;
   /** 完成一个 Todo（完成不改变它在 Today 中的位置记录，撤销后回到原位）。 */
   completeItem(id: string): Promise<ItemDto>;
   /** 重新打开已完成的 Todo，也是「完成」的撤销。 */
@@ -371,7 +376,8 @@ const tauriIpc: IpcClient = {
   renameTag: (id, name) => call("rename_tag", commands.renameTag(id, name)),
   mergeTags: (from, into) => call("merge_tags", commands.mergeTags(from, into)),
   setItemTags: (id, names) => call("set_item_tags", commands.setItemTags(id, names)),
-  quickCreate: (itemType, title) => call("quick_create", commands.quickCreate({ itemType, title })),
+  quickCreate: (itemType, title, scheduled) =>
+    call("quick_create", commands.quickCreate({ itemType, title, scheduled: scheduled ?? null })),
   rescheduleItem: (id, target) => call("reschedule_item", commands.rescheduleItem(id, target)),
   reorderToday: async (orderedIds) => {
     await call("reorder_today", commands.reorderToday(orderedIds));
@@ -480,7 +486,7 @@ export const ipc: IpcClient = {
   renameTag: (id, name) => current.renameTag(id, name),
   mergeTags: (from, into) => current.mergeTags(from, into),
   setItemTags: (id, names) => current.setItemTags(id, names),
-  quickCreate: (itemType, title) => current.quickCreate(itemType, title),
+  quickCreate: (itemType, title, scheduled) => current.quickCreate(itemType, title, scheduled),
   rescheduleItem: (id, target) => current.rescheduleItem(id, target),
   reorderToday: (orderedIds) => current.reorderToday(orderedIds),
   completeItem: (id) => current.completeItem(id),

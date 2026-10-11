@@ -114,6 +114,7 @@ export function TodayPanel({
           kind={quickCreateKind}
           onKindChange={onQuickCreateKindChange}
           onPasteNonText={capture?.onPaste}
+          today={view?.date}
           onDone={onQuickCreateDone}
         />
       )}

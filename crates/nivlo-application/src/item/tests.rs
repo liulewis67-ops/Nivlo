@@ -605,3 +605,33 @@ async fn rescheduling_to_the_inbox_marks_it_pending_and_a_dated_restore_organize
     assert!(!restored.in_inbox());
     assert_eq!(restored.scheduled(), original);
 }
+
+#[tokio::test]
+async fn quick_create_scheduled_uses_the_given_plan_instead_of_the_default() {
+    let f = fixture();
+    let plan = DatePoint::at(
+        NaiveDate::from_ymd_opt(2026, 10, 15).unwrap(),
+        chrono::NaiveTime::from_hms_opt(15, 30, 0).unwrap(),
+    );
+
+    let todo = f
+        .service
+        .quick_create_scheduled(ItemType::Todo, "  Review PR ", plan)
+        .await
+        .unwrap();
+    let note = f
+        .service
+        .quick_create_scheduled(ItemType::Note, "想法", plan)
+        .await
+        .unwrap();
+
+    assert_eq!(todo.title().as_str(), "Review PR");
+    assert_eq!(todo.scheduled(), Some(plan));
+    assert_eq!(note.scheduled(), Some(plan), "笔记也可以有计划日期");
+    let err = f
+        .service
+        .quick_create_scheduled(ItemType::Todo, "  ", plan)
+        .await
+        .unwrap_err();
+    assert_eq!(err.code, ErrorCode::ItemTitleEmpty);
+}

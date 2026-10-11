@@ -21,6 +21,7 @@ import type {
   TagDto,
   TagSummaryDto,
   CreateItemRequest,
+  DatePointDto,
   ItemDto,
   IpcClient,
   ItemTypeDto,
@@ -684,7 +685,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     failNextBeginInputWith: (error: AppError) => {
       beginInputFailure = error;
     },
-    quickCreate: (itemType: ItemTypeDto, title: string) => {
+    quickCreate: (itemType: ItemTypeDto, title: string, given?: DatePointDto | null) => {
       calls.push("quickCreate");
       if (quickCreateFailure !== undefined) {
         const failure = quickCreateFailure;
@@ -692,7 +693,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         return Promise.reject(failure);
       }
       // 与后端一致：Todo / Tip 默认今天，Note 没有日期。
-      const scheduled = itemType === "note" ? null : { date: today.date, time: null };
+      const scheduled = given ?? (itemType === "note" ? null : { date: today.date, time: null });
       return insert({
         itemType,
         title,

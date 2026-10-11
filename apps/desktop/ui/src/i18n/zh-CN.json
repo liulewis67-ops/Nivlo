@@ -49,6 +49,11 @@
     "input": {
       "label": "标题",
       "placeholder": "输入标题，回车创建，Tab 换类型"
+    },
+    "parsed": {
+      "label": "识别到计划：{{label}}",
+      "cancel": "取消日期识别",
+      "hint": "退格键可取消"
     }
   },
   "notes": {

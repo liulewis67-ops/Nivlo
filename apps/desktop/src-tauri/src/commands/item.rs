@@ -1,5 +1,6 @@
 //! Item 相关的 Command。
 
+use nivlo_domain::item::DatePoint;
 use tauri::State;
 
 use crate::app::AppState;
@@ -42,11 +43,23 @@ pub async fn quick_create(
     state: State<'_, AppState>,
     request: QuickCreateRequest,
 ) -> Result<ItemDto, IpcError> {
-    let item = state
-        .services
-        .items
-        .quick_create(request.item_type.into(), &request.title)
-        .await?;
+    let items = &state.services.items;
+    let item = match request.scheduled {
+        Some(scheduled) => {
+            items
+                .quick_create_scheduled(
+                    request.item_type.into(),
+                    &request.title,
+                    DatePoint::try_from(scheduled)?,
+                )
+                .await?
+        }
+        None => {
+            items
+                .quick_create(request.item_type.into(), &request.title)
+                .await?
+        }
+    };
     Ok(ItemDto::from(&item))
 }
 
