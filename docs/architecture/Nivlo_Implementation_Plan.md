@@ -1420,7 +1420,7 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [x] 可在编辑器中编写产品文档 §12 示例脚本（`export default function transform(input)`，返回 `title` / `content` / `tags`），试运行得到预期 Item（后端 `tests/script_step.rs`；界面 `workflows.test.tsx` 用内存 IPC 走通「添加脚本 → 编辑 → 试运行」）。注：架构文档里没有 §12 脚本示例，按产品文档 §12 实现；示例里的 `dueDate` 暂不支持（草稿没有截止日期字段，返回了也不会被使用）。
   - [x] 脚本错误时显示行号与错误信息（`脚本出错（第 N 行）：…`，`script_errors_report_the_line_number` 覆盖）。
-- **完成记录**：2026-10-12（进行中）：Workflow 编辑区新增「脚本」页签——CodeMirror 6 编辑器（JS 高亮、行号、括号匹配、`ctx.` / `console.` 补全，配色走设计 Token）、脚本主机输入（自动并入 `permissions`）、`ctx` API 参考（`CTX_DTS` 声明文本）、添加 / 移除脚本。后端：`console.*` 输出按行数 / 长度限量收集，经 `StepReport.logs` 展示在试运行里（不写入运行记录）；`export default function transform(input)` 约定参数是输入；返回值 `content` 与 `notes` 等价；只有声明了主机的脚本需要确认权限。**与任务描述的差距**：① 补全来自 `CTX_API` 条目表，并非由 `.d.ts` 驱动的 TypeScript 语言服务（`.d.ts` 仅作参考面板展示）；② 编辑器里没有高亮出错行，行号只显示在试运行的错误信息里；③ 试运行的样例输入只有文本 / 文件两种，没有结构化的 `ctx.metadata` 输入。**未验证**：真实应用里的 CodeMirror 渲染与补全交互——自动化测试只覆盖挂载与文本，未在浏览器窗格中目视检查。
+- **完成记录**：2026-10-12（进行中）：Workflow 编辑区新增「脚本」页签——CodeMirror 6 编辑器（JS 高亮、行号、括号匹配、`ctx.` / `console.` 补全，配色走设计 Token）、脚本主机输入（自动并入 `permissions`）、`ctx` API 参考（`CTX_DTS` 声明文本）、添加 / 移除脚本。后端：`console.*` 输出按行数 / 长度限量收集，经 `StepReport.logs` 展示在试运行里（不写入运行记录）；`export default function transform(input)` 约定参数是输入；返回值 `content` 与 `notes` 等价；只有声明了主机的脚本需要确认权限。**与任务描述的差距**：① 补全来自 `CTX_API` 条目表，并非由 `.d.ts` 驱动的 TypeScript 语言服务（`.d.ts` 仅作参考面板展示）；② 编辑器里没有高亮出错行，行号只显示在试运行的错误信息里；③ 试运行的样例输入只有文本 / 文件两种，没有结构化的 `ctx.metadata` 输入。已在浏览器预览（内存 IPC）里目视确认：编辑器按主题渲染（行号、等宽字体），输入 `ctx.h` 弹出带说明的 `ctx.http.get` 补全。**未验证**：Tauri 真机窗口里的表现。
 
 ### 8.5 Workflow 导入 / 导出
 
