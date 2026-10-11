@@ -1470,7 +1470,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 9.3 Jira API
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：9.2、6.4
 - **任务**：
   - Jira Cloud（Email + API Token）与 Server / Data Center（PAT）。
@@ -1478,9 +1478,9 @@ Phase 12 Backlog                        → 未排期
   - 完整降级链：API → Page Metadata → URL + Page Title。
   - 内网 / 自托管 Jira：用户在 Integration 中配置的 Host 可以绕过 HttpPort 的私网地址限制（只对该 Integration 生效），解决 6.4 中内网 Jira 只能保存工单号的问题。
 - **验收标准**：
-  - [ ] fixtures（录制的 API 响应）测试覆盖字段映射。
-  - [ ] 凭据失效时自动降级并提示用户重新连接。
-- **完成记录**：—
+  - [x] fixtures（`fixtures/jira/api/` 下 Cloud / Server / 全空字段三份响应）测试覆盖字段映射（key、title、description、status、priority、assignee、start / due、labels、project、url），另覆盖认证方式、错误分类、凭据按主机区分、参数校验与内网豁免范围（`jira/tests.rs`）。注：这些响应是按 Jira REST v2 的结构手写的样本，不是从真实实例录制的。
+  - [x] 凭据失效时自动降级并提示用户重新连接（`tests/jira_workflow.rs`：401 → 改用页面标题创建待办，同时返回带 `OPEN_INTEGRATION_SETTINGS:jira` 的运行提示，写入运行记录并在 Run Inspector 显示；从没连接过则静默走旧路径）。
+- **完成记录**：2026-10-12（进行中）：`JiraIntegration`（`nivlo-integrations`）——REST v2；Cloud（`*.atlassian.net`）Basic（凭据库存 `email:token`）、Server / DC Bearer PAT；`issue` 操作；401 / 403 → `Unauthorized`，无凭据 → `NotConnected`（不发请求），404 / 429 / 5xx / 超时分别归类；200 返回登录页 HTML 视为凭据失效。内网 / 自托管：`HostPolicy::with_configured_private_hosts` 只对**用户连接过的那个主机**放行私网限制（凭据按主机保存，所以没连接过的主机根本不会发请求）。降级链：内置 Jira Workflow（v2）在读页面之前加一个 `optional` 的 `integration` Step，标题回退写成 `vars.api_title → vars.issue_title → 空`，元数据增加 status / priority / assignee / project / labels / startDate / dueDate；新增模板变量 `url.authority`（主机 + 显式端口）。引擎增加「运行提示」（`RunNotice`）：成功但降级时随结果返回，运行记录里以 `degraded#<动作>` 记录。桌面端启动时注册 Jira，凭据库在 Windows 用 Credential Manager、其他平台暂用内存版。**重要：目前界面里还没有地方保存凭据（9.5），所以 API 路径在真机上还用不起来**；Start date 用 `customfield_10015`（Cloud 默认），自托管实例的自定义字段 ID 可能不同；没有对真实 Jira 实例做过验证；映射到 Item 的只有标题 / 描述，其余字段放在 `metadata_json`，没有映射到 Item 的优先级 / 计划日期。
 
 ### 9.4 GitHub API
 

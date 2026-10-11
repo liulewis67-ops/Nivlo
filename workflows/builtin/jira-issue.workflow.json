@@ -2,22 +2,62 @@
   "schemaVersion": 1,
   "id": "builtin.jira-issue",
   "name": "Jira 工单",
-  "description": "Jira 的 /browse/KEY-123 链接变成待办「[KEY-123] 标题」。先立刻用工单号创建，随后在后台读取页面标题补全；需要登录或没有网络时保持「[KEY-123]」，不受影响。自托管 Jira 同样识别（内网地址读不到标题，只保留工单号）。",
-  "version": 1,
+  "description": "Jira 的 /browse/KEY-123 链接变成待办「[KEY-123] 标题」。已在「集成」里连接 Jira 时，直接用 API 读取标题、状态、负责人、截止日期等；没有连接、凭据失效或读取失败时，依次降级为页面标题、仅工单号，创建待办本身不受影响。自托管 / 内网 Jira 同样识别（内网地址需要先连接才能读取）。",
+  "version": 2,
   "priority": 20,
   "enabled": true,
   "source": "builtin",
   "matcher": {
     "all": [
-      { "field": "input.type", "op": "equals", "value": "url" },
-      { "field": "url.path", "op": "regex", "value": "^/browse/[A-Z][A-Z0-9_]+-\\d+(/|$)" }
+      {
+        "field": "input.type",
+        "op": "equals",
+        "value": "url"
+      },
+      {
+        "field": "url.path",
+        "op": "regex",
+        "value": "^/browse/[A-Z][A-Z0-9_]+-\\d+(/|$)"
+      }
     ]
   },
-  "permissions": { "network": true, "hosts": ["*"] },
+  "permissions": {
+    "network": true,
+    "hosts": [
+      "*"
+    ]
+  },
   "steps": [
-    { "type": "extract", "from": "url.path", "pattern": "^/browse/([A-Z][A-Z0-9_]+-\\d+)", "into": "key" },
-    { "type": "http", "url": "{{ input.url }}", "into": "page", "optional": true },
-    { "type": "htmlMeta", "from": "vars.page", "into": "meta", "optional": true },
+    {
+      "type": "extract",
+      "from": "url.path",
+      "pattern": "^/browse/([A-Z][A-Z0-9_]+-\\d+)",
+      "into": "key"
+    },
+    {
+      "type": "integration",
+      "integration": "jira",
+      "operation": "issue",
+      "params": {
+        "key": "{{ vars.key }}",
+        "host": "{{ url.authority }}",
+        "scheme": "{{ url.scheme }}"
+      },
+      "into": "api",
+      "optional": true
+    },
+    {
+      "type": "http",
+      "url": "{{ input.url }}",
+      "into": "page",
+      "optional": true
+    },
+    {
+      "type": "htmlMeta",
+      "from": "vars.page",
+      "into": "meta",
+      "optional": true
+    },
     {
       "type": "extract",
       "from": "vars.meta_title",
@@ -28,14 +68,21 @@
     {
       "type": "createItem",
       "itemType": "todo",
-      "title": "[{{ vars.key }}] {{ vars.issue_title | default(\"\") | truncate(120) }}",
-      "content": "{{ input.url }}",
+      "title": "[{{ vars.key }}] {{ vars.api_title | default(vars.issue_title) | default(\"\") | truncate(120) }}",
+      "content": "{{ vars.api_description | default(\"\") | truncate(2000) }}\n\n{{ input.url }}",
       "inInbox": true,
       "sourceLabel": "Jira · {{ vars.key }}",
       "metadata": {
         "integration": "jira",
         "issueKey": "{{ vars.key }}",
-        "host": "{{ url.host }}"
+        "host": "{{ url.host }}",
+        "status": "{{ vars.api_status | default(\"\") }}",
+        "priority": "{{ vars.api_priority | default(\"\") }}",
+        "assignee": "{{ vars.api_assignee | default(\"\") }}",
+        "project": "{{ vars.api_project | default(\"\") }}",
+        "labels": "{{ vars.api_labels | default(\"\") }}",
+        "startDate": "{{ vars.api_start | default(\"\") }}",
+        "dueDate": "{{ vars.api_due | default(\"\") }}"
       }
     }
   ]

@@ -191,3 +191,24 @@ async fn the_step_needs_declared_network_permission_and_valid_ids() {
     let bad_template = definition(false, PERMS).replace("{{ input.text }}", "{{ input.text");
     assert!(adapter.parse(&bad_template).is_err());
 }
+
+#[tokio::test]
+async fn an_expired_connection_degrades_with_a_reconnect_notice_but_never_connected_stays_quiet() {
+    let adapter_expired = adapter(FakeHub::new(Err(IntegrationError::Unauthorized)));
+    let result = run(&adapter_expired, &definition(true, PERMS), RunMode::Full).await;
+    let notice = result.notice.clone().expect("应当提示重新连接");
+    assert!(notice.message.contains("重新连接"));
+    assert_eq!(
+        notice.action,
+        Some(FailureAction::OpenIntegrationSettings {
+            integration: "fakehub".to_owned()
+        })
+    );
+    // 降级后照样创建了条目。
+    assert_eq!(result.result.unwrap()[0].title, "无标题");
+
+    let adapter_never = adapter(FakeHub::new(Err(IntegrationError::NotConnected)));
+    let result = run(&adapter_never, &definition(true, PERMS), RunMode::Full).await;
+    assert!(result.notice.is_none());
+    assert!(result.result.is_ok());
+}

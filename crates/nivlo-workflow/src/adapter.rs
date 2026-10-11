@@ -5,8 +5,8 @@ use std::time::Duration;
 use async_trait::async_trait;
 use chrono::NaiveDate;
 use nivlo_application::workflow::{
-    FailureKind, PlannedItem, RunMode, StepOutcome, StepReport, WorkflowEngine, WorkflowFailure,
-    WorkflowIssue, WorkflowRunResult,
+    FailureKind, PlannedItem, RunMode, RunNotice, StepOutcome, StepReport, WorkflowEngine,
+    WorkflowFailure, WorkflowIssue, WorkflowRunResult,
 };
 use nivlo_domain::capture::CaptureInput;
 use nivlo_domain::workflow::Workflow;
@@ -148,11 +148,17 @@ fn result_of(
     outcome: Result<RunReport, RunFailure>,
     duration: Duration,
 ) -> WorkflowRunResult {
+    let mut notice = None;
     let (result, steps) = match outcome {
-        Ok(report) => (
-            Ok(report.drafts.into_iter().map(planned).collect()),
-            report.steps,
-        ),
+        Ok(report) => {
+            notice = report
+                .notice
+                .map(|(message, action)| RunNotice { message, action });
+            (
+                Ok(report.drafts.into_iter().map(planned).collect()),
+                report.steps,
+            )
+        }
         Err(failure) => (
             Err(WorkflowFailure {
                 kind: failure_kind(failure.error.kind),
@@ -168,6 +174,7 @@ fn result_of(
         workflow_name: workflow.name.clone(),
         result,
         steps: steps.iter().map(step_report).collect(),
+        notice,
         duration_ms: millis(duration),
     }
 }

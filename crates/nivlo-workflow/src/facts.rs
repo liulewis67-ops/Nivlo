@@ -152,6 +152,13 @@ impl InputFacts<'_> {
                         "url.host".to_owned(),
                         parsed.host_str().unwrap_or_default().to_owned(),
                     );
+                    // 主机加显式端口（`jira.corp:8080`）：自托管服务常用非默认端口，集成要用它拼地址。
+                    let authority = match (parsed.host_str(), parsed.port()) {
+                        (Some(host), Some(port)) => format!("{host}:{port}"),
+                        (Some(host), None) => host.to_owned(),
+                        _ => String::new(),
+                    };
+                    scope.insert("url.authority".to_owned(), authority);
                     scope.insert("url.path".to_owned(), parsed.path().to_owned());
                     for (key, value) in parsed.query_pairs() {
                         scope

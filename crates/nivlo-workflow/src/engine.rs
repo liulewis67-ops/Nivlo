@@ -7,6 +7,7 @@
 //! * 不碰数据库、文件系统、网络——产出的是待创建的 [`ItemDraft`]，由 Application 层在事务里落库。
 //!   因此「试运行」就是照常运行 Engine 再把草稿丢掉，不可能有副作用。
 
+use nivlo_application::workflow::FailureAction;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -60,6 +61,8 @@ pub struct RunReport {
     pub steps: Vec<StepRecord>,
     /// 是否因为 `condition` 不满足提前停止。
     pub stopped_early: bool,
+    /// 运行成功但降级时的提示（如凭据失效）。
+    pub notice: Option<(String, Option<FailureAction>)>,
 }
 
 /// 运行失败。
@@ -202,10 +205,11 @@ impl Engine {
             () = options.cancel.cancelled() => Err((StepError::fatal("已取消"), None)),
         };
         match outcome {
-            Ok((drafts, stopped_early)) => Ok(RunReport {
+            Ok((drafts, stopped_early, notice)) => Ok(RunReport {
                 drafts,
                 steps,
                 stopped_early,
+                notice,
             }),
             Err((error, failed_step)) => Err(RunFailure {
                 error,
@@ -222,7 +226,14 @@ impl Engine {
         facts: &InputFacts<'_>,
         options: &RunOptions,
         steps: &mut Vec<StepRecord>,
-    ) -> Result<(Vec<ItemDraft>, bool), (StepError, Option<usize>)> {
+    ) -> Result<
+        (
+            Vec<ItemDraft>,
+            bool,
+            Option<(String, Option<FailureAction>)>,
+        ),
+        (StepError, Option<usize>),
+    > {
         let mut ctx = RunContext {
             scope: facts.scope(options.today),
             drafts: Vec::new(),
@@ -233,6 +244,7 @@ impl Engine {
             network: options.network,
             stopped: false,
             logs: Vec::new(),
+            notice: None,
         };
         for (index, step) in workflow.steps.iter().enumerate() {
             let kind = step_kind(step);
@@ -286,7 +298,7 @@ impl Engine {
                 push_tag(&mut draft.tags, tag.clone());
             }
         }
-        Ok((drafts, ctx.stopped))
+        Ok((drafts, ctx.stopped, ctx.notice))
     }
 }
 

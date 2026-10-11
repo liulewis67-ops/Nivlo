@@ -124,12 +124,13 @@ pub fn build_app_state(
             settings.clone(),
         )),
     );
-    // 第三方集成（Jira / GitHub，9.3 / 9.4 注册具体实现）只经 IntegrationRegistry 抽象调用。
+    // 第三方集成只经 IntegrationRegistry 抽象调用；凭据只在各集成内部从系统凭据库读取。
     if let Some(http) = http {
-        adapter = adapter.with_integrations(
-            Arc::new(nivlo_application::ports::integration::IntegrationRegistry::new()),
-            http,
-        );
+        let mut integrations = nivlo_application::ports::integration::IntegrationRegistry::new();
+        integrations.register(Arc::new(nivlo_integrations::JiraIntegration::new(
+            crate::credentials::system_credentials(),
+        )));
+        adapter = adapter.with_integrations(Arc::new(integrations), http);
     }
     let engine: Arc<dyn WorkflowEngine> = Arc::new(adapter);
     // 网页标题等联网的补全在后台队列里做，捕获本身不等网络。

@@ -130,6 +130,8 @@ pub struct RunContext<'a> {
     pub stopped: bool,
     /// 当前 Step 产生的 `console` 输出；Engine 在 Step 结束后取走。
     pub logs: Vec<String>,
+    /// 运行成功但降级时的提示（第一条有效）；Engine 在运行结束后放进结果。
+    pub notice: Option<(String, Option<FailureAction>)>,
 }
 
 impl RunContext<'_> {
@@ -233,6 +235,11 @@ impl ExecutorRegistry {
         registry.register(Arc::new(CreateItemExecutor));
         registry.register(Arc::new(AddTagExecutor));
         registry.register(Arc::new(HtmlMetaExecutor));
+        // 默认没有任何集成：可选的 `integration` Step 直接跳过，不可选的报「没有这个集成」。
+        registry.register(Arc::new(crate::integration_step::IntegrationExecutor::new(
+            Arc::new(nivlo_application::ports::integration::IntegrationRegistry::new()),
+            Arc::new(crate::integration_step::UnavailableHttp),
+        )));
         registry
     }
 }

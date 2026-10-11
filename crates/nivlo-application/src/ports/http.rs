@@ -158,6 +158,9 @@ pub struct HostPolicy {
     allowed: Vec<String>,
     /// 是否放行环回 / 私有地址——**只给测试用**（连本机的假服务器）。
     allow_private: bool,
+    /// 用户在 Integration 里亲自配置过的主机（如内网 Jira）：只有它们可以绕过私网地址限制，
+    /// 其他主机（包括重定向的目标）仍然被拒绝。
+    private_ok: Vec<String>,
 }
 
 impl HostPolicy {
@@ -175,6 +178,7 @@ impl HostPolicy {
                 .filter(|h| !h.is_empty())
                 .collect(),
             allow_private: false,
+            private_ok: Vec::new(),
         }
     }
 
@@ -182,6 +186,24 @@ impl HostPolicy {
     #[must_use]
     pub fn allowing_private_network_for_tests(mut self) -> Self {
         self.allow_private = true;
+        self
+    }
+
+    /// 允许访问这些**用户亲自配置过**的内网 / 自托管主机（只对它们放行私网限制）。
+    ///
+    /// 只应该由 Integration 适配器对「用户已连接的主机」调用，不能用 Workflow 里声明的主机。
+    #[must_use]
+    pub fn with_configured_private_hosts<I, S>(mut self, hosts: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        self.private_ok.extend(
+            hosts
+                .into_iter()
+                .map(|h| h.as_ref().trim().to_ascii_lowercase())
+                .filter(|h| !h.is_empty()),
+        );
         self
     }
 
@@ -214,7 +236,7 @@ impl HostPolicy {
             .ok_or_else(|| HttpError::InvalidUrl("缺少主机".to_owned()))?
             .trim_matches(['[', ']'])
             .to_ascii_lowercase();
-        if !self.allow_private && is_private_host(&host) {
+        if !self.allow_private && is_private_host(&host) && !self.private_ok.contains(&host) {
             return Err(denied(&host, "不允许访问本机或内网地址"));
         }
         if self

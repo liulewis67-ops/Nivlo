@@ -3,5 +3,7 @@
 //! 禁止依赖：`tauri`、其他 Adapter 的内部实现（参见后端规范 §3.1）。
 
 pub mod http;
+pub mod jira;
 
 pub use http::ReqwestHttp;
+pub use jira::JiraIntegration;

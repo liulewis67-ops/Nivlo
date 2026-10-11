@@ -19,6 +19,26 @@ use nivlo_domain::workflow::Step;
 
 use crate::executor::{ErrorKind, RunContext, StepError, StepExecutor, step_kind};
 
+/// 没有网络组件时用的占位 Port：任何请求都失败。配合空的注册表，让引擎总能处理 `integration` Step。
+pub struct UnavailableHttp;
+
+#[async_trait]
+impl HttpPort for UnavailableHttp {
+    /// 总是失败。
+    async fn get(
+        &self,
+        _request: &nivlo_application::ports::http::HttpRequest,
+        _policy: &HostPolicy,
+    ) -> Result<
+        nivlo_application::ports::http::HttpResponse,
+        nivlo_application::ports::http::HttpError,
+    > {
+        Err(nivlo_application::ports::http::HttpError::Network(
+            "网络组件不可用".to_owned(),
+        ))
+    }
+}
+
 /// `integration` 的执行器。
 pub struct IntegrationExecutor {
     /// 已注册的集成。
@@ -116,6 +136,10 @@ impl StepExecutor for IntegrationExecutor {
             });
         }
         let Some(adapter) = self.registry.get(integration) else {
+            // 可选的 Step 引用了没有注册的集成（比如网络组件初始化失败）：当作没有连接，直接跳过。
+            if *optional {
+                return Ok(());
+            }
             return Err(StepError::fatal(format!("没有名为 {integration} 的集成")));
         };
         let mut rendered = BTreeMap::new();
@@ -149,6 +173,11 @@ impl StepExecutor for IntegrationExecutor {
                     integration = integration.as_str(),
                     "可选的 integration Step 被跳过"
                 );
+                // 凭据失效（曾经连接过）：降级继续，但要提示用户重新连接。从没连接过不打扰。
+                if matches!(error, IntegrationError::Unauthorized) && ctx.notice.is_none() {
+                    let failure = step_error(&error, integration, adapter.display_name());
+                    ctx.notice = Some((failure.message, failure.action));
+                }
                 Ok(())
             }
             Err(error) => Err(step_error(&error, integration, adapter.display_name())),

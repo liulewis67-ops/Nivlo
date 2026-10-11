@@ -107,6 +107,15 @@ impl FailureAction {
     }
 }
 
+/// 一次成功的运行里值得告诉用户的事（如「Jira 的连接已失效」）：运行没有失败，但降级了。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RunNotice {
+    /// 说明。
+    pub message: String,
+    /// 界面应当提供的下一步动作。
+    pub action: Option<FailureAction>,
+}
+
 /// Workflow 运行失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorkflowFailure {
@@ -182,6 +191,8 @@ pub struct WorkflowRunResult {
     pub result: Result<Vec<PlannedItem>, WorkflowFailure>,
     /// 每个 Step 的记录。
     pub steps: Vec<StepReport>,
+    /// 运行成功但降级时的提示（如凭据失效、已自动降级）。
+    pub notice: Option<RunNotice>,
     /// 总耗时（毫秒）。
     pub duration_ms: u64,
 }

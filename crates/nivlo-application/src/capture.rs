@@ -443,11 +443,21 @@ impl CaptureService {
             status,
             // 动作附在失败分类后面（`user_action_required#OPEN_INTEGRATION_SETTINGS:jira`），
             // 这样不需要为运行记录增加列；界面按 `#` 拆开。
-            error_kind: failure.map(|f| match &f.action {
-                Some(action) => format!("{}#{}", f.kind.as_str(), action.code()),
-                None => f.kind.as_str().to_owned(),
-            }),
-            error_message: failure.map(|f| f.message.clone()),
+            error_kind: failure
+                .map(|f| match &f.action {
+                    Some(action) => format!("{}#{}", f.kind.as_str(), action.code()),
+                    None => f.kind.as_str().to_owned(),
+                })
+                // 成功但降级（如 Jira 凭据失效，已改用页面信息）：同样记下提示与动作，Run Inspector 会显示。
+                .or_else(|| {
+                    run.notice.as_ref().map(|n| match &n.action {
+                        Some(action) => format!("degraded#{}", action.code()),
+                        None => "degraded".to_owned(),
+                    })
+                }),
+            error_message: failure
+                .map(|f| f.message.clone())
+                .or_else(|| run.notice.as_ref().map(|n| n.message.clone())),
             items_created: u32::try_from(items_created).unwrap_or(u32::MAX),
             duration_ms: run.duration_ms,
             started_at,

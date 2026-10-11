@@ -15,6 +15,7 @@ pub mod autostart;
 pub mod backup;
 pub mod clipboard;
 pub mod commands;
+pub mod credentials;
 pub mod diagnostics;
 pub mod dto;
 pub mod events;

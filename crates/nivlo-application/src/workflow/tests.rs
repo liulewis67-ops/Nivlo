@@ -82,6 +82,7 @@ impl WorkflowEngine for FakeEngine {
                 metadata: Default::default(),
             }]),
             steps: Vec::new(),
+            notice: None,
             duration_ms: 1,
         }
     }
