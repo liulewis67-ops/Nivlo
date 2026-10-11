@@ -1484,13 +1484,13 @@ Phase 12 Backlog                        → 未排期
 
 ### 9.4 GitHub API
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：9.2、6.5
 - **任务**：
   - Token 认证；Issue / PR 的标题、状态、标签、指派人、里程碑。
 - **验收标准**：
-  - [ ] fixtures 测试覆盖 Issue 与 PR；私有仓库在配置 Token 后可获取。
-- **完成记录**：—
+  - [x] fixtures 测试覆盖 Issue 与 PR（`fixtures/github/api/` 下 issue / pull（已合并）/ pull-draft / rate-limited，`github/tests.rs`）；私有仓库在配置 Token 后可获取（`tests/github_workflow.rs`：假服务器对匿名请求返回 404、对带 Bearer 的请求返回内容；配置 Token 前后对比）。注：样本是按 GitHub REST 的结构手写的，不是从真实 API 录制的。
+- **完成记录**：2026-10-12（进行中）：`GithubIntegration`（`issue` / `pull` 两个操作，只访问 `api.github.com`，`Authorization: Bearer <PAT>` + `X-GitHub-Api-Version`）；映射 title / state（PR 已合并显示 `merged`）/ draft / body / author / labels / assignees / milestone / url；401 → 凭据失效，403 按响应说明区分限流（可重试）与权限不足（提示重新连接），404 提示「找不到或 Token 没有权限」；没有 Token → `NotConnected`（不发请求）。内置 GitHub Issue / PR Workflow（v2）在匿名 API 之前加了一个 `optional` 的 `integration` Step：标题回退 带认证 API → 匿名 API → 页面标题，元数据新增 labels / assignees / milestone，`state` 优先用认证 API 的结果。桌面端启动时注册。**同样受限于 9.5**：界面里还没有保存 Token 的地方，所以真机上目前只能走匿名路径；GitHub Enterprise 不支持；没有对真实 GitHub 做过验证。
 
 ### 9.5 Integration 设置 UI
 

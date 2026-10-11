@@ -127,8 +127,12 @@ pub fn build_app_state(
     // 第三方集成只经 IntegrationRegistry 抽象调用；凭据只在各集成内部从系统凭据库读取。
     if let Some(http) = http {
         let mut integrations = nivlo_application::ports::integration::IntegrationRegistry::new();
+        let credentials = crate::credentials::system_credentials();
         integrations.register(Arc::new(nivlo_integrations::JiraIntegration::new(
-            crate::credentials::system_credentials(),
+            credentials.clone(),
+        )));
+        integrations.register(Arc::new(nivlo_integrations::GithubIntegration::new(
+            credentials,
         )));
         adapter = adapter.with_integrations(Arc::new(integrations), http);
     }
