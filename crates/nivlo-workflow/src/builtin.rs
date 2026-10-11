@@ -36,6 +36,11 @@ pub fn builtin_workflows() -> Vec<Workflow> {
         .iter()
         .filter_map(|(name, json)| match serde_json::from_str::<Workflow>(json) {
             Ok(mut workflow) => {
+                // 格式版本不兼容（比当前程序新）的定义跳过并记录，而不是导入一个读不懂的 Workflow。
+                if let Err(error) = workflow.validate() {
+                    tracing::error!(event = "builtin_workflow_skipped", name, %error, "内置 Workflow 未通过校验，已跳过");
+                    return None;
+                }
                 workflow.source = WorkflowSource::Builtin;
                 Some(workflow)
             }
@@ -45,4 +50,24 @@ pub fn builtin_workflows() -> Vec<Workflow> {
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod schema_tests {
+    use super::*;
+
+    #[test]
+    fn every_shipped_definition_loads_and_is_marked_builtin() {
+        let all = builtin_workflows();
+        assert_eq!(all.len(), DEFINITIONS.len());
+        assert!(all.iter().all(|w| w.source == WorkflowSource::Builtin));
+        assert!(all.iter().all(|w| w.id.as_str().starts_with("builtin.")));
+    }
+
+    #[test]
+    fn a_definition_from_a_newer_schema_is_rejected_by_validation() {
+        let mut workflow = builtin_workflows().remove(0);
+        workflow.schema_version = 999;
+        assert!(workflow.validate().is_err());
+    }
 }

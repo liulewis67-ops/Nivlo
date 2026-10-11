@@ -141,7 +141,7 @@ Phase 12 Backlog                        → 未排期
 | | 5.6 | Workflow Run 记录与调试 | ✅ |
 | | 5.7 | Workflow 管理 UI | ✅ |
 | **P6** | 6.1 | HttpPort 与网络权限 | ⬜ |
-| | 6.2 | 内置 Workflow 打包与同步 | ⬜ |
+| | 6.2 | 内置 Workflow 打包与同步 | ✅ |
 | | 6.3 | Generic Web Page（页面元数据） | ⬜ |
 | | 6.4 | Jira Issue（无 API 降级路径） | ⬜ |
 | | 6.5 | GitHub Issue / PR | ⬜ |
@@ -1099,7 +1099,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 6.2 内置 Workflow 打包与同步
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.1
 - **目标**：实现架构文档 §51 的内置 Workflow 打包与版本同步。
 - **任务**：
@@ -1107,9 +1107,9 @@ Phase 12 Backlog                        → 未排期
   - 启动时读取 → 比较版本 → 同步进数据库；用户的启用状态与优先级覆盖单独保存。
   - `schema_version` 不兼容时跳过并记录。
 - **验收标准**：
-  - [ ] 升级内置定义版本后数据库中定义更新，用户的启用 / 优先级设置保留。
-  - [ ] 用户复制出的 Workflow 不受内置升级影响。
-- **完成记录**：—
+  - [x] 升级内置定义版本后数据库中定义更新，用户的启用 / 优先级设置保留。
+  - [x] 用户复制出的 Workflow 不受内置升级影响。
+- **完成记录**：2026-10-11 完成。内置定义用 `include_str!` 编译进二进制（等价于应用资源，且不会被用户误删），启动时 `sync_builtin`：缺失的加入、版本升高的覆盖定义并保留用户的启用 / 优先级、同版本不动；格式版本不兼容的定义跳过并记录日志。测试：`builtin_sync_adds_missing_ones_and_keeps_user_choices_on_upgrade`、`a_definition_from_a_newer_schema_is_rejected_by_validation`；用户副本使用 `user.*` ID，同步只触碰 `builtin.*`，因此不受升级影响。偏差：启用 / 优先级直接写在 workflows 行里（升级时保留），没有单独的覆盖表。
 
 ### 6.3 Generic Web Page（页面元数据）
 
