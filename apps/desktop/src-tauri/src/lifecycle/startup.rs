@@ -100,7 +100,14 @@ pub fn build_app_state(
         clock.clone(),
         Arc::new(event_bus.clone()),
     );
-    let engine: Arc<dyn WorkflowEngine> = Arc::new(WorkflowEngineAdapter::standard());
+    // 网络只通过 HttpPort：Workflow 声明了 hosts 才能访问，初始化失败时退回没有 http Step 的引擎。
+    let engine: Arc<dyn WorkflowEngine> = match nivlo_integrations::ReqwestHttp::new() {
+        Ok(http) => Arc::new(WorkflowEngineAdapter::with_http(Arc::new(http))),
+        Err(error) => {
+            tracing::warn!(event = "http_unavailable", %error, "网络组件初始化失败，http Step 不可用");
+            Arc::new(WorkflowEngineAdapter::standard())
+        }
+    };
     let capture = CaptureService::new(
         Arc::new(database.clone()),
         clock.clone(),

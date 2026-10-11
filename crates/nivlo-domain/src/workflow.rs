@@ -40,6 +40,9 @@ pub enum WorkflowError {
     /// Step 数量超过上限。
     #[error("Workflow 最多 {MAX_WORKFLOW_STEPS} 个 Step，实际 {0} 个")]
     TooManySteps(usize),
+    /// 用了 `http` Step，却没有声明 `permissions.network` 与允许访问的主机。
+    #[error("http Step 需要在 permissions 里声明 network: true 和允许访问的 hosts")]
+    NetworkNotDeclared,
     /// 没有任何 CreateItem Step：这样的 Workflow 什么都不会创建。
     #[error("Workflow 至少需要一个 createItem Step")]
     NoCreateItem,
@@ -374,6 +377,19 @@ pub enum Step {
         #[serde(default)]
         otherwise: Otherwise,
     },
+    /// 发一个 GET 请求，响应正文存进 `vars.<into>`（最终地址存进 `vars.<into>_url`）。
+    ///
+    /// 只能访问 `permissions.hosts` 声明过的主机（重定向后的主机也要检查）；
+    /// `optional` 为真时，网络失败 / 超时 / 非 2xx 不算错误，Step 直接跳过（离线时仍能创建 Item）。
+    Http {
+        /// 地址模板。
+        url: String,
+        /// 响应正文存进哪个变量。
+        into: String,
+        /// 请求失败时是否继续（权限不足不算在内：那是配置错误）。
+        #[serde(default)]
+        optional: bool,
+    },
     /// 创建一条 Item。
     CreateItem {
         /// 类型。
@@ -423,9 +439,12 @@ fn default_true() -> bool {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Permissions {
-    /// 是否需要访问网络（Phase 6 的 HttpPort）。
+    /// 是否需要访问网络（经 HttpPort）。
     #[serde(default)]
     pub network: bool,
+    /// 允许访问的主机：精确主机名或 `*.example.com`。不在列表里的一律拒绝。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hosts: Vec<String>,
 }
 
 /// 一个 Workflow。
@@ -548,6 +567,14 @@ impl Workflow {
                             field: var.clone(),
                             op: op.name().to_owned(),
                         });
+                    }
+                }
+                Step::Http { into, .. } => {
+                    if !valid_variable(into) {
+                        return Err(WorkflowError::InvalidVariable(into.clone()));
+                    }
+                    if !self.permissions.network || self.permissions.hosts.is_empty() {
+                        return Err(WorkflowError::NetworkNotDeclared);
                     }
                 }
                 Step::CreateItem { .. } | Step::AddTag { .. } => {}

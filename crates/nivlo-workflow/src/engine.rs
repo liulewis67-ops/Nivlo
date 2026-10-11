@@ -111,6 +111,14 @@ impl Engine {
         )
     }
 
+    /// 标准配置，外加 `http` Step（经给定的网络 Port）。
+    #[must_use]
+    pub fn with_http(port: Arc<dyn nivlo_application::ports::http::HttpPort>) -> Self {
+        let mut registry = ExecutorRegistry::standard();
+        registry.register(Arc::new(crate::http_step::HttpExecutor::new(port)));
+        Self::new(registry, Arc::new(RegexCache::new()), DEFAULT_TIMEOUT)
+    }
+
     /// 与 Matcher / Resolver 共用的正则缓存。
     #[must_use]
     pub fn regexes(&self) -> &RegexCache {
@@ -171,6 +179,7 @@ impl Engine {
             tags: Vec::new(),
             files: files_of(facts.input).into_iter().cloned().collect(),
             regexes: &self.regexes,
+            permissions: &workflow.permissions,
             stopped: false,
         };
         for (index, step) in workflow.steps.iter().enumerate() {

@@ -33,6 +33,14 @@ impl WorkflowEngineAdapter {
         }
     }
 
+    /// 标准配置，并启用 `http` Step（经给定的网络 Port）。
+    #[must_use]
+    pub fn with_http(port: std::sync::Arc<dyn nivlo_application::ports::http::HttpPort>) -> Self {
+        Self {
+            engine: Engine::with_http(port),
+        }
+    }
+
     /// 用指定的引擎创建适配器（测试注入假 Executor）。
     #[must_use]
     pub fn new(engine: Engine) -> Self {

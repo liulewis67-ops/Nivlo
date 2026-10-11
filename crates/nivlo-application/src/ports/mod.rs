@@ -1,6 +1,7 @@
 //! Application 层定义的 Port。
 
 mod files;
+pub mod http;
 mod storage;
 
 pub use files::{AttachmentFiles, StoredFile};

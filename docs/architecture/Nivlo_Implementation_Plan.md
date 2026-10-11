@@ -140,7 +140,7 @@ Phase 12 Backlog                        → 未排期
 | | 5.5 | Capture 接入 Workflow | 🟨 |
 | | 5.6 | Workflow Run 记录与调试 | ✅ |
 | | 5.7 | Workflow 管理 UI | ✅ |
-| **P6** | 6.1 | HttpPort 与网络权限 | ⬜ |
+| **P6** | 6.1 | HttpPort 与网络权限 | ✅ |
 | | 6.2 | 内置 Workflow 打包与同步 | ✅ |
 | | 6.3 | Generic Web Page（页面元数据） | ⬜ |
 | | 6.4 | Jira Issue（无 API 降级路径） | ⬜ |
@@ -1085,7 +1085,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 6.1 HttpPort 与网络权限
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.3
 - **目标**：所有网络访问经过统一、受权限约束的 HttpPort（架构文档 §36、§44）。
 - **任务**：
@@ -1093,9 +1093,9 @@ Phase 12 Backlog                        → 未排期
   - 按 Workflow Effective Permission 的 Host 白名单检查；重定向后的 Host 重新检查；默认禁止 localhost / 私有 IP / `file://`。
   - `Http` Step Executor。
 - **验收标准**：
-  - [ ] 测试：未授权 Host → PermissionDenied；重定向到未授权 Host 被拦截；超过大小上限被截断 / 拒绝。
-  - [ ] 日志中不出现 Authorization / Cookie 头（测试断言）。
-- **完成记录**：—
+  - [x] 测试：未授权 Host → PermissionDenied；重定向到未授权 Host 被拦截；超过大小上限被截断 / 拒绝。
+  - [x] 日志中不出现 Authorization / Cookie 头（测试断言）。
+- **完成记录**：2026-10-11 完成。`HttpPort` + `HostPolicy`（`nivlo-application::ports::http`，纯逻辑，真实适配器与 Fake 共用）：只允许 http(s)，默认拒绝 localhost / `*.local` / 环回、私有、链路本地、CGNAT、IPv6 唯一本地与映射地址，主机必须匹配 `permissions.hosts`（精确或 `*.域名`）。`ReqwestHttp`（`nivlo-integrations`，rustls）：自己逐跳跟随重定向并重新检查策略（最多 5 跳）、整体超时、边读边计数的大小上限（超出截断并标记）、系统代理；`encoding_rs` 解码 GBK 等非 UTF-8 页面。`http` Step（Domain `Step::Http` + Schema + 校验：用到 http 必须声明 `network` 与 `hosts`；`optional` 让离线 / 非 2xx 不报错，但权限问题永远报错；状态码分类 403→UserActionRequired、429/5xx→Retryable）。测试：`integrations/src/http/tests.rs`（本机假服务器：未授权主机、重定向到未授权 / 内网被拦、死循环重定向、大小截断、超时）、`integrations/tests/logging.rs`（日志不含查询串 / Authorization / Cookie；独立进程避免 tracing 调用点缓存干扰）、`workflow/tests/http_step.rs`、策略单元测试。已知边界：策略只看 URL 主机，不解析 DNS（见 http.rs 文档）；试运行遇到 http Step 会真实发 GET（只读）。
 
 ### 6.2 内置 Workflow 打包与同步
 

@@ -165,6 +165,7 @@ pub fn check_workflow(workflow: &Workflow, regexes: &RegexCache) -> Result<(), V
                     check_template(&at("scheduled"), source, &mut issues);
                 }
             }
+            Step::Http { url, .. } => check_template(&at("url"), url, &mut issues),
             Step::AddTag { tag } => check_template(&at("tag"), tag, &mut issues),
         }
     }

@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use chrono::NaiveDate;
 use nivlo_domain::capture::FileRef;
 use nivlo_domain::item::{ItemType, Priority};
-use nivlo_domain::workflow::{ForEach, Op, Step};
+use nivlo_domain::workflow::{ForEach, Op, Permissions, Step};
 
 use crate::facts::put_file;
 use crate::glob::glob_match;
@@ -106,6 +106,8 @@ pub struct RunContext<'a> {
     pub files: Vec<FileRef>,
     /// 正则缓存。
     pub regexes: &'a RegexCache,
+    /// Workflow 声明的权限（`http` Step 据此限制可访问的主机）。
+    pub permissions: &'a Permissions,
     /// 条件不满足后置为 `true`：后续 Step 被跳过。
     pub stopped: bool,
 }
@@ -166,6 +168,7 @@ pub fn step_kind(step: &Step) -> &'static str {
         Step::Condition { .. } => "condition",
         Step::CreateItem { .. } => "createItem",
         Step::AddTag { .. } => "addTag",
+        Step::Http { .. } => "http",
     }
 }
 

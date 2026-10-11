@@ -25,7 +25,10 @@
     "permissions": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "network": { "type": "boolean" } }
+      "properties": {
+        "network": { "type": "boolean" },
+        "hosts": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
     }
   },
   "$defs": {
@@ -102,6 +105,17 @@
             "type": { "const": "jsonPath" },
             "from": { "type": "string", "minLength": 1 },
             "path": { "type": "string", "pattern": "^\\$" },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "url", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "http" },
+            "url": { "type": "string", "minLength": 1 },
             "into": { "$ref": "#/$defs/variable" },
             "optional": { "type": "boolean" }
           }
