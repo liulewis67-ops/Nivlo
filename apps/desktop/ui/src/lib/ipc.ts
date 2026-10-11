@@ -19,6 +19,7 @@ import type {
   TagDto,
   TagSummaryDto,
   TodayViewDto,
+  TrashEntryDto,
   UpdateItemRequest,
 } from "@/bindings";
 import { toAppError } from "./errors";
@@ -53,6 +54,7 @@ export type {
   TagSummaryDto,
   TodayItemDto,
   TodayViewDto,
+  TrashEntryDto,
   UpdateItemRequest,
 } from "@/bindings";
 
@@ -133,6 +135,22 @@ export interface IpcClient {
    * 空白查询返回空列表。
    */
   searchItems(query: string): Promise<ItemDto[]>;
+  /**
+   * 删除一批条目：移进回收站（软删除），30 天内可以恢复。一个事务，任何一个不存在整批不变。
+   * 条目立刻从所有视图与搜索里消失。
+   */
+  deleteItems(ids: string[]): Promise<void>;
+  /** 从回收站恢复一批条目（「删除」的撤销）；不在回收站里的被忽略。 */
+  restoreDeletedItems(ids: string[]): Promise<void>;
+  /** 回收站里的全部条目（最近删除的在前），带到期（自动永久清除）时间。 */
+  listTrash(): Promise<TrashEntryDto[]>;
+  /**
+   * 永久删除回收站里的这些条目；不在回收站里的不会被删除。返回实际删除的数量。
+   * 只删除记录与 Nivlo 自己保存的文件，被引用的用户文件不受影响。
+   */
+  purgeItems(ids: string[]): Promise<number>;
+  /** 清空回收站，返回删除的数量。 */
+  emptyTrash(): Promise<number>;
   /** 列出项目（创建时间从早到晚）与各自未完成的 Item 数量；默认不含已归档的。 */
   listProjects(includeArchived: boolean): Promise<ProjectDto[]>;
   /** 创建项目。名称为空抛出 `NAME_EMPTY`，过长抛出 `NAME_TOO_LONG`。 */
@@ -286,6 +304,15 @@ const tauriIpc: IpcClient = {
     await call("open_item_source", commands.openItemSource(id));
   },
   listItems: (request) => call("list_items", commands.listItems(request)),
+  deleteItems: async (ids) => {
+    await call("delete_items", commands.deleteItems(ids));
+  },
+  restoreDeletedItems: async (ids) => {
+    await call("restore_deleted_items", commands.restoreDeletedItems(ids));
+  },
+  listTrash: () => call("list_trash", commands.listTrash()),
+  purgeItems: (ids) => call("purge_items", commands.purgeItems(ids)),
+  emptyTrash: () => call("empty_trash", commands.emptyTrash()),
   searchItems: (query) => call("search_items", commands.searchItems(query)),
   listProjects: (includeArchived) => call("list_projects", commands.listProjects(includeArchived)),
   createProject: (name) => call("create_project", commands.createProject(name)),
@@ -383,6 +410,11 @@ export const ipc: IpcClient = {
   updateItem: (id, request) => current.updateItem(id, request),
   openItemSource: (id) => current.openItemSource(id),
   listItems: (request) => current.listItems(request),
+  deleteItems: (ids) => current.deleteItems(ids),
+  restoreDeletedItems: (ids) => current.restoreDeletedItems(ids),
+  listTrash: () => current.listTrash(),
+  purgeItems: (ids) => current.purgeItems(ids),
+  emptyTrash: () => current.emptyTrash(),
   searchItems: (query) => current.searchItems(query),
   listProjects: (includeArchived) => current.listProjects(includeArchived),
   createProject: (name) => current.createProject(name),

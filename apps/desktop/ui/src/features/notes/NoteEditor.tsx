@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Textarea } from "@/components";
 import { useItemDraft } from "@/features/detail";
 import { useOrganize } from "@/features/inbox";
+import { useDeleteItems } from "@/features/trash";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
 
@@ -25,6 +26,7 @@ export function NoteEditor({ id }: NoteEditorProps) {
   const { t } = useTranslation();
   const { query, draft, status, problem, edit, save } = useItemDraft(id);
   const { organize } = useOrganize();
+  const { remove } = useDeleteItems();
 
   if (query.isError) {
     return (
@@ -71,6 +73,14 @@ export function NoteEditor({ id }: NoteEditorProps) {
             onClick={() => void organize([id], "archive", draft.title)}
           >
             {t("inbox.action.archive")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-danger"
+            onClick={() => void remove([id], draft.title)}
+          >
+            {t("trash.delete")}
           </Button>
         </div>
       </header>

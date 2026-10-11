@@ -18,6 +18,7 @@ use nivlo_application::item::{Patch, RescheduleTarget, UpdateItemInput};
 use nivlo_application::organize::{ProjectSummary, TagSummary};
 use nivlo_application::ports::{ItemFilter, ItemOrder};
 use nivlo_application::today::{TodayEntry, TodayView};
+use nivlo_application::trash::TrashEntry;
 use nivlo_domain::attachment::Attachment;
 use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
 use nivlo_domain::id::{ItemId, ProjectId, TagId};
@@ -989,6 +990,29 @@ impl From<&TagSummary> for TagSummaryDto {
         Self {
             tag: TagDto::from(&value.tag),
             item_count: value.item_count,
+        }
+    }
+}
+
+/// 回收站里的一项（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TrashEntryDto {
+    /// 被删除的 Item。
+    pub item: ItemDto,
+    /// 删除时间（RFC 3339，UTC）。
+    pub deleted_at: String,
+    /// 到期（自动永久清除）的时间（RFC 3339，UTC）。
+    pub expires_at: String,
+}
+
+impl From<&TrashEntry> for TrashEntryDto {
+    /// Application → DTO。
+    fn from(value: &TrashEntry) -> Self {
+        Self {
+            item: ItemDto::from(&value.item),
+            deleted_at: format_utc(value.deleted_at),
+            expires_at: format_utc(value.expires_at),
         }
     }
 }

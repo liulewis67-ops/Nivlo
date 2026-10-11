@@ -13,6 +13,7 @@ use nivlo_application::item::ItemService;
 use nivlo_application::organize::{ProjectService, TagService};
 use nivlo_application::settings::SettingsService;
 use nivlo_application::today::TodayService;
+use nivlo_application::trash::TrashService;
 use nivlo_common::clock::Clock;
 use nivlo_common::logging::LogGuard;
 use nivlo_storage::Database;
@@ -38,6 +39,8 @@ pub struct ApplicationServices {
     pub projects: ProjectService,
     /// 标签（列表 / 重命名 / 合并 / 设置到 Item 上）。
     pub tags: TagService,
+    /// 删除与回收站（恢复、永久清除、30 天自动清除）。
+    pub trash: TrashService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

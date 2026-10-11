@@ -62,6 +62,11 @@ macro_rules! bindings_builder {
                 $crate::commands::item::get_item_detail,
                 $crate::commands::item::update_item,
                 $crate::commands::source::open_item_source::<$runtime>,
+                $crate::commands::trash::delete_items,
+                $crate::commands::trash::restore_deleted_items,
+                $crate::commands::trash::list_trash,
+                $crate::commands::trash::purge_items,
+                $crate::commands::trash::empty_trash,
                 $crate::commands::organize::list_projects,
                 $crate::commands::organize::create_project,
                 $crate::commands::organize::rename_project,
@@ -172,6 +177,27 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 async move { shutdown.cancelled().await },
             ));
             state.runtime.track_task(day_watcher);
+            // 回收站里超过 30 天的条目自动永久清除：启动时一次，之后每 6 小时一次（常驻应用不会重启）。
+            let trash = state.services.trash.clone();
+            let shutdown = state.runtime.shutdown_token();
+            let trash_purger = tauri::async_runtime::spawn(async move {
+                loop {
+                    match trash.purge_expired().await {
+                        Ok(0) => {}
+                        Ok(count) => {
+                            tracing::info!(event = "trash_purged", count, "已清除过期的回收站条目");
+                        }
+                        Err(error) => {
+                            tracing::warn!(event = "trash_purge_failed", %error, "清除过期的回收站条目失败");
+                        }
+                    }
+                    tokio::select! {
+                        () = shutdown.cancelled() => return,
+                        () = tokio::time::sleep(std::time::Duration::from_secs(6 * 60 * 60)) => {}
+                    }
+                }
+            });
+            state.runtime.track_task(trash_purger);
             app.manage(state);
 
             let floating = windows::create_floating_window(app)?;

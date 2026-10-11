@@ -8,7 +8,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_application::ports::{
     AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
     SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
-    Transaction,
+    Transaction, TrashRepository,
 };
 use nivlo_domain::attachment::{Attachment, AttachmentKind};
 use nivlo_domain::id::{AttachmentId, ItemId, ProjectId, SourceId};
@@ -152,6 +152,11 @@ impl Transaction for SqliteTransaction {
 
     /// 返回标签 Repository 视图（即本事务自身）。
     fn tags(&mut self) -> &mut dyn TagRepository {
+        self
+    }
+
+    /// 返回回收站 Repository 视图（即本事务自身）。
+    fn trash(&mut self) -> &mut dyn TrashRepository {
         self
     }
 
@@ -312,7 +317,7 @@ impl ItemRepository for SqliteTransaction {
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
-             WHERE type = 'todo' AND status = 'open' AND archived_at IS NULL
+             WHERE type = 'todo' AND status = 'open' AND archived_at IS NULL AND deleted_at IS NULL
                AND scheduled_date IS NOT NULL AND scheduled_date <= ?
              ORDER BY scheduled_date ASC, created_at ASC, id ASC",
             date
@@ -332,7 +337,7 @@ impl ItemRepository for SqliteTransaction {
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
-             WHERE type = 'tip' AND archived_at IS NULL AND scheduled_date = ?
+             WHERE type = 'tip' AND archived_at IS NULL AND deleted_at IS NULL AND scheduled_date = ?
              ORDER BY scheduled_time ASC, created_at ASC, id ASC",
             date
         )
@@ -357,7 +362,7 @@ impl ItemRepository for SqliteTransaction {
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
-             WHERE type = 'todo' AND archived_at IS NULL
+             WHERE type = 'todo' AND archived_at IS NULL AND deleted_at IS NULL
                AND completed_at IS NOT NULL AND completed_at >= ? AND completed_at < ?
              ORDER BY completed_at ASC, id ASC",
             from,
@@ -393,6 +398,7 @@ impl ItemRepository for SqliteTransaction {
              WHERE (?1 IS NULL OR type = ?1)
                AND (?2 = 1 OR archived_at IS NULL)
                AND (?3 = 0 OR in_inbox = 1)
+               AND deleted_at IS NULL
                AND (?6 IS NULL OR project_id = ?6)
                AND (?7 IS NULL OR EXISTS (
                     SELECT 1 FROM item_tags WHERE item_tags.item_id = items.id AND item_tags.tag_id = ?7))
@@ -455,6 +461,7 @@ impl ItemRepository for SqliteTransaction {
                         OR items_fts.content LIKE ?1 ESCAPE '\\'
                         OR items_fts.source_text LIKE ?1 ESCAPE '\\')
                    AND (?2 = 1 OR items.archived_at IS NULL)
+                   AND items.deleted_at IS NULL
                  ORDER BY (items_fts.title LIKE ?1 ESCAPE '\\') DESC, items.updated_at DESC, items.id DESC
                  LIMIT ?3",
                 pattern,
@@ -481,6 +488,7 @@ impl ItemRepository for SqliteTransaction {
                         items.completed_at, items.archived_at
                  FROM items_fts JOIN items ON items.id = items_fts.item_id
                  WHERE items_fts MATCH ?1 AND (?2 = 1 OR items.archived_at IS NULL)
+                   AND items.deleted_at IS NULL
                  ORDER BY bm25(items_fts, 0.0, 8.0, 1.0, 2.0), items.updated_at DESC, items.id DESC
                  LIMIT ?3",
                 query,

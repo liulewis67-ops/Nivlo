@@ -812,3 +812,112 @@ async fn projects_and_tags_organize_items_and_survive_a_restart() {
     assert_eq!(summary[1]["tag"]["name"], "工作");
     assert_eq!(summary[1]["itemCount"], 2);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn deleting_moves_items_to_the_trash_and_survives_a_restart() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let keep = invoke(&webview, "create_item", todo_request("留下")).unwrap();
+    let gone = invoke(&webview, "create_item", todo_request("删掉")).unwrap();
+    let gone_id = gone["id"].as_str().unwrap().to_owned();
+    let keep_id = keep["id"].as_str().unwrap().to_owned();
+
+    // 一批里有不存在的 ID：整批被拒绝，什么都没删。
+    let missing = "00000000-0000-7000-8000-0000000000aa";
+    let rejected = invoke(
+        &webview,
+        "delete_items",
+        json!({ "ids": [gone_id, missing] }),
+    )
+    .unwrap_err();
+    assert_eq!(rejected["code"], "ITEM_NOT_FOUND");
+    assert_eq!(
+        invoke(&webview, "list_trash", json!({}))
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .len(),
+        0
+    );
+    assert_eq!(
+        invoke(&webview, "delete_items", json!({ "ids": ["not-a-uuid"] })).unwrap_err()["code"],
+        "INVALID_INPUT"
+    );
+
+    invoke(&webview, "delete_items", json!({ "ids": [gone_id] })).unwrap();
+    let list = |webview: &WebviewWindow<MockRuntime>| {
+        invoke(
+            webview,
+            "list_items",
+            json!({ "request": { "itemType": null, "includeArchived": true, "limit": null } }),
+        )
+        .unwrap()
+    };
+    let titles: Vec<String> = list(&webview)
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| i["title"].as_str().unwrap().to_owned())
+        .collect();
+    assert_eq!(titles, ["留下"]);
+    let found = invoke(&webview, "search_items", json!({ "query": "删掉" })).unwrap();
+    assert!(found.as_array().unwrap().is_empty());
+    let trash = invoke(&webview, "list_trash", json!({})).unwrap();
+    assert_eq!(trash[0]["item"]["title"], "删掉");
+    assert!(trash[0]["expiresAt"].as_str().unwrap() > trash[0]["deletedAt"].as_str().unwrap());
+    drop(webview);
+    drop(app);
+
+    // 重启后仍在回收站里；恢复后回到列表与搜索里。
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    assert_eq!(
+        invoke(&webview, "list_trash", json!({}))
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    invoke(
+        &webview,
+        "restore_deleted_items",
+        json!({ "ids": [gone_id] }),
+    )
+    .unwrap();
+    assert_eq!(list(&webview).as_array().unwrap().len(), 2);
+    assert_eq!(
+        invoke(&webview, "search_items", json!({ "query": "删掉" }))
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+
+    // 永久删除只作用于回收站里的条目。
+    assert_eq!(
+        invoke(&webview, "purge_items", json!({ "ids": [gone_id] })).unwrap(),
+        0
+    );
+    invoke(
+        &webview,
+        "delete_items",
+        json!({ "ids": [gone_id, keep_id] }),
+    )
+    .unwrap();
+    assert_eq!(
+        invoke(&webview, "purge_items", json!({ "ids": [gone_id] })).unwrap(),
+        1
+    );
+    assert_eq!(invoke(&webview, "empty_trash", json!({})).unwrap(), 1);
+    assert_eq!(list(&webview).as_array().unwrap().len(), 0);
+    assert_eq!(
+        invoke(&webview, "get_item", json!({ "id": keep_id })).unwrap_err()["code"],
+        "ITEM_NOT_FOUND"
+    );
+}

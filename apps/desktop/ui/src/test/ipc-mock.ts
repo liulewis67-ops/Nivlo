@@ -20,6 +20,7 @@ import type {
   RescheduleTargetDto,
   TodayItemDto,
   TodayViewDto,
+  TrashEntryDto,
 } from "@/lib/ipc";
 
 /** 标题允许的最大字符数，与后端 `MAX_TITLE_CHARS` 保持一致。 */
@@ -215,6 +216,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   /** Item ID → 标签 ID。 */
   const itemTags = new Map<string, string[]>();
   let nextOrganizeId = 1;
+  /** 回收站：Item ID → 删除时间（ISO）。 */
+  const trashed = new Map<string, string>();
   const updates: { id: string; request: UpdateItemRequest }[] = [];
   const openedSources: string[] = [];
   let updateFailure: AppError | undefined;
@@ -268,7 +271,11 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   /** 项目当前未完成的 Item 数量。 */
   function openCount(projectId: string): number {
     return items.filter(
-      (item) => item.projectId === projectId && item.archivedAt === null && item.status !== "done",
+      (item) =>
+        item.projectId === projectId &&
+        item.archivedAt === null &&
+        !trashed.has(item.id) &&
+        item.status !== "done",
     ).length;
   }
 
@@ -426,7 +433,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     listInbox: () => {
       calls.push("listInbox");
       const entries: InboxEntryDto[] = items
-        .filter((item) => item.inInbox && item.archivedAt === null)
+        .filter((item) => item.inInbox && item.archivedAt === null && !trashed.has(item.id))
         .reverse()
         .map((item) => ({
           item,
@@ -864,6 +871,76 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         ? Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`))
         : Promise.resolve(found);
     },
+    deleteItems: (ids: string[]) => {
+      calls.push("deleteItems");
+      const missing = ids.find((id) => !items.some((item) => item.id === id));
+      if (missing !== undefined) {
+        return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${missing} 不存在`));
+      }
+      const now = new Date().toISOString();
+      for (const id of ids) {
+        if (!trashed.has(id)) trashed.set(id, now);
+        // 离开 Today 视图。
+        const wasOpen = today.todos.some((entry) => entry.id === id);
+        today = {
+          ...today,
+          remainingCount: today.remainingCount - (wasOpen ? 1 : 0),
+          todos: today.todos.filter((entry) => entry.id !== id),
+          tips: today.tips.filter((entry) => entry.id !== id),
+          completed: today.completed.filter((entry) => entry.id !== id),
+        };
+      }
+      notifyChange();
+      return Promise.resolve();
+    },
+    restoreDeletedItems: (ids: string[]) => {
+      calls.push("restoreDeletedItems");
+      for (const id of ids) {
+        if (!trashed.delete(id)) continue;
+        const item = items.find((candidate) => candidate.id === id);
+        if (item !== undefined && item.status === "open") addToToday(item);
+      }
+      notifyChange();
+      return Promise.resolve();
+    },
+    listTrash: () => {
+      calls.push("listTrash");
+      const entries: TrashEntryDto[] = [...trashed.entries()]
+        .map(([id, deletedAt]) => ({
+          item: items.find((candidate) => candidate.id === id) as ItemDto,
+          deletedAt,
+          expiresAt: new Date(new Date(deletedAt).getTime() + 30 * 86_400_000).toISOString(),
+        }))
+        .filter((entry) => entry.item !== undefined)
+        .sort((a, b) => b.deletedAt.localeCompare(a.deletedAt));
+      return Promise.resolve(entries);
+    },
+    purgeItems: (ids: string[]) => {
+      calls.push("purgeItems");
+      let count = 0;
+      for (const id of ids) {
+        if (!trashed.has(id)) continue;
+        trashed.delete(id);
+        itemTags.delete(id);
+        const at = items.findIndex((candidate) => candidate.id === id);
+        if (at >= 0) items.splice(at, 1);
+        count += 1;
+      }
+      notifyChange();
+      return Promise.resolve(count);
+    },
+    emptyTrash: () => {
+      calls.push("emptyTrash");
+      const ids = [...trashed.keys()];
+      for (const id of ids) {
+        itemTags.delete(id);
+        const at = items.findIndex((candidate) => candidate.id === id);
+        if (at >= 0) items.splice(at, 1);
+      }
+      trashed.clear();
+      notifyChange();
+      return Promise.resolve(ids.length);
+    },
     searchItems: (query: string) => {
       calls.push("searchItems");
       const terms = query
@@ -872,7 +949,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         .filter((term) => term !== "");
       if (terms.length === 0) return Promise.resolve([]);
       const matches = items
-        .filter((item) => item.archivedAt === null)
+        .filter((item) => item.archivedAt === null && !trashed.has(item.id))
         .map((item) => {
           const title = item.title.toLowerCase();
           const text = `${title}
@@ -978,7 +1055,10 @@ ${(item.content ?? "").toLowerCase()}`;
         .map((tag) => ({
           tag,
           itemCount: items.filter(
-            (item) => item.archivedAt === null && (itemTags.get(item.id) ?? []).includes(tag.id),
+            (item) =>
+              item.archivedAt === null &&
+              !trashed.has(item.id) &&
+              (itemTags.get(item.id) ?? []).includes(tag.id),
           ).length,
         }))
         .sort((a, b) => a.tag.name.toLowerCase().localeCompare(b.tag.name.toLowerCase()));
@@ -1054,6 +1134,7 @@ ${(item.content ?? "").toLowerCase()}`;
     listItems: (request: ListItemsRequest) => {
       calls.push("listItems");
       const visible = items
+        .filter((item) => !trashed.has(item.id))
         .filter((item) => request.includeArchived || item.archivedAt === null)
         .filter((item) => request.itemType === null || item.itemType === request.itemType)
         .filter((item) => request.projectId == null || item.projectId === request.projectId)

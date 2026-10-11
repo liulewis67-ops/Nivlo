@@ -8,6 +8,7 @@ import { useInboxQuery } from "./api";
 import { InboxRow } from "./InboxRow";
 import { pruneSelection, selectRange } from "./model/inbox-entry";
 import { useOrganize } from "./useOrganize";
+import { useDeleteItems } from "@/features/trash";
 import type { OrganizeKind } from "./useOrganize";
 
 /** 批量「转换类型」菜单里的类型。 */
@@ -27,6 +28,7 @@ export function InboxPage() {
   const { t } = useTranslation();
   const entries = useInboxQuery().data;
   const { organize } = useOrganize();
+  const { remove } = useDeleteItems();
   const paste = usePasteCapture();
 
   // Ctrl+V（macOS 为 Cmd+V）：焦点不在输入框里时，把剪贴板收进 Inbox。
@@ -181,6 +183,17 @@ export function InboxPage() {
                 <Button size="sm" variant="ghost" onClick={() => run(selectedIds, "archive")}>
                   {t("inbox.action.archive")}
                 </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-danger"
+                  onClick={() => {
+                    setSelected(new Set());
+                    void remove(selectedIds);
+                  }}
+                >
+                  {t("trash.delete")}
+                </Button>
               </div>
             )}
           </div>
@@ -196,6 +209,10 @@ export function InboxPage() {
                 selected={selected.has(entry.item.id)}
                 onToggle={(range) => toggle(entry.item.id, range)}
                 onOrganize={(kind) => run([entry.item.id], kind)}
+                onDelete={() => {
+                  setSelected(new Set());
+                  void remove([entry.item.id], entry.item.title);
+                }}
               />
             ))}
           </ul>

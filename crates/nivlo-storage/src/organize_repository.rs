@@ -126,7 +126,8 @@ impl ProjectRepository for SqliteTransaction {
         let rows = sqlx::query!(
             "SELECT project_id AS \"project_id!\", COUNT(*) AS \"count!: i64\"
              FROM items
-             WHERE project_id IS NOT NULL AND archived_at IS NULL AND status != 'done'
+             WHERE project_id IS NOT NULL AND archived_at IS NULL AND deleted_at IS NULL
+               AND status != 'done'
              GROUP BY project_id"
         )
         .fetch_all(&mut *self.tx)
@@ -190,7 +191,8 @@ impl TagRepository for SqliteTransaction {
                     COUNT(items.id) AS \"count!: i64\"
              FROM tags
              LEFT JOIN item_tags ON item_tags.tag_id = tags.id
-             LEFT JOIN items ON items.id = item_tags.item_id AND items.archived_at IS NULL
+             LEFT JOIN items ON items.id = item_tags.item_id
+                 AND items.archived_at IS NULL AND items.deleted_at IS NULL
              GROUP BY tags.id
              ORDER BY tags.name_key ASC, tags.id ASC"
         )

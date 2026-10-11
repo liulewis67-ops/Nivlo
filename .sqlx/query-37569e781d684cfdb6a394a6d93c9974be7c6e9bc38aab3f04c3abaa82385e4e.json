@@ -1,20 +1,20 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",\n                        items.content, items.content_format AS \"content_format!\",\n                        items.status AS \"status!\", items.priority AS \"priority!\",\n                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,\n                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",\n                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",\n                        items.completed_at, items.archived_at\n                 FROM items_fts JOIN items ON items.id = items_fts.item_id\n                 WHERE (items_fts.title LIKE ?1 ESCAPE '\\'\n                        OR items_fts.content LIKE ?1 ESCAPE '\\'\n                        OR items_fts.source_text LIKE ?1 ESCAPE '\\')\n                   AND (?2 = 1 OR items.archived_at IS NULL)\n                 ORDER BY (items_fts.title LIKE ?1 ESCAPE '\\') DESC, items.updated_at DESC, items.id DESC\n                 LIMIT ?3",
+  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE type = 'todo' AND status = 'open' AND archived_at IS NULL AND deleted_at IS NULL\n               AND scheduled_date IS NOT NULL AND scheduled_date <= ?\n             ORDER BY scheduled_date ASC, created_at ASC, id ASC",
   "describe": {
     "columns": [
       {
-        "name": "id!",
+        "name": "id",
         "ordinal": 0,
         "type_info": "Text"
       },
       {
-        "name": "item_type!",
+        "name": "item_type",
         "ordinal": 1,
         "type_info": "Text"
       },
       {
-        "name": "title!",
+        "name": "title",
         "ordinal": 2,
         "type_info": "Text"
       },
@@ -24,17 +24,17 @@
         "type_info": "Text"
       },
       {
-        "name": "content_format!",
+        "name": "content_format",
         "ordinal": 4,
         "type_info": "Text"
       },
       {
-        "name": "status!",
+        "name": "status",
         "ordinal": 5,
         "type_info": "Text"
       },
       {
-        "name": "priority!",
+        "name": "priority",
         "ordinal": 6,
         "type_info": "Text"
       },
@@ -69,17 +69,17 @@
         "type_info": "Text"
       },
       {
-        "name": "in_inbox!",
+        "name": "in_inbox",
         "ordinal": 13,
         "type_info": "Integer"
       },
       {
-        "name": "created_at!",
+        "name": "created_at",
         "ordinal": 14,
         "type_info": "Text"
       },
       {
-        "name": "updated_at!",
+        "name": "updated_at",
         "ordinal": 15,
         "type_info": "Text"
       },
@@ -95,7 +95,7 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 1
     },
     "nullable": [
       false,
@@ -118,5 +118,5 @@
       true
     ]
   },
-  "hash": "2005eeda56d9b2321685537fe8a3f898f2ade9f0ec8db0b6eeccd2de82fdff9d"
+  "hash": "37569e781d684cfdb6a394a6d93c9974be7c6e9bc38aab3f04c3abaa82385e4e"
 }

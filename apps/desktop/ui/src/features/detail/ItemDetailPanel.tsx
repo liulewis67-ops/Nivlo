@@ -8,6 +8,7 @@ import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { ProjectSelect, TagsField } from "@/features/organize";
+import { useDeleteItems } from "@/features/trash";
 import { SourceSection } from "./SourceSection";
 import { useItemDraft } from "./use-item-draft";
 
@@ -124,6 +125,7 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   const { t } = useTranslation();
   const { query, detail, draft, status, problem, edit, save } = useItemDraft(id);
   const item = detail?.item;
+  const { remove } = useDeleteItems();
 
   /**
    * Esc 关闭面板（在输入框里也一样：自动保存会在卸载时完成）。
@@ -156,6 +158,20 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
             {status === "saving" && t("detail.status.saving")}
             {status === "saved" && t("detail.status.saved")}
           </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={item === undefined}
+            className="text-danger"
+            onClick={() => {
+              if (item === undefined) return;
+              void remove([id], item.title).then((deleted) => {
+                if (deleted) onClose();
+              });
+            }}
+          >
+            {t("trash.delete")}
+          </Button>
           <Button size="sm" variant="ghost" aria-label={t("detail.close")} onClick={onClose}>
             {"✕"}
           </Button>

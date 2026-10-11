@@ -11,4 +11,5 @@ pub mod organize;
 pub mod shortcut;
 pub mod source;
 pub mod today;
+pub mod trash;
 pub mod window;

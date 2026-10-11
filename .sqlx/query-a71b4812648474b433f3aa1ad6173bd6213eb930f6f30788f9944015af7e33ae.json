@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, deleted_at AS \"deleted_at!\" FROM items\n             WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC, id DESC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted_at!",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "a71b4812648474b433f3aa1ad6173bd6213eb930f6f30788f9944015af7e33ae"
+}

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE (?1 IS NULL OR type = ?1)\n               AND (?2 = 1 OR archived_at IS NULL)\n               AND (?3 = 0 OR in_inbox = 1)\n               AND (?6 IS NULL OR project_id = ?6)\n               AND (?7 IS NULL OR EXISTS (\n                    SELECT 1 FROM item_tags WHERE item_tags.item_id = items.id AND item_tags.tag_id = ?7))\n             ORDER BY\n               CASE WHEN ?4 = 2 THEN status = 'done' ELSE 0 END ASC,\n               CASE WHEN ?4 = 2 THEN CASE priority\n                    WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END\n                    ELSE 0 END ASC,\n               CASE WHEN ?4 = 2 THEN scheduled_date IS NULL ELSE 0 END ASC,\n               CASE WHEN ?4 = 2 THEN scheduled_date END ASC,\n               CASE WHEN ?4 = 1 THEN updated_at ELSE created_at END DESC,\n               id DESC\n             LIMIT ?5",
+  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE type = 'tip' AND archived_at IS NULL AND deleted_at IS NULL AND scheduled_date = ?\n             ORDER BY scheduled_time ASC, created_at ASC, id ASC",
   "describe": {
     "columns": [
       {
@@ -95,7 +95,7 @@
       }
     ],
     "parameters": {
-      "Right": 7
+      "Right": 1
     },
     "nullable": [
       false,
@@ -118,5 +118,5 @@
       true
     ]
   },
-  "hash": "58a7f5057b6b10a94872092a7e8f129006e28d35ad1d9bf059e818d24dc2520e"
+  "hash": "eccefbf70504225fce4486d129831ad7d2796a9d70b42d7558b57b8ac14f8a29"
 }

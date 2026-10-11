@@ -21,7 +21,7 @@ use crate::event::EventPublisher;
 use crate::ports::{
     AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
     SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
-    Transaction, UnitOfWork,
+    Transaction, TrashRepository, UnitOfWork,
 };
 
 /// 内存数据库中的全部数据。事务开始时整体克隆为工作副本，提交时整体替换。
@@ -43,6 +43,8 @@ struct FakeData {
     tags: BTreeMap<TagId, Tag>,
     /// Item-标签关联。
     item_tags: BTreeSet<(ItemId, TagId)>,
+    /// 回收站：Item ID → 删除时间。
+    deleted: BTreeMap<ItemId, DateTime<Utc>>,
 }
 
 /// 内存数据库的共享状态。
@@ -175,6 +177,11 @@ impl Transaction for FakeTransaction {
         self
     }
 
+    /// 返回回收站 Repository 视图。
+    fn trash(&mut self) -> &mut dyn TrashRepository {
+        self
+    }
+
     /// 提交：把工作副本写回共享状态。
     async fn commit(self: Box<Self>) -> Result<(), StorageError> {
         let mut state = self.shared.lock();
@@ -197,6 +204,8 @@ impl ItemRepository for FakeTransaction {
     /// 永久删除：级联删除来源与附件、顺序记录。
     async fn delete(&mut self, id: ItemId) -> Result<(), StorageError> {
         self.working.items.remove(&id);
+        self.working.deleted.remove(&id);
+        self.working.item_tags.retain(|(item, _)| *item != id);
         self.working.sources.retain(|s| s.item_id != id);
         self.working.attachments.retain(|a| a.item_id != id);
         for ids in self.working.today_order.values_mut() {
@@ -247,6 +256,7 @@ impl ItemRepository for FakeTransaction {
             .values()
             .filter(|i| i.item_type() == ItemType::Todo)
             .filter(|i| i.status() == ItemStatus::Open && !i.is_archived())
+            .filter(|i| !self.working.deleted.contains_key(&i.id()))
             .filter(|i| i.scheduled().is_some_and(|s| s.date() <= date))
             .cloned()
             .collect();
@@ -261,6 +271,7 @@ impl ItemRepository for FakeTransaction {
             .items
             .values()
             .filter(|i| i.item_type() == ItemType::Tip && !i.is_archived())
+            .filter(|i| !self.working.deleted.contains_key(&i.id()))
             .filter(|i| i.scheduled().is_some_and(|s| s.date() == date))
             .cloned()
             .collect())
@@ -277,6 +288,7 @@ impl ItemRepository for FakeTransaction {
             .items
             .values()
             .filter(|i| i.item_type() == ItemType::Todo && !i.is_archived())
+            .filter(|i| !self.working.deleted.contains_key(&i.id()))
             .filter(|i| i.completed_at().is_some_and(|at| at >= from && at < to))
             .cloned()
             .collect();
@@ -292,6 +304,7 @@ impl ItemRepository for FakeTransaction {
             .values()
             .filter(|i| filter.item_type.is_none_or(|t| i.item_type() == t))
             .filter(|i| filter.include_archived || !i.is_archived())
+            .filter(|i| !self.working.deleted.contains_key(&i.id()))
             .filter(|i| !filter.in_inbox_only || i.in_inbox())
             .filter(|i| filter.project_id.is_none_or(|p| i.project_id() == Some(p)))
             .filter(|i| {
@@ -341,7 +354,9 @@ impl ItemRepository for FakeTransaction {
         }
         let mut found: Vec<(bool, Item)> = Vec::new();
         for item in self.working.items.values() {
-            if !include_archived && item.is_archived() {
+            if (!include_archived && item.is_archived())
+                || self.working.deleted.contains_key(&item.id())
+            {
                 continue;
             }
             let title = item.title().as_str().to_lowercase();
@@ -653,6 +668,7 @@ impl ProjectRepository for FakeTransaction {
             if let Some(project) = item.project_id()
                 && !item.is_archived()
                 && !item.is_done()
+                && !self.working.deleted.contains_key(&item.id())
             {
                 *counts.entry(project).or_default() += 1;
             }
@@ -702,6 +718,7 @@ impl TagRepository for FakeTransaction {
                     .iter()
                     .filter(|(item, t)| {
                         *t == tag.id
+                            && !self.working.deleted.contains_key(item)
                             && self
                                 .working
                                 .items
@@ -795,5 +812,56 @@ impl TagRepository for FakeTransaction {
             .item_tags
             .extend(tags.iter().map(|t| (item_id, *t)));
         Ok(())
+    }
+}
+
+#[async_trait]
+impl TrashRepository for FakeTransaction {
+    /// 标记为已删除；已经在回收站里的保持原来的删除时间。
+    async fn mark_deleted(&mut self, id: ItemId, at: DateTime<Utc>) -> Result<(), StorageError> {
+        if !self.working.items.contains_key(&id) {
+            return Err(StorageError::NotFound {
+                entity: "item",
+                id: id.to_string(),
+            });
+        }
+        self.working.deleted.entry(id).or_insert(at);
+        Ok(())
+    }
+
+    /// 恢复。
+    async fn restore(&mut self, id: ItemId) -> Result<(), StorageError> {
+        self.working.deleted.remove(&id);
+        Ok(())
+    }
+
+    /// 删除时间。
+    async fn deleted_at(&mut self, id: ItemId) -> Result<Option<DateTime<Utc>>, StorageError> {
+        Ok(self.working.deleted.get(&id).copied())
+    }
+
+    /// 回收站列表，最近删除的在前。
+    async fn list_deleted(&mut self) -> Result<Vec<(Item, DateTime<Utc>)>, StorageError> {
+        let mut entries: Vec<(Item, DateTime<Utc>)> = self
+            .working
+            .deleted
+            .iter()
+            .filter_map(|(id, at)| self.working.items.get(id).map(|item| (item.clone(), *at)))
+            .collect();
+        entries.sort_by(|a, b| b.1.cmp(&a.1).then(b.0.id().cmp(&a.0.id())));
+        Ok(entries)
+    }
+
+    /// 超过保留期的 ID。
+    async fn deleted_before(&mut self, cutoff: DateTime<Utc>) -> Result<Vec<ItemId>, StorageError> {
+        let mut ids: Vec<(DateTime<Utc>, ItemId)> = self
+            .working
+            .deleted
+            .iter()
+            .filter(|(_, at)| **at < cutoff)
+            .map(|(id, at)| (*at, *id))
+            .collect();
+        ids.sort();
+        Ok(ids.into_iter().map(|(_, id)| id).collect())
     }
 }

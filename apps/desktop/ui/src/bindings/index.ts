@@ -73,6 +73,50 @@ export const commands = {
 	 */
 	openItemSource: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_item_source", { id })),
 	/**
+	 *  删除一批 Item：移进回收站（软删除），30 天内可以恢复。
+	 * 
+	 *  全部在一个事务里：任何一个不存在，整批不变。成功后界面通过 `item_updated` 事件刷新。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不合法返回 `INVALID_INPUT`，不存在返回 `ITEM_NOT_FOUND`。
+	 */
+	deleteItems: (ids: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("delete_items", { ids })),
+	/**
+	 *  从回收站恢复一批 Item（「删除」的撤销）。不在回收站里的被忽略。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不合法返回 `INVALID_INPUT`；存储失败时没有任何改动。
+	 */
+	restoreDeletedItems: (ids: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("restore_deleted_items", { ids })),
+	/**
+	 *  回收站里的全部 Item，最近删除的在前，附带到期（自动永久清除）时间。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	listTrash: () => typedError<TrashEntryDto[], IpcError>(__TAURI_INVOKE("list_trash")),
+	/**
+	 *  永久删除回收站里的这些 Item；不在回收站里的不会被删除。返回实际删除的数量。
+	 * 
+	 *  只删除数据库记录与 Nivlo 自己保存的文件，被引用的用户文件不受影响。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不合法返回 `INVALID_INPUT`；存储失败时没有删除任何东西。
+	 */
+	purgeItems: (ids: string[]) => typedError<number, IpcError>(__TAURI_INVOKE("purge_items", { ids })),
+	/**
+	 *  清空回收站。返回删除的数量。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时没有删除任何东西。
+	 */
+	emptyTrash: () => typedError<number, IpcError>(__TAURI_INVOKE("empty_trash")),
+	/**
 	 *  列出项目（创建时间从早到晚）与各自未完成的 Item 数量。
 	 * 
 	 *  # Errors
@@ -827,6 +871,16 @@ export type TodayViewDto = {
 	tips: TodayItemDto[],
 	/**  今天已完成的待办。 */
 	completed: TodayItemDto[],
+};
+
+/**  回收站里的一项（IPC 表示）。 */
+export type TrashEntryDto = {
+	/**  被删除的 Item。 */
+	item: ItemDto,
+	/**  删除时间（RFC 3339，UTC）。 */
+	deletedAt: string,
+	/**  到期（自动永久清除）的时间（RFC 3339，UTC）。 */
+	expiresAt: string,
 };
 
 /**  更新 Item 的请求：所有字段默认「不修改」。 */

@@ -9,6 +9,7 @@ import { ProjectsPage } from "@/features/projects";
 import { CommandPalette } from "@/features/search";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
+import { TrashPage } from "@/features/trash";
 import { cx } from "@/lib/cx";
 import { ComingSoon } from "./ComingSoon";
 import { NavIcon } from "./NavIcons";
@@ -165,6 +166,12 @@ export function MainShell() {
             ))}
           </nav>
           <div className="mt-auto flex flex-col gap-1">
+            <NavButton
+              view="trash"
+              isActive={view === "trash"}
+              count={null}
+              onSelect={() => setView("trash")}
+            />
             <ShortcutSetting />
             <ThemeMenu />
           </div>
@@ -179,6 +186,7 @@ export function MainShell() {
             </div>
           )}
           {view === "projects" && <ProjectsPage />}
+          {view === "trash" && <TrashPage />}
           {view === "calendar" && <ComingSoon view={view} />}
         </main>
         {searching && <CommandPalette onClose={() => setSearching(false)} onOpenItem={setOpenId} />}

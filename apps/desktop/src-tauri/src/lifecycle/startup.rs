@@ -11,6 +11,7 @@ use nivlo_application::organize::{ProjectService, TagService};
 use nivlo_application::ports::StorageError;
 use nivlo_application::settings::SettingsService;
 use nivlo_application::today::TodayService;
+use nivlo_application::trash::TrashService;
 use nivlo_common::clock::SystemClock;
 use nivlo_common::logging::{LogConfig, LogError, LogGuard, init_logging};
 use nivlo_common::paths::{AppPaths, PathsError};
@@ -100,7 +101,7 @@ pub fn build_app_state(
         Arc::new(database.clone()),
         clock.clone(),
         Arc::new(event_bus.clone()),
-        Arc::new(FsAttachmentFiles::new(attachments_dir)),
+        Arc::new(FsAttachmentFiles::new(attachments_dir.clone())),
     );
     let inbox = InboxService::new(
         Arc::new(database.clone()),
@@ -113,6 +114,12 @@ pub fn build_app_state(
         clock.clone(),
         Arc::new(event_bus.clone()),
     );
+    let trash = TrashService::new(
+        Arc::new(database.clone()),
+        clock.clone(),
+        Arc::new(event_bus.clone()),
+        Arc::new(FsAttachmentFiles::new(attachments_dir.clone())),
+    );
     AppState {
         services: ApplicationServices {
             items,
@@ -122,6 +129,7 @@ pub fn build_app_state(
             inbox,
             projects,
             tags,
+            trash,
         },
         runtime: RuntimeHandles::new(event_bus, database, clock, log_guard),
     }
@@ -142,7 +150,7 @@ mod tests {
         let paths = AppPaths::from_root(dir.path().join("Nivlo"));
         paths.ensure_dirs().unwrap();
         let database = open_database(&paths).await.unwrap();
-        assert_eq!(database.schema_version().await.unwrap(), Some(3));
+        assert_eq!(database.schema_version().await.unwrap(), Some(4));
     }
 
     #[tokio::test]

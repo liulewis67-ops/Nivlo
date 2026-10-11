@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT project_id AS \"project_id!\", COUNT(*) AS \"count!: i64\"\n             FROM items\n             WHERE project_id IS NOT NULL AND archived_at IS NULL AND status != 'done'\n             GROUP BY project_id",
+  "query": "SELECT project_id AS \"project_id!\", COUNT(*) AS \"count!: i64\"\n             FROM items\n             WHERE project_id IS NOT NULL AND archived_at IS NULL AND deleted_at IS NULL\n               AND status != 'done'\n             GROUP BY project_id",
   "describe": {
     "columns": [
       {
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "db6386b07a586b751b6bb0258df650773c73acc8f4fc47c9f26359f45c95803a"
+  "hash": "f0271bbb7fcc716b84fd7c460680d7868f2fcc938c72197ef89ced00abd16270"
 }

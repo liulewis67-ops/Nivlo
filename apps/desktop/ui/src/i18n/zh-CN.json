@@ -214,7 +214,8 @@
       "calendar": "日历",
       "notes": "笔记",
       "projects": "项目",
-      "dev": "开发控制台"
+      "dev": "开发控制台",
+      "trash": "回收站"
     },
     "comingSoon": {
       "calendar": "把待办拖到某一天，安排接下来的日子。"
@@ -373,5 +374,26 @@
       "note": "笔记",
       "tip": "提示"
     }
+  },
+  "trash": {
+    "label": "回收站",
+    "list": "回收站里的条目",
+    "count": "{{count}} 项",
+    "empty": "清空回收站",
+    "emptyConfirm": "再点一次，永久清空",
+    "emptyTitle": "回收站是空的",
+    "emptyHint": "删除的条目会在这里保留 30 天，期间可以随时恢复。",
+    "deletedAgo": "删除于 {{ago}}",
+    "daysLeft": "还剩 {{count}} 天自动清除",
+    "restore": "恢复「{{title}}」",
+    "restoreShort": "恢复",
+    "purge": "永久删除「{{title}}」",
+    "purgeShort": "彻底删除",
+    "purgeConfirm": "再点一次确认",
+    "restored": "已恢复「{{title}}」",
+    "emptied": "已清空回收站（{{count}} 项）",
+    "delete": "删除",
+    "deleted": "已删除「{{title}}」，可在回收站找回",
+    "deletedMany": "已删除 {{count}} 项，可在回收站找回"
   }
 }

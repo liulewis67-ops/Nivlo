@@ -84,6 +84,9 @@ pub trait Transaction: Send {
     /// 标签（Tag）及 Item-标签关联的 Repository 视图，与本事务共享同一个连接。
     fn tags(&mut self) -> &mut dyn TagRepository;
 
+    /// 回收站（软删除）的 Repository 视图，与本事务共享同一个连接。
+    fn trash(&mut self) -> &mut dyn TrashRepository;
+
     /// 提交事务。
     ///
     /// # Errors
@@ -413,4 +416,46 @@ pub trait TagRepository: Send {
     ///
     /// Item 或标签不存在（外键）时返回 [`StorageError::Constraint`]。
     async fn set_for_item(&mut self, item_id: ItemId, tags: &[TagId]) -> Result<(), StorageError>;
+}
+
+/// 回收站（软删除）的持久化（`items.deleted_at`，D-08）。
+///
+/// 已删除的 Item 不会出现在 [`ItemRepository`] 的任何列表 / 搜索 / 统计里，
+/// 但 [`ItemRepository::get`] 仍然能按 ID 读到它（恢复与彻底删除需要）。
+#[async_trait]
+pub trait TrashRepository: Send {
+    /// 把 Item 标记为已删除；已经在回收站里的保持原来的删除时间。
+    ///
+    /// # Errors
+    ///
+    /// Item 不存在时返回 [`StorageError::NotFound`]。
+    async fn mark_deleted(&mut self, id: ItemId, at: DateTime<Utc>) -> Result<(), StorageError>;
+
+    /// 把 Item 移出回收站；本来就不在回收站里是空操作。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn restore(&mut self, id: ItemId) -> Result<(), StorageError>;
+
+    /// Item 被删除的时间；不在回收站里（或不存在）为 `None`。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn deleted_at(&mut self, id: ItemId) -> Result<Option<DateTime<Utc>>, StorageError>;
+
+    /// 回收站里的全部 Item 与删除时间，最近删除的在前。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn list_deleted(&mut self) -> Result<Vec<(Item, DateTime<Utc>)>, StorageError>;
+
+    /// 删除时间早于 `cutoff` 的 Item ID（已超过保留期，等待自动清除）。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn deleted_before(&mut self, cutoff: DateTime<Utc>) -> Result<Vec<ItemId>, StorageError>;
 }

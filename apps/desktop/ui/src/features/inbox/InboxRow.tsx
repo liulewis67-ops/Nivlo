@@ -23,6 +23,8 @@ export type InboxRowProps = {
   onToggle: (range: boolean) => void;
   /** 对这一条执行整理动作。 */
   onOrganize: (kind: OrganizeKind) => void;
+  /** 删除这一条（移进回收站）。 */
+  onDelete: () => void;
 };
 
 /**
@@ -34,7 +36,7 @@ export type InboxRowProps = {
  * @param props 条目、选中状态与回调。
  * @returns 列表项。
  */
-export function InboxRow({ entry, selected, onToggle, onOrganize }: InboxRowProps) {
+export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: InboxRowProps) {
   const { t } = useTranslation();
   const { item } = entry;
   const summary = summarizeEntry(entry);
@@ -53,6 +55,7 @@ export function InboxRow({ entry, selected, onToggle, onOrganize }: InboxRowProp
     })),
     { id: "leave", label: t("inbox.action.leave"), onSelect: () => onOrganize("leave") },
     { id: "archive", label: t("inbox.action.archive"), onSelect: () => onOrganize("archive") },
+    { id: "delete", label: t("trash.delete"), isDanger: true, onSelect: onDelete },
   ];
 
   return (
