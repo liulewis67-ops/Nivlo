@@ -1,0 +1,96 @@
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it } from "vitest";
+import { AppError } from "@/lib/errors";
+import { useThemeStore } from "@/stores/theme-store";
+import { useToastStore } from "@/stores/toast-store";
+import { createMemoryIpc } from "@/test/ipc-mock";
+import { renderWithProviders } from "@/test/render";
+import { SettingsPage } from "./SettingsPage";
+
+describe("设置页", () => {
+  beforeEach(() => {
+    useToastStore.setState({ toasts: [] });
+    useThemeStore.setState({ preference: "system" });
+  });
+
+  it("显示当前设置：自启关闭、置顶开启、稍后默认下周一", async () => {
+    renderWithProviders(<SettingsPage />, createMemoryIpc());
+
+    const autostart = await screen.findByRole("switch", { name: "开机自动启动" });
+    await waitFor(() => expect(autostart).toBeEnabled());
+    expect(autostart).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("switch", { name: "悬浮窗置顶" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: "下周一" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByRole("radio", { name: "3 天后" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("开关立即生效并保存；重新打开设置页仍是新值", async () => {
+    const ipc = createMemoryIpc();
+    const view = renderWithProviders(<SettingsPage />, ipc);
+    const autostart = await screen.findByRole("switch", { name: "开机自动启动" });
+    await waitFor(() => expect(autostart).toBeEnabled());
+
+    fireEvent.click(autostart);
+    await waitFor(() => expect(autostart).toHaveAttribute("aria-checked", "true"));
+    await waitFor(() => expect(ipc.appSettings.autostart).toBe(true));
+
+    fireEvent.click(screen.getByRole("switch", { name: "悬浮窗置顶" }));
+    await waitFor(() => expect(ipc.appSettings.floatingAlwaysOnTop).toBe(false));
+
+    view.unmount();
+    renderWithProviders(<SettingsPage />, ipc);
+    await waitFor(() =>
+      expect(screen.getByRole("switch", { name: "开机自动启动" })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      ),
+    );
+    expect(screen.getByRole("switch", { name: "悬浮窗置顶" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+  });
+
+  it("系统拒绝修改时回滚并提示原因", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    const autostart = await screen.findByRole("switch", { name: "开机自动启动" });
+    await waitFor(() => expect(autostart).toBeEnabled());
+
+    ipc.failNextSettingWith(new AppError("SYSTEM_SETTING_FAILED", "denied"));
+    fireEvent.click(autostart);
+    await waitFor(() =>
+      expect(useToastStore.getState().toasts.at(-1)?.message).toContain("系统没有允许"),
+    );
+    await waitFor(() => expect(autostart).toHaveAttribute("aria-checked", "false"));
+    expect(ipc.appSettings.autostart).toBe(false);
+  });
+
+  it("选择「稍后」的规则会保存", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    const week = await screen.findByRole("radio", { name: "7 天后" });
+    await waitFor(() => expect(week).toBeEnabled());
+
+    fireEvent.click(week);
+    await waitFor(() => expect(week).toHaveAttribute("aria-checked", "true"));
+    await waitFor(() => expect(ipc.appSettings.laterRule).toBe("inOneWeek"));
+    expect(screen.getByRole("radio", { name: "下周一" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("主题切换立即生效；语言目前只有简体中文", async () => {
+    renderWithProviders(<SettingsPage />, createMemoryIpc());
+    await screen.findByRole("switch", { name: "开机自动启动" });
+
+    fireEvent.click(screen.getByRole("button", { name: "深色" }));
+    expect(useThemeStore.getState().preference).toBe("dark");
+    expect(screen.getByRole("button", { name: "深色" })).toHaveAttribute("aria-pressed", "true");
+
+    const language = screen.getByRole("combobox", { name: "语言" });
+    expect(language).toHaveValue("zh-CN");
+    expect(screen.getAllByRole("option", { name: "简体中文" })).toHaveLength(1);
+  });
+});

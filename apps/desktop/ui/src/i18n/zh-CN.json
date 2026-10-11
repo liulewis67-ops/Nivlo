@@ -215,7 +215,8 @@
       "notes": "笔记",
       "projects": "项目",
       "dev": "开发控制台",
-      "trash": "回收站"
+      "trash": "回收站",
+      "settings": "设置"
     },
     "comingSoon": {
       "calendar": "把待办拖到某一天，安排接下来的日子。"
@@ -317,7 +318,8 @@
     "CLIPBOARD_EMPTY": "剪贴板里没有可以收集的内容，先复制点什么吧。",
     "PROJECT_NOT_FOUND": "这个项目已经不存在了。",
     "TAG_NOT_FOUND": "这个标签已经不存在了。",
-    "TAG_NAME_TAKEN": "已经有一个同名的标签了。想把两个合并，请用「合并到…」。"
+    "TAG_NAME_TAKEN": "已经有一个同名的标签了。想把两个合并，请用「合并到…」。",
+    "SYSTEM_SETTING_FAILED": "系统没有允许这次修改，请稍后重试，或在系统设置里手动调整。"
   },
   "errorAction": {
     "OPEN_DIAGNOSTICS": "打开诊断信息"
@@ -395,5 +397,44 @@
     "delete": "删除",
     "deleted": "已删除「{{title}}」，可在回收站找回",
     "deletedMany": "已删除 {{count}} 项，可在回收站找回"
+  },
+  "settings": {
+    "label": "设置",
+    "title": "设置",
+    "section": {
+      "general": "通用",
+      "floating": "悬浮窗",
+      "schedule": "日程"
+    },
+    "autostart": {
+      "label": "开机自动启动",
+      "hint": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。"
+    },
+    "language": {
+      "label": "语言",
+      "hint": "更多语言会在后续版本提供。",
+      "zhCN": "简体中文"
+    },
+    "theme": {
+      "label": "主题",
+      "hint": "跟随系统，或固定为浅色 / 深色。"
+    },
+    "alwaysOnTop": {
+      "label": "悬浮窗置顶",
+      "hint": "开启后悬浮窗始终显示在其他窗口上面。"
+    },
+    "shortcut": {
+      "label": "快速创建快捷键",
+      "hint": "在任何应用里按下它，就能立刻写下一条待办。"
+    },
+    "later": {
+      "label": "「稍后」是哪一天",
+      "hint": "悬浮窗和收集箱里的「稍后」按钮会把条目安排到这一天。",
+      "nextMonday": "下周一",
+      "inThreeDays": "3 天后",
+      "inOneWeek": "7 天后"
+    },
+    "saved": "已保存",
+    "loadFailed": "没能读取设置。"
   }
 }

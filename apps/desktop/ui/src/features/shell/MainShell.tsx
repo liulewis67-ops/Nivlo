@@ -7,6 +7,7 @@ import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { NotesPage } from "@/features/notes";
 import { ProjectsPage } from "@/features/projects";
 import { CommandPalette } from "@/features/search";
+import { SettingsPage } from "@/features/settings";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { TrashPage } from "@/features/trash";
@@ -172,6 +173,12 @@ export function MainShell() {
               count={null}
               onSelect={() => setView("trash")}
             />
+            <NavButton
+              view="settings"
+              isActive={view === "settings"}
+              count={null}
+              onSelect={() => setView("settings")}
+            />
             <ShortcutSetting />
             <ThemeMenu />
           </div>
@@ -187,6 +194,7 @@ export function MainShell() {
           )}
           {view === "projects" && <ProjectsPage />}
           {view === "trash" && <TrashPage />}
+          {view === "settings" && <SettingsPage />}
           {view === "calendar" && <ComingSoon view={view} />}
         </main>
         {searching && <CommandPalette onClose={() => setSearching(false)} onOpenItem={setOpenId} />}

@@ -33,6 +33,12 @@ const ICON_PATHS: Record<MainView, ReactElement> = {
       <path d="M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.8 7v4M9.2 7v4" />
     </>
   ),
+  settings: (
+    <>
+      <circle cx="8" cy="8" r="2.2" />
+      <path d="M8 2v1.6M8 12.4V14M2 8h1.6M12.4 8H14M3.8 3.8l1.1 1.1M11.1 11.1l1.1 1.1M3.8 12.2l1.1-1.1M11.1 4.9l1.1-1.1" />
+    </>
+  ),
   dev: <path d="M5.5 5L2.5 8l3 3M10.5 5l3 3-3 3M9 3.5l-2 9" />,
 };
 

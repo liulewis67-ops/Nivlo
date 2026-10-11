@@ -4,7 +4,7 @@ import type { MainView } from "./nav-store";
 /** [`ComingSoon`] 的 Props。 */
 export type ComingSoonProps = {
   /** 尚未实现的视图。 */
-  view: Exclude<MainView, "inbox" | "today" | "notes" | "projects" | "trash" | "dev">;
+  view: Exclude<MainView, "inbox" | "today" | "notes" | "projects" | "trash" | "settings" | "dev">;
 };
 
 /**

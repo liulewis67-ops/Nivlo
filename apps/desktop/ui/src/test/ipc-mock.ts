@@ -1,6 +1,8 @@
 import { AppError } from "@/lib/errors";
 import type {
+  AppSettingsDto,
   AttachmentDto,
+  LaterRuleDto,
   PatchDto,
   UpdateItemRequest,
   ShortcutStatusDto,
@@ -81,6 +83,10 @@ export interface MemoryIpc extends IpcClient {
   readonly updates: readonly { id: string; request: UpdateItemRequest }[];
   /** 让下一次 `updateItem` 抛出的错误（模拟保存失败）；触发后自动清除。 */
   failNextUpdateWith(error: AppError): void;
+  /** 设置页的当前设置。 */
+  readonly appSettings: AppSettingsDto;
+  /** 让下一次修改设置的调用抛出的错误（模拟系统拒绝）；触发后自动清除。 */
+  failNextSettingWith(error: AppError): void;
   /** 当前保存的全部项目（含已归档，按创建顺序）。 */
   readonly projects: readonly ProjectDto[];
   /** 当前保存的全部标签。 */
@@ -216,6 +222,12 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   /** Item ID → 标签 ID。 */
   const itemTags = new Map<string, string[]>();
   let nextOrganizeId = 1;
+  let appSettings: AppSettingsDto = {
+    autostart: false,
+    floatingAlwaysOnTop: true,
+    laterRule: "nextMonday" as LaterRuleDto,
+  };
+  let settingFailure: AppError | undefined;
   /** 回收站：Item ID → 删除时间（ISO）。 */
   const trashed = new Map<string, string>();
   const updates: { id: string; request: UpdateItemRequest }[] = [];
@@ -870,6 +882,46 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       return found === undefined
         ? Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`))
         : Promise.resolve(found);
+    },
+    get appSettings() {
+      return appSettings;
+    },
+    failNextSettingWith: (error: AppError) => {
+      settingFailure = error;
+    },
+    getAppSettings: () => {
+      calls.push("getAppSettings");
+      return Promise.resolve(appSettings);
+    },
+    setAutostart: (enabled: boolean) => {
+      calls.push("setAutostart");
+      if (settingFailure !== undefined) {
+        const failure = settingFailure;
+        settingFailure = undefined;
+        return Promise.reject(failure);
+      }
+      appSettings = { ...appSettings, autostart: enabled };
+      return Promise.resolve(enabled);
+    },
+    setFloatingAlwaysOnTop: (enabled: boolean) => {
+      calls.push("setFloatingAlwaysOnTop");
+      if (settingFailure !== undefined) {
+        const failure = settingFailure;
+        settingFailure = undefined;
+        return Promise.reject(failure);
+      }
+      appSettings = { ...appSettings, floatingAlwaysOnTop: enabled };
+      return Promise.resolve();
+    },
+    setLaterRule: (rule: LaterRuleDto) => {
+      calls.push("setLaterRule");
+      if (settingFailure !== undefined) {
+        const failure = settingFailure;
+        settingFailure = undefined;
+        return Promise.reject(failure);
+      }
+      appSettings = { ...appSettings, laterRule: rule };
+      return Promise.resolve();
     },
     deleteItems: (ids: string[]) => {
       calls.push("deleteItems");

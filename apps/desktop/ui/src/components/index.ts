@@ -8,6 +8,8 @@ export { Input, Textarea } from "./Input";
 export type { InputProps, TextareaProps } from "./Input";
 export { Menu } from "./Menu";
 export type { MenuItemSpec, MenuProps } from "./Menu";
+export { Switch } from "./Switch";
+export type { SwitchProps } from "./Switch";
 export { ToastViewport } from "./ToastViewport";
 export { Tooltip, TooltipProvider } from "./Tooltip";
 export type { TooltipProps, TooltipProviderProps } from "./Tooltip";

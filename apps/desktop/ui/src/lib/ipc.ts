@@ -1,6 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { commands, events } from "@/bindings";
 import type {
+  AppSettingsDto,
   CaptureRequestDto,
   CaptureResultDto,
   CreateItemRequest,
@@ -9,6 +10,7 @@ import type {
   IpcError,
   ItemDto,
   ItemTypeDto,
+  LaterRuleDto,
   ListItemsRequest,
   OrganizeActionDto,
   OrganizeResultDto,
@@ -25,6 +27,8 @@ import type {
 import { toAppError } from "./errors";
 
 export type {
+  AppSettingsDto,
+  LaterRuleDto,
   ItemOrderDto,
   AttachmentDto,
   CaptureInputDto,
@@ -135,6 +139,14 @@ export interface IpcClient {
    * 空白查询返回空列表。
    */
   searchItems(query: string): Promise<ItemDto[]>;
+  /** 读取设置页的全部设置：开机自启（以系统启动项为准）、悬浮窗置顶、「稍后」的规则。 */
+  getAppSettings(): Promise<AppSettingsDto>;
+  /** 开启 / 关闭开机自启，返回之后的实际状态；系统拒绝时抛出 `SYSTEM_SETTING_FAILED`。 */
+  setAutostart(enabled: boolean): Promise<boolean>;
+  /** 设置悬浮窗是否置顶，立即生效并保存。 */
+  setFloatingAlwaysOnTop(enabled: boolean): Promise<void>;
+  /** 修改「稍后」的规则（悬浮窗与收集箱的「稍后」按钮都按它算日期）。 */
+  setLaterRule(rule: LaterRuleDto): Promise<void>;
   /**
    * 删除一批条目：移进回收站（软删除），30 天内可以恢复。一个事务，任何一个不存在整批不变。
    * 条目立刻从所有视图与搜索里消失。
@@ -304,6 +316,14 @@ const tauriIpc: IpcClient = {
     await call("open_item_source", commands.openItemSource(id));
   },
   listItems: (request) => call("list_items", commands.listItems(request)),
+  getAppSettings: () => call("get_app_settings", commands.getAppSettings()),
+  setAutostart: (enabled) => call("set_autostart", commands.setAutostart(enabled)),
+  setFloatingAlwaysOnTop: async (enabled) => {
+    await call("set_floating_always_on_top", commands.setFloatingAlwaysOnTop(enabled));
+  },
+  setLaterRule: async (rule) => {
+    await call("set_later_rule", commands.setLaterRule(rule));
+  },
   deleteItems: async (ids) => {
     await call("delete_items", commands.deleteItems(ids));
   },
@@ -410,6 +430,10 @@ export const ipc: IpcClient = {
   updateItem: (id, request) => current.updateItem(id, request),
   openItemSource: (id) => current.openItemSource(id),
   listItems: (request) => current.listItems(request),
+  getAppSettings: () => current.getAppSettings(),
+  setAutostart: (enabled) => current.setAutostart(enabled),
+  setFloatingAlwaysOnTop: (enabled) => current.setFloatingAlwaysOnTop(enabled),
+  setLaterRule: (rule) => current.setLaterRule(rule),
   deleteItems: (ids) => current.deleteItems(ids),
   restoreDeletedItems: (ids) => current.restoreDeletedItems(ids),
   listTrash: () => current.listTrash(),
