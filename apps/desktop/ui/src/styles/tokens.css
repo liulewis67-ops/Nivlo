@@ -34,6 +34,7 @@
 
   /* 层级：Menu < Tooltip < Toast，避免魔法数字 z-index。 */
   --nv-z-menu: 40;
+  --nv-z-dialog: 45;
   --nv-z-tooltip: 50;
   --nv-z-toast: 60;
 

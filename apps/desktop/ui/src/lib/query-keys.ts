@@ -17,6 +17,8 @@ export const queryKeys = {
   tags: () => ["tags"] as const,
   /** 某个标签的 Item 列表；属于 `items` 前缀。 */
   tagItems: (tagId: string) => ["items", "tag", tagId] as const,
+  /** 全文搜索的结果；属于 `items` 前缀，Item 变化时会一起失效。 */
+  search: (query: string) => ["items", "search", query] as const,
   /** Today 视图（待办 / 提示 / 今日已完成）。 */
   today: () => ["today"] as const,
   /** Inbox 列表（等待整理的 Item，含来源与附件）。 */

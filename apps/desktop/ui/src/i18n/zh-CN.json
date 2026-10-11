@@ -357,5 +357,21 @@
     "complete": "完成「{{title}}」",
     "reopen": "重新打开「{{title}}」",
     "noDate": "未安排"
+  },
+  "search": {
+    "label": "搜索",
+    "input": "搜索关键词",
+    "placeholder": "搜索待办、笔记和提示…",
+    "hint": "输入关键词，搜索标题、正文和来源。",
+    "empty": "没有找到「{{query}}」",
+    "results": "搜索结果",
+    "keys": "↑↓ 选择　↵ 打开　Esc 关闭",
+    "count": "{{count}} 条结果",
+    "open": "搜索",
+    "group": {
+      "todo": "待办",
+      "note": "笔记",
+      "tip": "提示"
+    }
   }
 }

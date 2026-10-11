@@ -6,6 +6,7 @@ import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { NotesPage } from "@/features/notes";
 import { ProjectsPage } from "@/features/projects";
+import { CommandPalette } from "@/features/search";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { cx } from "@/lib/cx";
@@ -86,6 +87,25 @@ export function MainShell() {
   const inboxCount = useInboxCountQuery().data ?? null;
   /** 详情面板里正在编辑的条目；`null` 表示面板关闭。 */
   const [openId, setOpenId] = useState<string | null>(null);
+  /** 搜索面板（Ctrl+K）是否打开。 */
+  const [searching, setSearching] = useState(false);
+
+  // Ctrl+K（macOS 上 ⌘K）打开 / 关闭搜索面板。
+  useEffect(() => {
+    /**
+     * 全局快捷键：窗口里任何位置都生效，包括输入框。
+     *
+     * @param event 键盘事件。
+     */
+    function handleKeyDown(event: KeyboardEvent): void {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearching((open) => !open);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // 悬浮窗请求打开某个视图：窗口刚创建时从后端取走待处理的请求，已经在运行时由事件通知。
   useEffect(() => {
@@ -113,6 +133,26 @@ export function MainShell() {
             <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
             <span className="text-lg font-semibold tracking-wide text-text">{t("app.name")}</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setSearching(true)}
+            className="flex h-9 w-full items-center gap-2.5 rounded-md border border-border bg-bg px-2.5 text-sm text-muted transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) hover:border-primary hover:text-text"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+              className="size-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            >
+              <circle cx="7" cy="7" r="4.5" />
+              <path d="M10.5 10.5L14 14" />
+            </svg>
+            <span className="flex-1 text-left">{t("search.open")}</span>
+            <kbd className="rounded border border-border px-1.5 text-[11px]">{"Ctrl K"}</kbd>
+          </button>
           <nav aria-label={t("shell.nav.label")} className="flex flex-col gap-1">
             {[...NAV_VIEWS, ...DEV_VIEWS].map((item) => (
               <NavButton
@@ -141,6 +181,7 @@ export function MainShell() {
           {view === "projects" && <ProjectsPage />}
           {view === "calendar" && <ComingSoon view={view} />}
         </main>
+        {searching && <CommandPalette onClose={() => setSearching(false)} onOpenItem={setOpenId} />}
         {openId !== null && (
           <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />
         )}
