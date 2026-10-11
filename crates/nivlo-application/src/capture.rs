@@ -80,6 +80,8 @@ struct SourceDraft {
     path: Option<String>,
     /// 附带的元数据（JSON）：Workflow 失败时记下原因，供「重新运行」与排查。
     metadata_json: Option<String>,
+    /// 原始标题 / 来源显示名（如 `Jira · AI-128`）。
+    original_title: Option<String>,
 }
 
 /// 附件草稿。
@@ -108,6 +110,7 @@ fn plan_file(file: &FileRef) -> Planned {
             url: None,
             path: Some(file.path.clone()),
             metadata_json: None,
+            original_title: None,
         },
         attachment: Some(AttachmentDraft::Reference(file.clone())),
         tags: Vec::new(),
@@ -132,6 +135,7 @@ fn plan(input: &CaptureInput) -> Vec<Planned> {
                     url: None,
                     path: None,
                     metadata_json: None,
+                    original_title: None,
                 },
                 attachment: None,
                 tags: Vec::new(),
@@ -148,6 +152,7 @@ fn plan(input: &CaptureInput) -> Vec<Planned> {
                     url: Some(url.clone()),
                     path: None,
                     metadata_json: None,
+                    original_title: None,
                 },
                 attachment: None,
                 tags: Vec::new(),
@@ -165,6 +170,7 @@ fn plan(input: &CaptureInput) -> Vec<Planned> {
                     url: None,
                     path: None,
                     metadata_json: None,
+                    original_title: None,
                 },
                 attachment: Some(AttachmentDraft::Image(image.clone())),
                 tags: Vec::new(),
@@ -195,6 +201,7 @@ fn from_planned(input: &CaptureInput, items: &[PlannedItem]) -> Vec<Planned> {
                         url: None,
                         path: None,
                         metadata_json: None,
+                        original_title: None,
                     },
                     None,
                 ),
@@ -204,6 +211,7 @@ fn from_planned(input: &CaptureInput, items: &[PlannedItem]) -> Vec<Planned> {
                         url: Some(url.clone()),
                         path: None,
                         metadata_json: None,
+                        original_title: None,
                     },
                     None,
                 ),
@@ -213,6 +221,7 @@ fn from_planned(input: &CaptureInput, items: &[PlannedItem]) -> Vec<Planned> {
                         url: None,
                         path: file.map(|f| f.path.clone()),
                         metadata_json: None,
+                        original_title: None,
                     },
                     file.filter(|_| planned.attach)
                         .map(|f| AttachmentDraft::Reference(f.clone())),
@@ -223,12 +232,18 @@ fn from_planned(input: &CaptureInput, items: &[PlannedItem]) -> Vec<Planned> {
                         url: None,
                         path: None,
                         metadata_json: None,
+                        original_title: None,
                     },
                     planned
                         .attach
                         .then(|| AttachmentDraft::Image(image.clone())),
                 ),
             };
+            let mut source = source;
+            source.original_title.clone_from(&planned.source_label);
+            if !planned.metadata.is_empty() {
+                source.metadata_json = serde_json::to_string(&planned.metadata).ok();
+            }
             Planned {
                 item,
                 source,
@@ -528,7 +543,7 @@ impl CaptureService {
                 source_app: request.source_application.clone(),
                 source_url: planned.source.url,
                 source_path: planned.source.path,
-                original_title: None,
+                original_title: planned.source.original_title,
                 metadata_json: planned.source.metadata_json,
                 captured_at: now,
             };

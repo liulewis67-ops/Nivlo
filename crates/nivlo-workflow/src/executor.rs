@@ -92,6 +92,10 @@ pub struct ItemDraft {
     pub attach: bool,
     /// 对应输入里的第几个文件（`forEach: files` 时）；其余为 `None`。
     pub file_index: Option<usize>,
+    /// 来源的显示名（写进 Source 的原始标题）。
+    pub source_label: Option<String>,
+    /// Integration 专属信息（已渲染），写进 Source 的 `metadata_json`。
+    pub metadata: std::collections::BTreeMap<String, String>,
 }
 
 /// 一次运行中 Step 之间共享的状态。
@@ -433,6 +437,7 @@ impl CreateItemExecutor {
         scheduled: Option<&String>,
         attach: bool,
         file_index: Option<usize>,
+        source: (Option<&String>, &std::collections::BTreeMap<String, String>),
     ) -> Result<ItemDraft, StepError> {
         let title = render_in(scope, title)?.trim().to_owned();
         if title.is_empty() {
@@ -468,6 +473,17 @@ impl CreateItemExecutor {
             }
             None => None,
         };
+        let source_label = match source.0 {
+            Some(template) => {
+                let text = render_in(scope, template)?.trim().to_owned();
+                (!text.is_empty()).then_some(text)
+            }
+            None => None,
+        };
+        let mut metadata = std::collections::BTreeMap::new();
+        for (key, template) in source.1 {
+            metadata.insert(key.clone(), render_in(scope, template)?);
+        }
         Ok(ItemDraft {
             item_type,
             title,
@@ -478,6 +494,8 @@ impl CreateItemExecutor {
             scheduled,
             attach,
             file_index,
+            source_label,
+            metadata,
         })
     }
 }
@@ -501,6 +519,8 @@ impl StepExecutor for CreateItemExecutor {
             scheduled,
             attach,
             for_each,
+            source_label,
+            metadata,
         } = step
         else {
             return Err(wrong_step(step_kind(step)));
@@ -518,6 +538,7 @@ impl StepExecutor for CreateItemExecutor {
                     scheduled.as_ref(),
                     *attach,
                     None,
+                    (source_label.as_ref(), metadata),
                 )?;
                 ctx.drafts.push(draft);
             }
@@ -540,6 +561,7 @@ impl StepExecutor for CreateItemExecutor {
                         scheduled.as_ref(),
                         *attach,
                         Some(index),
+                        (source_label.as_ref(), metadata),
                     )?;
                     ctx.drafts.push(draft);
                 }

@@ -152,6 +152,8 @@ pub fn check_workflow(workflow: &Workflow, regexes: &RegexCache) -> Result<(), V
                 content,
                 tags,
                 scheduled,
+                source_label,
+                metadata,
                 ..
             } => {
                 check_template(&at("title"), title, &mut issues);
@@ -163,6 +165,12 @@ pub fn check_workflow(workflow: &Workflow, regexes: &RegexCache) -> Result<(), V
                 }
                 if let Some(source) = scheduled {
                     check_template(&at("scheduled"), source, &mut issues);
+                }
+                if let Some(source) = source_label {
+                    check_template(&at("sourceLabel"), source, &mut issues);
+                }
+                for (key, source) in metadata {
+                    check_template(&at(&format!("metadata/{key}")), source, &mut issues);
                 }
             }
             Step::HtmlMeta { from, base, .. } => {

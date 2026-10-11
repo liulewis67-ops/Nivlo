@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.jira-issue",
+  "name": "Jira 工单",
+  "description": "Jira 的 /browse/KEY-123 链接变成待办「[KEY-123] 标题」。先立刻用工单号创建，随后在后台读取页面标题补全；需要登录或没有网络时保持「[KEY-123]」，不受影响。自托管 Jira 同样识别（内网地址读不到标题，只保留工单号）。",
+  "version": 1,
+  "priority": 20,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": {
+    "all": [
+      { "field": "input.type", "op": "equals", "value": "url" },
+      { "field": "url.path", "op": "regex", "value": "^/browse/[A-Z][A-Z0-9_]+-\\d+(/|$)" }
+    ]
+  },
+  "permissions": { "network": true, "hosts": ["*"] },
+  "steps": [
+    { "type": "extract", "from": "url.path", "pattern": "^/browse/([A-Z][A-Z0-9_]+-\\d+)", "into": "key" },
+    { "type": "http", "url": "{{ input.url }}", "into": "page", "optional": true },
+    { "type": "htmlMeta", "from": "vars.page", "into": "meta", "optional": true },
+    {
+      "type": "extract",
+      "from": "vars.meta_title",
+      "pattern": "^\\s*\\[[A-Z][A-Z0-9_]*-\\d+\\]\\s*(.+?)\\s*(?:[-–—|]\\s*(?:Jira|JIRA|Atlassian)[^\\n]*)?$",
+      "into": "issue_title",
+      "optional": true
+    },
+    {
+      "type": "createItem",
+      "itemType": "todo",
+      "title": "[{{ vars.key }}] {{ vars.issue_title | default(\"\") | truncate(120) }}",
+      "content": "{{ input.url }}",
+      "inInbox": true,
+      "sourceLabel": "Jira · {{ vars.key }}",
+      "metadata": {
+        "integration": "jira",
+        "issueKey": "{{ vars.key }}",
+        "host": "{{ url.host }}"
+      }
+    }
+  ]
+}

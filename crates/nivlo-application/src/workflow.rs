@@ -44,6 +44,10 @@ pub struct PlannedItem {
     pub attach: bool,
     /// 对应输入里的第几个文件。
     pub file_index: Option<usize>,
+    /// 来源的显示名。
+    pub source_label: Option<String>,
+    /// Integration 专属信息。
+    pub metadata: std::collections::BTreeMap<String, String>,
 }
 
 /// 失败的分类（与引擎的错误分类一一对应）。

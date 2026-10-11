@@ -171,7 +171,9 @@
             "priority": { "enum": ["none", "low", "medium", "high"] },
             "scheduled": { "type": "string" },
             "attach": { "type": "boolean" },
-            "forEach": { "enum": ["files"] }
+            "forEach": { "enum": ["files"] },
+            "sourceLabel": { "type": "string" },
+            "metadata": { "type": "object", "additionalProperties": { "type": "string" } }
           }
         },
         {

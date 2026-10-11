@@ -433,6 +433,12 @@ pub enum Step {
         /// 对每个文件各创建一条。
         #[serde(default, skip_serializing_if = "Option::is_none")]
         for_each: Option<ForEach>,
+        /// 来源的显示名模板（如 `Jira · AI-128`），写进 Source 的原始标题。
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        source_label: Option<String>,
+        /// Integration 专属信息（键 → 模板），渲染后以 JSON 写进 Source 的 `metadata_json`。
+        #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+        metadata: BTreeMap<String, String>,
     },
     /// 给本次运行创建的全部 Item 加一个标签。
     AddTag {

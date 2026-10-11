@@ -143,7 +143,7 @@ Phase 12 Backlog                        → 未排期
 | **P6** | 6.1 | HttpPort 与网络权限 | ✅ |
 | | 6.2 | 内置 Workflow 打包与同步 | ✅ |
 | | 6.3 | Generic Web Page（页面元数据） | ✅ |
-| | 6.4 | Jira Issue（无 API 降级路径） | ⬜ |
+| | 6.4 | Jira Issue（无 API 降级路径） | ✅ |
 | | 6.5 | GitHub Issue / PR | ⬜ |
 | | 6.6 | 文件类 Workflow | ⬜ |
 | | 6.7 | 自然语言日期解析 | ✅ |
@@ -1127,16 +1127,16 @@ Phase 12 Backlog                        → 未排期
 
 ### 6.4 Jira Issue（无 API 降级路径）
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：6.3
 - **目标**：实现产品文档 §11 的降级链中「Page Metadata → URL + Page Title」两级（API 级在 9.3）。
 - **任务**：
   - Matcher：`*.atlassian.net/browse/*` 及用户可配置的自托管 Jira Host。
   - 提取 Issue Key；从页面标题解析标题；生成 Todo `[AI-128] Title`；Source `Jira · AI-128`；Integration 字段写入 `metadata_json`。
 - **验收标准**：
-  - [ ] fixtures 测试：Cloud 与自托管 URL 格式均可识别 Issue Key。
-  - [ ] 无凭据、未登录（页面需要认证）时仍生成 `[KEY] ` + 可得标题的 Todo。
-- **完成记录**：—
+  - [x] fixtures 测试：Cloud 与自托管 URL 格式均可识别 Issue Key。
+  - [x] 无凭据、未登录（页面需要认证）时仍生成 `[KEY] ` + 可得标题的 Todo。
+- **完成记录**：2026-10-11 完成。内置 `builtin.jira-issue`（priority 20）：按路径 `^/browse/KEY-123` 识别，**不限定主机**，所以 `*.atlassian.net` 与自托管 Jira 都能识别（偏差：计划里的「用户可配置自托管 Host」因此不需要配置；内网 Jira 因 HostPolicy 拒绝内网地址读不到页面标题，只保留工单号）。步骤：提取 Key → 可选 http → htmlMeta → 仅当标题以 `[KEY]` 开头才提取标题（登录页不会污染）→ 待办 `[KEY] 标题`；Source 原始标题写 `Jira · KEY`，`metadata_json` 写 `{integration, issueKey, host}`（新增 createItem 的 `sourceLabel` / `metadata`）。fixtures：`fixtures/jira/cases.json`；测试 `tests/jira.rs`：Cloud / 自托管 / 带查询串 / 末尾斜杠识别，非 Jira 路径不误判；页面标题补全（含无 Jira 后缀）；登录页、离线、超时都仍生成 `[AI-128]`。
 
 ### 6.5 GitHub Issue / PR
 

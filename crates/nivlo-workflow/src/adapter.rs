@@ -77,6 +77,8 @@ fn planned(draft: ItemDraft) -> PlannedItem {
         scheduled: draft.scheduled,
         attach: draft.attach,
         file_index: draft.file_index,
+        source_label: draft.source_label,
+        metadata: draft.metadata,
     }
 }
 

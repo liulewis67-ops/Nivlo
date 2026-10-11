@@ -78,6 +78,8 @@ impl WorkflowEngine for FakeEngine {
                 scheduled: None,
                 attach: false,
                 file_index: None,
+                source_label: None,
+                metadata: Default::default(),
             }]),
             steps: Vec::new(),
             duration_ms: 1,
