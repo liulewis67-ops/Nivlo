@@ -10,5 +10,6 @@
 #![cfg(target_os = "windows")]
 
 pub mod clipboard;
+pub mod credential;
 pub mod foreground;
 pub mod shortcut;

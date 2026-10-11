@@ -3,6 +3,7 @@
 //! 每种平台能力是一个**独立的小 trait**，不做拥有几十个方法的 God Trait（架构文档 §7.9、ADR-006）：
 //!
 //! * [`clipboard::ClipboardPort`]：读取剪贴板（只在用户粘贴时调用，没有监听接口）。
+//! * [`credential::CredentialPort`]：读写系统凭据库（Token 只存在那里，实施计划 9.1）。
 //! * [`notification::NotificationPort`]：发送系统通知（提醒、Tip、截止）。
 //! * [`open::OpenPort`]：受限的外部打开能力（默认浏览器打开 http(s) 网址、在资源管理器里定位文件）。
 //! * [`floating_window::FloatingWindowPort`]：悬浮窗的位置 / 尺寸 / 置顶 / 焦点。
@@ -17,6 +18,7 @@
 //! 禁止依赖：任何具体平台库（参见后端规范 §3.1）。
 
 pub mod clipboard;
+pub mod credential;
 pub mod error;
 pub mod floating_window;
 pub mod foreground;

@@ -60,6 +60,7 @@ tauri = { workspace = true, features = ["test"] }
 sqlx.workspace = true
 tempfile.workspace = true
 uuid.workspace = true
+tracing-subscriber.workspace = true
 nivlo-application = { workspace = true, features = ["testing"] }
 
 [lints]

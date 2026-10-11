@@ -159,7 +159,7 @@ Phase 12 Backlog                        → 未排期
 | | 8.3 | Script Step 与 Workflow 权限 | ⬜ |
 | | 8.4 | 脚本编辑器（CodeMirror） | ⬜ |
 | | 8.5 | Workflow 导入 / 导出 | ⬜ |
-| **P9** | 9.1 | CredentialPort 与 Windows Credential Manager | ⬜ |
+| **P9** | 9.1 | CredentialPort 与 Windows Credential Manager | ✅ |
 | | 9.2 | Integration Registry 与 Integration Step | ⬜ |
 | | 9.3 | Jira API | ⬜ |
 | | 9.4 | GitHub API | ⬜ |
@@ -1446,15 +1446,15 @@ Phase 12 Backlog                        → 未排期
 
 ### 9.1 CredentialPort 与 Windows Credential Manager
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.4
 - **任务**：
   - `CredentialPort`（get / set / delete）；Windows Credential Manager 适配器。
   - 凭据只能由 Integration Adapter 读取，不暴露给 JS 与前端。
 - **验收标准**：
-  - [ ] 集成测试：写入、读取、删除凭据。
-  - [ ] 搜索 SQLite 文件、配置文件、日志，均不出现测试 Token（自动化检查）。
-- **完成记录**：—
+  - [x] 集成测试：写入、覆盖、读取、删除凭据（`nivlo-platform-windows/tests/credential.rs`，真实的 Windows Credential Manager，目标名带进程号、结束时清理；另测超长内容被拒绝且不写入）。
+  - [x] 搜索 SQLite 文件、配置文件、日志，均不出现测试 Token（`apps/desktop/src-tauri/tests/secret_leak.rs`：扫描数据目录下每个文件的 UTF-8 / UTF-16 字节，含 WAL；已用故意泄漏验证这项检查会失败）。
+- **完成记录**：2026-10-12：`nivlo-platform` 新增 `CredentialPort`（`get` / `set` / `delete`）、`CredentialKey`（目标名 `Nivlo/<集成>/<账号>`，带校验）、`Secret`（`Debug` 只输出 `Secret(***)`，无 `Display` / `Serialize`，所以不会进日志或 IPC 类型）与内存版 `MemoryCredentials`（测试 / 无系统凭据库平台的降级，不落盘）；`WindowsCredentials` 用 `CredReadW` / `CredWriteW` / `CredDeleteW`（`CRED_TYPE_GENERIC`、`CRED_PERSIST_LOCAL_MACHINE`，内容 ≤ 2560 字节，写后清零内存副本）。没有任何 IPC Command 返回凭据内容。**未做**：macOS / Linux 的适配器（11.2 / 11.3）；设置页的凭据录入界面属于 9.5。
 
 ### 9.2 Integration Registry 与 Integration Step
 
