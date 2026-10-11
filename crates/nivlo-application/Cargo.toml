@@ -10,11 +10,12 @@ description = "Nivlo application crate"
 async-trait.workspace = true
 chrono.workspace = true
 chrono-tz.workspace = true
+serde_json.workspace = true
 nivlo-common.workspace = true
 nivlo-domain.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-tokio.workspace = true
+tokio = { workspace = true, features = ["macros"] }
 
 [features]
 # 暴露内存 Fake（FakeUnitOfWork、RecordingPublisher 等），供其他 crate 的测试使用。
@@ -24,7 +25,6 @@ testing = []
 nivlo-capture.workspace = true
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
 uuid.workspace = true
-serde_json.workspace = true
 
 [lints]
 workspace = true

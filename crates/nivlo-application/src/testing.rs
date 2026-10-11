@@ -18,12 +18,14 @@ use nivlo_domain::source::Source;
 use nivlo_domain::tag::{Tag, TagName};
 
 use crate::trigger::TriggerKey;
+use crate::workflow::{RunRecord, StoredWorkflow};
+use nivlo_domain::workflow::{Workflow, WorkflowId};
 
 use crate::event::EventPublisher;
 use crate::ports::{
     AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
     SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
-    Transaction, TrashRepository, TriggerRepository, UnitOfWork,
+    Transaction, TrashRepository, TriggerRepository, UnitOfWork, WorkflowRepository,
 };
 
 /// 内存数据库中的全部数据。事务开始时整体克隆为工作副本，提交时整体替换。
@@ -47,6 +49,10 @@ struct FakeData {
     item_tags: BTreeSet<(ItemId, TagId)>,
     /// 回收站：Item ID → 删除时间。
     deleted: BTreeMap<ItemId, DateTime<Utc>>,
+    /// Workflow 定义。
+    workflows: BTreeMap<WorkflowId, StoredWorkflow>,
+    /// Workflow 运行记录（按写入顺序）。
+    runs: Vec<RunRecord>,
     /// 已触发的触发点：键 → (通知时间, 是否补发)。
     fired: BTreeMap<TriggerKey, (DateTime<Utc>, bool)>,
 }
@@ -188,6 +194,11 @@ impl Transaction for FakeTransaction {
 
     /// 返回触发记录 Repository 视图。
     fn triggers(&mut self) -> &mut dyn TriggerRepository {
+        self
+    }
+
+    /// 返回 Workflow Repository 视图。
+    fn workflows(&mut self) -> &mut dyn WorkflowRepository {
         self
     }
 
@@ -972,5 +983,71 @@ impl TriggerRepository for FakeTransaction {
         let before = self.working.fired.len();
         self.working.fired.retain(|key, _| key.fire_at >= cutoff);
         Ok((before - self.working.fired.len()) as u64)
+    }
+}
+
+#[async_trait]
+impl WorkflowRepository for FakeTransaction {
+    /// 全部 Workflow。
+    async fn list(&mut self) -> Result<Vec<StoredWorkflow>, StorageError> {
+        Ok(self.working.workflows.values().cloned().collect())
+    }
+
+    /// 按 ID 读取。
+    async fn get(&mut self, id: &WorkflowId) -> Result<Option<StoredWorkflow>, StorageError> {
+        Ok(self.working.workflows.get(id).cloned())
+    }
+
+    /// 插入或覆盖；保留创建时间。
+    async fn upsert(
+        &mut self,
+        workflow: &Workflow,
+        now: DateTime<Utc>,
+    ) -> Result<(), StorageError> {
+        let created_at = self
+            .working
+            .workflows
+            .get(&workflow.id)
+            .map_or(now, |existing| existing.created_at);
+        self.working.workflows.insert(
+            workflow.id.clone(),
+            StoredWorkflow {
+                workflow: workflow.clone(),
+                created_at,
+                updated_at: now,
+            },
+        );
+        Ok(())
+    }
+
+    /// 删除。
+    async fn delete(&mut self, id: &WorkflowId) -> Result<(), StorageError> {
+        self.working.workflows.remove(id);
+        Ok(())
+    }
+
+    /// 写入运行记录。
+    async fn insert_run(&mut self, run: &RunRecord) -> Result<(), StorageError> {
+        self.working.runs.push(run.clone());
+        Ok(())
+    }
+
+    /// 最近的运行记录，新的在前。
+    async fn list_runs(&mut self, limit: u32) -> Result<Vec<RunRecord>, StorageError> {
+        let mut runs = self.working.runs.clone();
+        runs.sort_by(|a, b| b.started_at.cmp(&a.started_at).then(b.id.cmp(&a.id)));
+        runs.truncate(limit as usize);
+        Ok(runs)
+    }
+
+    /// 清理：保留最近 `keep` 条，并删除早于 `before` 的。
+    async fn prune_runs(&mut self, keep: u32, before: DateTime<Utc>) -> Result<u64, StorageError> {
+        let total = self.working.runs.len();
+        self.working
+            .runs
+            .sort_by(|a, b| b.started_at.cmp(&a.started_at).then(b.id.cmp(&a.id)));
+        self.working.runs.truncate(keep as usize);
+        self.working.runs.retain(|run| run.started_at >= before);
+        Ok((total - self.working.runs.len()) as u64)
     }
 }

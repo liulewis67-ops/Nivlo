@@ -50,11 +50,11 @@ async fn migrates_from_empty_and_is_idempotent() {
     assert_eq!(db.schema_version().await.unwrap(), None);
 
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(5));
+    assert_eq!(db.schema_version().await.unwrap(), Some(6));
 
     // 再次运行不报错，版本不变。
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(5));
+    assert_eq!(db.schema_version().await.unwrap(), Some(6));
 }
 
 #[tokio::test]
@@ -785,4 +785,111 @@ async fn list_can_order_by_last_update_for_notes() {
         .await
         .unwrap();
     assert_eq!(titles(by_updated), ["先写的（改过）", "后写的"]);
+}
+
+// ---- Workflow 仓库（5.5 / 5.6） ----
+
+fn sample_workflow(slug: &str, priority: i32) -> nivlo_domain::workflow::Workflow {
+    serde_json::from_str(&format!(
+        r#"{{"schemaVersion":1,"id":"{slug}","name":"测试 {slug}","priority":{priority},
+        "matcher":{{"field":"input.type","op":"equals","value":"text"}},
+        "steps":[{{"type":"createItem","itemType":"todo","title":"{{{{ input.title }}}}"}}]}}"#
+    ))
+    .unwrap()
+}
+
+fn sample_run(n: u32, started: DateTime<Utc>) -> nivlo_application::workflow::RunRecord {
+    use nivlo_application::workflow::{RunRecord, RunStatus, StepOutcome, StepReport};
+    RunRecord {
+        id: format!("00000000-0000-7000-8000-{n:012}"),
+        workflow_id: "user.a".into(),
+        workflow_name: "测试".into(),
+        input_kind: "text".into(),
+        input_summary: "文字 · 3 字".into(),
+        status: RunStatus::Succeeded,
+        error_kind: None,
+        error_message: None,
+        items_created: 1,
+        duration_ms: 3,
+        started_at: started,
+        steps: vec![StepReport {
+            index: 0,
+            kind: "createItem".into(),
+            outcome: StepOutcome::Ok,
+            duration_ms: 1,
+            message: None,
+        }],
+    }
+}
+
+#[tokio::test]
+async fn workflows_round_trip_and_upsert_keeps_creation_time() {
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.workflows()
+        .upsert(&sample_workflow("user.a", 5), t(8, 0))
+        .await
+        .unwrap();
+    tx.workflows()
+        .upsert(&sample_workflow("user.b", 9), t(8, 1))
+        .await
+        .unwrap();
+    // 覆盖：内容变、创建时间不变。
+    tx.workflows()
+        .upsert(&sample_workflow("user.a", 7), t(9, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let all = tx.workflows().list().await.unwrap();
+    assert_eq!(all.len(), 2);
+    let a = tx
+        .workflows()
+        .get(&nivlo_domain::workflow::WorkflowId::new("user.a").unwrap())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(a.workflow.priority, 7);
+    assert_eq!(a.created_at, t(8, 0));
+    assert_eq!(a.updated_at, t(9, 0));
+
+    tx.workflows()
+        .delete(&nivlo_domain::workflow::WorkflowId::new("user.b").unwrap())
+        .await
+        .unwrap();
+    assert_eq!(tx.workflows().list().await.unwrap().len(), 1);
+    // 删除不存在的是空操作。
+    tx.workflows()
+        .delete(&nivlo_domain::workflow::WorkflowId::new("user.zzz").unwrap())
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn workflow_runs_are_listed_newest_first_with_steps_and_pruned_by_count_and_age() {
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    for n in 0..5 {
+        tx.workflows()
+            .insert_run(&sample_run(n, t(8, n)))
+            .await
+            .unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let runs = tx.workflows().list_runs(3).await.unwrap();
+    assert_eq!(runs.len(), 3);
+    assert_eq!(runs[0].started_at, t(8, 4));
+    assert_eq!(runs[0].steps.len(), 1);
+    assert_eq!(runs[0].input_summary, "文字 · 3 字");
+
+    // 只保留最近 3 条：删掉 2 条旧的。
+    let removed = tx.workflows().prune_runs(3, t(0, 0)).await.unwrap();
+    assert_eq!(removed, 2);
+    // 过了截止时间的也删（8:02 之前的已经没了，8:02 本身早于 8:03）。
+    let removed = tx.workflows().prune_runs(100, t(8, 3)).await.unwrap();
+    assert_eq!(removed, 1);
+    assert_eq!(tx.workflows().list_runs(10).await.unwrap().len(), 2);
 }

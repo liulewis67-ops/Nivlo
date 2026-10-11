@@ -15,6 +15,7 @@ use nivlo_application::organize::{ProjectService, TagService};
 use nivlo_application::settings::SettingsService;
 use nivlo_application::today::TodayService;
 use nivlo_application::trash::TrashService;
+use nivlo_application::workflow::WorkflowService;
 use nivlo_common::clock::Clock;
 use nivlo_common::logging::LogGuard;
 use nivlo_storage::Database;
@@ -44,6 +45,8 @@ pub struct ApplicationServices {
     pub trash: TrashService,
     /// Calendar 查询。
     pub calendar: CalendarService,
+    /// Workflow 管理（列表 / 编辑 / 试运行 / 运行记录）。
+    pub workflows: WorkflowService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

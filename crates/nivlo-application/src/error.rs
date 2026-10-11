@@ -66,6 +66,12 @@ pub enum ErrorCode {
     ClipboardEmpty,
     /// 无法读取剪贴板（被其他程序占用，或当前平台不支持）。
     ClipboardUnavailable,
+    /// Workflow 不存在。
+    WorkflowNotFound,
+    /// Workflow 定义没有通过校验。
+    WorkflowInvalid,
+    /// 试图修改或删除只读的内置 Workflow。
+    WorkflowReadOnly,
     /// 无法修改系统设置（如开机启动项）。
     SystemSettingFailed,
     /// 来源指向的文件已经不在原处。
@@ -104,6 +110,9 @@ impl ErrorCode {
         Self::ShortcutConflict,
         Self::ClipboardEmpty,
         Self::ClipboardUnavailable,
+        Self::WorkflowNotFound,
+        Self::WorkflowInvalid,
+        Self::WorkflowReadOnly,
         Self::SystemSettingFailed,
         Self::SourceFileMissing,
         Self::SourceOpenFailed,
@@ -139,6 +148,9 @@ impl ErrorCode {
             Self::ShortcutConflict => "SHORTCUT_CONFLICT",
             Self::ClipboardEmpty => "CLIPBOARD_EMPTY",
             Self::ClipboardUnavailable => "CLIPBOARD_UNAVAILABLE",
+            Self::WorkflowNotFound => "WORKFLOW_NOT_FOUND",
+            Self::WorkflowInvalid => "WORKFLOW_INVALID",
+            Self::WorkflowReadOnly => "WORKFLOW_READ_ONLY",
             Self::SystemSettingFailed => "SYSTEM_SETTING_FAILED",
             Self::SourceFileMissing => "SOURCE_FILE_MISSING",
             Self::SourceOpenFailed => "SOURCE_OPEN_FAILED",

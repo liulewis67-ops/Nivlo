@@ -21,6 +21,8 @@ use nivlo_domain::source::Source;
 use nivlo_domain::tag::{Tag, TagName};
 
 use crate::trigger::TriggerKey;
+use crate::workflow::{RunRecord, StoredWorkflow};
+use nivlo_domain::workflow::{Workflow, WorkflowId};
 
 /// 存储 Adapter 返回的错误。
 ///
@@ -88,6 +90,9 @@ pub trait Transaction: Send {
 
     /// 回收站（软删除）的 Repository 视图，与本事务共享同一个连接。
     fn trash(&mut self) -> &mut dyn TrashRepository;
+
+    /// Workflow 与运行记录的 Repository 视图，与本事务共享同一个连接。
+    fn workflows(&mut self) -> &mut dyn WorkflowRepository;
 
     /// Scheduler 触发记录的 Repository 视图，与本事务共享同一个连接。
     fn triggers(&mut self) -> &mut dyn TriggerRepository;
@@ -524,4 +529,58 @@ pub trait TriggerRepository: Send {
     ///
     /// 数据库不可用时返回对应的 [`StorageError`]。
     async fn prune_fired_before(&mut self, cutoff: DateTime<Utc>) -> Result<u64, StorageError>;
+}
+
+/// Workflow 定义与运行记录的持久化（`workflows` / `workflow_runs` / `workflow_run_steps` 表）。
+#[async_trait]
+pub trait WorkflowRepository: Send {
+    /// 全部 Workflow。
+    ///
+    /// # Errors
+    ///
+    /// 定义无法解析时返回 [`StorageError::Corrupt`]。
+    async fn list(&mut self) -> Result<Vec<StoredWorkflow>, StorageError>;
+
+    /// 按 ID 读取；不存在返回 `Ok(None)`。
+    ///
+    /// # Errors
+    ///
+    /// 定义无法解析时返回 [`StorageError::Corrupt`]。
+    async fn get(&mut self, id: &WorkflowId) -> Result<Option<StoredWorkflow>, StorageError>;
+
+    /// 插入或整体覆盖一个 Workflow；已存在时保留创建时间。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn upsert(&mut self, workflow: &Workflow, now: DateTime<Utc>)
+    -> Result<(), StorageError>;
+
+    /// 删除一个 Workflow；不存在是空操作。运行记录保留。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn delete(&mut self, id: &WorkflowId) -> Result<(), StorageError>;
+
+    /// 写入一条运行记录（连同它的 Step 记录）。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn insert_run(&mut self, run: &RunRecord) -> Result<(), StorageError>;
+
+    /// 最近的运行记录，新的在前，带 Step 记录。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn list_runs(&mut self, limit: u32) -> Result<Vec<RunRecord>, StorageError>;
+
+    /// 清理运行记录：只保留最近 `keep` 条，且删除开始时间早于 `before` 的。返回删除的条数。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn prune_runs(&mut self, keep: u32, before: DateTime<Utc>) -> Result<u64, StorageError>;
 }

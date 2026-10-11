@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT step_index, kind, status, duration_ms, message\n                 FROM workflow_run_steps WHERE run_id = ? ORDER BY step_index ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "step_index",
+        "ordinal": 0,
+        "type_info": "Integer"
+      },
+      {
+        "name": "kind",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "status",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "duration_ms",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "message",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "2533375d6581fa979a28f579d120640fb2a01a087982268a623991114fbc0a46"
+}

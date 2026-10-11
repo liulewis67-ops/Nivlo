@@ -1,7 +1,9 @@
 //! `CaptureService`：把一次捕获变成 Item（实施计划 2.3、产品文档 §6–7、架构文档 §16、§56）。
 //!
-//! 在 Workflow Engine 出现之前（Phase 5 会把这里的规则改写为内置的 Generic Workflow），
-//! 这里是一组固定的默认规则，**全部进入 Inbox**（实施计划 D-02）：
+//! 捕获先交给 Workflow Engine（实施计划 5.5）：Resolver 选出匹配的 Workflow，产出要创建的 Item。
+//! 没有接入引擎、没有 Workflow 匹配、Workflow 失败或没有产出时，使用下面这组固定的默认规则——
+//! 它们同时也是内置 Generic Workflow 复刻的对象，**全部进入 Inbox**（实施计划 D-02），
+//! 因此**捕获永不丢失**：Workflow 失败时原始输入照常保存，并在来源上记下失败原因：
 //!
 //! | 输入 | 创建 | 内容 |
 //! |---|---|---|
@@ -24,13 +26,20 @@ use nivlo_domain::attachment::{Attachment, AttachmentKind};
 use nivlo_domain::capture::default_title;
 use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest, FileRef};
 use nivlo_domain::event::DomainEvent;
+use nivlo_domain::id::TagId;
 use nivlo_domain::id::{AttachmentId, ItemId, SourceId};
+use nivlo_domain::item::{DatePoint, Priority};
 use nivlo_domain::item::{Item, ItemType, NewItem};
 use nivlo_domain::source::{Source, SourceType};
+use nivlo_domain::tag::{Tag, TagName};
 
 use crate::error::AppError;
 use crate::event::EventPublisher;
 use crate::ports::{AttachmentFiles, UnitOfWork};
+use crate::workflow::{
+    PlannedItem, RunRecord, RunStatus, WorkflowEngine, WorkflowRunResult, new_run_id,
+    summarize_input,
+};
 
 /// 一次捕获创建出的结果。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -55,6 +64,8 @@ struct Planned {
     source: SourceDraft,
     /// 要关联的附件。
     attachment: Option<AttachmentDraft>,
+    /// 要打的标签（Workflow 产出；默认规则没有）。
+    tags: Vec<String>,
 }
 
 /// 来源草稿。
@@ -65,6 +76,8 @@ struct SourceDraft {
     url: Option<String>,
     /// 来源文件路径。
     path: Option<String>,
+    /// 附带的元数据（JSON）：Workflow 失败时记下原因，供「重新运行」与排查。
+    metadata_json: Option<String>,
 }
 
 /// 附件草稿。
@@ -92,8 +105,10 @@ fn plan_file(file: &FileRef) -> Planned {
             source_type: SourceType::FILE,
             url: None,
             path: Some(file.path.clone()),
+            metadata_json: None,
         },
         attachment: Some(AttachmentDraft::Reference(file.clone())),
+        tags: Vec::new(),
     }
 }
 
@@ -114,8 +129,10 @@ fn plan(input: &CaptureInput) -> Vec<Planned> {
                     source_type: SourceType::TEXT,
                     url: None,
                     path: None,
+                    metadata_json: None,
                 },
                 attachment: None,
+                tags: Vec::new(),
             }]
         }
         CaptureInput::Url { url } => {
@@ -128,8 +145,10 @@ fn plan(input: &CaptureInput) -> Vec<Planned> {
                     source_type: SourceType::WEB,
                     url: Some(url.clone()),
                     path: None,
+                    metadata_json: None,
                 },
                 attachment: None,
+                tags: Vec::new(),
             }]
         }
         CaptureInput::File { file } => vec![plan_file(file)],
@@ -143,11 +162,96 @@ fn plan(input: &CaptureInput) -> Vec<Planned> {
                     source_type: SourceType::IMAGE,
                     url: None,
                     path: None,
+                    metadata_json: None,
                 },
                 attachment: Some(AttachmentDraft::Image(image.clone())),
+                tags: Vec::new(),
             }]
         }
     }
+}
+
+/// 把 Workflow 的产出转成要创建的记录；来源与附件由输入的种类决定（与默认规则一致）。
+fn from_planned(input: &CaptureInput, items: &[PlannedItem]) -> Vec<Planned> {
+    items
+        .iter()
+        .map(|planned| {
+            let mut item = NewItem::new(planned.item_type, planned.title.clone());
+            item.content = planned.content.clone();
+            item.in_inbox = planned.in_inbox;
+            item.priority = planned.priority.unwrap_or(Priority::None);
+            item.scheduled = planned.scheduled.map(DatePoint::all_day);
+            let file = match input {
+                CaptureInput::File { file } => Some(file),
+                CaptureInput::Files { files } => files.get(planned.file_index.unwrap_or(0)),
+                _ => None,
+            };
+            let (source, attachment) = match input {
+                CaptureInput::Text { .. } => (
+                    SourceDraft {
+                        source_type: SourceType::TEXT,
+                        url: None,
+                        path: None,
+                        metadata_json: None,
+                    },
+                    None,
+                ),
+                CaptureInput::Url { url } => (
+                    SourceDraft {
+                        source_type: SourceType::WEB,
+                        url: Some(url.clone()),
+                        path: None,
+                        metadata_json: None,
+                    },
+                    None,
+                ),
+                CaptureInput::File { .. } | CaptureInput::Files { .. } => (
+                    SourceDraft {
+                        source_type: SourceType::FILE,
+                        url: None,
+                        path: file.map(|f| f.path.clone()),
+                        metadata_json: None,
+                    },
+                    file.filter(|_| planned.attach)
+                        .map(|f| AttachmentDraft::Reference(f.clone())),
+                ),
+                CaptureInput::Image { image } => (
+                    SourceDraft {
+                        source_type: SourceType::IMAGE,
+                        url: None,
+                        path: None,
+                        metadata_json: None,
+                    },
+                    planned
+                        .attach
+                        .then(|| AttachmentDraft::Image(image.clone())),
+                ),
+            };
+            Planned {
+                item,
+                source,
+                attachment,
+                tags: planned.tags.clone(),
+            }
+        })
+        .collect()
+}
+
+/// Workflow 失败时写在来源上的元数据。
+fn failure_metadata(run: &WorkflowRunResult) -> Option<String> {
+    let failure = run.result.as_ref().err()?;
+    Some(
+        serde_json::json!({
+            "workflowError": {
+                "workflowId": run.workflow_id.as_str(),
+                "workflowName": run.workflow_name,
+                "kind": failure.kind.as_str(),
+                "message": failure.message,
+                "failedStep": failure.failed_step,
+            }
+        })
+        .to_string(),
+    )
 }
 
 /// 输入种类的日志名。
@@ -183,6 +287,8 @@ pub struct CaptureService {
     events: Arc<dyn EventPublisher>,
     /// 由 Nivlo 拥有的附件文件（粘贴的图片）。
     files: Arc<dyn AttachmentFiles>,
+    /// Workflow 引擎；`None` 时只用默认规则。
+    workflows: Option<Arc<dyn WorkflowEngine>>,
 }
 
 impl CaptureService {
@@ -198,6 +304,102 @@ impl CaptureService {
             clock,
             events,
             files,
+            workflows: None,
+        }
+    }
+
+    /// 接入 Workflow 引擎：之后的捕获先交给匹配的 Workflow（实施计划 5.5）。
+    #[must_use]
+    pub fn with_workflows(mut self, engine: Arc<dyn WorkflowEngine>) -> Self {
+        self.workflows = Some(engine);
+        self
+    }
+
+    /// 规划这次捕获要创建什么：优先走 Workflow，任何一步不行都退回默认规则（捕获永不丢失）。
+    ///
+    /// 返回要创建的记录，以及（如果有 Workflow 参与）这次运行，用于提交成功之后记录。
+    async fn plan_for(
+        &self,
+        request: &CaptureRequest,
+    ) -> (Vec<Planned>, Option<(WorkflowRunResult, RunStatus)>) {
+        let Some(engine) = &self.workflows else {
+            return (plan(&request.input), None);
+        };
+        let workflows = match self.uow.begin().await {
+            Ok(mut tx) => match tx.workflows().list().await {
+                Ok(stored) => stored.into_iter().map(|s| s.workflow).collect::<Vec<_>>(),
+                Err(error) => {
+                    tracing::warn!(event = "workflow_load_failed", %error, "读取 Workflow 失败，使用默认规则");
+                    return (plan(&request.input), None);
+                }
+            },
+            Err(error) => {
+                tracing::warn!(event = "workflow_load_failed", %error, "读取 Workflow 失败，使用默认规则");
+                return (plan(&request.input), None);
+            }
+        };
+        let today = self.clock.today_local();
+        let Some(run) = engine
+            .resolve_and_run(
+                &workflows,
+                &request.input,
+                request.source_application.as_deref(),
+                today,
+            )
+            .await
+        else {
+            return (plan(&request.input), None);
+        };
+        match &run.result {
+            Ok(items) if !items.is_empty() => {
+                let plans = from_planned(&request.input, items);
+                (plans, Some((run, RunStatus::Succeeded)))
+            }
+            // 没有产出（比如条件不满足而提前停止）：走默认规则，不让这次捕获凭空消失。
+            Ok(_) => (plan(&request.input), Some((run, RunStatus::Skipped))),
+            Err(_) => {
+                let metadata = failure_metadata(&run);
+                let mut plans = plan(&request.input);
+                for planned in &mut plans {
+                    planned.source.metadata_json.clone_from(&metadata);
+                }
+                (plans, Some((run, RunStatus::Failed)))
+            }
+        }
+    }
+
+    /// 记录一次 Workflow 运行（尽力而为：记录失败不影响已经成功的捕获）。
+    async fn record_run(
+        &self,
+        request: &CaptureRequest,
+        run: &WorkflowRunResult,
+        status: RunStatus,
+        started_at: chrono::DateTime<chrono::Utc>,
+        items_created: usize,
+    ) {
+        let failure = run.result.as_ref().err();
+        let record = RunRecord {
+            id: new_run_id(self.clock.as_ref()),
+            workflow_id: run.workflow_id.to_string(),
+            workflow_name: run.workflow_name.clone(),
+            input_kind: kind_name(&request.input).to_owned(),
+            input_summary: summarize_input(&request.input),
+            status,
+            error_kind: failure.map(|f| f.kind.as_str().to_owned()),
+            error_message: failure.map(|f| f.message.clone()),
+            items_created: u32::try_from(items_created).unwrap_or(u32::MAX),
+            duration_ms: run.duration_ms,
+            started_at,
+            steps: run.steps.clone(),
+        };
+        let outcome = async {
+            let mut tx = self.uow.begin().await?;
+            tx.workflows().insert_run(&record).await?;
+            tx.commit().await
+        }
+        .await;
+        if let Err(error) = outcome {
+            tracing::warn!(event = "workflow_run_record_failed", %error, "写入 Workflow 运行记录失败");
         }
     }
 
@@ -214,7 +416,7 @@ impl CaptureService {
     pub async fn capture(&self, request: CaptureRequest) -> Result<CaptureResult, AppError> {
         let started = Instant::now();
         let now = self.clock.now_utc();
-        let plans = plan(&request.input);
+        let (plans, workflow_run) = self.plan_for(&request).await;
         let mut stored: Vec<StoredAttachment> = Vec::new();
 
         let outcome = self.write_all(&request, plans, now, &mut stored).await;
@@ -229,6 +431,10 @@ impl CaptureService {
             }
         };
 
+        if let Some((run, status)) = &workflow_run {
+            self.record_run(&request, run, *status, now, items.len())
+                .await;
+        }
         for item in &items {
             self.events
                 .publish(DomainEvent::ItemCreated { item_id: item.id() });
@@ -253,7 +459,8 @@ impl CaptureService {
         stored: &mut Vec<StoredAttachment>,
     ) -> Result<Vec<Item>, AppError> {
         // 先把要写的记录全部构造并校验好（纯内存），再写磁盘，最后一次性落库。
-        let mut records: Vec<(Item, Source, Option<Attachment>)> = Vec::with_capacity(plans.len());
+        let mut records: Vec<(Item, Source, Option<Attachment>, Vec<String>)> =
+            Vec::with_capacity(plans.len());
         for planned in plans {
             let item_id = ItemId::from_uuid(new_uuid_v7(self.clock.as_ref()));
             let (item, _) = Item::create(item_id, planned.item, now)?;
@@ -265,7 +472,7 @@ impl CaptureService {
                 source_url: planned.source.url,
                 source_path: planned.source.path,
                 original_title: None,
-                metadata_json: None,
+                metadata_json: planned.source.metadata_json,
                 captured_at: now,
             };
             let attachment = match planned.attachment {
@@ -298,19 +505,44 @@ impl CaptureService {
                     })
                 }
             };
-            records.push((item, source, attachment));
+            records.push((item, source, attachment, planned.tags));
         }
 
         let mut tx = self.uow.begin().await?;
-        for (item, source, attachment) in &records {
+        for (item, source, attachment, tags) in &records {
             tx.items().insert(item).await?;
             tx.sources().insert(source).await?;
             if let Some(attachment) = attachment {
                 tx.attachments().insert(attachment).await?;
             }
+            // Workflow 产出的标签：不存在的创建，名称不合法的（空、控制字符）跳过而不是让整次捕获失败。
+            let mut tag_ids: Vec<TagId> = Vec::new();
+            for raw in tags {
+                let Ok(name) = TagName::new(raw) else {
+                    tracing::warn!(event = "workflow_tag_skipped", "跳过不合法的标签名");
+                    continue;
+                };
+                let tag = match tx.tags().find_by_name(&name).await? {
+                    Some(existing) => existing,
+                    None => {
+                        let tag = Tag {
+                            id: TagId::from_uuid(new_uuid_v7(self.clock.as_ref())),
+                            name,
+                        };
+                        tx.tags().insert(&tag).await?;
+                        tag
+                    }
+                };
+                if !tag_ids.contains(&tag.id) {
+                    tag_ids.push(tag.id);
+                }
+            }
+            if !tag_ids.is_empty() {
+                tx.tags().set_for_item(item.id(), &tag_ids).await?;
+            }
         }
         tx.commit().await?;
-        Ok(records.into_iter().map(|(item, _, _)| item).collect())
+        Ok(records.into_iter().map(|(item, _, _, _)| item).collect())
     }
 
     /// 撤销一次捕获：永久删除这些 Item 及其来源、附件记录，并清理 Nivlo 自己保存的图片文件。

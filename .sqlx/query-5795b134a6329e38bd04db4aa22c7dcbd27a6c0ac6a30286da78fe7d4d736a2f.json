@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO workflows (id, name, source, version, enabled, priority, definition, created_at, updated_at)\n             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)\n             ON CONFLICT (id) DO UPDATE SET\n                name = excluded.name, source = excluded.source, version = excluded.version,\n                enabled = excluded.enabled, priority = excluded.priority,\n                definition = excluded.definition, updated_at = excluded.updated_at",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "5795b134a6329e38bd04db4aa22c7dcbd27a6c0ac6a30286da78fe7d4d736a2f"
+}

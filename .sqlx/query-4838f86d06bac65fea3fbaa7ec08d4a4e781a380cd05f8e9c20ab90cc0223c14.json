@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM workflow_runs\n             WHERE started_at < ?1\n                OR id NOT IN (SELECT id FROM workflow_runs ORDER BY started_at DESC, id DESC LIMIT ?2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "4838f86d06bac65fea3fbaa7ec08d4a4e781a380cd05f8e9c20ab90cc0223c14"
+}

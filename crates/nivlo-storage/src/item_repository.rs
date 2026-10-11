@@ -8,7 +8,7 @@ use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_application::ports::{
     AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
     SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
-    Transaction, TrashRepository, TriggerRepository,
+    Transaction, TrashRepository, TriggerRepository, WorkflowRepository,
 };
 use nivlo_domain::attachment::{Attachment, AttachmentKind};
 use nivlo_domain::id::{AttachmentId, ItemId, ProjectId, SourceId};
@@ -162,6 +162,11 @@ impl Transaction for SqliteTransaction {
 
     /// 返回触发记录 Repository 视图（即本事务自身）。
     fn triggers(&mut self) -> &mut dyn TriggerRepository {
+        self
+    }
+
+    /// 返回 Workflow Repository 视图（即本事务自身）。
+    fn workflows(&mut self) -> &mut dyn WorkflowRepository {
         self
     }
 

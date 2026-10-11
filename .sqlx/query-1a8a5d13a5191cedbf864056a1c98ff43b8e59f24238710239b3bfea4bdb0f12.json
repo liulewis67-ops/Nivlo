@@ -1,0 +1,56 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT definition, source, version, enabled, priority, created_at, updated_at\n             FROM workflows ORDER BY id ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "definition",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "source",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "version",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "enabled",
+        "ordinal": 3,
+        "type_info": "Integer"
+      },
+      {
+        "name": "priority",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 6,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1a8a5d13a5191cedbf864056a1c98ff43b8e59f24238710239b3bfea4bdb0f12"
+}

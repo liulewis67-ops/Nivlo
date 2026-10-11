@@ -340,6 +340,9 @@
     "PROJECT_NOT_FOUND": "这个项目已经不存在了。",
     "TAG_NOT_FOUND": "这个标签已经不存在了。",
     "TAG_NAME_TAKEN": "已经有一个同名的标签了。想把两个合并，请用「合并到…」。",
+    "WORKFLOW_NOT_FOUND": "这个 Workflow 已经不存在了。",
+    "WORKFLOW_INVALID": "这个 Workflow 的定义有问题，请按提示修改后再保存。",
+    "WORKFLOW_READ_ONLY": "内置 Workflow 不能直接修改。先「复制」一份，再改复制出来的这份。",
     "SYSTEM_SETTING_FAILED": "系统没有允许这次修改，请稍后重试，或在系统设置里手动调整。"
   },
   "errorAction": {

@@ -133,11 +133,11 @@ Phase 12 Backlog                        → 未排期
 | | 4.5 | Reconcile：启动 / 唤醒 / 时钟变化 | ✅ |
 | | 4.6 | 系统通知 | 🟨 |
 | | 4.7 | Reminder / Due / Tip 的 UI | 🟨 |
-| **P5** | 5.1 | Workflow 领域模型与定义格式 | ⬜ |
-| | 5.2 | Matcher 与 Resolver | ⬜ |
-| | 5.3 | Engine、Context 与 Executor Registry | ⬜ |
-| | 5.4 | 基础 Step Executor | ⬜ |
-| | 5.5 | Capture 接入 Workflow | ⬜ |
+| **P5** | 5.1 | Workflow 领域模型与定义格式 | ✅ |
+| | 5.2 | Matcher 与 Resolver | ✅ |
+| | 5.3 | Engine、Context 与 Executor Registry | ✅ |
+| | 5.4 | 基础 Step Executor | ✅ |
+| | 5.5 | Capture 接入 Workflow | 🟨 |
 | | 5.6 | Workflow Run 记录与调试 | ⬜ |
 | | 5.7 | Workflow 管理 UI | ⬜ |
 | **P6** | 6.1 | HttpPort 与网络权限 | ⬜ |
@@ -969,7 +969,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 5.1 Workflow 领域模型与定义格式
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：2.1
 - **目标**：建立 Workflow 的数据模型与可交换的定义格式。
 - **任务**：
@@ -977,14 +977,14 @@ Phase 12 Backlog                        → 未排期
   - JSON 定义格式 `*.workflow.json` 及其 JSON Schema（`workflows/schema/workflow.schema.json`）。
   - `migrations/0005_workflow.sql`：`workflows`、`workflow_steps`、`workflow_runs`、`workflow_run_steps`。
 - **验收标准**：
-  - [ ] 定义的 serde 往返测试通过。
-  - [ ] JSON Schema 能校验所有示例定义；非法定义给出带 JSON 路径的错误信息。
-  - [ ] Storage 测试覆盖 Workflow CRUD。
-- **完成记录**：—
+  - [x] 定义的 serde 往返测试通过。
+  - [x] JSON Schema 能校验所有示例定义；非法定义给出带 JSON 路径的错误信息。
+  - [x] Storage 测试覆盖 Workflow CRUD。
+- **完成记录**：2026-10-11 完成。`nivlo-domain::workflow`（serde 往返测试）、`workflows/schema/workflow.schema.json` 与 `nivlo-workflow::validate`（所有内置与示例定义通过；非法定义带 JSON 路径）；存储测试 `workflows_round_trip_and_upsert_keeps_creation_time`。偏差：迁移为 `0006_workflow.sql`（0005 已被 trigger_log 占用）；步骤作为 JSON 存在 `workflows.definition` 列里，不再单设 `workflow_steps` 表（Workflow 总是整体读写）。
 
 ### 5.2 Matcher 与 Resolver
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.1
 - **目标**：声明式匹配，按 Specificity + Explicit Priority 选择 Workflow（架构文档 §21）。
 - **任务**：
@@ -992,14 +992,14 @@ Phase 12 Backlog                        → 未排期
   - Host / Path / 文件名使用 glob（如 `*.atlassian.net`、`REQ-*.docx`）；Regex 有长度与复杂度限制，编译结果缓存。
   - Resolver：跳过禁用项；优先级相同时按 Specificity，再按稳定 ID 排序（确定性）。
 - **验收标准**：
-  - [ ] 表驱动测试覆盖所有匹配字段与组合。
-  - [ ] 同一输入多次解析结果一致（确定性测试）。
-  - [ ] 100 个 Workflow 时一次匹配 < 1ms（benchmark 记录）。
-- **完成记录**：—
+  - [x] 表驱动测试覆盖所有匹配字段与组合。
+  - [x] 同一输入多次解析结果一致（确定性测试）。
+  - [x] 100 个 Workflow 时一次匹配 < 1ms（benchmark 记录）。
+- **完成记录**：2026-10-11 完成。表驱动测试覆盖全部字段与组合；解析确定性测试；`one_hundred_workflows_resolve_quickly`（100 个 Workflow 一次匹配远低于 1ms）。
 
 ### 5.3 Engine、Context 与 Executor Registry
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.2；D-11
 - **目标**：实现 Linear Pipeline 执行引擎（架构文档 §18–20、§28、§39）。
 - **任务**：
@@ -1010,26 +1010,26 @@ Phase 12 Backlog                        → 未排期
   - 按 D-11 实现模板插值。
   - 执行不在 UI 线程，耗时阻塞工作使用 `spawn_blocking`。
 - **验收标准**：
-  - [ ] 使用 Fake Executor 的测试覆盖：顺序执行、短路、条件跳过、取消、超时、错误映射。
-  - [ ] Engine 代码中没有任何 Jira / GitHub 等具体领域逻辑（代码审查）。
-  - [ ] 模板插值测试覆盖缺失变量、默认值、转义。
-- **完成记录**：—
+  - [x] 使用 Fake Executor 的测试覆盖：顺序执行、短路、条件跳过、取消、超时、错误映射。
+  - [x] Engine 代码中没有任何 Jira / GitHub 等具体领域逻辑（代码审查）。
+  - [x] 模板插值测试覆盖缺失变量、默认值、转义。
+- **完成记录**：2026-10-11 完成。Fake Executor 测试覆盖顺序、短路、条件跳过、取消、超时与错误映射；Engine 只通过 Registry 认识 Step；模板插值覆盖缺失变量、默认值、转义（D-11 采用 `{{ var | filter }}`）。
 
 ### 5.4 基础 Step Executor
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.3
 - **目标**：实现 MVP 所需的本地 Step。
 - **任务**：
   - `Extract`（从输入提取字段，如 URL 片段、文件名片段）、`Regex`、`JsonPath`、`Transform`（字段映射）、`Condition`、`CreateItem`（Todo / Note / Tip，复用 2.3 的事务逻辑）、`AddTag`。
 - **验收标准**：
-  - [ ] 每个 Executor 有基于 fixtures 的单元测试。
+  - [x] 每个 Executor 有基于 fixtures 的单元测试。
   - [ ] `CreateItem` 产出的 Item 带完整 Source，且与 Item / Source / Tag 写入处于同一事务。
-- **完成记录**：—
+- **完成记录**：2026-10-11 完成（引擎侧）。每个 Executor 有 fixtures 测试。引擎是纯计算、产出 `ItemDraft`，由 Application 在**同一事务**里写入 Item / Source / Tag（见 5.5）；因此没有在 Step 里直接写库。
 
 ### 5.5 Capture 接入 Workflow
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：5.4
 - **目标**：所有 Capture 走 Workflow，且**捕获永不丢失**。
 - **任务**：
@@ -1037,10 +1037,10 @@ Phase 12 Backlog                        → 未排期
   - 异步 Workflow 期间 UI 显示「处理中」，完成后变为「Created ✓」。
   - Workflow 失败时：按原始输入创建 Inbox Item 并标记失败原因，可在 Item 上「重新运行 Workflow」。
 - **验收标准**：
-  - [ ] 测试：Workflow 在任一 Step 失败时，原始输入仍作为 Inbox Item 保存。
+  - [x] 测试：Workflow 在任一 Step 失败时，原始输入仍作为 Inbox Item 保存。
   - [ ] 本地 Workflow 从 Drop 到进入「处理中」状态 < 100ms。
-  - [ ] 2.3 原有测试在改写后全部通过（行为不回退）。
-- **完成记录**：—
+  - [x] 2.3 原有测试在改写后全部通过（行为不回退）。
+- **完成记录**：2026-10-11 完成主体。`CaptureService::with_workflows`：Resolver → Engine → 同一事务写入 Item / Source / Attachment / Tag；无匹配、无产出或失败时退回默认规则，失败原因写进 Source 元数据（`workflowError`），捕获永不丢失。内置 Generic Workflow 复刻原有规则；原 2.3 测试未改动且全部通过，另有 `crates/nivlo-workflow/tests/capture.rs`（内置复刻、复制后高优先级获胜、Step 失败兜底）。未完成：Drop → 「处理中」状态的 UI 与 < 100ms 度量，Item 上「重新运行 Workflow」。
 
 ### 5.6 Workflow Run 记录与调试
 

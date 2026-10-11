@@ -12,6 +12,7 @@
 //!
 //! 禁止依赖：`tauri`、其他 Adapter 的内部实现（通过 Port 访问网络等能力）（参见后端规范 §3.1）。
 
+pub mod adapter;
 pub mod builtin;
 pub mod engine;
 pub mod executor;
@@ -24,6 +25,7 @@ pub mod resolver;
 pub mod template;
 pub mod validate;
 
+pub use adapter::WorkflowEngineAdapter;
 pub use engine::{Engine, RunFailure, RunOptions, RunReport, StepRecord, StepStatus};
 pub use executor::{ErrorKind, ExecutorRegistry, ItemDraft, StepError, StepExecutor};
 pub use facts::InputFacts;

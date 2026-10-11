@@ -208,6 +208,30 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 }
             });
             state.runtime.track_task(trash_purger);
+            // 内置 Workflow 同步（升级时覆盖旧版本、保留用户的启用 / 优先级设置），再定期清理运行记录。
+            let workflows = state.services.workflows.clone();
+            let shutdown = state.runtime.shutdown_token();
+            let workflow_maintainer = tauri::async_runtime::spawn(async move {
+                if let Err(error) = workflows.sync_builtin(nivlo_workflow::builtin::builtin_workflows()).await {
+                    tracing::warn!(event = "workflow_sync_failed", %error, "同步内置 Workflow 失败");
+                }
+                loop {
+                    match workflows.prune_runs().await {
+                        Ok(0) => {}
+                        Ok(count) => {
+                            tracing::info!(event = "workflow_runs_pruned", count, "已清理过期的 Workflow 运行记录");
+                        }
+                        Err(error) => {
+                            tracing::warn!(event = "workflow_prune_failed", %error, "清理 Workflow 运行记录失败");
+                        }
+                    }
+                    tokio::select! {
+                        () = shutdown.cancelled() => return,
+                        () = tokio::time::sleep(std::time::Duration::from_secs(6 * 60 * 60)) => {}
+                    }
+                }
+            });
+            state.runtime.track_task(workflow_maintainer);
             app.manage(state);
 
             let floating = windows::create_floating_window(app)?;
