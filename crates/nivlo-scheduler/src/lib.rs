@@ -12,4 +12,5 @@
 pub mod plan;
 pub mod service;
 
+pub use plan::Locale;
 pub use service::{Control, Scheduler};

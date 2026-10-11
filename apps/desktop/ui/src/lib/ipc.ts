@@ -36,6 +36,9 @@ import type {
 } from "@/bindings";
 import { toAppError } from "./errors";
 
+/** 可经 IPC 持久化的界面偏好名（D-14）。 */
+export type UiPrefName = "appearance" | "skin" | "language" | "theme" | "hideCompleted";
+
 export type {
   AppSettingsDto,
   CalendarDto,
@@ -182,6 +185,10 @@ export interface IpcClient {
   getCalendar(request: CalendarRequest): Promise<CalendarDto>;
   /** 记录首次运行引导看过了（`true`），或让它下次重新出现（`false`）。 */
   setOnboardingCompleted(completed: boolean): Promise<void>;
+  /** 读取界面偏好（`appearance` / `skin`）的 JSON 文本；没保存过为 `null`（D-14）。 */
+  getUiPref(name: UiPrefName): Promise<string | null>;
+  /** 保存界面偏好的 JSON 文本；`null` 表示恢复默认。 */
+  setUiPref(name: UiPrefName, value: string | null): Promise<void>;
   /** 修改日历一周从哪天开始。 */
   setWeekStart(weekStart: WeekStartDto): Promise<void>;
   /**
@@ -404,6 +411,10 @@ const tauriIpc: IpcClient = {
   setNotificationsPaused: async (paused) => {
     await call("set_notifications_paused", commands.setNotificationsPaused(paused));
   },
+  getUiPref: (name) => call("get_ui_pref", commands.getUiPref(name)),
+  setUiPref: async (name, value) => {
+    await call("set_ui_pref", commands.setUiPref(name, value));
+  },
   setWeekStart: async (weekStart) => {
     await call("set_week_start", commands.setWeekStart(weekStart));
   },
@@ -541,6 +552,8 @@ export const ipc: IpcClient = {
   setLaterRule: (rule) => current.setLaterRule(rule),
   getCalendar: (request) => current.getCalendar(request),
   setWeekStart: (weekStart) => current.setWeekStart(weekStart),
+  getUiPref: (name) => current.getUiPref(name),
+  setUiPref: (name, value) => current.setUiPref(name, value),
   setNotificationsPaused: (paused) => current.setNotificationsPaused(paused),
   setOnboardingCompleted: (completed) => current.setOnboardingCompleted(completed),
   deleteItems: (ids) => current.deleteItems(ids),

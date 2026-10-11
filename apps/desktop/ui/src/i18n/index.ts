@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
+import { ipc } from "@/lib/ipc";
 import en from "./en.json";
 import zhCN from "./zh-CN.json";
 
@@ -61,7 +62,25 @@ export async function setLanguage(language: Language): Promise<void> {
     // 无法保存只影响「下次启动记住语言」。
   }
   applyLanguage(language);
+  // 写入后端（settings 表）：随备份，并让 Rust 侧的托盘 / 对话框 / 通知使用同一语言。
+  ipc.setUiPref("language", language).catch(() => undefined);
   await i18next.changeLanguage(language);
+}
+
+/**
+ * 用后端保存的语言覆盖本地缓存（主窗口启动时、备份恢复后）；非法值忽略。
+ *
+ * @param value 后端保存的语言文本。
+ */
+export async function hydrateLanguage(value: string): Promise<void> {
+  if (!isLanguage(value) || value === i18next.language) return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, value);
+  } catch {
+    // 缓存写入失败不影响当前会话。
+  }
+  applyLanguage(value);
+  await i18next.changeLanguage(value);
 }
 
 /**

@@ -11,29 +11,91 @@ use tauri_specta::Event;
 
 use crate::app::AppState;
 use crate::events::QuickAddRequestedEvent;
+use crate::native_i18n::Lang;
 use crate::scheduling::PauseMenuItem;
 use crate::windows::{self, FLOATING_WINDOW_LABEL};
 
 /// 托盘图标的 ID。
 const TRAY_ID: &str = "nivlo-tray";
 
-/// 菜单文案。
-// TODO(P7.5): 与前端一起接入 i18n 后改为按语言选择（实施计划 D-06）。
-mod labels {
+/// 一种语言下的全部菜单文案。
+struct Labels {
     /// 托盘悬停提示。
-    pub const TOOLTIP: &str = "拾序 Nivlo";
+    tooltip: &'static str,
     /// 打开主窗口。
-    pub const OPEN: &str = "打开拾序";
+    open: &'static str,
     /// 快速添加。
-    pub const QUICK_ADD: &str = "快速添加待办";
+    quick_add: &'static str,
     /// 显示 / 隐藏悬浮窗。
-    pub const TOGGLE_FLOATING: &str = "显示 / 隐藏悬浮窗";
+    toggle_floating: &'static str,
     /// 暂停通知（勾选 = 已暂停）。
-    pub const PAUSE_NOTIFICATIONS: &str = "暂停通知";
+    pause_notifications: &'static str,
     /// 设置。
-    pub const SETTINGS: &str = "设置";
+    settings: &'static str,
     /// 退出。
-    pub const QUIT: &str = "退出";
+    quit: &'static str,
+}
+
+/// 按语言选择菜单文案。
+fn labels(lang: Lang) -> Labels {
+    match lang {
+        Lang::ZhCn => Labels {
+            tooltip: "拾序 Nivlo",
+            open: "打开拾序",
+            quick_add: "快速添加待办",
+            toggle_floating: "显示 / 隐藏悬浮窗",
+            pause_notifications: "暂停通知",
+            settings: "设置",
+            quit: "退出",
+        },
+        Lang::En => Labels {
+            tooltip: "Nivlo",
+            open: "Open Nivlo",
+            quick_add: "Quick add to-do",
+            toggle_floating: "Show / hide floating window",
+            pause_notifications: "Pause notifications",
+            settings: "Settings",
+            quit: "Quit",
+        },
+    }
+}
+
+/// 托盘菜单项的句柄，切换语言时用来更新文案。
+pub struct TrayMenuItems {
+    /// 托盘图标。
+    tray: tauri::tray::TrayIcon<Wry>,
+    /// 打开主窗口。
+    open: MenuItem<Wry>,
+    /// 快速添加。
+    quick_add: MenuItem<Wry>,
+    /// 显示 / 隐藏悬浮窗。
+    toggle: MenuItem<Wry>,
+    /// 暂停通知。
+    pause: CheckMenuItem<Wry>,
+    /// 设置。
+    settings: MenuItem<Wry>,
+    /// 退出。
+    quit: MenuItem<Wry>,
+}
+
+/// 把托盘菜单与悬停提示切换到 `lang`；托盘不存在（创建失败）时什么都不做。
+pub fn apply_language<R: tauri::Runtime>(app: &AppHandle<R>, lang: Lang) {
+    let Some(items) = app.try_state::<TrayMenuItems>() else {
+        return;
+    };
+    let text = labels(lang);
+    let results = [
+        items.open.set_text(text.open),
+        items.quick_add.set_text(text.quick_add),
+        items.toggle.set_text(text.toggle_floating),
+        items.pause.set_text(text.pause_notifications),
+        items.settings.set_text(text.settings),
+        items.quit.set_text(text.quit),
+        items.tray.set_tooltip(Some(text.tooltip)),
+    ];
+    for error in results.into_iter().filter_map(Result::err) {
+        tracing::warn!(event = "tray_language_failed", %error, "切换托盘语言失败");
+    }
 }
 
 /// 菜单项 ID。
@@ -87,13 +149,14 @@ pub fn action_for(id: &str) -> Option<TrayAction> {
 /// # Errors
 ///
 /// 菜单或托盘图标创建失败时返回 Tauri 错误；调用方应记录并继续运行（托盘不是必需功能）。
-pub fn setup(app: &AppHandle<Wry>) -> tauri::Result<()> {
-    let open = MenuItem::with_id(app, ids::OPEN, labels::OPEN, true, None::<&str>)?;
-    let quick_add = MenuItem::with_id(app, ids::QUICK_ADD, labels::QUICK_ADD, true, None::<&str>)?;
+pub fn setup(app: &AppHandle<Wry>, lang: Lang) -> tauri::Result<()> {
+    let text = labels(lang);
+    let open = MenuItem::with_id(app, ids::OPEN, text.open, true, None::<&str>)?;
+    let quick_add = MenuItem::with_id(app, ids::QUICK_ADD, text.quick_add, true, None::<&str>)?;
     let toggle = MenuItem::with_id(
         app,
         ids::TOGGLE_FLOATING,
-        labels::TOGGLE_FLOATING,
+        text.toggle_floating,
         true,
         None::<&str>,
     )?;
@@ -104,14 +167,14 @@ pub fn setup(app: &AppHandle<Wry>) -> tauri::Result<()> {
     let pause = CheckMenuItem::with_id(
         app,
         ids::PAUSE_NOTIFICATIONS,
-        labels::PAUSE_NOTIFICATIONS,
+        text.pause_notifications,
         true,
         paused,
         None::<&str>,
     )?;
     app.manage(PauseMenuItem(pause.clone()));
-    let settings = MenuItem::with_id(app, ids::SETTINGS, labels::SETTINGS, true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, ids::QUIT, labels::QUIT, true, None::<&str>)?;
+    let settings = MenuItem::with_id(app, ids::SETTINGS, text.settings, true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, ids::QUIT, text.quit, true, None::<&str>)?;
     let separator_top = PredefinedMenuItem::separator(app)?;
     let separator_bottom = PredefinedMenuItem::separator(app)?;
     let menu = Menu::with_items(
@@ -129,7 +192,7 @@ pub fn setup(app: &AppHandle<Wry>) -> tauri::Result<()> {
     )?;
 
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
-        .tooltip(labels::TOOLTIP)
+        .tooltip(text.tooltip)
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| {
@@ -150,7 +213,16 @@ pub fn setup(app: &AppHandle<Wry>) -> tauri::Result<()> {
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }
-    builder.build(app)?;
+    let tray = builder.build(app)?;
+    app.manage(TrayMenuItems {
+        tray,
+        open,
+        quick_add,
+        toggle,
+        pause,
+        settings,
+        quit,
+    });
     Ok(())
 }
 

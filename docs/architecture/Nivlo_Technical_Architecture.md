@@ -962,6 +962,8 @@ CFSTR_INETURL
 
 当标准 WebView Drop 无法完整获取数据时，由 Native Drop Adapter 补齐。
 
+**Windows 实测约束（ADR-011，2026-10）**：WebView2 上 Tauri 原生拖放与 HTML5 Drop 互斥。悬浮窗当前使用 HTML5 Drop——链接、选中文本、图片可用，但资源管理器拖来的文件只有不带磁盘路径的 `File` 对象，无法作为文件引用保存。因此「拖入文件」在 Windows 上必须依赖 Native Drop Adapter（`IDropTarget` + `CF_HDROP`），这一部分属于 MVP 范围（实施计划 D-15，待定稿）；在它完成之前，文件通过复制 → 粘贴（`CF_HDROP` 带完整路径）收集。
+
 ---
 
 # 17. Clipboard
@@ -1872,6 +1874,10 @@ Settings
 Quit
 ```
 
+托盘菜单、原生对话框（开机自启询问、数据库恢复）与系统通知的文案由 Rust 侧生成，必须与 UI 使用同一语言偏好，并在切换语言后即时更新托盘菜单。因此语言偏好必须保存在后端可读的位置（`settings` 表），不能只存在 WebView 的 `localStorage`（实施计划 D-14）。
+
+通知点击后打开主窗口并定位 Item 需要原生通知激活：`tauri-plugin-notification` 在桌面端不提供点击回调，Windows 上需要安装包注册的 AppUserModelID 与 Toast 激活回调（实施计划 7.6、10.6）。不可用时退化为只显示通知。
+
 ---
 
 # 46. Performance Budget
@@ -1888,6 +1894,12 @@ Script: 默认 3s 超时
 ```
 
 禁止高频 polling、持续 RAF 动画、后台无意义 timer。
+
+用户主动开启的装饰性动效（悬浮窗自定义皮肤的逐帧播放与附加动效，实施计划 7.7）是这条规则唯一允许的例外，且须满足：
+
+- 默认配置不产生任何常驻动画或计时器；循环类播放只在用户显式选择后启用。
+- 窗口隐藏时停止计时器与动画；系统开启「减少动态效果」时只显示静态首帧。
+- 性能基线分别测量默认配置与启用动效的配置，预算以默认配置为准（实施计划 D-13，待定稿）。
 
 Floating Hover 不可依赖数据库和网络。
 
@@ -2263,6 +2275,8 @@ Export Backup
 
 包含 SQLite snapshot、Workflow、Settings。
 
+Settings 包括用户的 UI 偏好（语言、主题、悬浮窗外观与自定义皮肤）。只存于 WebView `localStorage` 的偏好不在备份范围内，因此需要长期保留的偏好必须进入 `settings` 表或数据目录（实施计划 D-14）。
+
 Secret 不直接导出。
 
 数据导入导出至少支持：
@@ -2408,6 +2422,8 @@ DPI
 Multi-monitor
 Snap
 ```
+
+其中 Windows 资源管理器文件拖放（`CF_HDROP`）因 §16 的实测约束，建议提前到 MVP 发布前完成（实施计划 D-15）。
 
 ## Phase 8 — macOS / Linux
 

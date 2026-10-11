@@ -1,9 +1,13 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useTodayQuery } from "@/features/today";
+import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
+import { useAppearanceStore } from "@/stores/appearance-store";
+import { useSkinStore } from "@/stores/skin-store";
 import { createDragIntentTracker } from "./model/drag-intent";
+import { SkinSprite } from "./SkinSprite";
 
 /** 待办数尚未加载完成时徽标上显示的占位符。 */
 const PLACEHOLDER = "–";
@@ -26,6 +30,10 @@ export function FloatingBadge() {
   const today = useTodayQuery();
   /** 今天还剩的待办数；尚未加载完成时为 `null`，显示占位而不是误导性的 0。 */
   const remaining = today.data?.remainingCount ?? null;
+  const shape = useAppearanceStore((state) => state.appearance.badgeShape);
+  const skin = useSkinStore((state) => state.skin);
+  const [hovered, setHovered] = useState(false);
+  const hasSkin = skin.frames.length > 0;
   const trackerRef = useRef(createDragIntentTracker());
   const draggedRef = useRef(false);
 
@@ -79,12 +87,28 @@ export function FloatingBadge() {
       onPointerUp={handlePointerEnd}
       onPointerCancel={handlePointerEnd}
       onClick={handleClick}
-      className="flex h-full w-full items-center justify-center gap-2 rounded-full border border-border bg-surface text-sm font-medium text-text shadow-md select-none"
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
+      className={cx(
+        "nv-float nv-badge flex h-full w-full items-center justify-center gap-2 rounded-full! text-sm font-semibold text-text select-none",
+        hasSkin && "px-2 py-1",
+      )}
     >
-      <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
-      <span aria-hidden="true" className="tabular-nums">
-        {remaining ?? PLACEHOLDER}
-      </span>
+      {hasSkin && <SkinSprite skin={skin} hovered={hovered} />}
+      {!hasSkin && shape !== "circle" && (
+        <span
+          aria-hidden="true"
+          className={cx(
+            "nv-badge-dot rounded-full bg-primary",
+            shape === "dot" ? "size-4" : "size-2.5",
+          )}
+        />
+      )}
+      {(hasSkin ? skin.showCount : shape !== "dot") && (
+        <span aria-hidden="true" className="tabular-nums">
+          {remaining ?? PLACEHOLDER}
+        </span>
+      )}
     </button>
   );
 }

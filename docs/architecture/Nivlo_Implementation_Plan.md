@@ -1,7 +1,7 @@
 # Nivlo · 拾序 实施计划（Implementation Plan）
 
 > Status: v1.0  
-> Last Updated: 2026-10-09  
+> Last Updated: 2026-10-11  
 > 依据文档：[Nivlo_Product_Design.md](Nivlo_Product_Design.md)（下称「产品文档」）、[Nivlo_Technical_Architecture.md](Nivlo_Technical_Architecture.md)（下称「架构文档」）  
 > 开发规范：[前端开发规范](../development/Nivlo_Frontend_Development_Guide.md)、[后端开发规范](../development/Nivlo_Backend_Development_Guide.md)（所有子阶段的实现必须遵守）  
 > 用途：本文档是后续全部开发工作的执行依据。每一项开发任务都应能对应到本文档中的某个子阶段（Sub-phase），完成后在本文档中更新状态。
@@ -153,6 +153,7 @@ Phase 12 Backlog                        → 未排期
 | | 7.4 | 备份与数据导出 | ✅ |
 | | 7.5 | 首次运行引导与体验打磨 | 🟨 |
 | | 7.6 | 安装包、签名、Updater 与发布流水线 | ⬜ |
+| | 7.7 | 悬浮窗外观与自定义皮肤 | 🟨 |
 | **P8** | 8.1 | QuickJS Runtime 与 Script Worker | ⬜ |
 | | 8.2 | Script Context 与 Capability API | ⬜ |
 | | 8.3 | Script Step 与 Workflow 权限 | ⬜ |
@@ -163,14 +164,74 @@ Phase 12 Backlog                        → 未排期
 | | 9.3 | Jira API | ⬜ |
 | | 9.4 | GitHub API | ⬜ |
 | | 9.5 | Integration 设置 UI | ⬜ |
-| **P10** | 10.1 | Windows Native Drop Adapter | ⬜ |
+| **P10** | 10.1 | Windows Native Drop Adapter（建议提前至 M4，见 D-15） | ⬜ |
 | | 10.2 | 高级悬浮窗行为（No-Activate 等） | ⬜ |
 | | 10.3 | DPI 与多显示器热插拔加固 | ⬜ |
 | | 10.4 | 来源应用识别 | ⬜ |
 | | 10.5 | 原生电源 / 时钟事件 | ⬜ |
+| | 10.6 | 原生通知激活（点击通知定位 Item） | ⬜ |
 | **P11** | 11.1 | 跨平台 CI 与视觉回归 | ⬜ |
 | | 11.2 | macOS Adapter | ⬜ |
 | | 11.3 | Linux Adapter | ⬜ |
+
+## 2.1 MVP 发布差距盘点（2026-10-11）
+
+盘点时的基线：本地 `cargo test --workspace` 569 通过 / 0 失败 / 6 忽略；`pnpm typecheck`、`pnpm lint`、`pnpm test`（45 个文件 447 个用例）全部通过；仓库**尚未配置远端**，CI 从未运行。Phase 0–6 的代码与自动化测试基本完成，剩余工作集中在发布工程、真机验收与少量功能缺口。本节只做汇总与排序，具体任务与验收标准以各子阶段为准，完成后同步勾掉。
+
+### A. M4 发布阻塞项
+
+| # | 事项 | 子阶段 | 说明 |
+|---|---|---|---|
+| A1 | 推送远端并让 CI 全绿，Windows Job 设为必需检查 | 0.2 | 全局完成定义（§0.3）的第一条目前无法满足。 |
+| A2 | 资源管理器文件拖放 | 10.1、D-15 | 产品文档 §28 把「Drag & Drop → File」与内置 PDF / File Workflow 列为 MVP 必须有；HTML5 Drop 拿不到磁盘路径（ADR-011），目前只能复制 → 粘贴。 |
+| A3 | 常驻性能基线与长稳 | 1.11、7.2 | `docs/development/perf-baseline.md` 尚不存在；7.7 的皮肤动效需一并测量（D-13）。 |
+| A4 | Desktop E2E 关键路径 | 7.1 | 7.6 的依赖。 |
+| A5 | 安装包、签名、Updater、发布流水线 | 7.6 | 4.6 的「通知显示正确应用名与图标」也依赖安装包注册的应用标识。 |
+
+### B. 真机验收清单（代码与自动化已完成，子阶段因手动验收保持 🟨）
+
+| 子阶段 | 待验证项 |
+|---|---|
+| 0.3 | 在未配置过的 Windows 机器上 10 步内首次启动。 |
+| 1.2 | 100% 与 150% 缩放显示器之间移动，徽标视觉尺寸一致（需双显示器）。 |
+| 1.5 | Hover → Enter 3 秒内；重启后仍在；Esc 不创建数据；结束后焦点不残留。 |
+| 2.4 | `drop-matrix.md` 全部「待真机」项；Drop → Created ✓ < 1s；悬浮窗不长期占有焦点。 |
+| 2.5 | 悬浮窗 / 主窗口里的完整粘贴流程。 |
+| 2.6 | 其他应用在前台时呼出 → 输入 → 创建 → 焦点归还；记录无法归还的场景。 |
+| 3.1 | 「在浏览器中打开」「在文件夹中显示」真实生效。 |
+| 4.6 / 4.7 | 设置提醒后按时收到通知（端到端）。 |
+| 5.5 | 本地 Workflow 从 Drop 到「处理中」< 100ms。 |
+| 7.5 | 至少 3 人可用性测试（2 分钟内完成 Hover → 新建 → 完成）。 |
+
+建议集中一次按本表逐项走查，结果写回各子阶段的完成记录。
+
+### C. 已标记完成 / 进行中子阶段里的功能缺口
+
+| 缺口 | 归属 | 说明 |
+|---|---|---|
+| D-07「隐藏已完成」开关未实现 | 7.5 | 1.6 把开关留给 3.5 设置页，3.5 完成时遗漏。 |
+| 原生侧文案未国际化 | 7.5、D-14 | 托盘菜单（`tray.rs`）、开机自启询问（`autostart.rs`）、恢复对话框（`lifecycle/recovery.rs`）、Scheduler 通知标题（`nivlo-scheduler` `plan.rs`）硬编码中文；语言偏好只存在前端 `localStorage`，Rust 侧无法得知当前语言。7.5 的「中英文切换后无缺失文案」因此未满足。 |
+| 点击通知无法定位 Item | 10.6 | `tauri-plugin-notification` 在桌面端没有点击回调，需要原生 Toast 激活。 |
+| 内网 / 自托管 Jira 只能保存工单号 | 9.3 | HostPolicy 拒绝私网地址（6.4 的已知偏差），由 Jira API 与按 Integration 配置的 Host 解决。 |
+| UI 偏好不在备份内 | D-14 | 语言、主题、悬浮窗外观、皮肤存于 `localStorage`，与 3.5「设置写入 `settings` 表」不一致，7.4 的备份 / 恢复不包含它们。 |
+
+### D. 技术债与文档卫生
+
+- 过期的代码 TODO：`apps/desktop/src-tauri/src/app.rs` 中 `TODO(P4.4)`「停止 Scheduler」已不成立（Scheduler 作为受跟踪任务随 shutdown 令牌取消，见 `scheduling.rs`），应删除；`events/forwarder.rs` 中 `TODO(P1.1)` 仍未做——事件广播到所有窗口，应改为 `emit_to` 按窗口发送（后端规范 §5.2）。
+- 8.1 的草稿（rquickjs Worker 与 8 个测试）放在 `.wip/`，被 `.git/info/exclude` 排除，不在版本控制中，存在丢失风险；应移到 `p8.1-script-worker` 分支。
+- Vitest 每个测试文件各建一次 jsdom（45 次，单次运行约 48s）；可评估 `pool: "vmThreads"` 或 `isolate: false`。
+- 5.4 第二条验收缺一个测试：经 Workflow 捕获且带 Tag 时提交失败，Item / Source / Tag 均不残留。
+- 本次盘点已同步：D-11 定稿、新增 7.7 与 10.6、新增 D-13 ~ D-15。
+
+### E. 建议顺序
+
+1. A1：推送远端，CI 全绿。
+2. D-13 / D-14 定稿 → 收尾 7.7 并提交。
+3. D-15 定稿 → 10.1（MVP 范围：`CF_HDROP` 文件 / 多文件 / 文件夹）。
+4. 7.5 缺口：原生文案国际化、「隐藏已完成」开关。
+5. B 类真机验收一次走查。
+6. 1.11 / 7.2 性能基线与长稳。
+7. 7.1 E2E → 7.6 发布流水线 → v0.1.0。
 
 ---
 
@@ -190,8 +251,11 @@ Phase 12 Backlog                        → 未排期
 | D-08 | **删除语义** | 增加 `deleted_at` 软删除，进入回收站，30 天后自动清除；与 `archived_at`（归档，长期保留）区分。 | 3.5 | 已决定（2026-10-11，采用推荐方案：`items.deleted_at` 软删除，30 天后自动清除） |
 | D-09 | **FTS 索引同步方式** | 使用 SQLite Trigger 同步 FTS5 表（与业务写入同一事务，不会不一致），而不是通过 Domain Event 异步更新。FTS5 使用 `trigram` tokenizer 以支持中文子串搜索。 | 3.4 | 已决定（2026-10-11，采用推荐方案；trigram 要求至少 3 个字符，更短的查询退化为 LIKE 扫描） |
 | D-10 | **WebView 拖拽方案** | Tauri 2 在 Windows 上启用原生 `dragDropEnabled` 时会拦截 HTML5 drop（只能拿到文件路径，拿不到浏览器拖来的 URL / 文本）。需在 2.4 开头做技术验证，从「Tauri 原生文件拖放 + HTML5 drop」的组合方案中选定一个，必要时将 10.1 Native Drop 提前。 | 2.4 | 已决定（2026-10-10：悬浮窗使用 HTML5 Drop，文件拖放由 10.1 Native Drop 解决，见 ADR-011；待真机验证） |
-| D-11 | **Workflow 字段映射模板语法** | 采用最小模板语法 `{{ path.to.var }}`（仅变量插值与少量过滤器，如 `| default`、`| trim`），不引入完整模板引擎。 | 5.3 | 待定 |
+| D-11 | **Workflow 字段映射模板语法** | 采用最小模板语法 `{{ path.to.var }}`（仅变量插值与少量过滤器，如 `| default`、`| trim`），不引入完整模板引擎。 | 5.3 | 已决定（2026-10-11，按 5.3 的实现补记：`{{ path.to.var }}` 插值，过滤器 `default`、`trim`、`lower`、`upper`、`truncate`、`replace`；6.3 增加 `default(var)` 以另一个变量作为默认值；不引入完整模板引擎） |
 | D-12 | **悬浮窗 IPC 白名单补充** | 架构文档 §13 的 floating 白名单没有推迟（改期）能力，但产品文档 §22 要求在悬浮面板直接推迟。推荐在 floating 白名单中增加 `reschedule_item`、`undo`、`get_inbox_count`，并同步更新架构文档 §13。 | 1.1 | 已决定（2026-10-09，采用推荐方案，已同步架构文档 §13） |
+| D-13 | **悬浮窗装饰动效与常驻性能预算** | 7.7 的自定义皮肤支持循环 / 往返逐帧播放（前端 `setInterval`）与漂浮 / 呼吸 / 弹跳（CSS 无限动画），与架构文档 §46「禁止持续 RAF 动画、后台无意义 timer」及 1.11「空闲 CPU < 0.5%」冲突。推荐：① 默认播放方式为「仅悬停时播放」，附加动效默认「无」；② 循环类播放作为用户显式选择，设置页注明会增加耗电；③ 窗口隐藏（`document.hidden`）或悬浮窗被隐藏时停止计时器与动画；④ 1.11 / 7.2 分别测量「默认徽标」与「循环皮肤 + 动效」两种配置，前者必须满足预算，后者记录实测值。 | 7.7 完成前 | 前端部分已落实（2026-10-11）：默认「仅悬停」播放、附加动效默认「无」、页面隐藏时停止计时器与 CSS 动画；设置页提示与 perf-baseline 实测待 7.2 |
+| D-14 | **UI 偏好的持久化位置** | 语言、主题（0.9 / 7.5）、悬浮窗外观与皮肤（7.7）目前存于各窗口的 `localStorage`，与 3.5「设置写入 `settings` 表」不一致：Rust 侧无法按语言显示托盘 / 通知文案，7.4 备份也不包含它们。推荐：语言、主题、外观写入 `settings` 表并通过 IPC 读写，变化以事件广播给各窗口；`localStorage` 只作为首帧渲染缓存；皮肤帧图保存到 `<数据目录>/skins/`，`settings` 只存元数据，从而被备份覆盖。 | 7.5 原生文案国际化、7.7 完成前 | 外观、皮肤、语言、主题已落实（2026-10-11，`ui.*` 写入 settings 表，启动时回填缓存）；Rust 侧原生文案国际化留在 7.5 |
+| D-15 | **10.1 Native Drop 是否提前到 M4** | 产品文档 §28 把「Drag & Drop → File」与内置 PDF / File Workflow 列为 MVP 必须有，2.4 也把「资源管理器文件（单 / 多）」列为核心来源；而 ADR-011 的 HTML5 Drop 拿不到文件路径。Phase 10 引言与 D-10 均规定核心来源失败时提前 10.1。推荐：把 10.1 中 `CF_HDROP`（单 / 多文件、文件夹）部分列为 M4 发布前必需；`FileGroupDescriptor`（Outlook 附件等）留在 Phase 10。 | 7.1 开始前 | 待定 |
 
 ---
 
@@ -248,6 +312,7 @@ Phase 12 Backlog                        → 未排期
   - 本地证据：`cargo fmt --check`、`cargo clippy --workspace --all-targets -D warnings`、`cargo test --workspace`、`RUSTDOCFLAGS=-D warnings cargo doc`、`pnpm lint/typecheck/test/format:check`、`node scripts/check-deps/check-deps.mjs` 均通过；负向验证：向 `nivlo-domain` 临时加入 `sqlx` → check-deps 报 `nivlo-domain -> sqlx` 并退出 1；`any` / 无 TSDoc 的函数、类型 → ESLint 报错；无文档的 Rust 私有函数 → `missing_docs` 报错；`npm install` → `only-allow pnpm` 拒绝。
   - 偏差：TypeScript 固定为 5.9（typescript-eslint 尚不支持 TS 7）；Prettier 仅格式化 `apps/desktop/ui`；`.github/workflows/ci.yml` 与 `deny.toml` 已编写但未在 GitHub 上运行（尚无远端）。`cargo deny` 未在本机安装，未本地运行。
   - 待办：推送到 GitHub 后确认 CI 全绿，并把 Windows Job 设为必需检查（branch protection）。
+  - 2026-10-11 盘点：仓库仍未配置远端（`git remote -v` 为空），CI 从未运行，是 M4 的发布阻塞项（§2.1 A1）。本地 `cargo test --workspace` 569 通过 / 6 忽略，`pnpm typecheck / lint / test` 通过（447 个用例）。
 
 ### 0.3 ADR 与开发文档
 
@@ -607,6 +672,7 @@ Phase 12 Backlog                        → 未排期
   - 编写测量脚本 / 步骤（`scripts/perf/`）：冷启动到悬浮窗可见时间、空闲 CPU、内存（主进程 + WebView2 进程）、Hover 展开耗时。
   - 8 小时长稳运行（含定时自动化操作：创建 / 完成 / 排序）。
   - 记录参考机器配置与测量结果。
+  - 按 D-13 分别测量「默认徽标」与「启用循环皮肤 + 附加动效」（7.7）两种配置；验收标准以默认配置为准，皮肤配置记录实测值。
 - **验收标准**：
   - [ ] 空闲 10 分钟平均 CPU < 0.5%（参考机器）。
   - [ ] 冷启动到悬浮窗可见体感 < 1s（记录实测值）。
@@ -840,6 +906,7 @@ Phase 12 Backlog                        → 未排期
   - [x] 删除后可在回收站恢复；超过保留期（FakeClock）后被清除。
   - [x] 所有设置项修改后立即生效并在重启后保留。
 - **完成记录**：2026-10-11 完成。
+  - 2026-10-11 盘点补记：① D-07 的「隐藏已完成」开关（1.6 留给本子阶段）未实现，移入 7.5；② 语言与主题实际保存在前端 `localStorage`，没有写入 `settings` 表（与本子阶段任务描述不一致；重启保留的验收仍满足），后续处理见 D-14。
   - 2026-10-11 删除与回收站完成：`migrations/0004_trash.sql`（`items.deleted_at`）；`TrashRepository` + `TrashService`（批量删除一个事务、恢复、列表带到期时间、永久删除只作用于回收站里的条目并清理 Nivlo 自己保存的文件、清空、30 天自动清除——启动时与每 6 小时一次）；所有日常查询（列表、Today 三个来源、搜索、项目 / 标签数量）都排除已删除的条目，按 ID 仍可读取；新增命令 `delete_items` / `restore_deleted_items` / `list_trash` / `purge_items` / `empty_trash`。测试：Application 7 个（含 FakeClock 超期清除、提交失败不先删文件）、Storage 5 个、IPC 端到端 1 个。前端：回收站视图（侧栏底部）——显示删除了多久与还剩几天、恢复、彻底删除与清空需 3 秒内二次确认（`ConfirmButton`）；详情面板、笔记编辑区、收集箱（行菜单与批量栏）都能删除，删除后给出可撤销的提示。
   - 2026-10-11 设置页完成：`LaterRule`（下周一 / 3 天后 / 7 天后，存在 `schedule.later`，缺省或值不认识时回退下周一）同时作用于悬浮窗的 `reschedule_item` 与收集箱的整理（有测试）；命令 `get_app_settings` / `set_autostart`（以系统启动项为准，失败返回 `SYSTEM_SETTING_FAILED`）/ `set_floating_always_on_top`（先保存再立即应用到窗口，`FloatingHandle` 新增 `set_always_on_top`）/ `set_later_rule`。前端设置页（侧栏底部）：开机自启、语言（目前只有简体中文）、主题、悬浮窗置顶、全局快捷键（复用录入组件）、「稍后」是哪一天；修改立即生效（乐观更新，被拒绝时回滚并提示）。新增通用 `Switch` 组件。归档在 2.7 / 3.2 已有（收集箱与笔记里可归档、可撤销）。
 
@@ -940,7 +1007,7 @@ Phase 12 Backlog                        → 未排期
   - Tray「Pause Notifications」生效（暂停期间的触发在恢复后汇总）。
 - **验收标准**：
   - [ ] Windows 通知中心显示正确的应用名与图标（待真机：开发模式下 Windows 可能显示为 PowerShell，安装包才有正确的应用标识）。
-  - [ ] 点击通知打开主窗口并定位到对应 Item（待办：`tauri-plugin-notification` 在桌面端没有点击回调，需要原生适配，计划随 10.x 补强）。
+  - [ ] 点击通知打开主窗口并定位到对应 Item（待办：`tauri-plugin-notification` 在桌面端没有点击回调，需要原生适配，由 10.6 实现）。
   - [x] 暂停期间不弹出通知，恢复后汇总显示。
 - **完成记录**：（进行中）2026-10-11：`NotificationPort`（`nivlo-platform`）+ Tauri 通知插件适配器 `TauriNotifier`；托盘「暂停通知」改为可勾选项（勾选 = 暂停），设置页「通知」里有同一个开关，状态保存在 `notifications.paused`、启动时恢复，两处互相同步；暂停期间到点的触发不记录，恢复后作为错过的提醒汇总（有测试）。待真机确认：通知中心里的应用名 / 图标、点击通知定位到条目。
 
@@ -1026,6 +1093,7 @@ Phase 12 Backlog                        → 未排期
   - [x] 每个 Executor 有基于 fixtures 的单元测试。
   - [ ] `CreateItem` 产出的 Item 带完整 Source，且与 Item / Source / Tag 写入处于同一事务。
 - **完成记录**：2026-10-11 完成（引擎侧）。每个 Executor 有 fixtures 测试。引擎是纯计算、产出 `ItemDraft`，由 Application 在**同一事务**里写入 Item / Source / Tag（见 5.5）；因此没有在 Step 里直接写库。
+  - 2026-10-11 盘点：第二条验收仍未勾选。现有证据是 `a_duplicated_workflow_with_higher_priority_wins_and_tags_the_item`（Workflow 产出的 Item 带 Source 与 Tag）和默认规则路径的 `a_failed_commit_leaves_no_records_and_removes_the_stored_image`；缺少「经 Workflow 捕获且带 Tag 时提交失败，Item / Source / Tag 均不残留」的测试，补上后再勾选。
 
 ### 5.5 Capture 接入 Workflow
 
@@ -1249,10 +1317,14 @@ Phase 12 Backlog                        → 未排期
   - 首次运行：介绍悬浮窗（Hover / Click / Drop）、询问开机自启、展示快捷键。
   - 英文文案补齐（D-06）；空状态、错误文案统一审校。
   - 基础可访问性：键盘可达、对比度、焦点可见。
+  - 原生侧文案国际化（2026-10-11 盘点补入，依赖 D-14）：托盘菜单、开机自启询问、恢复对话框、Scheduler 通知标题与正文按当前语言显示，切换语言后托盘菜单即时更新。
+  - D-07「隐藏已完成」开关（2026-10-11 盘点补入，3.5 遗漏）：Today（悬浮窗与主窗口）可隐藏今日已完成的 Todo，设置持久化。
 - **验收标准**：
   - [ ] 新用户在无说明文档的情况下可在 2 分钟内完成「Hover → 新建 → 完成」（至少 3 人可用性测试记录）。
   - [ ] 中英文切换后无缺失文案。
 - **完成记录**：（进行中）2026-10-11：首次运行引导完成——主窗口第一次打开时的四步欢迎（悬浮窗徽标在哪 / 悬停与点击 / 拖入与粘贴收集 / 自然语言与全局快捷键），用样式化的小插图模拟真实界面，随主题换色，动效尊重「减少动态效果」；全键盘（← → 切换、Enter 前进、Esc 跳过，每步焦点落在主按钮），步骤指示点可点击；快捷键取自真实绑定；看过 / 跳过都会记为已看过（`onboarding.completed`），设置页「新手引导 → 重新查看」可以再看一遍。开机自启的首次询问沿用 1.9 的原生对话框。2026-10-11：英文文案（D-06）完成——`en.json` 覆盖全部界面文案（含单复数），设置页「语言」可即时切换并持久化，悬浮窗通过 `storage` 事件同步；日期格式（月日 / 星期 / 相对时间）随语言变化（`lib/date-format.ts`）；`i18n.test.ts` 断言英文不缺失、不多余、插值变量一致。未覆盖：托盘菜单与原生对话框的文案仍是中文（Rust 侧）。待办：空状态与错误文案的统一审校、可访问性审计（对比度 / 焦点可见）、可用性测试记录（需要真人）。
+  - 2026-10-11 原生文案国际化（完成）：语言与主题经 `set_ui_pref` 写入 `settings` 表（`ui.language`、`ui.theme`），启动时主窗口回填缓存并为升级前的用户补写；新增 `native_i18n`（`Lang`），托盘菜单与悬停提示、开机自启询问、Scheduler 通知（`nivlo-scheduler` 新增 `Locale`，`Control::set_locale`）均有中英文版本，切换语言后托盘菜单即时更新、通知下一条起生效。恢复对话框（`lifecycle/recovery.rs`）因数据库不可用读不到语言偏好，按系统语言（`sys-locale`，中文用简体中文、其余英文）显示。D-07「隐藏已完成」开关完成：设置页开关 → `stores/display-store.ts`（`ui.hide_completed` 写入 settings，悬浮窗经 `storage` 事件同步），`TodayList` 据此隐藏已完成区。7.5 仍待：空状态与错误文案审校、可访问性审计、可用性测试记录（需真人）。以下为盘点时的原始记录，现已解决：
+  - 2026-10-11 盘点：「中英文切换后无缺失文案」尚不满足——Rust 侧文案（`tray.rs`、`autostart.rs`、`lifecycle/recovery.rs`、`nivlo-scheduler` 的 `plan.rs`）仍硬编码中文，且语言偏好只在前端 `localStorage`，后端无从得知（D-14）。「隐藏已完成」开关补入本子阶段任务。
 
 ### 7.6 安装包、签名、Updater 与发布流水线
 
@@ -1263,11 +1335,30 @@ Phase 12 Backlog                        → 未排期
   - Tauri Updater：签名的更新包 + HTTPS 更新端点 + Updater Manifest。
   - 发布流水线：Git Tag → CI Build → 签名 → Artifacts → Updater Manifest → Release。
   - 版本号规范与 CHANGELOG。
+  - 安装包注册应用标识（AppUserModelID）与开始菜单快捷方式，使 Windows 通知显示正确的应用名与图标（4.6 遗留），并为 10.6 的通知激活提供前提。
 - **验收标准**：
   - [ ] 从 v0.1.0-rc 自动更新到 v0.1.0 成功，用户数据保留。
   - [ ] 安装包签名有效；安装 / 卸载干净（卸载不删除用户数据，除非用户选择）。
   - [ ] 打 Tag 即可自动产出 Release。
 - **完成记录**：—
+
+### 7.7 悬浮窗外观与自定义皮肤
+
+- **状态**：🟨
+- **依赖**：1.2、1.3、3.5；D-13、D-14
+- **目标**：在不破坏常驻性能预算与「低视觉干扰」原则（产品文档 §5.1、§5.5）的前提下，让用户自定义悬浮窗外观。
+- **任务**：
+  - 外观偏好：强调色（blue / violet / teal / rose / amber）、徽标形态（胶囊 / 圆形 / 圆点）、面板质感（纯色 / 通透）、圆角（soft / round）、整体不透明度（40%–100%）。
+  - 自定义皮肤：最多 16 帧 PNG（缩放到最长边 96px）、1–24 fps、播放方式（循环 / 往返 / 仅悬停 / 静止）、附加动效（无 / 漂浮 / 呼吸 / 弹跳）、像素风（最近邻缩放）、是否同时显示待办数。
+  - 设置页「外观」与皮肤编辑；悬浮窗与主窗口实时同步。
+  - 按 D-13 收敛动效的常驻开销，按 D-14 确定持久化位置并纳入 7.4 备份。
+- **验收标准**：
+  - [x] 系统开启「减少动态效果」时只显示第一帧、无附加动效（`SkinSprite` 检查 `prefers-reduced-motion`，CSS 动效仅在 `no-preference` 下生效；`skin-sprite.test.tsx`）。
+  - [ ] 默认配置下 1.11 的空闲 CPU 预算不受影响；启用循环皮肤时的实测值写入 `perf-baseline.md`（D-13）。
+  - [x] 悬浮窗收起或被隐藏、且播放方式不是循环类时，没有运行中的计时器或无限动画（测试断言：仅悬停且未悬停时无计时器；页面隐藏时计时器与附加动效 class 均移除）。
+  - [x] 外观与皮肤随备份导出、恢复后保持一致（D-14）：`backup/tests.rs` 的备份 → 清空 → 恢复测试已断言 `ui.appearance` / `ui.skin` / `ui.language` / `ui.theme` 恢复为备份时的值。
+  - [x] 徽标的无障碍名称（今天还剩 N 项待办）在任何外观 / 皮肤下保持不变（`aria-label` 只由剩余数量生成，皮肤图为 `aria-hidden`）。
+- **完成记录**：（进行中）2026-10-11：未提交的实现——`stores/appearance-store.ts`、`stores/skin-store.ts`（均有单元测试）、`features/floating/SkinSprite.tsx`、`features/settings/SkinSetting.tsx`，`FloatingBadge` / `TodayPanel` / `SettingsPage` / `global.css` 接入，中英文文案已补；`pnpm typecheck / lint / test` 通过。偏差与待办：① D-13 已落实——默认播放方式改为「仅悬停」，页面隐藏（`document.hidden`）时停止计时器并移除附加动效 class，循环皮肤的实测值留待 7.2 写入 `perf-baseline.md`；② D-14 已落实——外观与皮肤经 `get_ui_pref` / `set_ui_pref`（仅主窗口 Capability）写入 `settings` 表（`ui.appearance`、`ui.skin`，设置值上限由 64KB 提高到 4MB 以容纳 PNG 帧），因此随 7.4 备份；`localStorage` 仅作首帧缓存，主窗口启动时以后端为准覆盖缓存，悬浮窗经 `storage` 事件同步。与推荐方案的差异：帧图直接放 settings 而非 `<数据目录>/skins/`。待办：备份恢复后一致性的端到端验证、语言 / 主题尚未迁移（7.5）；③ 本子阶段为计划外新增，于盘点时补入计划。
 
 ---
 
@@ -1289,7 +1380,7 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [ ] 测试：正常脚本、死循环超时、内存超限、抛出异常均返回对应错误且 Worker 可继续服务下一个请求。
   - [ ] UI 线程中不存在任何 eval 路径（代码审查）。
-- **完成记录**：—
+- **完成记录**：2026-10-11 盘点：已有一份草稿（`ScriptPolicy` 钳制、每个请求全新 Runtime / Context 的 `ScriptWorker`，8 个测试覆盖正常返回、死循环超时、内存超限、异常行号、深递归、取消、状态隔离、上限钳制），放在 `.wip/`（`lib.rs`、`tests.rs`、`script-8.1.patch`），被 `.git/info/exclude` 排除、**不在版本控制中**。正式开始时移到 `p8.1-script-worker` 分支并把状态改为 🟨。
 
 ### 8.2 Script Context 与 Capability API
 
@@ -1384,6 +1475,7 @@ Phase 12 Backlog                        → 未排期
   - Jira Cloud（Email + API Token）与 Server / Data Center（PAT）。
   - 获取 Key、Title、Description、Status、Priority、Assignee、Start / Due Date、Labels、Project、URL（产品文档 §11）；映射到 Item 与 `metadata_json`。
   - 完整降级链：API → Page Metadata → URL + Page Title。
+  - 内网 / 自托管 Jira：用户在 Integration 中配置的 Host 可以绕过 HttpPort 的私网地址限制（只对该 Integration 生效），解决 6.4 中内网 Jira 只能保存工单号的问题。
 - **验收标准**：
   - [ ] fixtures（录制的 API 响应）测试覆盖字段映射。
   - [ ] 凭据失效时自动降级并提示用户重新连接。
@@ -1425,9 +1517,10 @@ Phase 12 Backlog                        → 未排期
 - **任务**：
   - 基于 windows-rs 实现 `IDropTarget` / `IDataObject`，解析 `CF_HDROP`、`CF_UNICODETEXT`、`CFSTR_INETURL`，以及 Outlook 附件等 `FileGroupDescriptor` 场景（按矩阵需要）。
   - 作为 `DropPort` 的 Windows 实现，标准 WebView Drop 无法获取完整数据时补齐。
+  - 范围拆分（D-15）：`CF_HDROP`（单 / 多文件、文件夹）为 MVP 部分，建议在 M4 发布前完成；`FileGroupDescriptor` 等其余格式按矩阵结果留在 Phase 10。
 - **验收标准**：
   - [ ] 2.4 兼容矩阵中所有失败项重新测试并更新结果，核心项全部通过。
-- **完成记录**：—
+- **完成记录**：2026-10-11 盘点：2.4 的单元测试已确认资源管理器文件（单 / 多 / 文件夹）在 HTML5 Drop 下拿不到磁盘路径，满足 Phase 10 引言「核心来源失败时提前」的条件；是否列入 M4 待 D-15 定稿。
 
 ### 10.2 高级悬浮窗行为
 
@@ -1472,6 +1565,18 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [ ] 唤醒后 Reconcile 在 2s 内触发（日志证据）。
 - **完成记录**：—
+
+### 10.6 原生通知激活
+
+- **状态**：⬜
+- **依赖**：4.6、7.6
+- **任务**：
+  - Windows Toast 激活：通知携带 Item ID，点击后由原生激活回调（安装包注册的 AppUserModelID + COM Activator，或等效方案）唤起主窗口并定位到对应 Item；应用未运行时点击通知能冷启动并定位。
+  - 作为 `NotificationPort` 的扩展能力；不可用时（开发模式、未安装）退化为只显示通知。
+- **验收标准**：
+  - [ ] 点击通知打开主窗口并定位到对应 Item（关闭 4.6 的遗留验收项）。
+  - [ ] 应用未运行时点击通知，启动后定位到对应 Item。
+- **完成记录**：—（2026-10-11 由 4.6 的遗留项拆出：`tauri-plugin-notification` 在桌面端没有点击回调。）
 
 ---
 
@@ -1542,3 +1647,4 @@ Phase 12 Backlog                        → 未排期
 |---|---|---|
 | 2026-10-09 | v1.0 | 基于产品文档与技术架构文档建立实施计划初版 |
 | 2026-10-09 | v1.1 | 引用前端 / 后端开发规范；全局完成定义增加注释与 pnpm 要求；0.2 增加注释 Lint 与 pnpm 强制 |
+| 2026-10-11 | v1.2 | MVP 发布差距盘点（§2.1）；D-11 补记定稿；新增 D-13（装饰动效与性能预算）、D-14（UI 偏好持久化位置）、D-15（10.1 提前到 M4）；新增 7.7 悬浮窗外观与自定义皮肤、10.6 原生通知激活；7.5 补入原生文案国际化与「隐藏已完成」开关；7.6 补入 AppUserModelID；9.3 补入内网 Jira；0.2 / 1.11 / 3.5 / 4.6 / 5.4 / 8.1 / 10.1 补记盘点结论 |

@@ -442,6 +442,7 @@
     "section": {
       "general": "General",
       "floating": "Floating badge",
+      "appearance": "Appearance",
       "schedule": "Schedule",
       "notifications": "Notifications",
       "data": "Data and diagnostics"
@@ -459,6 +460,10 @@
     "theme": {
       "label": "Theme",
       "hint": "Match the system, or fix it to light / dark."
+    },
+    "hideCompleted": {
+      "label": "Hide completed to-dos",
+      "hint": "Hide to-dos you finished today from the Today list and the floating panel."
     },
     "alwaysOnTop": {
       "label": "Keep badge on top",
@@ -521,6 +526,85 @@
       "readyTitle": "Backup is ready",
       "readyBody": "Backup created {{created}} (Nivlo {{version}}). After restarting, this data replaces the current data; your current data was backed up to: {{safety}}",
       "restart": "Restart now"
+    },
+    "appearance": {
+      "accent": {
+        "label": "Accent color",
+        "hint": "Colors the badge dot, buttons and highlights.",
+        "blue": "Blue",
+        "violet": "Violet",
+        "teal": "Teal",
+        "rose": "Rose",
+        "amber": "Amber"
+      },
+      "shape": {
+        "label": "Badge shape",
+        "hint": "How the collapsed badge looks.",
+        "pill": "Pill",
+        "circle": "Number",
+        "dot": "Dot"
+      },
+      "surface": {
+        "label": "Surface",
+        "hint": "Glass is softly translucent; Solid is fully opaque.",
+        "solid": "Solid",
+        "glass": "Glass"
+      },
+      "corners": {
+        "label": "Corners",
+        "hint": "Corner radius of the panel.",
+        "soft": "Soft",
+        "round": "Round"
+      },
+      "opacity": {
+        "label": "Window opacity",
+        "hint": "Lower it to let what is behind show through."
+      },
+      "reset": {
+        "label": "Reset appearance",
+        "hint": "Restore the default look.",
+        "button": "Reset"
+      }
+    },
+    "skin": {
+      "label": "Custom skin",
+      "hint": "Pick several images or pixel art; they play as frames on the collapsed badge. Up to 16 frames, shrunk to fit. A GIF contributes its first frame.",
+      "add": "Add images…",
+      "clear": "Remove skin",
+      "empty": "No skin",
+      "frames": "{{count}} frames",
+      "removeFrame": "Remove frame {{index}}",
+      "tooMany": "Only the first {{max}} frames were kept.",
+      "saveFailed": "Could not save the skin. Try fewer or smaller images.",
+      "readFailed": "Could not read one of those images.",
+      "playback": {
+        "label": "Playback",
+        "hint": "How the frames play.",
+        "loop": "Loop",
+        "pingpong": "Ping-pong",
+        "hover": "On hover",
+        "still": "Still"
+      },
+      "fps": {
+        "label": "Speed",
+        "hint": "Frames per second."
+      },
+      "motion": {
+        "label": "Extra motion",
+        "hint": "Gentle movement layered on the image.",
+        "none": "None",
+        "float": "Float",
+        "breathe": "Breathe",
+        "bounce": "Bounce"
+      },
+      "pixel": {
+        "label": "Pixel art mode",
+        "hint": "Keeps hard pixel edges instead of smoothing. Turn it on before adding images."
+      },
+      "showCount": {
+        "label": "Show count",
+        "hint": "Keep the number of remaining to-dos next to the skin."
+      }
     }
   },
   "calendar": {

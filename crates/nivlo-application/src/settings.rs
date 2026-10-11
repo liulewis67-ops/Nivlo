@@ -28,6 +28,16 @@ pub mod keys {
     pub const NOTIFICATIONS_PAUSED: &str = "notifications.paused";
     /// 是否已经看过（或跳过）首次运行引导（`"true"`），缺省为未看过。
     pub const ONBOARDING_COMPLETED: &str = "onboarding.completed";
+    /// 悬浮窗外观偏好（JSON，前端定义结构，D-14）。
+    pub const UI_APPEARANCE: &str = "ui.appearance";
+    /// 悬浮窗自定义皮肤（JSON，含 PNG 帧 data URL，D-14）。
+    pub const UI_SKIN: &str = "ui.skin";
+    /// 界面语言（`zh-CN` / `en`）；Rust 侧的托盘、对话框、通知文案据此选择语言（D-14）。
+    pub const UI_LANGUAGE: &str = "ui.language";
+    /// 主题偏好（`system` / `light` / `dark`）。
+    pub const UI_THEME: &str = "ui.theme";
+    /// Today 是否隐藏今日已完成的 Todo（`"true"` / `"false"`），缺省为显示。
+    pub const UI_HIDE_COMPLETED: &str = "ui.hide_completed";
     /// 日历一周从哪天开始（`monday` / `sunday`），缺省为周一。
     pub const WEEK_START: &str = "calendar.week_start";
 }
@@ -110,7 +120,7 @@ pub(crate) async fn read_week_start(tx: &mut dyn Transaction) -> Result<WeekStar
 const MAX_KEY_LEN: usize = 100;
 
 /// 设置值允许的最大字节数，防止误把大块数据塞进设置表。
-const MAX_VALUE_BYTES: usize = 64 * 1024;
+const MAX_VALUE_BYTES: usize = 4 * 1024 * 1024;
 
 /// 设置的 Use Case。
 #[derive(Clone)]

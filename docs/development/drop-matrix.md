@@ -25,5 +25,5 @@
 
 ## 10.1 的输入
 
-- 资源管理器的文件 / 多文件 / 文件夹：HTML5 Drop 拿不到磁盘路径，需要 Native Drop（`IDropTarget` + `CF_HDROP`）。
+- 资源管理器的文件 / 多文件 / 文件夹：HTML5 Drop 拿不到磁盘路径，需要 Native Drop（`IDropTarget` + `CF_HDROP`）。这一项属于 MVP 必须有的「拖入文件」，实施计划 D-15 建议提前到 M4 发布前完成。
 - 真机验证后，把「待真机」替换为实测结果，并把所有失败项补充到这里。

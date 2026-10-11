@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 use std::future::Future;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::time::Duration as StdDuration;
 
 use chrono::{DateTime, Duration, Utc};
@@ -14,7 +14,7 @@ use nivlo_common::clock::Clock;
 use nivlo_platform::notification::NotificationPort;
 use tokio::sync::Notify;
 
-use crate::plan::{MISSED_LOOKBACK, compose, plan};
+use crate::plan::{Locale, MISSED_LOOKBACK, compose, plan};
 
 /// 单次睡眠的最长时间。
 ///
@@ -39,6 +39,8 @@ pub struct Control {
     wake: Notify,
     /// 是否暂停通知（托盘「暂停通知」）。
     paused: AtomicBool,
+    /// 通知文案的语言（`Locale` 的编号，切换语言后下一次通知生效）。
+    locale: AtomicU8,
 }
 
 impl Control {
@@ -57,6 +59,19 @@ impl Control {
         let was = self.paused.swap(paused, Ordering::SeqCst);
         if was && !paused {
             self.wake();
+        }
+    }
+
+    /// 切换通知文案的语言。
+    pub fn set_locale(&self, locale: Locale) {
+        self.locale.store(locale as u8, Ordering::SeqCst);
+    }
+
+    /// 当前通知文案的语言。
+    pub fn locale(&self) -> Locale {
+        match self.locale.load(Ordering::SeqCst) {
+            1 => Locale::En,
+            _ => Locale::ZhCn,
         }
     }
 
@@ -122,7 +137,7 @@ impl Scheduler {
         let result = plan(now, triggers, &fired);
 
         if !self.control.is_paused() {
-            for notice in compose(now, &result.due, timezone) {
+            for notice in compose(now, &result.due, timezone, self.control.locale()) {
                 if let Err(error) = self.notifier.notify(&notice.notification) {
                     // 通知发不出去（用户在系统里关了通知）也记为已触发，否则每次醒来都会重试。
                     tracing::warn!(event = "notification_failed", %error, "发送系统通知失败");

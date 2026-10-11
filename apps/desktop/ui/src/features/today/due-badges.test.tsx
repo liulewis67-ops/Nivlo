@@ -91,3 +91,27 @@ describe("Today 里的截止与时间标记（悬浮窗与主窗口共用同一�
     expect(tips).toHaveTextContent("提交周报");
   });
 });
+
+describe("隐藏已完成", () => {
+  it("开启后不显示已完成区，关闭后恢复", async () => {
+    const { useDisplayStore } = await import("@/stores/display-store");
+    const view: TodayViewDto = {
+      ...VIEW,
+      completed: [{ ...todo("z", "已经做完", null), status: "done" }],
+    };
+    const props = {
+      view,
+      onComplete: () => undefined,
+      onMove: () => undefined,
+      onPostpone: () => undefined,
+      onReopen: () => undefined,
+    };
+    useDisplayStore.setState({ hideCompleted: true });
+    const hidden = renderWithProviders(<TodayList {...props} />);
+    expect(screen.queryByText("已经做完")).toBeNull();
+    hidden.unmount();
+    useDisplayStore.setState({ hideCompleted: false });
+    renderWithProviders(<TodayList {...props} />);
+    expect(screen.getByText("已经做完")).toBeTruthy();
+  });
+});

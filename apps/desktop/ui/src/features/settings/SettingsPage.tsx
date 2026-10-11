@@ -11,8 +11,20 @@ import type { AppSettingsDto, LaterRuleDto, RestoreStagedDto, WeekStartDto } fro
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
+import { MAX_FPS, MIN_FPS, MOTIONS, PLAYBACKS, useSkinStore } from "@/stores/skin-store";
+import { SkinSetting } from "./SkinSetting";
 import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
+import {
+  ACCENTS,
+  BADGE_SHAPES,
+  CORNERS,
+  MAX_OPACITY,
+  MIN_OPACITY,
+  SURFACES,
+  useAppearanceStore,
+} from "@/stores/appearance-store";
+import { useDisplayStore } from "@/stores/display-store";
 
 /** 「稍后」规则选项，按展示顺序。 */
 const LATER_RULES: LaterRuleDto[] = ["nextMonday", "inThreeDays", "inOneWeek"];
@@ -25,6 +37,63 @@ const EXPORT_FORMATS = ["json", "markdown", "markdownFiles"] as const;
 
 /** 主题偏好选项，按展示顺序。 */
 const THEMES: ThemePreference[] = ["system", "light", "dark"];
+
+/** [`Segmented`] 的 Props。 */
+type SegmentedProps<T extends string> = {
+  label: string;
+  value: T;
+  options: readonly T[];
+  render: (option: T) => string;
+  onChange: (option: T) => void;
+};
+
+/**
+ * 分段选择器：一组互斥按钮。
+ *
+ * @param props 当前值、选项与回调。
+ * @returns 分段控件。
+ */
+function Segmented<T extends string>({
+  label,
+  value,
+  options,
+  render,
+  onChange,
+}: SegmentedProps<T>) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      className="flex rounded-md border border-border bg-bg p-0.5"
+    >
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={value === option}
+          onClick={() => onChange(option)}
+          className={cx(
+            "h-7 rounded-sm px-3 text-xs transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
+            value === option
+              ? "bg-primary font-medium text-primary-contrast"
+              : "text-muted hover:bg-surface-hover hover:text-text",
+          )}
+        >
+          {render(option)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** 强调色预设的展示色。 */
+const ACCENT_SWATCH: Record<(typeof ACCENTS)[number], string> = {
+  blue: "#2563eb",
+  violet: "#7c4dff",
+  teal: "#0d9488",
+  rose: "#e11d48",
+  amber: "#d97706",
+};
 
 /** [`Section`] 的 Props。 */
 type SectionProps = {
@@ -91,6 +160,8 @@ function Row({ label, hint, children }: RowProps) {
  */
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
+  const hideCompleted = useDisplayStore((state) => state.hideCompleted);
+  const setHideCompleted = useDisplayStore((state) => state.setHideCompleted);
   const queryClient = useQueryClient();
   const key = queryKeys.appSettings();
   const settings = useQuery({
@@ -101,6 +172,11 @@ export function SettingsPage() {
   const [exportFormat, setExportFormat] = useState<(typeof EXPORT_FORMATS)[number]>("json");
   /** 已暂存、等待重启生效的恢复。 */
   const [staged, setStaged] = useState<RestoreStagedDto | null>(null);
+  const appearance = useAppearanceStore((state) => state.appearance);
+  const updateAppearance = useAppearanceStore((state) => state.update);
+  const resetAppearance = useAppearanceStore((state) => state.reset);
+  const skin = useSkinStore((state) => state.skin);
+  const updateSkin = useSkinStore((state) => state.update);
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
 
@@ -210,6 +286,150 @@ export function SettingsPage() {
             <ShortcutSetting />
           </Row>
         </Section>
+        <Section title={t("settings.section.appearance")}>
+          <Row
+            label={t("settings.appearance.accent.label")}
+            hint={t("settings.appearance.accent.hint")}
+          >
+            <div
+              role="radiogroup"
+              aria-label={t("settings.appearance.accent.label")}
+              className="flex gap-2"
+            >
+              {ACCENTS.map((accent) => (
+                <button
+                  key={accent}
+                  type="button"
+                  role="radio"
+                  aria-checked={appearance.accent === accent}
+                  aria-label={t(`settings.appearance.accent.${accent}`)}
+                  onClick={() => updateAppearance({ accent })}
+                  style={{ backgroundColor: ACCENT_SWATCH[accent] }}
+                  className={cx(
+                    "size-6 rounded-full transition-transform duration-(--nv-duration-fast)",
+                    appearance.accent === accent
+                      ? "scale-110 ring-2 ring-text ring-offset-2 ring-offset-surface"
+                      : "hover:scale-110",
+                  )}
+                />
+              ))}
+            </div>
+          </Row>
+          <Row
+            label={t("settings.appearance.shape.label")}
+            hint={t("settings.appearance.shape.hint")}
+          >
+            <Segmented
+              label={t("settings.appearance.shape.label")}
+              value={appearance.badgeShape}
+              options={BADGE_SHAPES}
+              render={(o) => t(`settings.appearance.shape.${o}`)}
+              onChange={(badgeShape) => updateAppearance({ badgeShape })}
+            />
+          </Row>
+          <Row
+            label={t("settings.appearance.surface.label")}
+            hint={t("settings.appearance.surface.hint")}
+          >
+            <Segmented
+              label={t("settings.appearance.surface.label")}
+              value={appearance.surface}
+              options={SURFACES}
+              render={(o) => t(`settings.appearance.surface.${o}`)}
+              onChange={(surface) => updateAppearance({ surface })}
+            />
+          </Row>
+          <Row
+            label={t("settings.appearance.corners.label")}
+            hint={t("settings.appearance.corners.hint")}
+          >
+            <Segmented
+              label={t("settings.appearance.corners.label")}
+              value={appearance.corners}
+              options={CORNERS}
+              render={(o) => t(`settings.appearance.corners.${o}`)}
+              onChange={(corners) => updateAppearance({ corners })}
+            />
+          </Row>
+          <Row
+            label={t("settings.appearance.opacity.label")}
+            hint={t("settings.appearance.opacity.hint")}
+          >
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                aria-label={t("settings.appearance.opacity.label")}
+                min={MIN_OPACITY}
+                max={MAX_OPACITY}
+                step={5}
+                value={appearance.opacity}
+                onChange={(event) => updateAppearance({ opacity: Number(event.target.value) })}
+                className="w-32 accent-(--nv-primary)"
+              />
+              <span className="w-10 text-right text-xs text-muted tabular-nums">
+                {`${appearance.opacity}%`}
+              </span>
+            </div>
+          </Row>
+          <Row
+            label={t("settings.appearance.reset.label")}
+            hint={t("settings.appearance.reset.hint")}
+          >
+            <Button size="sm" onClick={resetAppearance}>
+              {t("settings.appearance.reset.button")}
+            </Button>
+          </Row>
+          <Row label={t("settings.skin.label")} hint={t("settings.skin.hint")}>
+            <SkinSetting />
+          </Row>
+          <Row label={t("settings.skin.playback.label")} hint={t("settings.skin.playback.hint")}>
+            <Segmented
+              label={t("settings.skin.playback.label")}
+              value={skin.playback}
+              options={PLAYBACKS}
+              render={(o) => t(`settings.skin.playback.${o}`)}
+              onChange={(playback) => updateSkin({ playback })}
+            />
+          </Row>
+          <Row label={t("settings.skin.fps.label")} hint={t("settings.skin.fps.hint")}>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                aria-label={t("settings.skin.fps.label")}
+                min={MIN_FPS}
+                max={MAX_FPS}
+                step={1}
+                value={skin.fps}
+                onChange={(event) => updateSkin({ fps: Number(event.target.value) })}
+                className="w-32 accent-(--nv-primary)"
+              />
+              <span className="w-10 text-right text-xs text-muted tabular-nums">{skin.fps}</span>
+            </div>
+          </Row>
+          <Row label={t("settings.skin.motion.label")} hint={t("settings.skin.motion.hint")}>
+            <Segmented
+              label={t("settings.skin.motion.label")}
+              value={skin.motion}
+              options={MOTIONS}
+              render={(o) => t(`settings.skin.motion.${o}`)}
+              onChange={(motion) => updateSkin({ motion })}
+            />
+          </Row>
+          <Row label={t("settings.skin.pixel.label")} hint={t("settings.skin.pixel.hint")}>
+            <Switch
+              label={t("settings.skin.pixel.label")}
+              checked={skin.pixel}
+              onCheckedChange={(pixel) => updateSkin({ pixel })}
+            />
+          </Row>
+          <Row label={t("settings.skin.showCount.label")} hint={t("settings.skin.showCount.hint")}>
+            <Switch
+              label={t("settings.skin.showCount.label")}
+              checked={skin.showCount}
+              onCheckedChange={(showCount) => updateSkin({ showCount })}
+            />
+          </Row>
+        </Section>
         <Section title={t("settings.section.notifications")}>
           <Row
             label={t("settings.pauseNotifications.label")}
@@ -275,6 +495,13 @@ export function SettingsPage() {
                 </button>
               ))}
             </div>
+          </Row>
+          <Row label={t("settings.hideCompleted.label")} hint={t("settings.hideCompleted.hint")}>
+            <Switch
+              label={t("settings.hideCompleted.label")}
+              checked={hideCompleted}
+              onCheckedChange={setHideCompleted}
+            />
           </Row>
           <Row label={t("settings.weekStart.label")} hint={t("settings.weekStart.hint")}>
             <div

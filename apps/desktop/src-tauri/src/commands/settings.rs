@@ -199,3 +199,108 @@ pub async fn set_onboarding_completed(
         .await?;
     Ok(())
 }
+
+/// UI 偏好允许的名字与对应的设置 key；只有这里列出的偏好能经由 IPC 读写（D-14）。
+fn ui_pref_key(name: &str) -> Result<&'static str, IpcError> {
+    match name {
+        "appearance" => Ok(keys::UI_APPEARANCE),
+        "skin" => Ok(keys::UI_SKIN),
+        "language" => Ok(keys::UI_LANGUAGE),
+        "theme" => Ok(keys::UI_THEME),
+        "hideCompleted" => Ok(keys::UI_HIDE_COMPLETED),
+        _ => Err(IpcError::from(AppError::new(
+            ErrorCode::InvalidInput,
+            format!("未知的界面偏好：{name}"),
+        ))),
+    }
+}
+
+/// 读取界面偏好（`appearance` / `skin` / `language` / `theme`）的 JSON 文本；没保存过返回 `None`。
+///
+/// 偏好存于 `settings` 表，因此随备份导出 / 恢复（实施计划 D-14）。
+///
+/// # Errors
+///
+/// 名字不认识返回 `INVALID_INPUT`；存储失败返回存储错误。
+#[tauri::command]
+#[specta::specta]
+pub async fn get_ui_pref(
+    state: State<'_, AppState>,
+    name: String,
+) -> Result<Option<String>, IpcError> {
+    let key = ui_pref_key(&name)?;
+    Ok(state.services.settings.get(key).await?)
+}
+
+/// 保存界面偏好的 JSON 文本；`None` 表示恢复默认（删除记录）。
+///
+/// # Errors
+///
+/// 名字不认识或内容过大（超过设置值上限）返回 `INVALID_INPUT`；存储失败返回存储错误。
+#[tauri::command]
+#[specta::specta]
+pub async fn set_ui_pref<R: Runtime>(
+    app: AppHandle<R>,
+    state: State<'_, AppState>,
+    name: String,
+    value: Option<String>,
+) -> Result<(), IpcError> {
+    let key = ui_pref_key(&name)?;
+    if let Some(text) = &value {
+        validate_ui_pref(&name, text)?;
+    }
+    match value {
+        Some(text) => {
+            state.services.settings.set(key, &text).await?;
+            // 语言变了：托盘菜单立即换成新语言（原生对话框与通知在下次弹出时读取）。
+            if name == "language"
+                && let Some(lang) = crate::native_i18n::Lang::parse(&text)
+            {
+                crate::tray::apply_language(&app, lang);
+                state.runtime.scheduler_control().set_locale(lang.into());
+            }
+            Ok(())
+        }
+        // 空字符串等同于未设置：读取方会回退到默认值。
+        None => Ok(state.services.settings.set(key, "").await?),
+    }
+}
+
+/// 语言与主题是枚举值，写入前校验，避免后端读到无法识别的文本；外观与皮肤的结构由前端清洗。
+fn validate_ui_pref(name: &str, value: &str) -> Result<(), IpcError> {
+    let allowed: &[&str] = match name {
+        "language" => &["zh-CN", "en"],
+        "theme" => &["system", "light", "dark"],
+        "hideCompleted" => &["true", "false"],
+        _ => return Ok(()),
+    };
+    if allowed.contains(&value) {
+        Ok(())
+    } else {
+        Err(IpcError::from(AppError::new(
+            ErrorCode::InvalidInput,
+            format!("界面偏好 {name} 的值不合法：{value}"),
+        )))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ui_pref_names_are_whitelisted() {
+        assert_eq!(ui_pref_key("language").ok(), Some(keys::UI_LANGUAGE));
+        assert_eq!(ui_pref_key("theme").ok(), Some(keys::UI_THEME));
+        assert!(ui_pref_key("sql").is_err());
+    }
+
+    #[test]
+    fn enum_prefs_reject_unknown_values() {
+        assert!(validate_ui_pref("language", "en").is_ok());
+        assert!(validate_ui_pref("language", "fr").is_err());
+        assert!(validate_ui_pref("theme", "dark").is_ok());
+        assert!(validate_ui_pref("theme", "neon").is_err());
+        assert!(validate_ui_pref("skin", "{}").is_ok());
+    }
+}

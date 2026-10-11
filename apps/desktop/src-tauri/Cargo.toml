@@ -42,6 +42,7 @@ nivlo-script.workspace = true
 nivlo-scheduler.workspace = true
 nivlo-integrations.workspace = true
 nivlo-platform.workspace = true
+sys-locale = "0.3.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 nivlo-platform-windows.workspace = true

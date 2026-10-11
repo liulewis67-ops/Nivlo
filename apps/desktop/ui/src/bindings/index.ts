@@ -245,6 +245,24 @@ export const commands = {
 	 */
 	getAppSettings: () => typedError<AppSettingsDto, IpcError>(__TAURI_INVOKE("get_app_settings")),
 	/**
+	 *  读取界面偏好（`appearance` / `skin` / `language` / `theme`）的 JSON 文本；没保存过返回 `None`。
+	 * 
+	 *  偏好存于 `settings` 表，因此随备份导出 / 恢复（实施计划 D-14）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  名字不认识返回 `INVALID_INPUT`；存储失败返回存储错误。
+	 */
+	getUiPref: (name: string) => typedError<string | null, IpcError>(__TAURI_INVOKE("get_ui_pref", { name })),
+	/**
+	 *  保存界面偏好的 JSON 文本；`None` 表示恢复默认（删除记录）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  名字不认识或内容过大（超过设置值上限）返回 `INVALID_INPUT`；存储失败返回存储错误。
+	 */
+	setUiPref: (name: string, value: string | null) => typedError<null, IpcError>(__TAURI_INVOKE("set_ui_pref", { name, value })),
+	/**
 	 *  开启或关闭开机自启，返回之后的实际状态。
 	 * 
 	 *  # Errors

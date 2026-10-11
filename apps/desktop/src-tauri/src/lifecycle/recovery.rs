@@ -8,19 +8,63 @@ use std::io;
 use std::path::Path;
 
 use nivlo_common::paths::AppPaths;
+
+use crate::native_i18n::Lang;
 use tauri::{AppHandle, Wry};
 use tauri_plugin_dialog::{
     DialogExt, MessageDialogButtons, MessageDialogKind, MessageDialogResult,
 };
 use tauri_plugin_opener::OpenerExt;
 
-/// 对话框按钮文案。
-// TODO(P0.9): 接入 i18n 后改为从资源文件读取（实施计划 D-06）。
-const BUTTON_OPEN_LOGS: &str = "打开日志目录";
-/// 导出数据库副本按钮文案。
-const BUTTON_EXPORT: &str = "导出数据库副本";
-/// 退出按钮文案。
-const BUTTON_QUIT: &str = "退出";
+/// 一种语言下的对话框文案。
+struct Text {
+    /// 打开日志目录按钮。
+    open_logs: &'static str,
+    /// 导出数据库副本按钮。
+    export: &'static str,
+    /// 退出按钮。
+    quit: &'static str,
+    /// 对话框标题。
+    title: &'static str,
+}
+
+/// 按语言选择文案。
+fn text(lang: Lang) -> Text {
+    match lang {
+        Lang::ZhCn => Text {
+            open_logs: "打开日志目录",
+            export: "导出数据库副本",
+            quit: "退出",
+            title: "Nivlo 无法启动",
+        },
+        Lang::En => Text {
+            open_logs: "Open log folder",
+            export: "Export database copy",
+            quit: "Quit",
+            title: "Nivlo can't start",
+        },
+    }
+}
+
+/// 对话框正文。
+fn message(lang: Lang, error: &dyn std::fmt::Display) -> String {
+    match lang {
+        Lang::ZhCn => format!(
+            "Nivlo 无法升级本地数据库，已停止启动以保护你的数据。
+
+原因：{error}
+
+             你可以打开日志目录查看详情，或导出一份数据库副本发给开发者。"
+        ),
+        Lang::En => format!(
+            "Nivlo couldn't upgrade the local database and stopped to protect your data.
+
+Reason: {error}
+
+             You can open the log folder for details, or export a copy of the database to send to the developer."
+        ),
+    }
+}
 
 /// 用户在恢复对话框中的选择。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -34,10 +78,10 @@ enum RecoveryChoice {
 }
 
 /// 把对话框返回值解析为选择；关闭对话框等价于退出。
-fn parse_choice(result: MessageDialogResult) -> RecoveryChoice {
+fn parse_choice(result: MessageDialogResult, words: &Text) -> RecoveryChoice {
     match result {
-        MessageDialogResult::Custom(label) if label == BUTTON_OPEN_LOGS => RecoveryChoice::OpenLogs,
-        MessageDialogResult::Custom(label) if label == BUTTON_EXPORT => {
+        MessageDialogResult::Custom(label) if label == words.open_logs => RecoveryChoice::OpenLogs,
+        MessageDialogResult::Custom(label) if label == words.export => {
             RecoveryChoice::ExportDatabase
         }
         _ => RecoveryChoice::Quit,
@@ -60,23 +104,22 @@ pub fn export_database_copy(database_file: &Path, destination: &Path) -> io::Res
 ///
 /// 阻塞调用，只应在启动阶段（事件循环尚未处理业务窗口时）使用。
 pub fn run_recovery_dialog(app: &AppHandle<Wry>, paths: &AppPaths, error: &dyn std::fmt::Display) {
-    let message = format!(
-        "Nivlo 无法升级本地数据库，已停止启动以保护你的数据。\n\n原因：{error}\n\n\
-         你可以打开日志目录查看详情，或导出一份数据库副本发给开发者。"
-    );
+    // 数据库不可用，读不到保存的语言偏好：按系统语言显示。
+    let words = text(Lang::from_system());
+    let message = message(Lang::from_system(), error);
     loop {
         let result = app
             .dialog()
             .message(&message)
-            .title("Nivlo 无法启动")
+            .title(words.title)
             .kind(MessageDialogKind::Error)
             .buttons(MessageDialogButtons::YesNoCancelCustom(
-                BUTTON_OPEN_LOGS.to_owned(),
-                BUTTON_EXPORT.to_owned(),
-                BUTTON_QUIT.to_owned(),
+                words.open_logs.to_owned(),
+                words.export.to_owned(),
+                words.quit.to_owned(),
             ))
             .blocking_show_with_result();
-        match parse_choice(result) {
+        match parse_choice(result, &words) {
             RecoveryChoice::OpenLogs => {
                 let logs = paths.logs_dir().to_string_lossy().into_owned();
                 if let Err(open_error) = app.opener().open_path(logs, None::<&str>) {
@@ -122,11 +165,17 @@ mod tests {
     #[test]
     fn custom_buttons_map_to_choices() {
         assert_eq!(
-            parse_choice(MessageDialogResult::Custom(BUTTON_OPEN_LOGS.to_owned())),
+            parse_choice(
+                MessageDialogResult::Custom(text(Lang::En).open_logs.to_owned()),
+                &text(Lang::En)
+            ),
             RecoveryChoice::OpenLogs
         );
         assert_eq!(
-            parse_choice(MessageDialogResult::Custom(BUTTON_EXPORT.to_owned())),
+            parse_choice(
+                MessageDialogResult::Custom(text(Lang::ZhCn).export.to_owned()),
+                &text(Lang::ZhCn)
+            ),
             RecoveryChoice::ExportDatabase
         );
     }
@@ -134,11 +183,14 @@ mod tests {
     #[test]
     fn anything_else_quits() {
         assert_eq!(
-            parse_choice(MessageDialogResult::Custom(BUTTON_QUIT.to_owned())),
+            parse_choice(
+                MessageDialogResult::Custom(text(Lang::En).quit.to_owned()),
+                &text(Lang::En)
+            ),
             RecoveryChoice::Quit
         );
         assert_eq!(
-            parse_choice(MessageDialogResult::Cancel),
+            parse_choice(MessageDialogResult::Cancel, &text(Lang::En)),
             RecoveryChoice::Quit
         );
     }

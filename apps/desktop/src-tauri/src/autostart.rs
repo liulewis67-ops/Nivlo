@@ -4,6 +4,8 @@
 //! 以后的开关放在设置页（3.5）。自启本身由 `tauri-plugin-autostart` 写入系统启动项。
 
 use nivlo_application::settings::{SettingsService, keys};
+
+use crate::native_i18n::Lang;
 use tauri::{AppHandle, Wry};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_dialog::{
@@ -16,18 +18,38 @@ pub const AUTOSTART_ARG: &str = "--autostarted";
 /// 设置了这个环境变量就不弹首次运行询问（自动化脚本使用，不会记录「已询问」）。
 pub const SKIP_PROMPT_ENV: &str = "NIVLO_SKIP_FIRST_RUN_PROMPTS";
 
-/// 对话框文案。
-// TODO(P7.5): 接入 i18n 后改为从资源文件读取（实施计划 D-06）。
-mod text {
+/// 一种语言下的对话框文案。
+struct Text {
     /// 标题。
-    pub const TITLE: &str = "开机时自动启动拾序？";
+    title: &'static str,
     /// 正文。
-    pub const MESSAGE: &str = "拾序常驻在屏幕边缘，开机自动启动后你随时可以把想法和待办收进来。\n\n\
-         你可以随时在设置里更改这个选项。";
+    message: &'static str,
     /// 同意按钮。
-    pub const ENABLE: &str = "开机自动启动";
+    enable: &'static str,
     /// 拒绝按钮。
-    pub const DECLINE: &str = "暂不需要";
+    decline: &'static str,
+}
+
+/// 按语言选择对话框文案。
+fn text(lang: Lang) -> Text {
+    match lang {
+        Lang::ZhCn => Text {
+            title: "开机时自动启动拾序？",
+            message: "拾序常驻在屏幕边缘，开机自动启动后你随时可以把想法和待办收进来。
+
+                      你可以随时在设置里更改这个选项。",
+            enable: "开机自动启动",
+            decline: "暂不需要",
+        },
+        Lang::En => Text {
+            title: "Start Nivlo when you sign in?",
+            message: "Nivlo lives at the edge of your screen. Starting it at sign-in lets you capture ideas and to-dos anytime.
+
+                      You can change this in Settings at any time.",
+            enable: "Start at sign-in",
+            decline: "Not now",
+        },
+    }
 }
 
 /// 是否需要询问：只有从未询问过才问。设置里是任何值都算"问过了"。
@@ -37,8 +59,8 @@ pub fn should_prompt(prompted: Option<&str>) -> bool {
 }
 
 /// 对话框的返回值是否是「开机自动启动」按钮。
-fn is_enable_choice(result: &MessageDialogResult) -> bool {
-    matches!(result, MessageDialogResult::Custom(label) if label == text::ENABLE)
+fn is_enable_choice(result: &MessageDialogResult, enable_label: &str) -> bool {
+    matches!(result, MessageDialogResult::Custom(label) if label == enable_label)
 }
 
 /// 首次运行时询问是否开机自启；已经问过则什么都不做。
@@ -59,17 +81,19 @@ pub async fn prompt_once(app: AppHandle<Wry>, settings: SettingsService) {
         }
     }
     let handle = app.clone();
+    let words = text(crate::native_i18n::current(&settings).await);
+    let enable_label = words.enable;
     app.dialog()
-        .message(text::MESSAGE)
-        .title(text::TITLE)
+        .message(words.message)
+        .title(words.title)
         .kind(MessageDialogKind::Info)
         .buttons(MessageDialogButtons::OkCancelCustom(
-            text::ENABLE.to_owned(),
-            text::DECLINE.to_owned(),
+            words.enable.to_owned(),
+            words.decline.to_owned(),
         ))
         .show_with_result(move |result| {
             // 只有明确点了「开机自动启动」才启用：对话框被系统 / 其他窗口意外关闭时一律视为拒绝。
-            let enable = is_enable_choice(&result);
+            let enable = is_enable_choice(&result, enable_label);
             tauri::async_runtime::spawn(async move {
                 // 先记录"已询问"，即使启用失败也不再反复弹窗。
                 if let Err(error) = settings.set(keys::AUTOSTART_PROMPTED, "true").await {
@@ -91,7 +115,7 @@ pub async fn prompt_once(app: AppHandle<Wry>, settings: SettingsService) {
 mod tests {
     use tauri_plugin_dialog::MessageDialogResult;
 
-    use super::{is_enable_choice, should_prompt, text};
+    use super::{Lang, is_enable_choice, should_prompt, text};
 
     #[test]
     fn prompts_only_when_never_asked() {
@@ -102,14 +126,25 @@ mod tests {
 
     #[test]
     fn only_the_enable_button_enables_autostart() {
-        assert!(is_enable_choice(&MessageDialogResult::Custom(
-            text::ENABLE.to_owned()
-        )));
-        assert!(!is_enable_choice(&MessageDialogResult::Custom(
-            text::DECLINE.to_owned()
-        )));
-        assert!(!is_enable_choice(&MessageDialogResult::Ok));
-        assert!(!is_enable_choice(&MessageDialogResult::Yes));
-        assert!(!is_enable_choice(&MessageDialogResult::Cancel));
+        assert!(is_enable_choice(
+            &MessageDialogResult::Custom(text(Lang::ZhCn).enable.to_owned()),
+            text(Lang::ZhCn).enable
+        ));
+        assert!(!is_enable_choice(
+            &MessageDialogResult::Custom(text(Lang::ZhCn).decline.to_owned()),
+            text(Lang::ZhCn).enable
+        ));
+        assert!(!is_enable_choice(
+            &MessageDialogResult::Ok,
+            text(Lang::ZhCn).enable
+        ));
+        assert!(!is_enable_choice(
+            &MessageDialogResult::Yes,
+            text(Lang::ZhCn).enable
+        ));
+        assert!(!is_enable_choice(
+            &MessageDialogResult::Cancel,
+            text(Lang::ZhCn).enable
+        ));
     }
 }

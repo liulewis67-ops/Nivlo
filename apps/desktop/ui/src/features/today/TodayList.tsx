@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
+import { useDisplayStore } from "@/stores/display-store";
 import { ItemTitle } from "./ItemTitle";
 import { SortableTodoList } from "./SortableTodoList";
 import { TodoCheck } from "./TodoCheck";
@@ -45,7 +46,9 @@ function timeLabel(item: TodayItemDto): string | null {
  */
 export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: TodayListProps) {
   const { t } = useTranslation();
-  if (view.todos.length === 0 && view.tips.length === 0 && view.completed.length === 0) {
+  const hideCompleted = useDisplayStore((state) => state.hideCompleted);
+  const completed = hideCompleted ? [] : view.completed;
+  if (view.todos.length === 0 && view.tips.length === 0 && completed.length === 0) {
     return null;
   }
   return (
@@ -70,9 +73,9 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
           ))}
         </ul>
       )}
-      {view.completed.length > 0 && (
+      {completed.length > 0 && (
         <ul aria-label={t("today.section.completed")} className="flex flex-col gap-1">
-          {view.completed.map((item) => (
+          {completed.map((item) => (
             <li
               key={item.id}
               className={cx("flex items-center gap-2 px-2 py-1 text-sm text-muted line-through")}

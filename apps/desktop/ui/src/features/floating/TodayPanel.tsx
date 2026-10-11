@@ -65,7 +65,7 @@ export function TodayPanel({
     <section
       aria-label={t("today.panel.label")}
       style={{ transformOrigin: origin }}
-      className="nv-panel-in relative flex h-full w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
+      className="nv-panel-in nv-float relative flex h-full w-full flex-col overflow-hidden"
     >
       <header className="flex items-center justify-between border-b border-border px-3 py-2">
         <h2 className="text-sm font-semibold text-text">
@@ -117,7 +117,7 @@ export function TodayPanel({
         />
       )}
       {dropActive && (
-        <div className="nv-drop-zone pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary bg-surface/90">
+        <div className="nv-drop-zone pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-[inherit] border-2 border-dashed border-primary bg-surface/90">
           <p className="text-sm font-semibold text-primary">{t("capture.drop.title")}</p>
           <p className="text-xs text-muted">{t("capture.drop.hint")}</p>
         </div>

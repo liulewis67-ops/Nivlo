@@ -1,3 +1,4 @@
+import type { UiPrefName } from "@/lib/ipc";
 import { visibleRange } from "@/features/calendar/model/calendar-grid";
 import { AppError } from "@/lib/errors";
 import { createWorkflowMock } from "./workflow-mock";
@@ -242,6 +243,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   /** Item ID → 标签 ID。 */
   const itemTags = new Map<string, string[]>();
   let nextOrganizeId = 1;
+  const uiPrefs = new Map<string, string>();
   let appSettings: AppSettingsDto = {
     autostart: false,
     floatingAlwaysOnTop: true,
@@ -963,6 +965,16 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         return Promise.reject(failure);
       }
       appSettings = { ...appSettings, notificationsPaused: paused };
+      return Promise.resolve();
+    },
+    getUiPref: (name: UiPrefName) => {
+      calls.push("getUiPref");
+      return Promise.resolve(uiPrefs.get(name) ?? null);
+    },
+    setUiPref: (name: UiPrefName, value: string | null) => {
+      calls.push("setUiPref");
+      if (value === null) uiPrefs.delete(name);
+      else uiPrefs.set(name, value);
       return Promise.resolve();
     },
     setWeekStart: (weekStart: WeekStartDto) => {

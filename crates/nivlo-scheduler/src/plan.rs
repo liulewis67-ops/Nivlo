@@ -52,6 +52,16 @@ pub fn plan(now: DateTime<Utc>, triggers: Vec<Trigger>, fired: &HashSet<TriggerK
     Plan { due, next }
 }
 
+/// 通知文案的语言。
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Locale {
+    /// 简体中文（默认）。
+    #[default]
+    ZhCn,
+    /// 英文。
+    En,
+}
+
 /// 一条要发出去的通知，以及它代表的触发点。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Notice {
@@ -67,25 +77,38 @@ pub struct Notice {
 ///
 /// 准时的逐条通知；错过的不超过 [`MAX_INDIVIDUAL_MISSED`] 条也逐条通知（标题带「错过」），
 /// 更多的合并成一条汇总，避免休眠一夜醒来被通知轰炸（实施计划 4.5）。
-pub fn compose(now: DateTime<Utc>, due: &[Trigger], timezone: Tz) -> Vec<Notice> {
+pub fn compose(now: DateTime<Utc>, due: &[Trigger], timezone: Tz, locale: Locale) -> Vec<Notice> {
     let (late, on_time): (Vec<&Trigger>, Vec<&Trigger>) = due
         .iter()
         .partition(|trigger| now - trigger.key.fire_at > ON_TIME_GRACE);
     let mut notices: Vec<Notice> = on_time
         .into_iter()
-        .map(|trigger| single(trigger, false, timezone))
+        .map(|trigger| single(trigger, false, timezone, locale))
         .collect();
     if late.len() <= MAX_INDIVIDUAL_MISSED {
         notices.extend(
             late.into_iter()
-                .map(|trigger| single(trigger, true, timezone)),
+                .map(|trigger| single(trigger, true, timezone, locale)),
         );
     } else {
         let titles: Vec<&str> = late.iter().take(3).map(|t| t.title.as_str()).collect();
+        let (title, body) = match locale {
+            Locale::ZhCn => (
+                format!("你错过了 {} 个提醒", late.len()),
+                format!("包括：{} 等。点击打开拾序查看。", titles.join("、")),
+            ),
+            Locale::En => (
+                format!("You missed {} reminders", late.len()),
+                format!(
+                    "Including: {} and more. Click to open Nivlo.",
+                    titles.join(", ")
+                ),
+            ),
+        };
         notices.push(Notice {
             notification: Notification {
-                title: format!("你错过了 {} 个提醒", late.len()),
-                body: format!("包括：{} 等。点击打开拾序查看。", titles.join("、")),
+                title,
+                body,
                 item_id: None,
             },
             keys: late.iter().map(|t| t.key).collect(),
@@ -96,18 +119,21 @@ pub fn compose(now: DateTime<Utc>, due: &[Trigger], timezone: Tz) -> Vec<Notice>
 }
 
 /// 一个触发点的通知。
-fn single(trigger: &Trigger, missed: bool, timezone: Tz) -> Notice {
+fn single(trigger: &Trigger, missed: bool, timezone: Tz, locale: Locale) -> Notice {
     let local = trigger.key.fire_at.with_timezone(&timezone);
     let clock_time = local.format("%H:%M");
-    let label = match trigger.key.kind {
-        TriggerKind::Reminder => "提醒",
-        TriggerKind::Tip => "💡 提示",
-        TriggerKind::Due => "到期",
+    let label = match (locale, trigger.key.kind) {
+        (Locale::ZhCn, TriggerKind::Reminder) => "提醒",
+        (Locale::ZhCn, TriggerKind::Tip) => "💡 提示",
+        (Locale::ZhCn, TriggerKind::Due) => "到期",
+        (Locale::En, TriggerKind::Reminder) => "Reminder",
+        (Locale::En, TriggerKind::Tip) => "💡 Tip",
+        (Locale::En, TriggerKind::Due) => "Due",
     };
-    let title = if missed {
-        format!("错过的{label}")
-    } else {
-        label.to_owned()
+    let title = match (missed, locale) {
+        (false, _) => label.to_owned(),
+        (true, Locale::ZhCn) => format!("错过的{label}"),
+        (true, Locale::En) => format!("Missed: {label}"),
     };
     // 补发的通知带上原本的时间，让用户知道是哪个时刻的事；准时的 Tip 直接显示时间。
     let body = match (missed, trigger.key.kind) {
@@ -202,7 +228,7 @@ mod tests {
             trigger(2, TriggerKind::Tip, at(10, 0), "站会"),
             trigger(3, TriggerKind::Due, at(10, 0), "提交材料"),
         ];
-        let notices = compose(at(10, 1), &due, Tz::UTC);
+        let notices = compose(at(10, 1), &due, Tz::UTC, Locale::ZhCn);
         assert_eq!(notices.len(), 3);
         assert!(notices.iter().all(|n| !n.missed));
         assert_eq!(notices[0].notification.title, "提醒");
@@ -215,7 +241,7 @@ mod tests {
     #[test]
     fn times_in_notifications_use_the_user_time_zone() {
         let due = vec![trigger(1, TriggerKind::Tip, at(2, 0), "东京的会")];
-        let notices = compose(at(2, 1), &due, Tz::Asia__Tokyo);
+        let notices = compose(at(2, 1), &due, Tz::Asia__Tokyo, Locale::ZhCn);
         assert_eq!(notices[0].notification.body, "11:00 东京的会");
     }
 
@@ -225,7 +251,7 @@ mod tests {
             trigger(1, TriggerKind::Reminder, at(10, 0), "开会"),
             trigger(2, TriggerKind::Reminder, at(10, 30), "吃药"),
         ];
-        let notices = compose(at(11, 0), &due, Tz::UTC);
+        let notices = compose(at(11, 0), &due, Tz::UTC, Locale::ZhCn);
         assert_eq!(notices.len(), 2);
         assert!(notices.iter().all(|n| n.missed));
         assert_eq!(notices[0].notification.title, "错过的提醒");
@@ -244,7 +270,7 @@ mod tests {
                 )
             })
             .collect();
-        let notices = compose(at(12, 0), &due, Tz::UTC);
+        let notices = compose(at(12, 0), &due, Tz::UTC, Locale::ZhCn);
         assert_eq!(notices.len(), 1);
         assert_eq!(notices[0].notification.title, "你错过了 6 个提醒");
         assert_eq!(notices[0].notification.item_id, None);
@@ -258,9 +284,19 @@ mod tests {
             .map(|n| trigger(n, TriggerKind::Reminder, at(8, n as u32), "旧"))
             .collect();
         due.push(trigger(9, TriggerKind::Reminder, at(11, 59), "刚到点"));
-        let notices = compose(at(12, 0), &due, Tz::UTC);
+        let notices = compose(at(12, 0), &due, Tz::UTC, Locale::ZhCn);
         assert_eq!(notices.len(), 2);
         let individual = notices.iter().find(|n| !n.missed).unwrap();
         assert_eq!(individual.notification.body, "刚到点");
+    }
+
+    #[test]
+    fn english_notices() {
+        let due = vec![trigger(1, TriggerKind::Reminder, at(10, 0), "standup")];
+        let on_time = compose(at(10, 1), &due, Tz::UTC, Locale::En);
+        assert_eq!(on_time[0].notification.title, "Reminder");
+        let missed = compose(at(12, 0), &due, Tz::UTC, Locale::En);
+        assert_eq!(missed[0].notification.title, "Missed: Reminder");
+        assert_eq!(missed[0].notification.body, "10:00 standup");
     }
 }

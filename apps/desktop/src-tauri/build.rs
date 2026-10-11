@@ -30,6 +30,8 @@ const COMMANDS: &[&str] = &[
     "list_workflow_runs",
     "rerun_workflow",
     "get_app_settings",
+    "get_ui_pref",
+    "set_ui_pref",
     "set_autostart",
     "set_floating_always_on_top",
     "set_later_rule",

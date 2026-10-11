@@ -19,6 +19,7 @@ pub mod diagnostics;
 pub mod dto;
 pub mod events;
 pub mod lifecycle;
+pub mod native_i18n;
 pub mod open;
 pub mod scheduling;
 pub mod shortcut;
@@ -85,6 +86,8 @@ macro_rules! bindings_builder {
                 $crate::commands::workflow::rerun_workflow,
                 $crate::commands::trash::empty_trash,
                 $crate::commands::settings::get_app_settings::<$runtime>,
+                $crate::commands::settings::get_ui_pref,
+                $crate::commands::settings::set_ui_pref::<$runtime>,
                 $crate::commands::settings::set_autostart::<$runtime>,
                 $crate::commands::settings::set_floating_always_on_top,
                 $crate::commands::settings::set_later_rule,
@@ -325,7 +328,10 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             scheduling::spawn(app.handle(), &app.state::<AppState>());
 
             // 托盘不是必需功能：创建失败只记录，应用继续以悬浮窗运行。
-            if let Err(error) = tray::setup(app.handle()) {
+            let lang = tauri::async_runtime::block_on(native_i18n::current(
+                &app.state::<AppState>().services.settings,
+            ));
+            if let Err(error) = tray::setup(app.handle(), lang) {
                 tracing::warn!(event = "tray_setup_failed", %error, "创建托盘失败");
             }
             // 首次运行询问一次是否开机自启（默认关闭）。

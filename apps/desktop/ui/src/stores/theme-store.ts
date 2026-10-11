@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { ipc } from "@/lib/ipc";
 
 /** 用户的主题偏好。 */
 export type ThemePreference = "system" | "light" | "dark";
@@ -47,10 +48,12 @@ type ThemeState = {
   preference: ThemePreference;
   /** 设置偏好，立即应用并保存。 */
   setPreference: (preference: ThemePreference) => void;
+  /** 用后端保存的值覆盖本地缓存（启动时、备份恢复后）；非法值忽略。 */
+  hydrate: (value: string) => void;
 };
 
 /** 主题偏好的 Zustand Store。 */
-export const useThemeStore = create<ThemeState>((set) => ({
+export const useThemeStore = create<ThemeState>((set, get) => ({
   preference: loadPreference(),
   setPreference: (preference) => {
     applyTheme(preference);
@@ -60,5 +63,18 @@ export const useThemeStore = create<ThemeState>((set) => ({
       // 无法保存只影响"下次启动记住偏好"，不影响当前会话。
     }
     set({ preference });
+    // 同步写入后端（settings 表，随备份）；失败只影响备份，不影响当前会话。
+    ipc.setUiPref("theme", preference).catch(() => undefined);
+  },
+  hydrate: (value) => {
+    if (value !== "light" && value !== "dark" && value !== "system") return;
+    if (value === get().preference) return;
+    applyTheme(value);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, value);
+    } catch {
+      // 缓存写入失败不影响当前会话。
+    }
+    set({ preference: value });
   },
 }));

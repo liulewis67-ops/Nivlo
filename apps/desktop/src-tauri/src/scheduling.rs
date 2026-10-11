@@ -70,6 +70,8 @@ pub fn spawn(app: &AppHandle<Wry>, state: &AppState) {
         .flatten()
         .is_some_and(|value| value == "true");
     control.set_paused(paused_before);
+    control
+        .set_locale(tauri::async_runtime::block_on(crate::native_i18n::current(&settings)).into());
 
     let scheduler = Arc::new(Scheduler::new(
         Arc::new(state.runtime.database()),

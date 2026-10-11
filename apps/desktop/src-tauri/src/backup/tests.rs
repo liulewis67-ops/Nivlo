@@ -27,6 +27,19 @@ async fn fixture() -> (tempfile::TempDir, AppPaths, Database) {
     (dir, paths, database)
 }
 
+/// 随备份验证的界面偏好（key、值）。
+const UI_PREFS: [(&str, &str); 4] = [
+    ("ui.appearance", r#"{"accent":"rose"}"#),
+    ("ui.skin", r#"{"frames":[],"fps":6}"#),
+    ("ui.language", "en"),
+    ("ui.theme", "dark"),
+];
+
+/// 固定的测试时间。
+fn now() -> chrono::DateTime<Utc> {
+    Utc.with_ymd_and_hms(2026, 10, 11, 8, 0, 0).unwrap()
+}
+
 fn item(n: u128, title: &str) -> Item {
     Item::create(
         ItemId::from_uuid(Uuid::from_u128(n)),
@@ -63,6 +76,10 @@ async fn backup_then_wipe_then_restore_gives_back_identical_data() {
         let mut tx = database.begin().await.unwrap();
         tx.items().insert(&item(1, "买牛奶")).await.unwrap();
         tx.items().insert(&item(2, "读书笔记")).await.unwrap();
+        // 外观与皮肤存于 settings 表（D-14），应随备份一起带走。
+        for (key, value) in UI_PREFS {
+            tx.settings().set(key, value, now()).await.unwrap();
+        }
         tx.commit().await.unwrap();
     }
     std::fs::write(paths.attachments_dir().join("shot.png"), b"PNG-BYTES").unwrap();
@@ -97,6 +114,12 @@ async fn backup_then_wipe_then_restore_gives_back_identical_data() {
             .delete(ItemId::from_uuid(Uuid::from_u128(2)))
             .await
             .unwrap();
+        for (key, _) in UI_PREFS {
+            tx.settings()
+                .set(key, "changed-after-backup", now())
+                .await
+                .unwrap();
+        }
         tx.commit().await.unwrap();
     }
     std::fs::remove_file(paths.attachments_dir().join("shot.png")).unwrap();
@@ -113,6 +136,15 @@ async fn backup_then_wipe_then_restore_gives_back_identical_data() {
     let restored = Database::open(&paths.database_file()).await.unwrap();
     restored.migrate().await.unwrap();
     assert_eq!(titles(&restored).await, before);
+    {
+        let mut tx = restored.begin().await.unwrap();
+        for (key, value) in UI_PREFS {
+            assert_eq!(
+                tx.settings().get(key).await.unwrap().as_deref(),
+                Some(value)
+            );
+        }
+    }
     assert_eq!(
         std::fs::read(paths.attachments_dir().join("shot.png")).unwrap(),
         b"PNG-BYTES"

@@ -439,6 +439,7 @@
     "section": {
       "general": "通用",
       "floating": "悬浮窗",
+      "appearance": "悬浮窗外观",
       "schedule": "日程",
       "notifications": "通知",
       "data": "数据与诊断"
@@ -456,6 +457,10 @@
     "theme": {
       "label": "主题",
       "hint": "跟随系统，或固定为浅色 / 深色。"
+    },
+    "hideCompleted": {
+      "label": "隐藏已完成的待办",
+      "hint": "在 Today 列表与悬浮面板中隐藏今天已完成的待办。"
     },
     "alwaysOnTop": {
       "label": "悬浮窗置顶",
@@ -518,6 +523,85 @@
       "readyTitle": "备份已准备好",
       "readyBody": "备份创建于 {{created}}（拾序 {{version}}）。重启后会换上这份数据；当前数据已先备份到：{{safety}}",
       "restart": "立即重启"
+    },
+    "appearance": {
+      "accent": {
+        "label": "强调色",
+        "hint": "用于徽标圆点、按钮和高亮。",
+        "blue": "蓝",
+        "violet": "紫",
+        "teal": "青",
+        "rose": "玫红",
+        "amber": "琥珀"
+      },
+      "shape": {
+        "label": "徽标形态",
+        "hint": "收起时徽标的样子。",
+        "pill": "胶囊",
+        "circle": "数字",
+        "dot": "圆点"
+      },
+      "surface": {
+        "label": "质感",
+        "hint": "通透带有柔和半透明，纯色则完全不透明。",
+        "solid": "纯色",
+        "glass": "通透"
+      },
+      "corners": {
+        "label": "圆角",
+        "hint": "面板的圆角大小。",
+        "soft": "柔和",
+        "round": "圆润"
+      },
+      "opacity": {
+        "label": "窗口不透明度",
+        "hint": "调低后可以透出后面的内容。"
+      },
+      "reset": {
+        "label": "恢复默认外观",
+        "hint": "还原为默认的样子。",
+        "button": "恢复"
+      }
+    },
+    "skin": {
+      "label": "自定义皮肤",
+      "hint": "选择多张图片或像素图，会作为帧在收起的徽标上播放。最多 16 帧，会自动缩小；GIF 只取第一帧。",
+      "add": "添加图片…",
+      "clear": "移除皮肤",
+      "empty": "无皮肤",
+      "frames": "{{count}} 帧",
+      "removeFrame": "删除第 {{index}} 帧",
+      "tooMany": "只保留了前 {{max}} 帧。",
+      "saveFailed": "皮肤保存失败，请减少图片数量或换更小的图片。",
+      "readFailed": "有图片无法读取。",
+      "playback": {
+        "label": "播放方式",
+        "hint": "帧的播放方式。",
+        "loop": "循环",
+        "pingpong": "往返",
+        "hover": "悬停时",
+        "still": "静止"
+      },
+      "fps": {
+        "label": "速度",
+        "hint": "每秒播放的帧数。"
+      },
+      "motion": {
+        "label": "附加动效",
+        "hint": "在图片上叠加的轻微动作。",
+        "none": "无",
+        "float": "漂浮",
+        "breathe": "呼吸",
+        "bounce": "弹跳"
+      },
+      "pixel": {
+        "label": "像素风模式",
+        "hint": "保持锐利的像素边缘而不做平滑，请在添加图片前开启。"
+      },
+      "showCount": {
+        "label": "显示数字",
+        "hint": "在皮肤旁保留剩余待办数。"
+      }
     }
   },
   "calendar": {
