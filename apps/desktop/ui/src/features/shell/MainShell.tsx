@@ -5,6 +5,7 @@ import { DevConsole } from "@/features/dev-console";
 import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { NotesPage } from "@/features/notes";
+import { ProjectsPage } from "@/features/projects";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { cx } from "@/lib/cx";
@@ -72,7 +73,7 @@ function NavButton({ view, isActive, count, onSelect }: NavButtonProps) {
 /**
  * 主窗口外壳：左侧导航 + 右侧当前视图（实施计划 1.10、产品文档 §23）。
  *
- * Today 与 Inbox 是完整实现；Calendar / Notes / Projects 显示占位页，随后续阶段逐个替换。
+ * Today / Inbox / Notes / Projects 是完整实现；Calendar 显示占位页，随后续阶段逐个替换。
  * Today 的角标取自 Today 查询缓存，和悬浮窗徽标是同一个数字；Inbox 的角标是等待整理的条数。
  *
  * @returns 主窗口内容。
@@ -137,7 +138,8 @@ export function MainShell() {
               <DevConsole />
             </div>
           )}
-          {(view === "calendar" || view === "projects") && <ComingSoon view={view} />}
+          {view === "projects" && <ProjectsPage />}
+          {view === "calendar" && <ComingSoon view={view} />}
         </main>
         {openId !== null && (
           <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />

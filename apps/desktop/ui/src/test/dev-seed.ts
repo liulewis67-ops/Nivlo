@@ -7,8 +7,17 @@ import type { IpcClient } from "@/lib/ipc";
  * @param ipc 内存版 IPC。
  */
 export async function seedDemoData(ipc: IpcClient): Promise<void> {
-  await ipc.quickCreate("todo", "回复产品评审的邮件");
-  await ipc.quickCreate("todo", "整理本周周报");
+  const review = await ipc.quickCreate("todo", "回复产品评审的邮件");
+  const report = await ipc.quickCreate("todo", "整理本周周报");
+  const launch = await ipc.createProject("新版本发布");
+  const growth = await ipc.createProject("增长实验");
+  await ipc.updateItem(review.id, {
+    priority: "high",
+    projectId: { kind: "set", value: launch.id },
+  });
+  await ipc.updateItem(report.id, { projectId: { kind: "set", value: growth.id } });
+  await ipc.setItemTags(review.id, ["沟通", "产品"]);
+  await ipc.setItemTags(report.id, ["沟通"]);
   await ipc.quickCreate("tip", "下午三点：站会");
   await ipc.capture({
     input: { kind: "text", text: "https://www.example.com/blog/local-first-software" },

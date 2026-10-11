@@ -66,6 +66,8 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
         void client.invalidateQueries({ queryKey: queryKeys.today() });
         void client.invalidateQueries({ queryKey: queryKeys.inbox() });
         void client.invalidateQueries({ queryKey: queryKeys.itemsOne() });
+        void client.invalidateQueries({ queryKey: queryKeys.projects() });
+        void client.invalidateQueries({ queryKey: queryKeys.tags() });
       }),
     [client],
   );

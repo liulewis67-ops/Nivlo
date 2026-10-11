@@ -7,6 +7,7 @@ import { toAppError } from "@/lib/errors";
 import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
+import { ProjectSelect, TagsField } from "@/features/organize";
 import { SourceSection } from "./SourceSection";
 import { useItemDraft } from "./use-item-draft";
 
@@ -201,6 +202,12 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
               value={draft.title}
               onChange={(event) => edit({ title: event.target.value })}
             />
+          </Field>
+          <Field label={t("detail.field.project")}>
+            <ProjectSelect value={draft.projectId} onChange={(projectId) => edit({ projectId })} />
+          </Field>
+          <Field label={t("detail.field.tags")}>
+            <TagsField itemId={id} tags={query.data.tags} />
           </Field>
           <Field label={t("detail.field.content")}>
             <Textarea

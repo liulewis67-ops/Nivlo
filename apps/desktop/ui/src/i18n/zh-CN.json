@@ -1,9 +1,13 @@
 {
-  "app": { "name": "拾序" },
+  "app": {
+    "name": "拾序"
+  },
   "common": {
     "loading": "加载中…"
   },
-  "toast": { "dismiss": "关闭提示" },
+  "toast": {
+    "dismiss": "关闭提示"
+  },
   "theme": {
     "label": "主题",
     "current": "主题 · {{preference}}",
@@ -21,16 +25,31 @@
       "typeLabel": "类型",
       "submit": "创建"
     },
-    "type": { "todo": "待办", "note": "笔记", "tip": "提示" },
+    "type": {
+      "todo": "待办",
+      "note": "笔记",
+      "tip": "提示"
+    },
     "list": {
       "heading": "最近的 Item",
       "empty": "还没有任何 Item，先创建一个吧。"
     }
   },
   "quickCreate": {
-    "add": { "todo": "+ 待办", "note": "+ 笔记", "tip": "+ 提示" },
-    "kind": { "todo": "待办", "note": "笔记", "tip": "提示" },
-    "input": { "label": "标题", "placeholder": "输入标题，回车创建，Tab 换类型" }
+    "add": {
+      "todo": "+ 待办",
+      "note": "+ 笔记",
+      "tip": "+ 提示"
+    },
+    "kind": {
+      "todo": "待办",
+      "note": "笔记",
+      "tip": "提示"
+    },
+    "input": {
+      "label": "标题",
+      "placeholder": "输入标题，回车创建，Tab 换类型"
+    }
   },
   "notes": {
     "label": "笔记",
@@ -53,10 +72,21 @@
     "loading": "加载中…",
     "retry": "重试",
     "saveFailed": "没能保存：{{reason}}你的修改还留在这里，不会丢。",
-    "status": { "saving": "保存中…", "saved": "已保存" },
+    "status": {
+      "saving": "保存中…",
+      "saved": "已保存"
+    },
     "contentPlaceholder": "写点什么…（支持 Markdown）",
-    "format": { "plain": "纯文本", "markdown": "Markdown" },
-    "priority": { "none": "无", "low": "低", "medium": "中", "high": "高" },
+    "format": {
+      "plain": "纯文本",
+      "markdown": "Markdown"
+    },
+    "priority": {
+      "none": "无",
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
     "field": {
       "type": "类型",
       "title": "标题",
@@ -68,7 +98,9 @@
       "due": "截止日期",
       "dueDate": "截止日期（日）",
       "dueTime": "截止时间",
-      "priority": "优先级"
+      "priority": "优先级",
+      "project": "项目",
+      "tags": "标签"
     },
     "source": {
       "label": "来源",
@@ -81,6 +113,18 @@
         "image": "图片",
         "manual": "手动创建"
       }
+    },
+    "project": {
+      "none": "无项目",
+      "archived": "{{name}}（已归档）",
+      "missing": "已不存在的项目"
+    },
+    "tags": {
+      "add": "添加标签，回车确认",
+      "addLabel": "添加标签",
+      "remove": "移除标签「{{name}}」",
+      "suggestions": "标签建议",
+      "empty": "还没有标签"
     }
   },
   "shortcut": {
@@ -99,8 +143,16 @@
     }
   },
   "inbox": {
-    "page": { "label": "收集箱", "allClear": "已全部整理", "pending": "{{count}} 项待整理" },
-    "toolbar": { "label": "批量整理", "selectAll": "全选", "selected": "已选 {{count}} 项" },
+    "page": {
+      "label": "收集箱",
+      "allClear": "已全部整理",
+      "pending": "{{count}} 项待整理"
+    },
+    "toolbar": {
+      "label": "批量整理",
+      "selectAll": "全选",
+      "selected": "已选 {{count}} 项"
+    },
     "select": "选择：{{title}}",
     "undo": "撤销",
     "missingFile": "文件不存在",
@@ -131,7 +183,10 @@
     }
   },
   "capture": {
-    "drop": { "title": "松手即可收集", "hint": "链接、文字、图片都会先放进收集箱" },
+    "drop": {
+      "title": "松手即可收集",
+      "hint": "链接、文字、图片都会先放进收集箱"
+    },
     "saving": "正在收集…",
     "paste": "粘贴",
     "pasted": "已收集：{{title}}",
@@ -147,7 +202,10 @@
       "empty": "这个内容没法收集，试试拖入链接、文字或图片。"
     }
   },
-  "floating": { "label": "拾序悬浮窗", "open": "打开拾序主窗口" },
+  "floating": {
+    "label": "拾序悬浮窗",
+    "open": "打开拾序主窗口"
+  },
   "shell": {
     "nav": {
       "label": "主导航",
@@ -159,19 +217,24 @@
       "dev": "开发控制台"
     },
     "comingSoon": {
-      "calendar": "把待办拖到某一天，安排接下来的日子。",
-      "projects": "把相关的待办与笔记归到一个项目里。"
+      "calendar": "把待办拖到某一天，安排接下来的日子。"
     }
   },
   "today": {
-    "badge": { "label": "今天还剩 {{count}} 项待办" },
+    "badge": {
+      "label": "今天还剩 {{count}} 项待办"
+    },
     "panel": {
       "label": "今日面板",
       "title": "今天",
       "openMain": "打开主窗口",
       "inbox": "收集箱 {{count}}"
     },
-    "section": { "todos": "待办", "tips": "提示", "completed": "今日已完成" },
+    "section": {
+      "todos": "待办",
+      "tips": "提示",
+      "completed": "今日已完成"
+    },
     "overdue": "逾期",
     "page": {
       "label": "今天",
@@ -200,7 +263,11 @@
         "later": "「{{title}}」已推迟到下周一",
         "inbox": "「{{title}}」已放回收集箱"
       },
-      "zone": { "tomorrow": "明天", "later": "下周一", "inbox": "收集箱" },
+      "zone": {
+        "tomorrow": "明天",
+        "later": "下周一",
+        "inbox": "收集箱"
+      },
       "more": "「{{title}}」的更多操作"
     },
     "reorder": {
@@ -211,9 +278,14 @@
       "dropped": "「{{title}}」已放在第 {{position}} 位。",
       "cancelled": "已取消移动「{{title}}」。"
     },
-    "empty": { "title": "今天还没有安排", "hint": "按下 Ctrl+Shift+Space 快速添加一条待办。" }
+    "empty": {
+      "title": "今天还没有安排",
+      "hint": "按下 Ctrl+Shift+Space 快速添加一条待办。"
+    }
   },
-  "menu": { "open": "打开菜单" },
+  "menu": {
+    "open": "打开菜单"
+  },
   "error": {
     "UNKNOWN": "出了点问题，请稍后重试。",
     "INVALID_INPUT": "输入的内容不合法。",
@@ -241,7 +313,49 @@
     "SOURCE_FILE_MISSING": "文件已经不在原来的位置了，可能被移动或删除。",
     "SOURCE_OPEN_FAILED": "无法打开这个来源。",
     "CLIPBOARD_UNAVAILABLE": "暂时读取不到剪贴板，可能被其他程序占用，请稍后重试。",
-    "CLIPBOARD_EMPTY": "剪贴板里没有可以收集的内容，先复制点什么吧。"
+    "CLIPBOARD_EMPTY": "剪贴板里没有可以收集的内容，先复制点什么吧。",
+    "PROJECT_NOT_FOUND": "这个项目已经不存在了。",
+    "TAG_NOT_FOUND": "这个标签已经不存在了。",
+    "TAG_NAME_TAKEN": "已经有一个同名的标签了。想把两个合并，请用「合并到…」。"
   },
-  "errorAction": { "OPEN_DIAGNOSTICS": "打开诊断信息" }
+  "errorAction": {
+    "OPEN_DIAGNOSTICS": "打开诊断信息"
+  },
+  "projects": {
+    "label": "项目与标签",
+    "sidebar": "项目与标签导航",
+    "projects": "项目",
+    "tags": "标签",
+    "new": "新项目",
+    "newLabel": "新项目名称",
+    "newPlaceholder": "项目名称，回车创建",
+    "noProjects": "还没有项目",
+    "noTags": "给条目打上标签后，会出现在这里。",
+    "count": "{{count}} 项未完成",
+    "tagCount": "{{count}} 项",
+    "menu": "「{{name}}」的更多操作",
+    "rename": "重命名",
+    "renameLabel": "新的名称",
+    "archive": "归档",
+    "archived": "项目「{{name}}」已归档",
+    "merge": "合并到…",
+    "mergeTitle": "把标签「{{name}}」合并到",
+    "mergeTarget": "合并目标",
+    "mergeConfirm": "合并",
+    "merged": "已把「{{from}}」合并到「{{into}}」",
+    "cancel": "取消",
+    "save": "保存",
+    "items": "条目列表",
+    "empty": {
+      "title": "这个项目还是空的",
+      "hint": "打开任意条目，在详情里选择项目，它就会出现在这里。",
+      "none": "还没有项目",
+      "noneHint": "项目把相关的待办和笔记放在一起。新建一个，再把条目归进去。",
+      "tag": "没有带这个标签的条目",
+      "pick": "选择一个项目或标签"
+    },
+    "complete": "完成「{{title}}」",
+    "reopen": "重新打开「{{title}}」",
+    "noDate": "未安排"
+  }
 }

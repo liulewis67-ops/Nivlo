@@ -33,6 +33,8 @@ export type ItemDraft = {
   dueDate: string;
   /** 截止时间 `HH:MM`；空串表示全天。 */
   dueTime: string;
+  /** 所属项目 ID；空串表示没有项目。 */
+  projectId: string;
 };
 
 /**
@@ -64,6 +66,7 @@ export function toDraft(item: ItemDto): ItemDraft {
     scheduledTime: scheduled.time,
     dueDate: due.date,
     dueTime: due.time,
+    projectId: item.projectId ?? "",
   };
 }
 
@@ -117,6 +120,10 @@ export function buildPatch(item: ItemDto, draft: ItemDraft): UpdateItemRequest |
     draft.dueTime,
   );
   if (due !== undefined) patch.due = due;
+  if (draft.projectId !== before.projectId) {
+    patch.projectId =
+      draft.projectId === "" ? { kind: "clear" } : { kind: "set", value: draft.projectId };
+  }
   return Object.keys(patch).length === 0 ? null : patch;
 }
 

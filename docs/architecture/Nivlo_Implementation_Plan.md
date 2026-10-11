@@ -123,7 +123,7 @@ Phase 12 Backlog                        → 未排期
 | | 2.7 | Inbox | ✅ |
 | **P3** | 3.1 | Item 完整编辑器 | 🟨 |
 | | 3.2 | Notes 视图 | ✅ |
-| | 3.3 | Projects 与 Tags | ⬜ |
+| | 3.3 | Projects 与 Tags | ✅ |
 | | 3.4 | 全文搜索与 Ctrl+K | ⬜ |
 | | 3.5 | 归档 / 删除 / 设置页 | ⬜ |
 | **P4** | 4.1 | 时间模型与 Schedule 语义 | ⬜ |
@@ -184,7 +184,7 @@ Phase 12 Backlog                        → 未排期
 | D-02 | **Inbox 的定义** | 采用显式字段 `in_inbox`（布尔）。Capture 产生的 Item 置为 true；任何整理动作（设置计划日期、设置项目、转换类型、手动「移出 Inbox」）置为 false；「推迟到 Inbox」置为 true 并清除计划日期。不采用「无日期且无项目即 Inbox」的推导规则，避免 Note 永远滞留 Inbox。 | 2.2 | 已决定（2026-10-10，采用推荐方案） |
 | D-03 | **时间存储模型** | 架构文档使用 `scheduled_at: DateTime`，产品文档使用 `scheduled_date`。推荐：计划与截止拆为「本地日期 + 可选本地时间」（`scheduled_date`、`scheduled_time`、`due_date`、`due_time`），按用户本地日历语义解释（跨时区不漂移）；`reminder_at` 存 UTC 时间点。需同步更新架构文档 §8、§31。 | 0.5 | 已决定（2026-10-09，采用推荐方案） |
 | D-04 | **ID 与时间戳格式** | ID 使用 UUIDv7（TEXT）；`created_at` 等审计时间戳存 UTC（RFC 3339 TEXT 或 Unix ms INTEGER，二选一并全库统一）。 | 0.5 | 已决定（2026-10-09：ID 为 UUIDv7 TEXT；审计时间戳为 UTC RFC 3339 TEXT，全库统一） |
-| D-05 | **Project Order** | 产品文档 §21 要求区分 Today Order 与 Project Order。推荐 MVP 中 Project 视图按 优先级 → 计划日期 → 创建时间 排序，手动 Project Order 推迟到 MVP 后（新增 `project_item_order` 表）。 | 3.3 | 待定 |
+| D-05 | **Project Order** | 产品文档 §21 要求区分 Today Order 与 Project Order。推荐 MVP 中 Project 视图按 优先级 → 计划日期 → 创建时间 排序，手动 Project Order 推迟到 MVP 后（新增 `project_item_order` 表）。 | 3.3 | 已决定（2026-10-11，采用推荐方案；未完成的排在已完成之前） |
 | D-06 | **UI 语言** | 默认简体中文，从 0.9 起接入 i18n 框架（如 i18next），文案全部走资源文件；英文作为第二语言在 7.5 补齐。 | 0.9 | 已决定（2026-10-09，采用推荐方案） |
 | D-07 | **已完成 Todo 在 Today 中的展示** | 当天完成的 Todo 以删除线显示在 Today 列表底部，次日不再显示；提供「隐藏已完成」开关。 | 1.6 | 已决定（2026-10-10，采用推荐方案） |
 | D-08 | **删除语义** | 增加 `deleted_at` 软删除，进入回收站，30 天后自动清除；与 `archived_at`（归档，长期保留）区分。 | 3.5 | 待定 |
@@ -801,17 +801,17 @@ Phase 12 Backlog                        → 未排期
 
 ### 3.3 Projects 与 Tags
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：3.1；D-05
 - **目标**：实现项目与标签的组织能力。
 - **任务**：
   - Project：创建、重命名、归档；侧栏列表；项目视图（排序按 D-05）。
   - Tag：自动补全、创建、重命名、合并；按标签过滤。
 - **验收标准**：
-  - [ ] 项目与标签的 CRUD 有 Application 与 Storage 测试。
-  - [ ] 可在项目视图、标签过滤中看到正确的 Item。
-  - [ ] 重命名标签后所有关联 Item 同步更新。
-- **完成记录**：—
+  - [x] 项目与标签的 CRUD 有 Application 与 Storage 测试。
+  - [x] 可在项目视图、标签过滤中看到正确的 Item。
+  - [x] 重命名标签后所有关联 Item 同步更新。
+- **完成记录**：2026-10-11 完成。后端：`ProjectRepository` / `TagRepository`（SQLite + 内存 Fake）、`ProjectService`（创建 / 重命名 / 归档 / 取消归档 / 列表含未完成数量）、`TagService`（列表含数量、重命名——忽略大小写重名返回 `TAG_NAME_TAKEN`、只改大小写允许；合并——重复关联去重后删除来源标签；`set_item_tags`——整体替换，不存在的自动创建，忽略大小写去重沿用已有写法，名称不合法时整批不变）；`list_items` 新增项目 / 标签过滤与项目视图排序（D-05）；`update_item` 支持项目三态修改并校验项目存在（`PROJECT_NOT_FOUND`）；详情 DTO 带标签。新增错误码 `PROJECT_NOT_FOUND` / `TAG_NOT_FOUND` / `TAG_NAME_TAKEN`。测试：Application 13 个、Storage 10 个（含项目被删时条目保留、重启后保留）、IPC 端到端 1 个。前端：`features/organize`（`ProjectSelect`、带自动补全的 `TagsField`：回车 / 逗号添加、方向键选择、Backspace 移除）与 `features/projects`（项目与标签导航、项目视图、行内新建 / 重命名、归档带撤销、标签过滤 / 重命名 / 合并）；详情面板里可选择项目、编辑标签。Vitest 新增 12 个用例。
 
 ### 3.4 全文搜索与 Ctrl+K
 

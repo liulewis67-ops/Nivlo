@@ -373,8 +373,28 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     }
     const source = complete ? today.todos : today.completed;
     const found = source.find((entry) => entry.id === id);
+    const at = items.findIndex((candidate) => candidate.id === id);
+    const stored = items[at];
     if (found === undefined) {
-      return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+      // 不在 Today 视图里（比如项目视图里的待办）：直接改条目本身。
+      if (stored === undefined || stored.itemType !== "todo") {
+        return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+      }
+      const next: ItemDto = {
+        ...stored,
+        status: complete ? "done" : "open",
+        completedAt: complete ? new Date().toISOString() : null,
+      };
+      items[at] = next;
+      for (const notify of listeners) notify();
+      return Promise.resolve(next);
+    }
+    if (stored !== undefined) {
+      items[at] = {
+        ...stored,
+        status: complete ? "done" : "open",
+        completedAt: complete ? new Date().toISOString() : null,
+      };
     }
     today = complete
       ? {
