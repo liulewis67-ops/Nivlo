@@ -818,6 +818,7 @@ fn sample_run(n: u32, started: DateTime<Utc>) -> nivlo_application::workflow::Ru
             outcome: StepOutcome::Ok,
             duration_ms: 1,
             message: None,
+            logs: Vec::new(),
         }],
     }
 }

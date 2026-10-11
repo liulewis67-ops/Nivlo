@@ -689,7 +689,8 @@
     "editMode": "Edit mode",
     "mode": {
       "form": "Form",
-      "json": "JSON"
+      "json": "JSON",
+      "script": "Script"
     },
     "formUnavailable": "This definition uses something the form can't represent yet. Please edit it as JSON.",
     "when": "When this is captured…",
@@ -747,7 +748,8 @@
       "wouldCreate": "Would create {{count}}:",
       "nothing": "This rule produced nothing (a real capture would be saved the default way).",
       "failed": "Run failed: {{reason}} (a real capture would be saved the default way, nothing is lost)",
-      "inInbox": "Inbox"
+      "inInbox": "Inbox",
+      "logs": "Script console output"
     },
     "stepOutcome": {
       "ok": "done",
@@ -772,7 +774,17 @@
       "confirm": "Confirm permissions",
       "confirmed": "Script permissions confirmed. Network access: {{hosts}}.",
       "saveFirst": "Save your changes first.",
-      "confirmFailed": "Couldn’t confirm the script permissions."
+      "confirmFailed": "Couldn’t confirm the script permissions.",
+      "invalidJson": "Fix the JSON first — the script editor needs a valid definition.",
+      "none": "This automation has no script yet. A script can reshape the captured input into the item to create.",
+      "add": "Add a script",
+      "hosts": "Hosts the script may call",
+      "hostsHint": "Comma-separated, e.g. api.example.com. Leave empty for a script that never touches the network.",
+      "editorLabel": "Script source",
+      "reference": "ctx API reference",
+      "remove": "Remove script",
+      "removeConfirm": "Remove for good?",
+      "hostsPlaceholder": "api.example.com"
     }
   },
   "dateFormat": {

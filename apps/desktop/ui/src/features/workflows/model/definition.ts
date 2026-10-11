@@ -60,7 +60,7 @@ export type WorkflowForm = {
 };
 
 /** 定义里 JSON 对象的宽松形态。 */
-type Json = Record<string, unknown>;
+export type Json = Record<string, unknown>;
 
 /**
  * 是否是普通对象。

@@ -118,6 +118,7 @@ fn step_report(record: &StepRecord) -> StepReport {
         },
         duration_ms: millis(record.duration),
         message: record.message.clone(),
+        logs: record.logs.clone(),
     }
 }
 

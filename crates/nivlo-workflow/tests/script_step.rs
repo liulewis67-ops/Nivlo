@@ -178,3 +178,29 @@ async fn a_bad_return_shape_is_invalid_input() {
     let result = run(&adapter, &definition(source, "", "")).await;
     assert_eq!(result.result.unwrap_err().kind, FailureKind::InvalidInput);
 }
+
+#[tokio::test]
+async fn a_script_without_hosts_runs_without_confirmation_and_reports_console_output() {
+    let worker = ScriptWorker::spawn();
+    let adapter = engine(Arc::new(Grants::default()), &worker);
+    let source = "export default function transform(input) { console.log(\"got\", input.text); return { title: input.text, content: \"正文\" }; }";
+    let result = run(&adapter, &definition(source, "", "")).await;
+    assert_eq!(result.steps[0].logs, ["got 你好"]);
+    let items = result.result.unwrap();
+    assert_eq!(items[0].title, "你好");
+    assert_eq!(items[0].content.as_deref(), Some("正文"));
+}
+
+#[tokio::test]
+async fn script_errors_report_the_line_number() {
+    let worker = ScriptWorker::spawn();
+    let adapter = engine(Arc::new(Grants::default()), &worker);
+    let source = "export default function (ctx) {
+  const a = 1;
+  throw new Error(\"boom\");
+}";
+    let result = run(&adapter, &definition(source, "", "")).await;
+    let failure = result.result.unwrap_err();
+    assert!(failure.message.contains("第 3 行"), "{}", failure.message);
+    assert!(failure.message.contains("boom"));
+}

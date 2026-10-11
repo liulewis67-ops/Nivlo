@@ -143,7 +143,16 @@ describe("Workflow 管理页", () => {
       itemsCreated: 1,
       durationMs: 4,
       startedAt: new Date().toISOString(),
-      steps: [{ index: 0, kind: "createItem", outcome: "failed", durationMs: 2, message: "boom" }],
+      steps: [
+        {
+          index: 0,
+          kind: "createItem",
+          outcome: "failed",
+          durationMs: 2,
+          message: "boom",
+          logs: [],
+        },
+      ],
     });
     renderWithProviders(<WorkflowsPage />, ipc);
     await userEvent.click(await screen.findByRole("tab", { name: "最近执行" }));
@@ -192,5 +201,30 @@ describe("脚本权限确认", () => {
     await userEvent.click(await screen.findByRole("button", { name: /^网页链接/ }));
     await screen.findByText(/内置规则不能直接修改/);
     expect(screen.queryByRole("button", { name: "确认权限" })).not.toBeInTheDocument();
+  });
+});
+
+describe("脚本编辑器", () => {
+  it("添加脚本 → 编辑器出现并带有模板 → 试运行显示结果与控制台输出", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "新建规则" }));
+    await userEvent.click(await screen.findByRole("tab", { name: "脚本" }));
+    await userEvent.click(screen.getByRole("button", { name: "添加脚本" }));
+
+    const editor = await screen.findByRole("textbox", { name: "脚本源码" });
+    expect(editor).toHaveTextContent("export default function transform(input)");
+
+    // 主机会并入权限：在 JSON 页签里能看到。
+    await userEvent.type(screen.getByLabelText("脚本可以访问的主机"), "API.example.com");
+    await userEvent.click(screen.getByRole("tab", { name: "JSON" }));
+    const json = (screen.getByRole("textbox", { name: "JSON" }) as HTMLTextAreaElement).value;
+    expect(json).toContain('"hosts": [\n        "api.example.com"');
+    expect(json).toContain('"network": true');
+
+    await userEvent.type(screen.getByLabelText("样例"), "你好");
+    await userEvent.click(screen.getByRole("button", { name: "试运行" }));
+    expect(await screen.findByText("脚本结果：你好")).toBeInTheDocument();
+    expect(screen.getByLabelText("脚本控制台输出")).toHaveTextContent("input: 你好");
   });
 });

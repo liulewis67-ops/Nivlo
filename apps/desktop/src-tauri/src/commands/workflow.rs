@@ -181,6 +181,8 @@ pub struct StepReportDto {
     pub duration_ms: u32,
     /// 失败原因。
     pub message: Option<String>,
+    /// 脚本的 `console` 输出（只在试运行里有）。
+    pub logs: Vec<String>,
 }
 
 impl From<&StepReport> for StepReportDto {
@@ -192,6 +194,7 @@ impl From<&StepReport> for StepReportDto {
             outcome: value.outcome.as_str().to_owned(),
             duration_ms: u32::try_from(value.duration_ms).unwrap_or(u32::MAX),
             message: value.message.clone(),
+            logs: value.logs.clone(),
         }
     }
 }

@@ -685,7 +685,8 @@
     "editMode": "编辑方式",
     "mode": {
       "form": "表单",
-      "json": "JSON"
+      "json": "JSON",
+      "script": "脚本"
     },
     "formUnavailable": "这份定义用到了表单还不能表示的写法，请用 JSON 编辑。",
     "when": "当收集到……时",
@@ -743,7 +744,8 @@
       "wouldCreate": "会创建 {{count}} 条：",
       "nothing": "这条规则没有产出任何内容（实际收集时会按默认方式保存）。",
       "failed": "运行失败：{{reason}}（实际收集时会按默认方式保存，不会丢失）",
-      "inInbox": "收集箱"
+      "inInbox": "收集箱",
+      "logs": "脚本控制台输出"
     },
     "stepOutcome": {
       "ok": "完成",
@@ -768,7 +770,17 @@
       "confirm": "确认权限",
       "confirmed": "脚本权限已确认。可访问的网络：{{hosts}}。",
       "saveFirst": "请先保存修改。",
-      "confirmFailed": "确认脚本权限失败。"
+      "confirmFailed": "确认脚本权限失败。",
+      "invalidJson": "请先修好 JSON——脚本编辑需要一份合法的定义。",
+      "none": "这个自动化还没有脚本。脚本可以把捕获到的输入加工成要创建的条目。",
+      "add": "添加脚本",
+      "hosts": "脚本可以访问的主机",
+      "hostsHint": "用逗号分隔，例如 api.example.com。留空表示脚本完全不联网。",
+      "editorLabel": "脚本源码",
+      "reference": "ctx API 参考",
+      "remove": "移除脚本",
+      "removeConfirm": "确定移除？",
+      "hostsPlaceholder": "api.example.com"
     }
   },
   "dateFormat": {

@@ -170,7 +170,7 @@ export function StepList({ steps }: StepListProps) {
   return (
     <ol aria-label={t("workflows.steps")} className="flex flex-col gap-1 text-xs">
       {steps.map((step) => (
-        <li key={step.index} className="flex items-center gap-2">
+        <li key={step.index} className="flex flex-wrap items-center gap-2">
           <span
             aria-hidden="true"
             className={cx(
@@ -184,6 +184,14 @@ export function StepList({ steps }: StepListProps) {
           <span className="text-muted">{t(`workflows.stepOutcome.${step.outcome}`)}</span>
           <span className="ml-auto tabular-nums text-muted">{`${step.durationMs} ms`}</span>
           {step.message !== null && <span className="text-danger">{step.message}</span>}
+          {step.logs.length > 0 && (
+            <pre
+              aria-label={t("workflows.dryRun.logs")}
+              className="basis-full overflow-auto rounded-md border border-border bg-surface p-2 font-mono text-text"
+            >
+              {step.logs.join("\n")}
+            </pre>
+          )}
         </li>
       ))}
     </ol>

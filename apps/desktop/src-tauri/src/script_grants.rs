@@ -51,14 +51,14 @@ impl SettingsScriptGrants {
     }
 }
 
-/// Workflow 里每个 script Step 的指纹。
+/// Workflow 里每个**需要确认**的 script Step 的指纹：只有声明了主机（要联网）的脚本才需要确认。
 #[must_use]
 pub fn workflow_fingerprints(workflow: &Workflow) -> Vec<String> {
     workflow
         .steps
         .iter()
         .filter_map(|step| match step {
-            Step::Script { source, hosts } => {
+            Step::Script { source, hosts } if !hosts.is_empty() => {
                 Some(script_fingerprint(&workflow.permissions, source, hosts))
             }
             _ => None,

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, ConfirmButton, Input, Switch, Textarea } from "@/components";
 import { ScriptPermissionNotice } from "./ScriptPermissionNotice";
+import { ScriptTab } from "./ScriptTab";
 import { cx } from "@/lib/cx";
 import { toAppError } from "@/lib/errors";
 import { ipc } from "@/lib/ipc";
@@ -73,7 +74,7 @@ export function WorkflowEditor({
 }: WorkflowEditorProps) {
   const { t } = useTranslation();
   const [text, setText] = useState(workflow.definitionJson);
-  const [mode, setMode] = useState<"form" | "json">("form");
+  const [mode, setMode] = useState<"form" | "json" | "script">("form");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -199,7 +200,7 @@ export function WorkflowEditor({
         onConfirmed={onConfirmed}
       />
       <div role="tablist" aria-label={t("workflows.editMode")} className="flex gap-1">
-        {(["form", "json"] as const).map((item) => (
+        {(["form", "json", "script"] as const).map((item) => (
           <button
             key={item}
             type="button"
@@ -357,6 +358,15 @@ export function WorkflowEditor({
             )}
           </fieldset>
         </div>
+      ) : mode === "script" ? (
+        <ScriptTab
+          key={workflow.id}
+          text={text}
+          onTextChange={(next) => {
+            setText(next);
+            setError(null);
+          }}
+        />
       ) : (
         <Textarea
           aria-label={t("workflows.mode.json")}

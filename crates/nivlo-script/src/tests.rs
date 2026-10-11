@@ -298,3 +298,38 @@ async fn missing_entry_is_an_exception_and_infinite_loops_still_time_out() {
         ScriptError::Timeout
     );
 }
+
+#[tokio::test]
+async fn console_output_is_collected_with_limits_and_transform_gets_the_input() {
+    let worker = ScriptWorker::spawn();
+    let source = "export default function transform(input) { \
+        console.log('hello', input.text, { a: 1 }); console.warn('careful'); \
+        for (let i = 0; i < 500; i++) console.log('x'.repeat(5000)); \
+        return { title: input.text, content: 'body', tags: ['a'] }; }";
+    let out = worker.handle().run(step(source, &[])).await.unwrap();
+    assert_eq!(
+        out.result_json,
+        r#"{"title":"你好","content":"body","tags":["a"]}"#
+    );
+    assert_eq!(out.logs.len(), 100);
+    assert_eq!(out.logs[0], r#"hello 你好 {"a":1}"#);
+    assert_eq!(out.logs[1], "careful");
+    assert_eq!(out.logs[2].chars().count(), 1000);
+}
+
+#[tokio::test]
+async fn content_must_be_a_string() {
+    let worker = ScriptWorker::spawn();
+    let error = worker
+        .handle()
+        .run(step(
+            "export default () => ({ title: 'a', content: 5 })",
+            &[],
+        ))
+        .await
+        .unwrap_err();
+    match error {
+        ScriptError::InvalidInput { field, .. } => assert_eq!(field, "content"),
+        other => panic!("{other:?}"),
+    }
+}

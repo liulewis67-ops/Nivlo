@@ -150,6 +150,8 @@ pub struct ScriptOutput {
     pub result_json: String,
     /// 实际耗时。
     pub elapsed: Duration,
+    /// 脚本的 `console` 输出（仅 Script Step 模式；行数与长度有上限）。
+    pub logs: Vec<String>,
 }
 
 /// 发给 Worker 的消息。
@@ -344,9 +346,11 @@ fn execute(request: &ScriptRequest, cancel: &Arc<AtomicBool>) -> Result<ScriptOu
         (Err(_), Some(message)) => Err(ScriptError::PermissionDenied { message }),
         (other, _) => other,
     };
+    let logs = bridge.take_logs();
     outcome.map(|result_json| ScriptOutput {
         result_json,
         elapsed: started.elapsed(),
+        logs,
     })
 }
 

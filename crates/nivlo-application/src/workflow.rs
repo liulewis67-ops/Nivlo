@@ -140,6 +140,8 @@ pub struct StepReport {
     pub duration_ms: u64,
     /// 失败原因。
     pub message: Option<String>,
+    /// 脚本的 `console` 输出：只在试运行里展示，不写入运行记录（可能含用户内容）。
+    pub logs: Vec<String>,
 }
 
 /// 一次 Workflow 运行的结果。

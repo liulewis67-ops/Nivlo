@@ -130,10 +130,15 @@ fn step_error(error: &ScriptError) -> StepError {
         | ScriptError::Exception { .. }
         | ScriptError::WorkerGone => ErrorKind::Fatal,
     };
-    StepError {
-        kind,
-        message: error.to_string(),
-    }
+    // 异常要带上行号，方便用户在编辑器里定位。
+    let message = match error {
+        ScriptError::Exception {
+            message,
+            line: Some(line),
+        } => format!("脚本出错（第 {line} 行）：{message}"),
+        other => other.to_string(),
+    };
+    StepError { kind, message }
 }
 
 /// 取出变量表里某个前缀下的条目，组成 JSON 对象文本（键去掉前缀）。
@@ -166,9 +171,10 @@ fn draft_from(result_json: &str) -> Result<ItemDraft, StepError> {
         Some("tip") => ItemType::Tip,
         _ => ItemType::Note,
     };
-    let content = value
-        .get("notes")
-        .and_then(serde_json::Value::as_str)
+    // `notes` 与 `content` 等价（产品文档 §12 的示例用 `content`）。
+    let content = ["notes", "content"]
+        .iter()
+        .find_map(|key| value.get(*key).and_then(serde_json::Value::as_str))
         .map(str::to_owned)
         .filter(|n| !n.is_empty());
     let mut tags: Vec<String> = Vec::new();
@@ -229,8 +235,9 @@ impl StepExecutor for ScriptExecutor {
                 message: "脚本声明的权限超出了 Workflow 的权限".to_owned(),
             });
         }
+        // 没有声明任何主机的脚本没有额外能力（纯计算，受时间 / 内存上限约束），不需要用户确认。
         let fingerprint = script_fingerprint(ctx.permissions, source, hosts);
-        if !self.grants.is_granted(&fingerprint).await {
+        if !hosts.is_empty() && !self.grants.is_granted(&fingerprint).await {
             return Err(StepError {
                 kind: ErrorKind::UserActionRequired,
                 message: "脚本需要先在 Workflow 设置里确认它的权限".to_owned(),
@@ -267,6 +274,7 @@ impl StepExecutor for ScriptExecutor {
             .run(request)
             .await
             .map_err(|error| step_error(&error))?;
+        ctx.logs = output.logs;
         ctx.drafts.push(draft_from(&output.result_json)?);
         Ok(())
     }

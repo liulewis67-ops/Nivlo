@@ -1198,6 +1198,8 @@ export type StepReportDto = {
 	durationMs: number,
 	/**  失败原因。 */
 	message: string | null,
+	/**  脚本的 `console` 输出（只在试运行里有）。 */
+	logs: string[],
 };
 
 /**  标签（IPC 表示）。 */

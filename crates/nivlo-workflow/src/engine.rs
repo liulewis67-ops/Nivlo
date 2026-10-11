@@ -47,6 +47,8 @@ pub struct StepRecord {
     pub duration: Duration,
     /// 失败原因。
     pub message: Option<String>,
+    /// 脚本的 `console` 输出（只给试运行展示，不写入运行记录）。
+    pub logs: Vec<String>,
 }
 
 /// 运行成功的结果。
@@ -215,6 +217,7 @@ impl Engine {
             permissions: &workflow.permissions,
             network: options.network,
             stopped: false,
+            logs: Vec::new(),
         };
         for (index, step) in workflow.steps.iter().enumerate() {
             let kind = step_kind(step);
@@ -226,6 +229,7 @@ impl Engine {
                     status: StepStatus::Skipped,
                     duration: Duration::ZERO,
                     message: None,
+                    logs: Vec::new(),
                 });
                 continue;
             }
@@ -242,6 +246,7 @@ impl Engine {
                     status: StepStatus::Ok,
                     duration,
                     message: None,
+                    logs: std::mem::take(&mut ctx.logs),
                 }),
                 Err(error) => {
                     steps.push(StepRecord {
@@ -250,6 +255,7 @@ impl Engine {
                         status: StepStatus::Failed,
                         duration,
                         message: Some(error.message.clone()),
+                        logs: std::mem::take(&mut ctx.logs),
                     });
                     return Err((error, Some(index)));
                 }

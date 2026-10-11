@@ -48,7 +48,15 @@ pub trait ScriptHost: Send + Sync + std::fmt::Debug {
 pub(crate) struct BridgeState {
     /// 越权信息（`PermissionDenied`）。
     denied: Mutex<Option<String>>,
+    /// 脚本的 `console` 输出（行数与长度都有上限）。
+    logs: Mutex<Vec<String>>,
 }
+
+/// `console` 输出最多保留的行数。
+const MAX_LOG_LINES: usize = 100;
+
+/// 每行 `console` 输出最多保留的字符数。
+const MAX_LOG_CHARS: usize = 1000;
 
 impl BridgeState {
     /// 取出已记录的越权信息。
@@ -57,6 +65,19 @@ impl BridgeState {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
+    }
+
+    /// 取出 `console` 输出。
+    pub(crate) fn take_logs(&self) -> Vec<String> {
+        std::mem::take(&mut *self.logs.lock().unwrap_or_else(PoisonError::into_inner))
+    }
+
+    /// 追加一行 `console` 输出；超过上限的行与字符被丢弃。
+    fn log(&self, line: &str) {
+        let mut logs = self.logs.lock().unwrap_or_else(PoisonError::into_inner);
+        if logs.len() < MAX_LOG_LINES {
+            logs.push(line.chars().take(MAX_LOG_CHARS).collect());
+        }
     }
 
     /// 记录越权（只保留第一次）。
@@ -109,12 +130,12 @@ fn install_capabilities<'js>(
     let http = Object::new(js.clone())?;
     let permissions = permissions.clone();
     let host = host.cloned();
-    let state = state.clone();
+    let deny_state = state.clone();
     http.set(
         "get",
         Function::new(js.clone(), move |js: Ctx<'js>, url: String| {
             if let Err(message) = http_allowed(&permissions, &url) {
-                state.deny(&message);
+                deny_state.deny(&message);
                 return Err(Exception::throw_message(
                     &js,
                     &format!("PermissionDenied: {message}"),
@@ -141,6 +162,20 @@ fn install_capabilities<'js>(
            truncate: (s, n) => { const t = String(s ?? ''); return t.length > n ? t.slice(0, n) : t; } })",
     )?;
     ctx_object.set("utils", utils)?;
+
+    // console：JS 侧负责把参数格式化成一行文本，Rust 侧只负责限量收集。
+    let sink = state.clone();
+    let push = Function::new(js.clone(), move |line: String| sink.log(&line))?;
+    let install: Function = js.eval(
+        "(push) => { \
+           const fmt = (a) => { \
+             if (typeof a === 'string') return a; \
+             try { const t = JSON.stringify(a); return t === undefined ? String(a) : t; } \
+             catch (e) { return String(a); } }; \
+           const write = (...args) => push(args.map(fmt).join(' ')); \
+           globalThis.console = { log: write, info: write, warn: write, error: write, debug: write }; }",
+    )?;
+    install.call::<_, ()>((push,))?;
     Ok(())
 }
 
@@ -173,7 +208,14 @@ pub(crate) fn run_step<'js>(
     let globals = js.globals();
     let entry: Value = globals.get("__nivlo_entry")?;
     let result: Value = if let Some(function) = entry.as_function() {
-        function.call((ctx_object,))?
+        // `export default function transform(input)` 约定参数是输入；其余入口接收完整的 ctx。
+        let name: String = function.get("name").unwrap_or_default();
+        if name == "transform" {
+            let input: Value = ctx_object.get("input")?;
+            function.call((input,))?
+        } else {
+            function.call((ctx_object,))?
+        }
     } else {
         let transform: Value = globals.get("transform")?;
         let Some(function) = transform.as_function() else {
@@ -193,7 +235,7 @@ pub(crate) fn run_step<'js>(
 }
 
 /// 校验脚本的返回值是标准 Item 结构：`title` 为非空字符串；
-/// 可选 `notes`（字符串）、`type`（`todo` / `note` / `tip`）、`tags`（字符串数组）。
+/// 可选 `notes` 或 `content`（字符串，二者等价）、`type`（`todo` / `note` / `tip`）、`tags`（字符串数组）。
 ///
 /// # Errors
 ///
@@ -213,11 +255,13 @@ pub fn validate_item_result(result_json: &str) -> Result<(), ScriptError> {
         Some(_) => return Err(invalid("title", "必须是非空字符串")),
         None => return Err(invalid("title", "缺少必填字段")),
     }
-    if let Some(notes) = object.get("notes")
-        && !notes.is_string()
-        && !notes.is_null()
-    {
-        return Err(invalid("notes", "必须是字符串"));
+    for field in ["notes", "content"] {
+        if let Some(text) = object.get(field)
+            && !text.is_string()
+            && !text.is_null()
+        {
+            return Err(invalid(field, "必须是字符串"));
+        }
     }
     if let Some(kind) = object.get("type")
         && !matches!(kind.as_str(), Some("todo" | "note" | "tip"))

@@ -388,6 +388,37 @@ export function createWorkflowMock(): WorkflowMock {
         if (input.value.trim() === "") throw new AppError("INVALID_INPUT", "请先输入一个样例");
         const definition = parse(json);
         const scope = scopeOf(input);
+        // 脚本在真实应用里由后端沙箱执行；内存版不执行任何脚本，只返回固定的结果和日志，方便测试界面。
+        const script = (definition.steps as Record<string, unknown>[]).find(
+          (s) => s.type === "script",
+        );
+        if (script !== undefined) {
+          return Promise.resolve({
+            items: [
+              {
+                itemType: "note" as const,
+                title: `脚本结果：${input.value}`,
+                content: null,
+                inInbox: true,
+                tags: ["script"],
+                priority: null,
+                scheduled: null,
+              },
+            ],
+            steps: [
+              {
+                index: 0,
+                kind: "script",
+                outcome: "ok",
+                durationMs: 2,
+                message: null,
+                logs: [`input: ${input.value}`],
+              },
+            ],
+            error: null,
+            durationMs: 2,
+          });
+        }
         const create = (definition.steps as Record<string, unknown>[]).find(
           (s) => s.type === "createItem",
         );
@@ -412,6 +443,7 @@ export function createWorkflowMock(): WorkflowMock {
             outcome: "ok",
             durationMs: 0,
             message: null,
+            logs: [],
           })),
           error: null,
           durationMs: 1,

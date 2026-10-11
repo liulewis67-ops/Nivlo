@@ -116,6 +116,8 @@ pub struct RunContext<'a> {
     pub network: bool,
     /// 条件不满足后置为 `true`：后续 Step 被跳过。
     pub stopped: bool,
+    /// 当前 Step 产生的 `console` 输出；Engine 在 Step 结束后取走。
+    pub logs: Vec<String>,
 }
 
 impl RunContext<'_> {

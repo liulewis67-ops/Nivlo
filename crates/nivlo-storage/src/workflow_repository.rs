@@ -235,6 +235,7 @@ impl WorkflowRepository for SqliteTransaction {
                         })?,
                         duration_ms: u64::try_from(s.duration_ms).unwrap_or(0),
                         message: s.message,
+                        logs: Vec::new(),
                     })
                 })
                 .collect::<Result<Vec<_>, StorageError>>()?;
