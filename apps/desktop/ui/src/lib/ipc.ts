@@ -27,6 +27,10 @@ import type {
   TrashEntryDto,
   UpdateItemRequest,
   WeekStartDto,
+  DryRunInputDto,
+  DryRunResultDto,
+  WorkflowDto,
+  WorkflowRunDto,
 } from "@/bindings";
 import { toAppError } from "./errors";
 
@@ -70,6 +74,12 @@ export type {
   TodayViewDto,
   TrashEntryDto,
   UpdateItemRequest,
+  DryRunInputDto,
+  DryRunResultDto,
+  PlannedItemDto,
+  StepReportDto,
+  WorkflowDto,
+  WorkflowRunDto,
 } from "@/bindings";
 
 /**
@@ -191,6 +201,22 @@ export interface IpcClient {
   purgeItems(ids: string[]): Promise<number>;
   /** 清空回收站，返回删除的数量。 */
   emptyTrash(): Promise<number>;
+  /** 全部 Workflow：内置在前，其次是用户的，各自按优先级从大到小。 */
+  listWorkflows(): Promise<WorkflowDto[]>;
+  /** 启用 / 禁用一个 Workflow（内置的也可以）。 */
+  setWorkflowEnabled(id: string, enabled: boolean): Promise<void>;
+  /** 调整优先级：数字大的先匹配。 */
+  setWorkflowPriority(id: string, priority: number): Promise<void>;
+  /** 复制出一份可编辑的用户副本（优先级比原件高，所以先于原件生效）。 */
+  duplicateWorkflow(id: string): Promise<WorkflowDto>;
+  /** 保存一个用户 Workflow；定义没通过校验抛出 `WORKFLOW_INVALID`（消息里带位置），覆盖内置抛出 `WORKFLOW_READ_ONLY`。 */
+  saveWorkflow(definitionJson: string): Promise<WorkflowDto>;
+  /** 删除用户 Workflow；内置的不能删除。 */
+  deleteWorkflow(id: string): Promise<void>;
+  /** 试运行：用样例预览会创建什么，不写任何数据。 */
+  dryRunWorkflow(definitionJson: string, input: DryRunInputDto): Promise<DryRunResultDto>;
+  /** 最近的运行记录（新的在前）。 */
+  listWorkflowRuns(limit?: number): Promise<WorkflowRunDto[]>;
   /** 列出项目（创建时间从早到晚）与各自未完成的 Item 数量；默认不含已归档的。 */
   listProjects(includeArchived: boolean): Promise<ProjectDto[]>;
   /** 创建项目。名称为空抛出 `NAME_EMPTY`，过长抛出 `NAME_TOO_LONG`。 */
@@ -371,6 +397,21 @@ const tauriIpc: IpcClient = {
   listTrash: () => call("list_trash", commands.listTrash()),
   purgeItems: (ids) => call("purge_items", commands.purgeItems(ids)),
   emptyTrash: () => call("empty_trash", commands.emptyTrash()),
+  listWorkflows: () => call("list_workflows", commands.listWorkflows()),
+  setWorkflowEnabled: async (id, enabled) => {
+    await call("set_workflow_enabled", commands.setWorkflowEnabled(id, enabled));
+  },
+  setWorkflowPriority: async (id, priority) => {
+    await call("set_workflow_priority", commands.setWorkflowPriority(id, priority));
+  },
+  duplicateWorkflow: (id) => call("duplicate_workflow", commands.duplicateWorkflow(id)),
+  saveWorkflow: (definitionJson) => call("save_workflow", commands.saveWorkflow(definitionJson)),
+  deleteWorkflow: async (id) => {
+    await call("delete_workflow", commands.deleteWorkflow(id));
+  },
+  dryRunWorkflow: (definitionJson, input) =>
+    call("dry_run_workflow", commands.dryRunWorkflow(definitionJson, input)),
+  listWorkflowRuns: (limit) => call("list_workflow_runs", commands.listWorkflowRuns(limit ?? null)),
   searchItems: (query) => call("search_items", commands.searchItems(query)),
   listProjects: (includeArchived) => call("list_projects", commands.listProjects(includeArchived)),
   createProject: (name) => call("create_project", commands.createProject(name)),
@@ -482,6 +523,14 @@ export const ipc: IpcClient = {
   listTrash: () => current.listTrash(),
   purgeItems: (ids) => current.purgeItems(ids),
   emptyTrash: () => current.emptyTrash(),
+  listWorkflows: () => current.listWorkflows(),
+  setWorkflowEnabled: (id, enabled) => current.setWorkflowEnabled(id, enabled),
+  setWorkflowPriority: (id, priority) => current.setWorkflowPriority(id, priority),
+  duplicateWorkflow: (id) => current.duplicateWorkflow(id),
+  saveWorkflow: (definitionJson) => current.saveWorkflow(definitionJson),
+  deleteWorkflow: (id) => current.deleteWorkflow(id),
+  dryRunWorkflow: (definitionJson, input) => current.dryRunWorkflow(definitionJson, input),
+  listWorkflowRuns: (limit) => current.listWorkflowRuns(limit),
   searchItems: (query) => current.searchItems(query),
   listProjects: (includeArchived) => current.listProjects(includeArchived),
   createProject: (name) => current.createProject(name),

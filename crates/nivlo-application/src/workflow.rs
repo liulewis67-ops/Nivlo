@@ -521,6 +521,30 @@ impl WorkflowService {
         self.save(workflow).await
     }
 
+    /// 保存编辑器提交的 JSON 定义（新建或覆盖用户 Workflow）。
+    ///
+    /// # Errors
+    ///
+    /// `WORKFLOW_INVALID`、`WORKFLOW_READ_ONLY`；存储错误。
+    pub async fn save_json(&self, json: &str) -> Result<Workflow, AppError> {
+        let workflow = self.engine.parse(json).map_err(|issues| invalid(&issues))?;
+        self.save(workflow).await
+    }
+
+    /// 用 JSON 草稿试运行（见 [`Self::dry_run`]）。
+    ///
+    /// # Errors
+    ///
+    /// `WORKFLOW_INVALID`。
+    pub async fn dry_run_json(
+        &self,
+        json: &str,
+        input: &CaptureInput,
+    ) -> Result<WorkflowRunResult, AppError> {
+        let workflow = self.engine.parse(json).map_err(|issues| invalid(&issues))?;
+        self.dry_run(&workflow, input).await
+    }
+
     /// 删除用户的 Workflow。
     ///
     /// # Errors

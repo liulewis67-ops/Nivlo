@@ -109,6 +109,71 @@ export const commands = {
 	 */
 	purgeItems: (ids: string[]) => typedError<number, IpcError>(__TAURI_INVOKE("purge_items", { ids })),
 	/**
+	 *  全部 Workflow：内置在前，其次是用户的，各自按优先级从大到小。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	listWorkflows: () => typedError<WorkflowDto[], IpcError>(__TAURI_INVOKE("list_workflows")),
+	/**
+	 *  启用或禁用一个 Workflow（内置的也可以禁用）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `WORKFLOW_NOT_FOUND`。
+	 */
+	setWorkflowEnabled: (id: string, enabled: boolean) => typedError<null, IpcError>(__TAURI_INVOKE("set_workflow_enabled", { id, enabled })),
+	/**
+	 *  调整优先级：数字大的先匹配。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `WORKFLOW_NOT_FOUND`。
+	 */
+	setWorkflowPriority: (id: string, priority: number) => typedError<null, IpcError>(__TAURI_INVOKE("set_workflow_priority", { id, priority })),
+	/**
+	 *  复制一个 Workflow：得到一份可编辑的用户副本，优先级比原来高，所以它会先于原件生效。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `WORKFLOW_NOT_FOUND`。
+	 */
+	duplicateWorkflow: (id: string) => typedError<WorkflowDto, IpcError>(__TAURI_INVOKE("duplicate_workflow", { id })),
+	/**
+	 *  保存（新建或覆盖）一个用户 Workflow。定义要通过完整校验。
+	 * 
+	 *  # Errors
+	 * 
+	 *  定义不合法返回 `WORKFLOW_INVALID`（消息里带出错位置）；覆盖内置 Workflow 返回
+	 *  `WORKFLOW_READ_ONLY`。
+	 */
+	saveWorkflow: (definitionJson: string) => typedError<WorkflowDto, IpcError>(__TAURI_INVOKE("save_workflow", { definitionJson })),
+	/**
+	 *  删除一个用户 Workflow；内置的不能删除。
+	 * 
+	 *  # Errors
+	 * 
+	 *  `WORKFLOW_NOT_FOUND` / `WORKFLOW_READ_ONLY`。
+	 */
+	deleteWorkflow: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("delete_workflow", { id })),
+	/**
+	 *  试运行：用样例输入跑一份定义（可以是还没保存的草稿），预览会创建什么。**不写任何数据。**
+	 * 
+	 *  # Errors
+	 * 
+	 *  定义不合法返回 `WORKFLOW_INVALID`；样例为空返回 `INVALID_INPUT`。
+	 */
+	dryRunWorkflow: (definitionJson: string, input: DryRunInputDto) => typedError<DryRunResultDto, IpcError>(__TAURI_INVOKE("dry_run_workflow", { definitionJson, input })),
+	/**
+	 *  最近的运行记录，新的在前。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	listWorkflowRuns: (limit: number | null) => typedError<WorkflowRunDto[], IpcError>(__TAURI_INVOKE("list_workflow_runs", { limit })),
+	/**
 	 *  清空回收站。返回删除的数量。
 	 * 
 	 *  # Errors
@@ -681,6 +746,26 @@ export type DayChangedEvent = {
 	date: string,
 };
 
+/**  试运行的样例输入。 */
+export type DryRunInputDto = {
+	/**  `text`（文字或网址，自动识别）或 `file`（一个文件路径）。 */
+	kind: string,
+	/**  样例内容。 */
+	value: string,
+};
+
+/**  试运行的结果。 */
+export type DryRunResultDto = {
+	/**  会创建的 Item；失败时为空。 */
+	items: PlannedItemDto[],
+	/**  每个 Step 的记录。 */
+	steps: StepReportDto[],
+	/**  失败说明；成功为 `None`。 */
+	error: string | null,
+	/**  总耗时（毫秒）。 */
+	durationMs: number,
+};
+
 /**  一条 Calendar 条目的种类（IPC 表示）。 */
 export type EntryKindDto = 
 /**  计划在这一天。 */
@@ -878,6 +963,24 @@ export type PatchDto<T> =
 /**  新值。 */
 value: T };
 
+/**  试运行产出的一条 Item（预览）。 */
+export type PlannedItemDto = {
+	/**  类型。 */
+	itemType: ItemTypeDto,
+	/**  标题。 */
+	title: string,
+	/**  内容。 */
+	content: string | null,
+	/**  是否进 Inbox。 */
+	inInbox: boolean,
+	/**  标签。 */
+	tags: string[],
+	/**  优先级。 */
+	priority: PriorityDto | null,
+	/**  计划日期（`YYYY-MM-DD`）。 */
+	scheduled: string | null,
+};
+
 /**  整理之前的状态（IPC 表示），原样交给 `restore_items` 撤销。 */
 export type PreviousStateDto = {
 	/**  Item ID。 */
@@ -984,6 +1087,20 @@ export type SourceDto = {
 	capturedAt: string,
 };
 
+/**  一个 Step 的记录（IPC 表示）。 */
+export type StepReportDto = {
+	/**  第几个 Step（从 0 开始）。 */
+	index: number,
+	/**  种类。 */
+	kind: string,
+	/**  `ok` / `skipped` / `failed`。 */
+	outcome: string,
+	/**  耗时（毫秒）。 */
+	durationMs: number,
+	/**  失败原因。 */
+	message: string | null,
+};
+
 /**  标签（IPC 表示）。 */
 export type TagDto = {
 	/**  标签 ID。 */
@@ -1082,6 +1199,56 @@ export type WeekStartDto =
 "monday" | 
 /**  周日。 */
 "sunday";
+
+/**  一个 Workflow（IPC 表示）。 */
+export type WorkflowDto = {
+	/**  ID（slug）。 */
+	id: string,
+	/**  名称。 */
+	name: string,
+	/**  说明。 */
+	description: string,
+	/**  来源：`builtin` / `user` / `imported` / `marketplace`。 */
+	source: string,
+	/**  是否启用。 */
+	enabled: boolean,
+	/**  优先级。 */
+	priority: number,
+	/**  定义版本。 */
+	version: number,
+	/**  内置的只读，只能复制。 */
+	readOnly: boolean,
+	/**  完整定义（JSON 文本）。 */
+	definitionJson: string,
+	/**  最近修改时间（RFC 3339，UTC）。 */
+	updatedAt: string,
+};
+
+/**  一条运行记录（IPC 表示）。 */
+export type WorkflowRunDto = {
+	/**  记录 ID。 */
+	id: string,
+	/**  Workflow ID。 */
+	workflowId: string,
+	/**  当时的 Workflow 名称。 */
+	workflowName: string,
+	/**  输入种类。 */
+	inputKind: string,
+	/**  输入的脱敏摘要。 */
+	inputSummary: string,
+	/**  `succeeded` / `failed` / `skipped`。 */
+	status: string,
+	/**  失败说明。 */
+	errorMessage: string | null,
+	/**  创建的 Item 数。 */
+	itemsCreated: number,
+	/**  总耗时（毫秒）。 */
+	durationMs: number,
+	/**  开始时间（RFC 3339，UTC）。 */
+	startedAt: string,
+	/**  每个 Step 的记录。 */
+	steps: StepReportDto[],
+};
 
 /* Tauri Specta runtime */
 async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {

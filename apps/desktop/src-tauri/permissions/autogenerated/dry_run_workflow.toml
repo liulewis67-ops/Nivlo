@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-dry-run-workflow"
+description = "Enables the dry_run_workflow command without any pre-configured scope."
+commands.allow = ["dry_run_workflow"]
+
+[[permission]]
+identifier = "deny-dry-run-workflow"
+description = "Denies the dry_run_workflow command without any pre-configured scope."
+commands.deny = ["dry_run_workflow"]

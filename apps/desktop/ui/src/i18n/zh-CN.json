@@ -235,7 +235,8 @@
       "projects": "项目",
       "dev": "开发控制台",
       "trash": "回收站",
-      "settings": "设置"
+      "settings": "设置",
+      "workflows": "自动化"
     }
   },
   "today": {
@@ -521,6 +522,119 @@
     "step3": {
       "title": "用说话的方式安排时间",
       "body": "写「明天下午3点 评审方案」，拾序会认出日期和时间，并在添加前让你确认。在任何应用里按下快捷键就能立刻写下一条："
+    }
+  },
+  "workflows": {
+    "label": "自动化",
+    "tabs": "自动化分区",
+    "tab": {
+      "rules": "规则",
+      "runs": "最近执行"
+    },
+    "new": "新建规则",
+    "intro": "收集到的内容会交给第一条匹配的规则处理：优先级数字大的先匹配，相同时越具体的越优先。内置规则只读，可以复制后自定义。",
+    "group": {
+      "builtin": "内置",
+      "mine": "我的"
+    },
+    "groupEmpty": "还没有。选一条内置规则，点「复制」就能开始自定义。",
+    "enable": "启用 {{name}}",
+    "priority": "优先级",
+    "priorityOf": "{{name}} 的优先级",
+    "priorityDown": "降低 {{name}} 的优先级",
+    "priorityUp": "提高 {{name}} 的优先级",
+    "pickTitle": "选一条规则查看或编辑",
+    "pickHint": "或者点右上角「新建规则」。试运行可以先看看会创建什么，不会写入任何数据。",
+    "close": "关闭",
+    "readOnlyNotice": "内置规则不能直接修改。点「复制」得到一份副本，副本的优先级更高，会先于原规则生效。",
+    "matches": "匹配",
+    "matchesComplex": "复杂条件（见下方定义）",
+    "duplicate": "复制",
+    "duplicated": "已复制为「{{name}}」，现在可以修改它了",
+    "save": "保存",
+    "saved": "已保存「{{name}}」",
+    "delete": "删除",
+    "deleteConfirm": "再点一次删除",
+    "deleted": "已删除",
+    "editMode": "编辑方式",
+    "mode": {
+      "form": "表单",
+      "json": "JSON"
+    },
+    "formUnavailable": "这份定义用到了表单还不能表示的写法，请用 JSON 编辑。",
+    "when": "当收集到……时",
+    "then": "就创建……",
+    "steps": "执行步骤",
+    "templateHint": "可以使用这些变量：{{vars}}",
+    "field": {
+      "name": "名称",
+      "description": "说明",
+      "itemType": "创建",
+      "title": "标题",
+      "content": "内容",
+      "tags": "标签",
+      "tagsPlaceholder": "用逗号分隔，如 read, github",
+      "inInbox": "先放进收集箱",
+      "scheduledToday": "安排在今天"
+    },
+    "fieldName": {
+      "input.type": "输入类型",
+      "url.host": "网址主机",
+      "url.path": "网址路径",
+      "url.scheme": "网址协议",
+      "file.extension": "文件扩展名",
+      "file.name": "文件名",
+      "text": "文字内容",
+      "source.application": "来源应用"
+    },
+    "op": {
+      "equals": "等于",
+      "contains": "包含",
+      "startsWith": "开头是",
+      "endsWith": "结尾是",
+      "glob": "通配",
+      "regex": "正则",
+      "exists": "存在"
+    },
+    "condition": {
+      "field": "条件 {{n}} 的字段",
+      "op": "条件 {{n}} 的比较方式",
+      "value": "条件 {{n}} 的值",
+      "remove": "删除条件 {{n}}",
+      "add": "添加条件"
+    },
+    "dryRun": {
+      "label": "试运行",
+      "title": "试运行",
+      "hint": "输入一个样例，看看这条规则会创建什么。不会创建任何条目，也不会留下运行记录。",
+      "kind": "样例类型",
+      "kindText": "文字 / 网址",
+      "kindFile": "文件路径",
+      "sample": "样例",
+      "textPlaceholder": "例如 https://github.com/a/b/pull/1",
+      "filePlaceholder": "例如 D:文档报告.pdf",
+      "run": "试运行",
+      "wouldCreate": "会创建 {{count}} 条：",
+      "nothing": "这条规则没有产出任何内容（实际收集时会按默认方式保存）。",
+      "failed": "运行失败：{{reason}}（实际收集时会按默认方式保存，不会丢失）",
+      "inInbox": "收集箱"
+    },
+    "stepOutcome": {
+      "ok": "完成",
+      "skipped": "跳过",
+      "failed": "失败"
+    },
+    "runs": {
+      "list": "最近执行",
+      "emptyTitle": "还没有执行记录",
+      "emptyHint": "收集内容并命中某条规则后，会在这里留下一条记录（只有摘要，不含内容全文）。",
+      "status": {
+        "succeeded": "成功",
+        "failed": "失败",
+        "skipped": "未产出"
+      },
+      "fellBack": "规则失败，已按默认方式保存：{{reason}}",
+      "summary": "创建 {{count}} 条 · {{ms}} ms"
     }
   }
 }

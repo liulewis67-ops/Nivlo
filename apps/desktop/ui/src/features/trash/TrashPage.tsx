@@ -2,13 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, formatDistanceToNowStrict, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components";
+import { Button, ConfirmButton } from "@/components";
 import { ipc } from "@/lib/ipc";
 import type { TrashEntryDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
-import { ConfirmButton } from "./ConfirmButton";
 
 /**
  * 距离自动永久清除还剩几天（按日历天数，最少 0）。

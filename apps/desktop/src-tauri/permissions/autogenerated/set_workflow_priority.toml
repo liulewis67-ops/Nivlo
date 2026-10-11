@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-workflow-priority"
+description = "Enables the set_workflow_priority command without any pre-configured scope."
+commands.allow = ["set_workflow_priority"]
+
+[[permission]]
+identifier = "deny-set-workflow-priority"
+description = "Denies the set_workflow_priority command without any pre-configured scope."
+commands.deny = ["set_workflow_priority"]

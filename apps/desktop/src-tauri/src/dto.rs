@@ -232,7 +232,7 @@ fn parse_utc(text: &str) -> Result<DateTime<Utc>, AppError> {
 }
 
 /// 把 UTC 时间点编码为 RFC 3339（毫秒精度）。
-fn format_utc(value: DateTime<Utc>) -> String {
+pub fn format_utc(value: DateTime<Utc>) -> String {
     value.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 

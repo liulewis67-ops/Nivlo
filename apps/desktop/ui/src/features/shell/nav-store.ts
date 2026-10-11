@@ -2,7 +2,15 @@ import { create } from "zustand";
 
 /** 主窗口里的视图。 */
 export type MainView =
-  "inbox" | "today" | "calendar" | "notes" | "projects" | "trash" | "settings" | "dev";
+  | "inbox"
+  | "today"
+  | "calendar"
+  | "notes"
+  | "projects"
+  | "workflows"
+  | "trash"
+  | "settings"
+  | "dev";
 
 /** 可以由悬浮窗等外部请求直接打开的视图。 */
 const OPENABLE_VIEWS: readonly MainView[] = ["inbox", "today", "calendar", "notes", "projects"];

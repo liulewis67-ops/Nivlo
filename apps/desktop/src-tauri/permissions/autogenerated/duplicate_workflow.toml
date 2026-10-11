@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-duplicate-workflow"
+description = "Enables the duplicate_workflow command without any pre-configured scope."
+commands.allow = ["duplicate_workflow"]
+
+[[permission]]
+identifier = "deny-duplicate-workflow"
+description = "Denies the duplicate_workflow command without any pre-configured scope."
+commands.deny = ["duplicate_workflow"]

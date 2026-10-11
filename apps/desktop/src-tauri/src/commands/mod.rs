@@ -15,3 +15,4 @@ pub mod source;
 pub mod today;
 pub mod trash;
 pub mod window;
+pub mod workflow;

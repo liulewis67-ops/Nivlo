@@ -7,7 +7,7 @@ import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
-import { CONFIRM_WINDOW_MS, ConfirmButton } from "./ConfirmButton";
+import { CONFIRM_WINDOW_MS, ConfirmButton } from "@/components/ConfirmButton";
 import { TrashPage } from "./TrashPage";
 
 /** 创建一个条目并返回 ID。 */

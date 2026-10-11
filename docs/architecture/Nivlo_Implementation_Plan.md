@@ -139,7 +139,7 @@ Phase 12 Backlog                        → 未排期
 | | 5.4 | 基础 Step Executor | ✅ |
 | | 5.5 | Capture 接入 Workflow | 🟨 |
 | | 5.6 | Workflow Run 记录与调试 | ✅ |
-| | 5.7 | Workflow 管理 UI | ⬜ |
+| | 5.7 | Workflow 管理 UI | ✅ |
 | **P6** | 6.1 | HttpPort 与网络权限 | ⬜ |
 | | 6.2 | 内置 Workflow 打包与同步 | ⬜ |
 | | 6.3 | Generic Web Page（页面元数据） | ⬜ |
@@ -1058,7 +1058,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 5.7 Workflow 管理 UI
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.6
 - **目标**：用户可查看、启用 / 禁用、复制并自定义 Workflow（产品文档 §14「Duplicate → Customize」）。
 - **任务**：
@@ -1068,10 +1068,10 @@ Phase 12 Backlog                        → 未排期
   - 试运行：输入样例（URL / 文件 / 文本）预览结果，不创建 Item。
   - 简单 Run Inspector：最近执行列表与 Step 耗时。
 - **验收标准**：
-  - [ ] 端到端：复制内置 Web Workflow → 改为生成带 `#read` 标签的 Todo → 之后拖入 URL 使用新 Workflow。
-  - [ ] 无法直接修改内置 Workflow 本体。
-  - [ ] 试运行不产生任何数据写入（测试断言）。
-- **完成记录**：—
+  - [x] 端到端：复制内置 Web Workflow → 改为生成带 `#read` 标签的 Todo → 之后拖入 URL 使用新 Workflow。
+  - [x] 无法直接修改内置 Workflow 本体。
+  - [x] 试运行不产生任何数据写入（测试断言）。
+- **完成记录**：2026-10-11 完成。新增侧栏「自动化」视图（`features/workflows`）：内置 / 我的分组列表、启用开关、优先级加减、表单编辑器（匹配条件、创建类型、标题 / 内容 / 标签模板、收集箱与今天）与 JSON 编辑、试运行面板、最近执行（Run Inspector，Step 状态与耗时）。8 个 IPC 命令（`list_workflows` … `list_workflow_runs`），定义以 JSON 文本往返，保存走与导入相同的深度校验，出错位置显示在编辑区。证据：`workflows.test.tsx`（复制内置网页规则 → 改为带 read 标签的待办 → 试运行 → 保存；内置只读；试运行不触发任何创建 / 捕获调用；校验错误带位置），后端 `crates/nivlo-workflow/tests/capture.rs` 证明复制后的高优先级规则在真实捕获中胜出，`dry_run_returns_the_result_and_writes_nothing`。表单遇到无法表示的定义（嵌套条件、`forEach` 等）自动改用 JSON，不会悄悄丢内容。Item 上「重新运行 Workflow」与捕获「处理中」状态仍留在 5.5。
 
 ---
 

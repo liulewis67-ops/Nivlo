@@ -14,6 +14,7 @@ import { SettingsPage } from "@/features/settings";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { TrashPage } from "@/features/trash";
+import { WorkflowsPage } from "@/features/workflows";
 import { cx } from "@/lib/cx";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
@@ -178,6 +179,12 @@ export function MainShell() {
           </nav>
           <div className="mt-auto flex flex-col gap-1">
             <NavButton
+              view="workflows"
+              isActive={view === "workflows"}
+              count={null}
+              onSelect={() => setView("workflows")}
+            />
+            <NavButton
               view="trash"
               isActive={view === "trash"}
               count={null}
@@ -203,6 +210,7 @@ export function MainShell() {
             </div>
           )}
           {view === "projects" && <ProjectsPage />}
+          {view === "workflows" && <WorkflowsPage />}
           {view === "trash" && <TrashPage />}
           {view === "settings" && <SettingsPage />}
           {view === "calendar" && <CalendarPage />}

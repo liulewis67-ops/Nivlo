@@ -1,5 +1,7 @@
 export { Button } from "./Button";
 export type { ButtonProps, ButtonSize, ButtonVariant } from "./Button";
+export { ConfirmButton, CONFIRM_WINDOW_MS } from "./ConfirmButton";
+export type { ConfirmButtonProps } from "./ConfirmButton";
 export { Checkbox } from "./Checkbox";
 export type { CheckboxProps } from "./Checkbox";
 export { ContextMenu } from "./ContextMenu";

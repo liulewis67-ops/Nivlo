@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components";
-import type { ButtonProps } from "@/components";
+import { Button } from "./Button";
+import type { ButtonProps } from "./Button";
 
 /** 第一次点击之后，多久不确认就自动取消（毫秒）。 */
 export const CONFIRM_WINDOW_MS = 3000;

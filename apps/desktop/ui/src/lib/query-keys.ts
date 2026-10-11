@@ -25,6 +25,10 @@ export const queryKeys = {
   appSettings: () => ["app-settings"] as const,
   /** 回收站里的条目。 */
   trash: () => ["trash"] as const,
+  /** Workflow 列表。 */
+  workflows: () => ["workflows"] as const,
+  /** Workflow 最近的运行记录。 */
+  workflowRuns: () => ["workflows", "runs"] as const,
   /** Today 视图（待办 / 提示 / 今日已完成）。 */
   today: () => ["today"] as const,
   /** Inbox 列表（等待整理的 Item，含来源与附件）。 */

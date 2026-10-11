@@ -27,6 +27,14 @@ const ICON_PATHS: Record<MainView, ReactElement> = {
   projects: (
     <path d="M2.5 4.5a1 1 0 0 1 1-1h2.8l1.4 1.5h4.8a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-7.5z" />
   ),
+  workflows: (
+    <>
+      <circle cx="4" cy="4.5" r="1.5" />
+      <circle cx="12" cy="8" r="1.5" />
+      <circle cx="4" cy="11.5" r="1.5" />
+      <path d="M5.5 4.5h2.5a2 2 0 0 1 2 2V8M5.5 11.5h2.5a2 2 0 0 0 2-2V8" />
+    </>
+  ),
   trash: (
     <>
       <path d="M3 4.5h10M6.5 4.5V3a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1.5" />

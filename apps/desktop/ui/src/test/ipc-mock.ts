@@ -1,5 +1,7 @@
 import { visibleRange } from "@/features/calendar/model/calendar-grid";
 import { AppError } from "@/lib/errors";
+import { createWorkflowMock } from "./workflow-mock";
+import type { WorkflowMock } from "./workflow-mock";
 import type {
   AppSettingsDto,
   AttachmentDto,
@@ -45,7 +47,7 @@ export const EMPTY_TODAY: TodayViewDto = {
 };
 
 /** 内存版 IPC 额外暴露的、仅供测试使用的能力。 */
-export interface MemoryIpc extends IpcClient {
+export interface MemoryIpc extends IpcClient, WorkflowMock {
   /** 当前保存的全部 Item（按创建顺序）。 */
   readonly items: readonly ItemDto[];
   /** `openMain` 被调用的次数。 */
@@ -220,6 +222,7 @@ export type MemoryIpcOptions = {
  * @returns 内存版 IPC。
  */
 export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
+  const workflowMock = createWorkflowMock();
   const items: ItemDto[] = [];
   const listeners = new Set<() => void>();
   const pointerLeftListeners = new Set<() => void>();
@@ -1152,6 +1155,18 @@ ${(item.content ?? "").toLowerCase()}`;
         );
       return Promise.resolve(matches.slice(0, 50).map((match) => match.item));
     },
+    get workflows() {
+      return workflowMock.workflows;
+    },
+    listWorkflows: workflowMock.listWorkflows,
+    setWorkflowEnabled: workflowMock.setWorkflowEnabled,
+    setWorkflowPriority: workflowMock.setWorkflowPriority,
+    duplicateWorkflow: workflowMock.duplicateWorkflow,
+    saveWorkflow: workflowMock.saveWorkflow,
+    deleteWorkflow: workflowMock.deleteWorkflow,
+    dryRunWorkflow: workflowMock.dryRunWorkflow,
+    listWorkflowRuns: workflowMock.listWorkflowRuns,
+    seedWorkflowRun: workflowMock.seedWorkflowRun,
     get projects() {
       return projects;
     },
