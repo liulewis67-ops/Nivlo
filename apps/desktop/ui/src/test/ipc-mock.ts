@@ -1,7 +1,13 @@
+import { visibleRange } from "@/features/calendar/model/calendar-grid";
 import { AppError } from "@/lib/errors";
 import type {
   AppSettingsDto,
   AttachmentDto,
+  CalendarDto,
+  CalendarEntryDto,
+  CalendarItemDto,
+  CalendarRequest,
+  WeekStartDto,
   LaterRuleDto,
   PatchDto,
   UpdateItemRequest,
@@ -226,6 +232,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     autostart: false,
     floatingAlwaysOnTop: true,
     laterRule: "nextMonday" as LaterRuleDto,
+    weekStart: "monday" as WeekStartDto,
   };
   let settingFailure: AppError | undefined;
   /** 回收站：Item ID → 删除时间（ISO）。 */
@@ -592,6 +599,42 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       const inToday = today.todos.find((entry) => entry.id === id);
       const away = postponed.get(id);
       const found = inToday ?? away;
+      // 条目本身（不在 Today 视图里的，如日历里拖动的）：直接按目标改它的计划日期。
+      const at = items.findIndex((candidate) => candidate.id === id);
+      const stored = items[at];
+      if (stored !== undefined) {
+        const kept = stored.scheduled?.time ?? null;
+        const shift = (days: number) => {
+          const base = new Date(`${today.date}T00:00:00`);
+          base.setDate(base.getDate() + days);
+          const pad = (n: number) => String(n).padStart(2, "0");
+          return `${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}`;
+        };
+        const nextMonday = (() => {
+          const weekday = new Date(`${today.date}T00:00:00`).getDay();
+          return shift((8 - weekday) % 7 || 7);
+        })();
+        const scheduled =
+          target.kind === "today"
+            ? { date: today.date, time: kept }
+            : target.kind === "tomorrow"
+              ? { date: shift(1), time: kept }
+              : target.kind === "later"
+                ? { date: nextMonday, time: kept }
+                : target.kind === "inbox"
+                  ? null
+                  : target.scheduled;
+        items[at] = {
+          ...stored,
+          scheduled,
+          inInbox: target.kind === "inbox",
+          updatedAt: new Date().toISOString(),
+        };
+        if (found === undefined) {
+          notifyChange();
+          return Promise.resolve(items[at] as ItemDto);
+        }
+      }
       if (found === undefined) {
         return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
       }
@@ -885,6 +928,70 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     get appSettings() {
       return appSettings;
+    },
+    setWeekStart: (weekStart: WeekStartDto) => {
+      calls.push("setWeekStart");
+      appSettings = { ...appSettings, weekStart };
+      notifyChange();
+      return Promise.resolve();
+    },
+    getCalendar: (request: CalendarRequest) => {
+      calls.push("getCalendar");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(request.anchor)) {
+        return Promise.reject(new AppError("INVALID_INPUT", `无效的日期：${request.anchor}`));
+      }
+      const { from, to } = visibleRange(request.view, request.anchor, appSettings.weekStart);
+      const light = (item: ItemDto): CalendarItemDto => ({
+        id: item.id,
+        itemType: item.itemType,
+        title: item.title,
+        status: item.status,
+        priority: item.priority,
+        scheduled: item.scheduled,
+        due: item.due,
+      });
+      const live = items.filter((item) => item.archivedAt === null && !trashed.has(item.id));
+      const entries: CalendarEntryDto[] = [];
+      for (const item of live) {
+        const scheduledDate = item.scheduled?.date;
+        if (scheduledDate !== undefined && scheduledDate >= from && scheduledDate <= to) {
+          entries.push({ item: light(item), date: scheduledDate, kind: "scheduled" });
+        }
+        const dueDate = item.due?.date;
+        if (
+          item.itemType === "todo" &&
+          item.status === "open" &&
+          dueDate !== undefined &&
+          dueDate >= from &&
+          dueDate <= to
+        ) {
+          entries.push({ item: light(item), date: dueDate, kind: "due" });
+        }
+      }
+      const timeOf = (entry: CalendarEntryDto) =>
+        (entry.kind === "due" ? entry.item.due?.time : entry.item.scheduled?.time) ?? "";
+      entries.sort(
+        (a, b) =>
+          a.date.localeCompare(b.date) ||
+          Number(a.kind === "due") - Number(b.kind === "due") ||
+          timeOf(a).localeCompare(timeOf(b)),
+      );
+      const unscheduled = live
+        .filter(
+          (item) => item.itemType === "todo" && item.status === "open" && item.scheduled === null,
+        )
+        .reverse()
+        .slice(0, 100)
+        .map(light);
+      const data: CalendarDto = {
+        from,
+        to,
+        today: today.date,
+        weekStart: appSettings.weekStart,
+        entries,
+        unscheduled,
+      };
+      return Promise.resolve(data);
     },
     failNextSettingWith: (error: AppError) => {
       settingFailure = error;

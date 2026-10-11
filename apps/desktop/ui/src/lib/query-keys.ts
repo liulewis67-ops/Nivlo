@@ -19,6 +19,8 @@ export const queryKeys = {
   tagItems: (tagId: string) => ["items", "tag", tagId] as const,
   /** 全文搜索的结果；属于 `items` 前缀，Item 变化时会一起失效。 */
   search: (query: string) => ["items", "search", query] as const,
+  /** Calendar 的某一页；属于 `items` 前缀，Item 变化时会一起失效。 */
+  calendar: (view: string, anchor: string) => ["items", "calendar", view, anchor] as const,
   /** 设置页的设置（开机自启、置顶、「稍后」规则）。 */
   appSettings: () => ["app-settings"] as const,
   /** 回收站里的条目。 */

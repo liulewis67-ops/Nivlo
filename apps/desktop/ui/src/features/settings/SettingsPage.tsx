@@ -5,7 +5,7 @@ import { Switch } from "@/components";
 import { ShortcutSetting } from "@/features/shortcut";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
-import type { AppSettingsDto, LaterRuleDto } from "@/lib/ipc";
+import type { AppSettingsDto, LaterRuleDto, WeekStartDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useThemeStore } from "@/stores/theme-store";
@@ -13,6 +13,9 @@ import type { ThemePreference } from "@/stores/theme-store";
 
 /** 「稍后」规则选项，按展示顺序。 */
 const LATER_RULES: LaterRuleDto[] = ["nextMonday", "inThreeDays", "inOneWeek"];
+
+/** 一周起始日选项，按展示顺序。 */
+const WEEK_STARTS: WeekStartDto[] = ["monday", "sunday"];
 
 /** 主题偏好选项，按展示顺序。 */
 const THEMES: ThemePreference[] = ["system", "light", "dark"];
@@ -222,6 +225,37 @@ export function SettingsPage() {
                   )}
                 >
                   {t(`settings.later.${rule}`)}
+                </button>
+              ))}
+            </div>
+          </Row>
+          <Row label={t("settings.weekStart.label")} hint={t("settings.weekStart.hint")}>
+            <div
+              role="radiogroup"
+              aria-label={t("settings.weekStart.label")}
+              className="flex rounded-md border border-border bg-bg p-0.5"
+            >
+              {WEEK_STARTS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={current?.weekStart === option}
+                  disabled={current === undefined}
+                  onClick={() =>
+                    change.mutate({
+                      patch: { weekStart: option },
+                      apply: () => ipc.setWeekStart(option),
+                    })
+                  }
+                  className={cx(
+                    "h-7 rounded-sm px-3 text-xs transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
+                    current?.weekStart === option
+                      ? "bg-primary font-medium text-primary-contrast"
+                      : "text-muted hover:bg-surface-hover hover:text-text",
+                  )}
+                >
+                  {t(`settings.weekStart.${option}`)}
                 </button>
               ))}
             </div>

@@ -19,6 +19,41 @@ export async function seedDemoData(ipc: IpcClient): Promise<void> {
   await ipc.setItemTags(review.id, ["沟通", "产品"]);
   await ipc.setItemTags(report.id, ["沟通"]);
   await ipc.quickCreate("tip", "下午三点：站会");
+  // 日历演示：本月与下月的计划、截止与一个待安排的待办。
+  const demo = async (
+    itemType: "todo" | "tip" | "note",
+    title: string,
+    scheduled: { date: string; time: string | null } | null,
+    due: { date: string; time: string | null } | null = null,
+  ) =>
+    ipc.createItem({
+      itemType,
+      title,
+      content: null,
+      contentFormat: "plain",
+      priority: null,
+      scheduled,
+      due,
+      reminderAt: null,
+      projectId: null,
+    });
+  await demo(
+    "todo",
+    "季度复盘材料",
+    { date: "2026-10-13", time: null },
+    { date: "2026-10-16", time: null },
+  );
+  await demo("tip", "产品评审会", { date: "2026-10-13", time: "15:00:00" });
+  await demo("todo", "预约牙医", { date: "2026-10-15", time: null });
+  await demo("note", "读书笔记：Local-first", { date: "2026-10-15", time: null });
+  await demo(
+    "todo",
+    "提交报销",
+    { date: "2026-10-20", time: null },
+    { date: "2026-10-23", time: null },
+  );
+  await demo("todo", "整理照片", null);
+  await demo("todo", "给爸妈打电话", null);
   await ipc.capture({
     input: { kind: "text", text: "https://www.example.com/blog/local-first-software" },
     origin: "drop",

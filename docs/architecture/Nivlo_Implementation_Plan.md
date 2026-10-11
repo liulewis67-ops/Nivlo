@@ -126,9 +126,9 @@ Phase 12 Backlog                        → 未排期
 | | 3.3 | Projects 与 Tags | ✅ |
 | | 3.4 | 全文搜索与 Ctrl+K | ✅ |
 | | 3.5 | 归档 / 删除 / 设置页 | ✅ |
-| **P4** | 4.1 | 时间模型与 Schedule 语义 | ⬜ |
-| | 4.2 | Calendar 查询与 Month / Week 视图 | ⬜ |
-| | 4.3 | Calendar 拖拽排期 | ⬜ |
+| **P4** | 4.1 | 时间模型与 Schedule 语义 | ✅ |
+| | 4.2 | Calendar 查询与 Month / Week 视图 | ✅ |
+| | 4.3 | Calendar 拖拽排期 | ✅ |
 | | 4.4 | Scheduler Actor | ⬜ |
 | | 4.5 | Reconcile：启动 / 唤醒 / 时钟变化 | ⬜ |
 | | 4.6 | 系统通知 | ⬜ |
@@ -855,7 +855,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 4.1 时间模型与 Schedule 语义
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：D-03 已定稿
 - **目标**：统一 Rust 与 TS 两端的日期语义。
 - **任务**：
@@ -863,28 +863,28 @@ Phase 12 Backlog                        → 未排期
   - Rust（chrono）与 TS（date-fns）日期工具：今天 / 明天 / 下周、一周起始日（可配置）、月视图日期范围。
   - 共享测试向量：`fixtures/dates/*.json`，两端测试读取同一份数据。
 - **验收标准**：
-  - [ ] 两端使用同一份测试向量，结果一致。
-  - [ ] 在非 UTC+8 时区下（测试中设置时区）结果正确。
-  - [ ] Scheduled 与 Due 语义在 Domain 测试中明确区分。
-- **完成记录**：—
+  - [x] 两端使用同一份测试向量，结果一致。
+  - [x] 在非 UTC+8 时区下（测试中设置时区）结果正确。
+  - [x] Scheduled 与 Due 语义在 Domain 测试中明确区分。
+- **完成记录**：2026-10-11 完成。D-03 的字段模型早在 0.5 落地（`DatePoint` + UTC `reminder_at`），无需新迁移；`reminders` 表（已触发状态）随调度器在 4.4 引入（`0004` 已被回收站占用，届时用 `0005`）。后端 `calendar::visible_range` 是月视图整周网格 / 周视图的唯一计算处，前端只排版；`WeekStart`（周一 / 周日，设置项 `calendar.week_start`）。Rust 与 TS 共用 `fixtures/dates/calendar-ranges.json`（11 个范围用例 + 下周一用例，覆盖 4 / 5 / 6 行的月份、闰年、跨年、两种起始日）。时区：`today_follows_the_user_time_zone_not_utc`（同一 UTC 时刻在东京与洛杉矶得到不同的「今天」）。Scheduled 与 Due 的区别由 `entries_are_scheduled_items_plus_a_deadline_overlay_for_open_todos` 与 `completed_todos_stay_on_their_day_but_lose_the_deadline_marker` 明确：计划是「打算哪天做」，截止只给未完成的待办作为 Deadline Overlay。
 
 ### 4.2 Calendar 查询与 Month / Week 视图
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：4.1
 - **目标**：Calendar 主要基于 Scheduled，Due 作为 Deadline Overlay（架构文档 §32）。
 - **任务**：
   - `get_calendar(range)` Use Case：返回范围内的计划 Item、Tip、截止标记。
   - Month 视图、Week 视图；上一页 / 下一页 / 回到今天；已完成样式；Tip 以 💡 展示。
 - **验收标准**：
-  - [ ] 5k 条数据下单月查询 < 20ms（记录实测）。
-  - [ ] Due 标记与 Scheduled 条目视觉上可明确区分。
-  - [ ] 一周起始日设置对 Week / Month 视图生效。
-- **完成记录**：—
+  - [x] 5k 条数据下单月查询 < 20ms（记录实测）。
+  - [x] Due 标记与 Scheduled 条目视觉上可明确区分。
+  - [x] 一周起始日设置对 Week / Month 视图生效。
+- **完成记录**：2026-10-11 完成。`get_calendar(view, anchor)`：范围内的计划条目 + 截止标记 + 「待安排」（没有日期的未完成待办，最多 100 条）；条目只带显示需要的字段（不含正文）。`ItemRepository::list_calendar` 用到 `idx_items_scheduled_date` / `idx_items_due_date`；**5000 条数据下单月查询 4.9ms（debug 构建，目标 < 20ms）**。前端 `features/calendar`：月 / 周视图，上一页 / 今天 / 下一页，今天高亮、周末与非本月淡化，已完成划线，Tip 用 💡，截止标记用虚线框 + 旗标 + 「截止」与计划条目明确区分（不可拖动），月视图每格最多 3 条、其余折叠成「还有 N 项」（点击切到周视图），周视图条目带时间前缀，悬停格子出现「+」可原地写下一条待办。设置页新增「一周从哪天开始」。
 
 ### 4.3 Calendar 拖拽排期
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：4.2、2.7
 - **目标**：实现产品文档 §20.2「Inbox Todo → drag → Sep 30」。
 - **任务**：
@@ -892,10 +892,10 @@ Phase 12 Backlog                        → 未排期
   - 日期之间拖动修改计划日期（MVP 只到天粒度）。
   - Optimistic 更新 + Undo。
 - **验收标准**：
-  - [ ] 从 Inbox 拖到某天后：计划日期正确、离开 Inbox、出现在该日。
-  - [ ] 日期间拖动正确修改计划日期；Undo 可撤销。
-  - [ ] 拖入今天的 Item 同步出现在悬浮窗 Today 末尾。
-- **完成记录**：—
+  - [x] 从 Inbox 拖到某天后：计划日期正确、离开 Inbox、出现在该日。
+  - [x] 日期间拖动正确修改计划日期；Undo 可撤销。
+  - [x] 拖入今天的 Item 同步出现在悬浮窗 Today 末尾。
+- **完成记录**：2026-10-11 完成。右侧「待安排」列表里的待办（以及日期格里的计划条目）可以拖到任意日期格：dnd-kit 指针 + 键盘传感器，拖动超过 5px 才开始，落点高亮，拖动时有浮层；落下后调用 `reschedule_item`（exact）——**保留原有的具体时间**，设置计划日期即离开 Inbox（D-02）；乐观地由数据变更事件刷新，成功后给出带「撤销」的提示（撤销 = 精确恢复原来的计划，包括「没有日期」）。拖入今天的待办由 Today 的规范化追加到末尾（`TodayService` 对未知待办的既有行为），悬浮窗同步出现。测试：真实浏览器预览里用指针拖拽验证；jsdom 里通过替换 `DndContext` 触发 `onDragEnd` 验证「落点 → 重新安排 → 提示与撤销」（`calendar-drop.test.tsx`）。
 
 ### 4.4 Scheduler Actor
 

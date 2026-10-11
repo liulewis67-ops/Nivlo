@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
+import { CalendarPage } from "@/features/calendar";
 import { DevConsole } from "@/features/dev-console";
 import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
@@ -12,7 +13,6 @@ import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { TrashPage } from "@/features/trash";
 import { cx } from "@/lib/cx";
-import { ComingSoon } from "./ComingSoon";
 import { NavIcon } from "./NavIcons";
 import { parseMainView, useNavStore } from "./nav-store";
 import type { MainView } from "./nav-store";
@@ -76,7 +76,7 @@ function NavButton({ view, isActive, count, onSelect }: NavButtonProps) {
 /**
  * 主窗口外壳：左侧导航 + 右侧当前视图（实施计划 1.10、产品文档 §23）。
  *
- * Today / Inbox / Notes / Projects 是完整实现；Calendar 显示占位页，随后续阶段逐个替换。
+ * 各视图都是完整实现。
  * Today 的角标取自 Today 查询缓存，和悬浮窗徽标是同一个数字；Inbox 的角标是等待整理的条数。
  *
  * @returns 主窗口内容。
@@ -195,7 +195,7 @@ export function MainShell() {
           {view === "projects" && <ProjectsPage />}
           {view === "trash" && <TrashPage />}
           {view === "settings" && <SettingsPage />}
-          {view === "calendar" && <ComingSoon view={view} />}
+          {view === "calendar" && <CalendarPage />}
         </main>
         {searching && <CommandPalette onClose={() => setSearching(false)} onOpenItem={setOpenId} />}
         {openId !== null && (

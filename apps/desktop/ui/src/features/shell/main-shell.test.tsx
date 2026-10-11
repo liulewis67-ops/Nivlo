@@ -53,7 +53,7 @@ describe("MainShell", () => {
     );
   });
 
-  it("尚未实现的页面显示占位说明，切回 Today 后内容仍在", async () => {
+  it("切换到别的视图再切回 Today，内容仍在", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();
     ipc.setToday(VIEW);
@@ -61,11 +61,14 @@ describe("MainShell", () => {
     await screen.findByText("写周报");
 
     await user.click(screen.getByRole("button", { name: "日历" }));
-    expect(screen.getByRole("heading", { name: "日历" })).toBeInTheDocument();
-    expect(screen.getByText(/把待办拖到某一天/)).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "日历" })).toBeInTheDocument();
     expect(screen.queryByText("写周报")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /今天/ }));
+    await user.click(
+      within(screen.getByRole("navigation", { name: "主导航" })).getByRole("button", {
+        name: /今天/,
+      }),
+    );
     expect(await screen.findByText("写周报")).toBeInTheDocument();
   });
 
@@ -94,10 +97,10 @@ describe("MainShell", () => {
     expect(await screen.findByRole("heading", { name: "收集箱" })).toBeInTheDocument();
 
     act(() => ipc.emitMainViewRequested("calendar"));
-    expect(await screen.findByRole("heading", { name: "日历" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "日历" })).toBeInTheDocument();
     // 不认识的视图被忽略。
     act(() => ipc.emitMainViewRequested("nope"));
-    expect(screen.getByRole("heading", { name: "日历" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "日历" })).toBeInTheDocument();
   });
 
   it("显示进度，并在输入框里回车创建待办", async () => {

@@ -217,9 +217,6 @@
       "dev": "开发控制台",
       "trash": "回收站",
       "settings": "设置"
-    },
-    "comingSoon": {
-      "calendar": "把待办拖到某一天，安排接下来的日子。"
     }
   },
   "today": {
@@ -435,6 +432,33 @@
       "inOneWeek": "7 天后"
     },
     "saved": "已保存",
-    "loadFailed": "没能读取设置。"
+    "loadFailed": "没能读取设置。",
+    "weekStart": {
+      "label": "一周从哪天开始",
+      "hint": "影响日历的周视图与月视图。",
+      "monday": "周一",
+      "sunday": "周日"
+    }
+  },
+  "calendar": {
+    "label": "日历",
+    "previous": "上一页",
+    "next": "下一页",
+    "today": "今天",
+    "viewSwitch": "切换视图",
+    "view": {
+      "month": "月",
+      "week": "周"
+    },
+    "due": "截止",
+    "dueChip": "「{{title}}」的截止日期",
+    "more": "还有 {{count}} 项",
+    "addOn": "在{{date}}添加待办",
+    "newTodo": "新待办",
+    "newTodoPlaceholder": "写下一件事，回车添加",
+    "unscheduled": "待安排",
+    "unscheduledHint": "把待办拖到日期格上，就安排好了。",
+    "unscheduledEmpty": "没有待安排的待办 🎉",
+    "scheduled": "「{{title}}」已安排到 {{date}}"
   }
 }

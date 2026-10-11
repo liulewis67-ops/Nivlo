@@ -2,6 +2,8 @@ import { isTauri } from "@tauri-apps/api/core";
 import { commands, events } from "@/bindings";
 import type {
   AppSettingsDto,
+  CalendarDto,
+  CalendarRequest,
   CaptureRequestDto,
   CaptureResultDto,
   CreateItemRequest,
@@ -23,11 +25,18 @@ import type {
   TodayViewDto,
   TrashEntryDto,
   UpdateItemRequest,
+  WeekStartDto,
 } from "@/bindings";
 import { toAppError } from "./errors";
 
 export type {
   AppSettingsDto,
+  CalendarDto,
+  CalendarEntryDto,
+  CalendarItemDto,
+  CalendarRequest,
+  EntryKindDto,
+  WeekStartDto,
   LaterRuleDto,
   ItemOrderDto,
   AttachmentDto,
@@ -147,6 +156,13 @@ export interface IpcClient {
   setFloatingAlwaysOnTop(enabled: boolean): Promise<void>;
   /** 修改「稍后」的规则（悬浮窗与收集箱的「稍后」按钮都按它算日期）。 */
   setLaterRule(rule: LaterRuleDto): Promise<void>;
+  /**
+   * 查询 Calendar：可见范围（月视图的整周网格 / 周视图的一周）内的计划与截止条目，
+   * 以及还没有安排日期的待办。范围由后端按「一周从哪天开始」的设置计算。
+   */
+  getCalendar(request: CalendarRequest): Promise<CalendarDto>;
+  /** 修改日历一周从哪天开始。 */
+  setWeekStart(weekStart: WeekStartDto): Promise<void>;
   /**
    * 删除一批条目：移进回收站（软删除），30 天内可以恢复。一个事务，任何一个不存在整批不变。
    * 条目立刻从所有视图与搜索里消失。
@@ -324,6 +340,10 @@ const tauriIpc: IpcClient = {
   setLaterRule: async (rule) => {
     await call("set_later_rule", commands.setLaterRule(rule));
   },
+  getCalendar: (request) => call("get_calendar", commands.getCalendar(request)),
+  setWeekStart: async (weekStart) => {
+    await call("set_week_start", commands.setWeekStart(weekStart));
+  },
   deleteItems: async (ids) => {
     await call("delete_items", commands.deleteItems(ids));
   },
@@ -434,6 +454,8 @@ export const ipc: IpcClient = {
   setAutostart: (enabled) => current.setAutostart(enabled),
   setFloatingAlwaysOnTop: (enabled) => current.setFloatingAlwaysOnTop(enabled),
   setLaterRule: (rule) => current.setLaterRule(rule),
+  getCalendar: (request) => current.getCalendar(request),
+  setWeekStart: (weekStart) => current.setWeekStart(weekStart),
   deleteItems: (ids) => current.deleteItems(ids),
   restoreDeletedItems: (ids) => current.restoreDeletedItems(ids),
   listTrash: () => current.listTrash(),
