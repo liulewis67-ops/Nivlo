@@ -154,7 +154,7 @@ Phase 12 Backlog                        → 未排期
 | | 7.5 | 首次运行引导与体验打磨 | 🟨 |
 | | 7.6 | 安装包、签名、Updater 与发布流水线 | ⬜ |
 | | 7.7 | 悬浮窗外观与自定义皮肤 | 🟨 |
-| **P8** | 8.1 | QuickJS Runtime 与 Script Worker | ⬜ |
+| **P8** | 8.1 | QuickJS Runtime 与 Script Worker | ✅ |
 | | 8.2 | Script Context 与 Capability API | ⬜ |
 | | 8.3 | Script Step 与 Workflow 权限 | ⬜ |
 | | 8.4 | 脚本编辑器（CodeMirror） | ⬜ |
@@ -1372,15 +1372,16 @@ Phase 12 Backlog                        → 未排期
 
 ### 8.1 QuickJS Runtime 与 Script Worker
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.3
 - **任务**：
   - `nivlo-script`：rquickjs Runtime；`ScriptPolicy`（默认超时 3s、最大 10s；默认内存 32MB、最大 64MB；栈上限）；Interrupt Handler 实现超时。
   - Script Worker Actor（独立线程，消息 `ScriptRequest` / `Cancel` / `Shutdown`），执行后重置 Context，防止状态泄漏。
 - **验收标准**：
-  - [ ] 测试：正常脚本、死循环超时、内存超限、抛出异常均返回对应错误且 Worker 可继续服务下一个请求。
-  - [ ] UI 线程中不存在任何 eval 路径（代码审查）。
-- **完成记录**：2026-10-11 盘点：已有一份草稿（`ScriptPolicy` 钳制、每个请求全新 Runtime / Context 的 `ScriptWorker`，8 个测试覆盖正常返回、死循环超时、内存超限、异常行号、深递归、取消、状态隔离、上限钳制），放在 `.wip/`（`lib.rs`、`tests.rs`、`script-8.1.patch`），被 `.git/info/exclude` 排除、**不在版本控制中**。正式开始时移到 `p8.1-script-worker` 分支并把状态改为 🟨。
+  - [x] 测试：正常脚本、死循环超时、内存超限、抛出异常均返回对应错误且 Worker 可继续服务下一个请求（`nivlo-script` 10 个测试，另含深递归、取消、状态隔离、上限钳制）。
+  - [x] UI 线程中不存在任何 eval 路径（代码审查：`rquickjs` 只被 `nivlo-script` 依赖；前端无 `eval` / `new Function`；脚本只在独立 Worker 线程执行）。
+- **完成记录**：2026-10-11 盘点：已有一份草稿（`ScriptPolicy` 钳制、每个请求全新 Runtime / Context 的 `ScriptWorker`，8 个测试覆盖正常返回、死循环超时、内存超限、异常行号、深递归、取消、状态隔离、上限钳制），放在 `.wip/`（`lib.rs`、`tests.rs`、`script-8.1.patch`），被 `.git/info/exclude` 排除、**不在版本控制中**。
+  - 2026-10-11 完成：草稿移入 `p8.1-script-worker` 分支。适配 rquickjs 0.14——`Exception` 没有 `line()`，改为从调用栈文本解析第一帧行号（`first_line_number`，有单元测试）；`clippy -D warnings` 通过。
 
 ### 8.2 Script Context 与 Capability API
 
