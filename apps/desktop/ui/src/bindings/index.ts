@@ -117,6 +117,40 @@ export const commands = {
 	 */
 	emptyTrash: () => typedError<number, IpcError>(__TAURI_INVOKE("empty_trash")),
 	/**
+	 *  读取全部设置：开机自启、悬浮窗置顶、「稍后」的规则。
+	 * 
+	 *  开机自启的状态以系统启动项为准（用户可能在系统设置里改过）；读取失败时按「关闭」显示并记录日志。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	getAppSettings: () => typedError<AppSettingsDto, IpcError>(__TAURI_INVOKE("get_app_settings")),
+	/**
+	 *  开启或关闭开机自启，返回之后的实际状态。
+	 * 
+	 *  # Errors
+	 * 
+	 *  系统拒绝修改启动项时返回 `SYSTEM_SETTING_FAILED`，此时状态不变。
+	 */
+	setAutostart: (enabled: boolean) => typedError<boolean, IpcError>(__TAURI_INVOKE("set_autostart", { enabled })),
+	/**
+	 *  设置悬浮窗是否置顶：先保存，再立即应用到窗口。
+	 * 
+	 *  # Errors
+	 * 
+	 *  保存失败返回存储错误（窗口不变）；窗口调用失败返回 `WINDOW_UNAVAILABLE`（设置已保存，下次启动生效）。
+	 */
+	setFloatingAlwaysOnTop: (enabled: boolean) => typedError<null, IpcError>(__TAURI_INVOKE("set_floating_always_on_top", { enabled })),
+	/**
+	 *  修改「稍后」的规则（悬浮窗与收集箱的「稍后」按钮都按它算日期）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]，规则不变。
+	 */
+	setLaterRule: (rule: LaterRuleDto) => typedError<null, IpcError>(__TAURI_INVOKE("set_later_rule", { rule })),
+	/**
 	 *  列出项目（创建时间从早到晚）与各自未完成的 Item 数量。
 	 * 
 	 *  # Errors
@@ -430,6 +464,16 @@ export const events = {
 };
 
 /* Types */
+/**  设置页展示的全部设置（IPC 表示）。 */
+export type AppSettingsDto = {
+	/**  是否开机自启（以系统启动项为准）。 */
+	autostart: boolean,
+	/**  悬浮窗是否置顶。 */
+	floatingAlwaysOnTop: boolean,
+	/**  「稍后」指哪一天。 */
+	laterRule: LaterRuleDto,
+};
+
 /**  附件（IPC 表示）。 */
 export type AttachmentDto = {
 	/**  `reference`（引用用户的文件）或 `stored`（Nivlo 保存的图片）。 */
@@ -655,6 +699,15 @@ export type ItemUpdatedEvent = {
 	/**  变化的 Item ID。 */
 	itemId: string,
 };
+
+/**  「稍后」指哪一天（IPC 表示）。 */
+export type LaterRuleDto = 
+/**  下一个周一。 */
+"nextMonday" | 
+/**  3 天后。 */
+"inThreeDays" | 
+/**  7 天后。 */
+"inOneWeek";
 
 /**  列出 Item 的请求。 */
 export type ListItemsRequest = {

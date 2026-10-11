@@ -17,6 +17,7 @@ use nivlo_application::inbox::{
 use nivlo_application::item::{Patch, RescheduleTarget, UpdateItemInput};
 use nivlo_application::organize::{ProjectSummary, TagSummary};
 use nivlo_application::ports::{ItemFilter, ItemOrder};
+use nivlo_application::settings::LaterRule;
 use nivlo_application::today::{TodayEntry, TodayView};
 use nivlo_application::trash::TrashEntry;
 use nivlo_domain::attachment::Attachment;
@@ -1015,6 +1016,52 @@ impl From<&TrashEntry> for TrashEntryDto {
             expires_at: format_utc(value.expires_at),
         }
     }
+}
+
+/// 「稍后」指哪一天（IPC 表示）。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum LaterRuleDto {
+    /// 下一个周一。
+    NextMonday,
+    /// 3 天后。
+    InThreeDays,
+    /// 7 天后。
+    InOneWeek,
+}
+
+impl From<LaterRule> for LaterRuleDto {
+    /// Application → DTO。
+    fn from(value: LaterRule) -> Self {
+        match value {
+            LaterRule::NextMonday => Self::NextMonday,
+            LaterRule::InThreeDays => Self::InThreeDays,
+            LaterRule::InOneWeek => Self::InOneWeek,
+        }
+    }
+}
+
+impl From<LaterRuleDto> for LaterRule {
+    /// DTO → Application。
+    fn from(value: LaterRuleDto) -> Self {
+        match value {
+            LaterRuleDto::NextMonday => Self::NextMonday,
+            LaterRuleDto::InThreeDays => Self::InThreeDays,
+            LaterRuleDto::InOneWeek => Self::InOneWeek,
+        }
+    }
+}
+
+/// 设置页展示的全部设置（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AppSettingsDto {
+    /// 是否开机自启（以系统启动项为准）。
+    pub autostart: bool,
+    /// 悬浮窗是否置顶。
+    pub floating_always_on_top: bool,
+    /// 「稍后」指哪一天。
+    pub later_rule: LaterRuleDto,
 }
 
 #[cfg(test)]

@@ -20,8 +20,8 @@ use nivlo_domain::tag::Tag;
 
 use crate::error::AppError;
 use crate::event::EventPublisher;
-use crate::item::next_monday_after;
 use crate::ports::{ItemFilter, UnitOfWork};
+use crate::settings::read_later_rule;
 
 /// Inbox 中的一条：Item 以及它的来源与附件。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -183,6 +183,7 @@ impl InboxService {
         let now = self.clock.now_utc();
         let today = self.clock.today_local();
         let mut tx = self.uow.begin().await?;
+        let later = read_later_rule(&mut *tx).await?;
         let mut items = Vec::with_capacity(ids.len());
         let mut previous = Vec::with_capacity(ids.len());
         let mut events: Vec<DomainEvent> = Vec::with_capacity(ids.len());
@@ -199,7 +200,7 @@ impl InboxService {
                     let date = match target {
                         ScheduleTarget::Today => today,
                         ScheduleTarget::Tomorrow => today.succ_opt().unwrap_or(today),
-                        ScheduleTarget::Later => next_monday_after(today),
+                        ScheduleTarget::Later => later.resolve(today),
                         ScheduleTarget::Date(date) => date,
                     };
                     item.set_scheduled(Some(DatePoint::all_day(date)), now)

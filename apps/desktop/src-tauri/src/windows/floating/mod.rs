@@ -64,6 +64,13 @@ pub trait FloatingHandle: Send + Sync {
     /// 窗口无法聚焦时返回 [`PlatformError`]；此时悬浮窗已恢复为不可聚焦，调用方应放弃输入。
     fn begin_input(&self) -> Result<(), PlatformError>;
 
+    /// 立即修改悬浮窗是否置顶（设置页）。持久化由调用方负责。
+    ///
+    /// # Errors
+    ///
+    /// 窗口调用失败时返回 [`PlatformError`]。
+    fn set_always_on_top(&self, enabled: bool) -> Result<(), PlatformError>;
+
     /// 结束文本输入：悬浮窗恢复为不可聚焦，并把焦点还给用户之前的窗口。可以重复调用。
     ///
     /// # Errors
@@ -298,6 +305,11 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
 }
 
 impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
+    /// 修改置顶：直接交给窗口 Port。
+    fn set_always_on_top(&self, enabled: bool) -> Result<(), PlatformError> {
+        self.port.set_always_on_top(enabled)
+    }
+
     /// 退出前保存位置：等价于立即「结算」一次；展开期间或位置没变时是空操作。
     fn flush(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>> {
         Box::pin(self.settle())

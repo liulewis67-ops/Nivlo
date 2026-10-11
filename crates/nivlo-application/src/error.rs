@@ -66,6 +66,8 @@ pub enum ErrorCode {
     ClipboardEmpty,
     /// 无法读取剪贴板（被其他程序占用，或当前平台不支持）。
     ClipboardUnavailable,
+    /// 无法修改系统设置（如开机启动项）。
+    SystemSettingFailed,
     /// 来源指向的文件已经不在原处。
     SourceFileMissing,
     /// 无法打开来源（没有可打开的来源、网址不合法，或系统打开失败）。
@@ -102,6 +104,7 @@ impl ErrorCode {
         Self::ShortcutConflict,
         Self::ClipboardEmpty,
         Self::ClipboardUnavailable,
+        Self::SystemSettingFailed,
         Self::SourceFileMissing,
         Self::SourceOpenFailed,
     ];
@@ -136,6 +139,7 @@ impl ErrorCode {
             Self::ShortcutConflict => "SHORTCUT_CONFLICT",
             Self::ClipboardEmpty => "CLIPBOARD_EMPTY",
             Self::ClipboardUnavailable => "CLIPBOARD_UNAVAILABLE",
+            Self::SystemSettingFailed => "SYSTEM_SETTING_FAILED",
             Self::SourceFileMissing => "SOURCE_FILE_MISSING",
             Self::SourceOpenFailed => "SOURCE_OPEN_FAILED",
         }

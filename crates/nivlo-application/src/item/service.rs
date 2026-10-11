@@ -22,6 +22,7 @@ use crate::error::AppError;
 use crate::event::EventPublisher;
 use crate::inbox::InboxEntry;
 use crate::ports::{ItemFilter, UnitOfWork};
+use crate::settings::read_later_rule;
 
 /// 一次搜索最多返回的条数。
 pub const SEARCH_LIMIT: u32 = 50;
@@ -198,8 +199,8 @@ impl ItemService {
 
     /// 改期（推迟）：把计划日期移到目标日期，并让 Item 离开 Today 的手动顺序。
     ///
-    /// 目标为 Today / Tomorrow / Later 时保留原有的具体时间（如果有）；Later 是**下周一**
-    /// （严格晚于今天的下一个周一，后续可配置）；Inbox 清除计划日期并标记为待整理
+    /// 目标为 Today / Tomorrow / Later 时保留原有的具体时间（如果有）；Later 按设置里的规则
+    /// （默认下周一，见 [`crate::settings::LaterRule`]）；Inbox 清除计划日期并标记为待整理
     /// （`in_inbox`，D-02）。`Exact` 用于撤销：原样恢复之前的计划。
     ///
     /// # Errors
@@ -214,6 +215,7 @@ impl ItemService {
         let now = self.clock.now_utc();
         let today = self.clock.today_local();
         let mut tx = self.uow.begin().await?;
+        let later = read_later_rule(&mut *tx).await?;
         let mut item = tx
             .items()
             .get(id)
@@ -228,7 +230,10 @@ impl ItemService {
             RescheduleTarget::Tomorrow => {
                 item.set_scheduled(Some(on(today.succ_opt().unwrap_or(today))), now)
             }
-            RescheduleTarget::Later => item.set_scheduled(Some(on(next_monday_after(today))), now),
+            RescheduleTarget::Later => {
+                let date = later.resolve(today);
+                item.set_scheduled(Some(on(date)), now)
+            }
             // 放回收集箱：清除日期并标记为待整理（D-02）。
             RescheduleTarget::Inbox => item.move_to_inbox(now),
             RescheduleTarget::Exact(scheduled) => item.set_scheduled(scheduled, now),

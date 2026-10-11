@@ -6,10 +6,12 @@
 
 use std::sync::Arc;
 
+use chrono::{Duration, NaiveDate};
 use nivlo_common::clock::Clock;
 
 use crate::error::{AppError, ErrorCode};
-use crate::ports::UnitOfWork;
+use crate::item::next_monday_after;
+use crate::ports::{Transaction, UnitOfWork};
 
 /// 已登记的设置 key。新增设置时在这里集中定义，避免魔法字符串散落各处。
 pub mod keys {
@@ -19,6 +21,67 @@ pub mod keys {
     pub const FLOATING_ALWAYS_ON_TOP: &str = "floating.always_on_top";
     /// 是否已经问过用户「开机自动启动」（有值即问过，不再询问）。
     pub const AUTOSTART_PROMPTED: &str = "autostart.prompted";
+    /// 「稍后」指哪一天（`next_monday` / `in_three_days` / `in_one_week`），缺省为下周一。
+    pub const LATER_RULE: &str = "schedule.later";
+}
+
+/// 「稍后」（推迟）指哪一天（实施计划 3.5）。
+///
+/// 悬浮窗与收集箱的「稍后」按钮都按这个规则算日期；默认是下周一。
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum LaterRule {
+    /// 严格晚于今天的下一个周一（今天是周一则为 7 天后）。
+    #[default]
+    NextMonday,
+    /// 3 天后。
+    InThreeDays,
+    /// 7 天后。
+    InOneWeek,
+}
+
+impl LaterRule {
+    /// 存进设置表的稳定文本。
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::NextMonday => "next_monday",
+            Self::InThreeDays => "in_three_days",
+            Self::InOneWeek => "in_one_week",
+        }
+    }
+
+    /// 从设置里的文本还原；不认识的值返回 `None`（调用方退回默认规则）。
+    pub fn parse(text: &str) -> Option<Self> {
+        match text {
+            "next_monday" => Some(Self::NextMonday),
+            "in_three_days" => Some(Self::InThreeDays),
+            "in_one_week" => Some(Self::InOneWeek),
+            _ => None,
+        }
+    }
+
+    /// 以 `today` 为基准，「稍后」是哪一天。
+    pub fn resolve(self, today: NaiveDate) -> NaiveDate {
+        match self {
+            Self::NextMonday => next_monday_after(today),
+            Self::InThreeDays => today + Duration::days(3),
+            Self::InOneWeek => today + Duration::days(7),
+        }
+    }
+}
+
+/// 在已开启的事务里读取「稍后」的规则；没设置过或值不认识时用默认规则。
+///
+/// # Errors
+///
+/// 存储错误。
+pub(crate) async fn read_later_rule(tx: &mut dyn Transaction) -> Result<LaterRule, AppError> {
+    Ok(tx
+        .settings()
+        .get(keys::LATER_RULE)
+        .await?
+        .as_deref()
+        .and_then(LaterRule::parse)
+        .unwrap_or_default())
 }
 
 /// 设置 key 允许的最大长度。
@@ -69,6 +132,25 @@ impl SettingsService {
         validate_key(key)?;
         let mut tx = self.uow.begin().await?;
         Ok(tx.settings().get(key).await?)
+    }
+
+    /// 读取「稍后」的规则；没设置过或值不认识时是默认的下周一。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误。
+    pub async fn later_rule(&self) -> Result<LaterRule, AppError> {
+        let mut tx = self.uow.begin().await?;
+        read_later_rule(&mut *tx).await
+    }
+
+    /// 修改「稍后」的规则。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误，事务已回滚。
+    pub async fn set_later_rule(&self, rule: LaterRule) -> Result<(), AppError> {
+        self.set(keys::LATER_RULE, rule.as_str()).await
     }
 
     /// 写入（覆盖）一个设置。

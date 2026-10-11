@@ -611,3 +611,15 @@ async fn a_failed_focus_leaves_the_window_unfocusable() {
     // 不能留下一个"可被激活"的悬浮窗：否则下次单击就会抢走别的应用的焦点。
     assert_eq!(lock(&f.port.state).focusable, Some(false));
 }
+
+#[tokio::test(start_paused = true)]
+async fn the_settings_page_can_change_always_on_top_while_running() {
+    let f = fixture(single(), (0, 0), &[]).await;
+    f.controller.restore().await;
+    assert_eq!(lock(&f.port.state).always_on_top, Some(true));
+
+    f.controller.set_always_on_top(false).unwrap();
+    assert_eq!(lock(&f.port.state).always_on_top, Some(false));
+    f.controller.set_always_on_top(true).unwrap();
+    assert_eq!(lock(&f.port.state).always_on_top, Some(true));
+}
