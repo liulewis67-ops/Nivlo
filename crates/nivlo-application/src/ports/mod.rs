@@ -2,6 +2,7 @@
 
 mod files;
 pub mod http;
+pub mod inspect;
 mod storage;
 
 pub use files::{AttachmentFiles, StoredFile};

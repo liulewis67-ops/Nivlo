@@ -30,7 +30,7 @@ fn every_example_and_builtin_definition_passes_schema_and_deep_validation() {
         assert!(result.is_ok(), "示例 {name}：{result:?}");
     }
     let builtins = builtin_workflows();
-    assert_eq!(builtins.len(), 8, "内置 Workflow 都应该能解析");
+    assert_eq!(builtins.len(), 11, "内置 Workflow 都应该能解析");
     for workflow in &builtins {
         let json = serde_json::to_string(workflow).unwrap_or_default();
         assert!(

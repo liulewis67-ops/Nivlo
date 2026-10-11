@@ -145,7 +145,7 @@ Phase 12 Backlog                        → 未排期
 | | 6.3 | Generic Web Page（页面元数据） | ✅ |
 | | 6.4 | Jira Issue（无 API 降级路径） | ✅ |
 | | 6.5 | GitHub Issue / PR | ✅ |
-| | 6.6 | 文件类 Workflow | ⬜ |
+| | 6.6 | 文件类 Workflow | ✅ |
 | | 6.7 | 自然语言日期解析 | ✅ |
 | **P7** | 7.1 | Desktop E2E 关键路径 | ⬜ |
 | | 7.2 | 性能预算与长稳验收 | ⬜ |
@@ -1154,7 +1154,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 6.6 文件类 Workflow
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.5
 - **目标**：PDF / Word / Markdown / Image / Generic File / Requirements / Meeting（产品文档 §14）。
 - **任务**：
@@ -1166,9 +1166,9 @@ Phase 12 Backlog                        → 未排期
   - 文件解析在 `spawn_blocking` 中执行，有文件大小上限。
   - 「Downloads 目录监听」属于自动捕获，标记为 ➖，移入 Backlog。
 - **验收标准**：
-  - [ ] 每种 fixture 文件生成预期的 Item 类型、标题与 Source。
-  - [ ] 拖入 500MB 文件不阻塞 UI，超过上限时只保存引用。
-- **完成记录**：—
+  - [x] 每种 fixture 文件生成预期的 Item 类型、标题与 Source。
+  - [x] 拖入 500MB 文件不阻塞 UI，超过上限时只保存引用。
+- **完成记录**：2026-10-11 完成。新增 `readFile` Step 与 `FileInspector` Port（`FsFileInspector` 在 `spawn_blocking` 里只读被拖入的那个文件，路径只来自 Workflow 输入；超过 32 MiB 不读内容，只保存引用——500 MB 稀疏文件测试在毫秒内返回且不读取）。`doc_meta` 提取标题：Markdown（front matter `title:` > 首个 ATX 标题 > setext，忽略代码块与 #tag）、PDF（`/Title` 字面 / 十六进制 / UTF-16BE / 转义）、Word（docx 压缩包里 `dc:title`）。内置 `builtin.file-document`（md / pdf / docx → 笔记，标题优先用文档标题，读不到用文件名）、`builtin.file-requirements`（`REQ-*` / `PRD-*` → 待办「处理 文件名」）、`builtin.file-meeting`（`meeting-*.md` → 带 meeting 标签的笔记）；Image 与 Generic File 沿用 `builtin.generic-image` / `generic-file`（笔记 + 附件 / 文件引用）。测试：`tests/files.rs`（每种文件的类型 / 标题 / 附件，超大 / 缺失 / 不可读退回文件名，多文件保持通用行为）、`doc_meta` 单元测试、`FsFileInspector` 测试。「Downloads 目录监听」属于自动捕获，按计划标记为 ➖ 移入 Backlog。偏差：legacy `.doc` 不提取标题（只当作通用文件）；Source 的文件路径 / MIME 沿用 5.5 的通用写入。
 
 ### 6.7 自然语言日期解析
 

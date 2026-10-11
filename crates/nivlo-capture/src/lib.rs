@@ -14,6 +14,10 @@
 //!
 //! 禁止依赖：`tauri`、其他 Adapter 的内部实现（参见后端规范 §3.1）。
 
+mod inspector;
+
+pub use inspector::FsFileInspector;
+
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Read;

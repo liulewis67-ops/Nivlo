@@ -113,6 +113,22 @@ impl Engine {
         )
     }
 
+    /// 标准配置，外加 `readFile` Step（经给定的文件检查 Port）。
+    #[must_use]
+    pub fn with_ports(
+        http: Option<Arc<dyn nivlo_application::ports::http::HttpPort>>,
+        files: Option<Arc<dyn nivlo_application::ports::inspect::FileInspector>>,
+    ) -> Self {
+        let mut registry = ExecutorRegistry::standard();
+        if let Some(port) = http {
+            registry.register(Arc::new(crate::http_step::HttpExecutor::new(port)));
+        }
+        if let Some(port) = files {
+            registry.register(Arc::new(crate::file_step::ReadFileExecutor::new(port)));
+        }
+        Self::new(registry, Arc::new(RegexCache::new()), DEFAULT_TIMEOUT)
+    }
+
     /// 标准配置，外加 `http` Step（经给定的网络 Port）。
     #[must_use]
     pub fn with_http(port: Arc<dyn nivlo_application::ports::http::HttpPort>) -> Self {

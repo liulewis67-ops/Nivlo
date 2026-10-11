@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.file-requirements",
+  "name": "需求文档（REQ-* / PRD-*）",
+  "description": "文件名以 REQ- 或 PRD- 开头的文件变成待办「处理 文件名」，并保存文件的引用。",
+  "version": 1,
+  "priority": 10,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": {
+    "all": [
+      { "field": "input.type", "op": "equals", "value": "file" },
+      {
+        "any": [
+          { "field": "file.name", "op": "glob", "value": "REQ-*" },
+          { "field": "file.name", "op": "glob", "value": "PRD-*" }
+        ]
+      }
+    ]
+  },
+  "steps": [
+    {
+      "type": "createItem",
+      "itemType": "todo",
+      "title": "处理 {{ file.name | truncate(120) }}",
+      "inInbox": true
+    }
+  ]
+}

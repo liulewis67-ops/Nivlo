@@ -29,6 +29,18 @@ const DEFINITIONS: &[(&str, &str)] = &[
         include_str!("../../../workflows/builtin/github-issue.workflow.json"),
     ),
     (
+        "file-document",
+        include_str!("../../../workflows/builtin/file-document.workflow.json"),
+    ),
+    (
+        "file-requirements",
+        include_str!("../../../workflows/builtin/file-requirements.workflow.json"),
+    ),
+    (
+        "file-meeting",
+        include_str!("../../../workflows/builtin/file-meeting.workflow.json"),
+    ),
+    (
         "jira-issue",
         include_str!("../../../workflows/builtin/jira-issue.workflow.json"),
     ),

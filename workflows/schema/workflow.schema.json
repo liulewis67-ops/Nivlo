@@ -111,6 +111,16 @@
         },
         {
           "type": "object",
+          "required": ["type", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "readFile" },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "from", "into"],
           "additionalProperties": false,
           "properties": {

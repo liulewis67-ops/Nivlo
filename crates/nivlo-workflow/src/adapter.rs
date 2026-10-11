@@ -41,6 +41,17 @@ impl WorkflowEngineAdapter {
         }
     }
 
+    /// 标准配置，按需启用 `http`（网络 Port）与 `readFile`（文件检查 Port）。
+    #[must_use]
+    pub fn with_ports(
+        http: Option<std::sync::Arc<dyn nivlo_application::ports::http::HttpPort>>,
+        files: Option<std::sync::Arc<dyn nivlo_application::ports::inspect::FileInspector>>,
+    ) -> Self {
+        Self {
+            engine: Engine::with_ports(http, files),
+        }
+    }
+
     /// 用指定的引擎创建适配器（测试注入假 Executor）。
     #[must_use]
     pub fn new(engine: Engine) -> Self {

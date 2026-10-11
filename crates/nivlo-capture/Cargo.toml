@@ -7,6 +7,9 @@ publish.workspace = true
 description = "Nivlo capture crate"
 
 [dependencies]
+async-trait.workspace = true
+nivlo-application.workspace = true
+tokio = { workspace = true, features = ["rt"] }
 nivlo-domain.workspace = true
 mime_guess.workspace = true
 thiserror.workspace = true
@@ -16,6 +19,7 @@ url.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
+tokio = { workspace = true, features = ["rt", "macros"] }
 
 [lints]
 workspace = true

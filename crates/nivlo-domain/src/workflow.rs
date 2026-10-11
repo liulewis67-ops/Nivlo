@@ -390,6 +390,20 @@ pub enum Step {
         #[serde(default)]
         optional: bool,
     },
+    /// 读取**输入里那个被拖入的文件**（只读、有大小上限），提取文档标题，
+    /// 存进 `vars.<into>_title`（Markdown 首个标题 / PDF Title / Word 标题；没有是空串）、
+    /// `_kind`（markdown / pdf / docx / other）、`_size`（字节）。
+    ///
+    /// 被拖入的文件视为隐式授予读取权限：只能读这一个文件，不能指定别的路径。
+    /// 超过大小上限的文件不读内容，只保存引用。输入不是单个文件（或读取失败）时，
+    /// `optional` 为真则全部字段为空，否则报错。
+    ReadFile {
+        /// 结果变量前缀。
+        into: String,
+        /// 读取失败 / 输入不是单个文件时是否继续。
+        #[serde(default)]
+        optional: bool,
+    },
     /// 从 HTML 里提取页面元数据，存进 `vars.<into>_title`、`_description`、`_site`、`_image`、`_icon`
     /// （没有的是空串，配合 `default` 过滤器使用）。
     ///
@@ -599,7 +613,7 @@ impl Workflow {
                         });
                     }
                 }
-                Step::HtmlMeta { into, .. } => {
+                Step::ReadFile { into, .. } | Step::HtmlMeta { into, .. } => {
                     if !valid_variable(into) {
                         return Err(WorkflowError::InvalidVariable(into.clone()));
                     }

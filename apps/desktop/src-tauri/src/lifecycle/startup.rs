@@ -101,13 +101,19 @@ pub fn build_app_state(
         Arc::new(event_bus.clone()),
     );
     // 网络只通过 HttpPort：Workflow 声明了 hosts 才能访问，初始化失败时退回没有 http Step 的引擎。
-    let engine: Arc<dyn WorkflowEngine> = match nivlo_integrations::ReqwestHttp::new() {
-        Ok(http) => Arc::new(WorkflowEngineAdapter::with_http(Arc::new(http))),
-        Err(error) => {
-            tracing::warn!(event = "http_unavailable", %error, "网络组件初始化失败，http Step 不可用");
-            Arc::new(WorkflowEngineAdapter::standard())
-        }
-    };
+    // 文件内容只通过 FileInspector：只读被拖入的那个文件，有大小上限。
+    let http: Option<Arc<dyn nivlo_application::ports::http::HttpPort>> =
+        match nivlo_integrations::ReqwestHttp::new() {
+            Ok(http) => Some(Arc::new(http)),
+            Err(error) => {
+                tracing::warn!(event = "http_unavailable", %error, "网络组件初始化失败，http Step 不可用");
+                None
+            }
+        };
+    let engine: Arc<dyn WorkflowEngine> = Arc::new(WorkflowEngineAdapter::with_ports(
+        http,
+        Some(Arc::new(nivlo_capture::FsFileInspector)),
+    ));
     // 网页标题等联网的补全在后台队列里做，捕获本身不等网络。
     let (enrichment_tx, enrichment_rx) = tokio::sync::mpsc::unbounded_channel();
     let capture = CaptureService::new(

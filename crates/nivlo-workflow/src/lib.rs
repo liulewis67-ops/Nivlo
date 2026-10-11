@@ -14,9 +14,11 @@
 
 pub mod adapter;
 pub mod builtin;
+pub mod doc_meta;
 pub mod engine;
 pub mod executor;
 pub mod facts;
+pub mod file_step;
 pub mod glob;
 pub mod html_meta;
 pub mod http_step;

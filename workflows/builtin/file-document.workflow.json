@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.file-document",
+  "name": "文档（Markdown / PDF / Word）",
+  "description": "拖入的 Markdown、PDF、Word 文件变成笔记，标题优先用文档自己的标题（Markdown 的首个标题、PDF / Word 的标题属性），读不到就用文件名；只保存文件的引用，不复制文件。超过 32 MB 的文件不读内容，只保存引用。",
+  "version": 1,
+  "priority": 5,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": {
+    "all": [
+      { "field": "input.type", "op": "equals", "value": "file" },
+      {
+        "any": [
+          { "field": "file.extension", "op": "equals", "value": "md" },
+          { "field": "file.extension", "op": "equals", "value": "markdown" },
+          { "field": "file.extension", "op": "equals", "value": "pdf" },
+          { "field": "file.extension", "op": "equals", "value": "docx" }
+        ]
+      }
+    ]
+  },
+  "steps": [
+    { "type": "readFile", "into": "doc", "optional": true },
+    {
+      "type": "createItem",
+      "itemType": "note",
+      "title": "{{ vars.doc_title | default(file.name) | truncate(120) }}",
+      "inInbox": true
+    }
+  ]
+}
