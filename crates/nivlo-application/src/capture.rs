@@ -441,7 +441,12 @@ impl CaptureService {
             input_kind: kind_name(&request.input).to_owned(),
             input_summary: summarize_input(&request.input),
             status,
-            error_kind: failure.map(|f| f.kind.as_str().to_owned()),
+            // 动作附在失败分类后面（`user_action_required#OPEN_INTEGRATION_SETTINGS:jira`），
+            // 这样不需要为运行记录增加列；界面按 `#` 拆开。
+            error_kind: failure.map(|f| match &f.action {
+                Some(action) => format!("{}#{}", f.kind.as_str(), action.code()),
+                None => f.kind.as_str().to_owned(),
+            }),
             error_message: failure.map(|f| f.message.clone()),
             items_created: u32::try_from(items_created).unwrap_or(u32::MAX),
             duration_ms: run.duration_ms,

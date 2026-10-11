@@ -9,6 +9,7 @@ description = "Nivlo integrations crate"
 [dependencies]
 async-trait.workspace = true
 nivlo-application.workspace = true
+nivlo-platform.workspace = true
 reqwest.workspace = true
 tokio = { workspace = true, features = ["time", "rt"] }
 tracing.workspace = true

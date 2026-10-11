@@ -40,6 +40,9 @@ pub enum WorkflowError {
     /// Step 数量超过上限。
     #[error("Workflow 最多 {MAX_WORKFLOW_STEPS} 个 Step，实际 {0} 个")]
     TooManySteps(usize),
+    /// integration Step 的集成标识不合法。
+    #[error("integration Step 的集成标识不合法：{0}")]
+    InvalidIntegration(String),
     /// script Step 的源码为空。
     #[error("script Step 的源码不能为空")]
     EmptyScript,
@@ -460,6 +463,25 @@ pub enum Step {
         #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
         metadata: BTreeMap<String, String>,
     },
+    /// 调用一个已注册的第三方集成（Jira、GitHub……），返回的字段存进 `vars.<into>_<字段>`。
+    ///
+    /// 凭据由集成适配器从系统凭据库读取并附在请求上，Workflow 与脚本都拿不到；
+    /// 只能访问 `permissions.hosts` 声明过的主机。没有连接 / 凭据被拒绝时，
+    /// 用户会看到「需要连接 X」和跳转到集成设置的按钮。`optional` 为真时，连不上或没授权不算错误。
+    Integration {
+        /// 集成标识（如 `jira`）。
+        integration: String,
+        /// 操作名（如 `issue`）。
+        operation: String,
+        /// 参数：名称 → 模板。
+        #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+        params: BTreeMap<String, String>,
+        /// 结果变量前缀。
+        into: String,
+        /// 连不上 / 没授权时是否继续。
+        #[serde(default)]
+        optional: bool,
+    },
     /// 运行一段 JavaScript（QuickJS 沙箱），返回值按标准 Item 结构直接产出一条 Item 草稿。
     ///
     /// 脚本看到的 `ctx.input` 是输入字段、`ctx.vars` 是已有变量；除此之外只能使用 `hosts` 声明的网络主机，
@@ -643,6 +665,25 @@ impl Workflow {
                 Step::Http { into, .. } => {
                     if !valid_variable(into) {
                         return Err(WorkflowError::InvalidVariable(into.clone()));
+                    }
+                    if !self.permissions.network || self.permissions.hosts.is_empty() {
+                        return Err(WorkflowError::NetworkNotDeclared);
+                    }
+                }
+                Step::Integration {
+                    integration, into, ..
+                } => {
+                    if !valid_variable(into) {
+                        return Err(WorkflowError::InvalidVariable(into.clone()));
+                    }
+                    if integration.is_empty()
+                        || !integration.chars().all(|c| {
+                            c.is_ascii_lowercase()
+                                || c.is_ascii_digit()
+                                || matches!(c, '-' | '_' | '.')
+                        })
+                    {
+                        return Err(WorkflowError::InvalidIntegration(integration.clone()));
                     }
                     if !self.permissions.network || self.permissions.hosts.is_empty() {
                         return Err(WorkflowError::NetworkNotDeclared);

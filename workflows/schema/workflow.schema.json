@@ -134,6 +134,19 @@
         },
         {
           "type": "object",
+          "required": ["type", "integration", "operation", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "integration" },
+            "integration": { "type": "string", "pattern": "^[a-z0-9._-]{1,40}$" },
+            "operation": { "type": "string", "minLength": 1, "maxLength": 60 },
+            "params": { "type": "object", "additionalProperties": { "type": "string" } },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "source"],
           "additionalProperties": false,
           "properties": {

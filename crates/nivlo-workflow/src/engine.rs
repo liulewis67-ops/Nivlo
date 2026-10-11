@@ -131,6 +131,20 @@ impl Engine {
         Self::new(registry, Arc::new(RegexCache::new()), DEFAULT_TIMEOUT)
     }
 
+    /// 在已有配置上追加 `integration` Step（经给定的集成注册表与网络 Port）。
+    #[must_use]
+    pub fn with_integrations(
+        mut self,
+        registry: Arc<nivlo_application::ports::integration::IntegrationRegistry>,
+        http: Arc<dyn nivlo_application::ports::http::HttpPort>,
+    ) -> Self {
+        self.registry
+            .register(Arc::new(crate::integration_step::IntegrationExecutor::new(
+                registry, http,
+            )));
+        self
+    }
+
     /// 在已有配置上追加 `script` Step（经给定的 Script Worker、网络 Port 与授权记录）。
     #[must_use]
     pub fn with_script(
@@ -180,6 +194,7 @@ impl Engine {
                     StepError {
                         kind: ErrorKind::Timeout,
                         message: format!("Workflow 超过 {} 秒仍未完成", self.timeout.as_secs()),
+                        action: None,
                     },
                     None,
                 )),
@@ -222,7 +237,9 @@ impl Engine {
         for (index, step) in workflow.steps.iter().enumerate() {
             let kind = step_kind(step);
             // 即时运行（不联网）：`http` Step 直接跳过，不需要注册执行器；后续 Step 用 optional / default 兜底。
-            if ctx.stopped || (!ctx.network && matches!(step, Step::Http { .. })) {
+            if ctx.stopped
+                || (!ctx.network && matches!(step, Step::Http { .. } | Step::Integration { .. }))
+            {
                 steps.push(StepRecord {
                     index,
                     kind,

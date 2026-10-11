@@ -38,6 +38,7 @@ fn step_error(error: &HttpError) -> StepError {
     StepError {
         kind,
         message: error.to_string(),
+        action: None,
     }
 }
 
@@ -52,6 +53,7 @@ fn status_error(status: u16) -> StepError {
     StepError {
         kind,
         message: format!("{message}（HTTP {status}）"),
+        action: None,
     }
 }
 
@@ -83,6 +85,7 @@ impl StepExecutor for HttpExecutor {
             return Err(StepError {
                 kind: ErrorKind::PermissionDenied,
                 message: "这个 Workflow 没有声明网络权限".to_owned(),
+                action: None,
             });
         }
         let target = ctx.render(url)?;

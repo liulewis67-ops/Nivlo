@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Input } from "@/components";
 import { toAppError } from "@/lib/errors";
 import { ipc } from "@/lib/ipc";
+import { FailureActionButton } from "./FailureActionButton";
 import type { DryRunResultDto } from "@/lib/ipc";
 import { cx } from "@/lib/cx";
 
@@ -108,9 +109,12 @@ function DryRunResult({ result }: DryRunResultProps) {
   return (
     <div aria-live="polite" className="flex flex-col gap-3 rounded-md border border-border p-3">
       {result.error !== null ? (
-        <p className="text-sm text-danger">
-          {t("workflows.dryRun.failed", { reason: result.error })}
-        </p>
+        <div className="flex flex-col items-start gap-2">
+          <p className="text-sm text-danger">
+            {t("workflows.dryRun.failed", { reason: result.error })}
+          </p>
+          <FailureActionButton action={result.errorAction} />
+        </div>
       ) : result.items.length === 0 ? (
         <p className="text-sm text-muted">{t("workflows.dryRun.nothing")}</p>
       ) : (

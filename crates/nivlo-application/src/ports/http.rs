@@ -15,6 +15,7 @@ use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::time::Duration;
 
 use async_trait::async_trait;
+use nivlo_platform::credential::Secret;
 use url::Url;
 
 /// 请求被拒绝或失败的原因。
@@ -54,6 +55,9 @@ pub struct HttpRequest {
     pub max_bytes: usize,
     /// 整个请求（含重定向）的超时。
     pub timeout: Duration,
+    /// 附加的请求头（如认证信息）。值是 [`Secret`]：`Debug` 输出会被遮蔽，日志里不会出现；
+    /// 适配器只会把它们发给**最初的那个来源**，重定向到别处时丢弃。
+    pub headers: Vec<(String, Secret)>,
 }
 
 impl HttpRequest {
@@ -70,7 +74,15 @@ impl HttpRequest {
             url: url.into(),
             max_bytes: Self::DEFAULT_MAX_BYTES,
             timeout: Self::DEFAULT_TIMEOUT,
+            headers: Vec::new(),
         }
+    }
+
+    /// 追加一个请求头。
+    #[must_use]
+    pub fn with_header(mut self, name: impl Into<String>, value: Secret) -> Self {
+        self.headers.push((name.into(), value));
+        self
     }
 }
 

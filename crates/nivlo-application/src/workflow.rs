@@ -82,9 +82,36 @@ impl FailureKind {
     }
 }
 
+/// 失败之后界面应当提供的「下一步」动作。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FailureAction {
+    /// 打开集成设置去连接 / 重新连接某个集成（带集成标识，如 `jira`）。
+    OpenIntegrationSettings {
+        /// 集成标识。
+        integration: String,
+    },
+    /// 去 Workflow 的编辑区确认脚本权限。
+    ConfirmScriptPermissions,
+}
+
+impl FailureAction {
+    /// 稳定的文本，存进运行记录、通过 IPC 传给前端：`OPEN_INTEGRATION_SETTINGS:jira` / `CONFIRM_SCRIPT_PERMISSIONS`。
+    #[must_use]
+    pub fn code(&self) -> String {
+        match self {
+            Self::OpenIntegrationSettings { integration } => {
+                format!("OPEN_INTEGRATION_SETTINGS:{integration}")
+            }
+            Self::ConfirmScriptPermissions => "CONFIRM_SCRIPT_PERMISSIONS".to_owned(),
+        }
+    }
+}
+
 /// Workflow 运行失败。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WorkflowFailure {
+    /// 下一步动作（如「去连接 Jira」）；没有时为 `None`。
+    pub action: Option<FailureAction>,
     /// 分类。
     pub kind: FailureKind,
     /// 说明（不含输入全文）。

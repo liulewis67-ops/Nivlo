@@ -180,6 +180,11 @@ pub fn check_workflow(workflow: &Workflow, regexes: &RegexCache) -> Result<(), V
                 }
             }
             Step::ReadFile { .. } | Step::Script { .. } => {}
+            Step::Integration { params, .. } => {
+                for (name, source) in params {
+                    check_template(&at(&format!("params/{name}")), source, &mut issues);
+                }
+            }
             Step::Http { url, .. } => check_template(&at("url"), url, &mut issues),
             Step::AddTag { tag } => check_template(&at("tag"), tag, &mut issues),
         }

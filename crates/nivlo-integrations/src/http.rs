@@ -65,17 +65,23 @@ impl HttpPort for ReqwestHttp {
     ) -> Result<HttpResponse, HttpError> {
         let deadline = Instant::now() + request.timeout;
         let mut current = policy.check(&request.url)?;
+        // 认证信息只发给最初的那个来源（协议 + 主机 + 端口）；重定向到别处时不带。
+        let origin = current.origin();
         for _ in 0..=MAX_REDIRECTS {
             let remaining = deadline
                 .checked_duration_since(Instant::now())
                 .ok_or(HttpError::Timeout)?;
-            let response = self
-                .client
-                .get(current.clone())
-                .timeout(remaining)
-                .send()
-                .await
-                .map_err(|e| classify(&e))?;
+            let mut builder = self.client.get(current.clone()).timeout(remaining);
+            if current.origin() == origin {
+                for (name, value) in &request.headers {
+                    let mut header = reqwest::header::HeaderValue::from_str(value.expose())
+                        .map_err(|_| HttpError::InvalidUrl("请求头的值不合法".to_owned()))?;
+                    // 标记为敏感：reqwest 的调试输出与 HTTP/2 头压缩都会特殊处理。
+                    header.set_sensitive(true);
+                    builder = builder.header(name.as_str(), header);
+                }
+            }
+            let response = builder.send().await.map_err(|e| classify(&e))?;
             let status = response.status();
             tracing::debug!(
                 event = "http_response",

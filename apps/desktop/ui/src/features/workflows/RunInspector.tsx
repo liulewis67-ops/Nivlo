@@ -7,6 +7,7 @@ import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { StepList } from "./DryRunPanel";
+import { FailureActionButton } from "./FailureActionButton";
 
 /**
  * 简单的 Run Inspector：最近的 Workflow 执行（新的在前），点开看每一步的状态与耗时。
@@ -71,6 +72,7 @@ export function RunInspector() {
                     {t("workflows.runs.fellBack", { reason: run.errorMessage })}
                   </p>
                 )}
+                <FailureActionButton action={run.errorAction} />
                 <p className="text-xs text-muted">
                   {t("workflows.runs.summary", {
                     count: run.itemsCreated,

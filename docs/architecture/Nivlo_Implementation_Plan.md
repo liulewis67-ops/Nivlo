@@ -1458,15 +1458,15 @@ Phase 12 Backlog                        → 未排期
 
 ### 9.2 Integration Registry 与 Integration Step
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：9.1、6.1
 - **任务**：
   - `IntegrationRegistry`；`Integration` Step Executor；HttpPort 自动注入认证信息。
   - 401 / 403 → `UserActionRequired`，携带 `OPEN_INTEGRATION_SETTINGS` Action。
 - **验收标准**：
-  - [ ] Workflow Engine 中没有任何具体 Integration 代码（代码审查）。
-  - [ ] 测试：401 时 UI 显示「需要连接 Jira」及跳转按钮，而不是 HTTP 错误堆栈。
-- **完成记录**：—
+  - [x] Workflow Engine 中没有任何具体 Integration 代码（代码审查：`nivlo-workflow` 只依赖 `nivlo_application::ports::integration` 的 `Integration` / `IntegrationRegistry` 抽象；其中出现 Jira / GitHub 字样的只有内置 Workflow 数据、匹配器与测试样例；测试用的是假集成 `fakehub`）。
+  - [x] 测试：未连接 / 401·403 时，后端给出 `UserActionRequired` + `OPEN_INTEGRATION_SETTINGS:<集成>`（`tests/integration_step.rs`，断言消息不含 HTTP）；界面试运行与运行记录显示「需要连接 X」并提供「打开设置，连接 X」按钮（`workflows.test.tsx`）。注：真实 Jira 适配器在 9.3，401 → `IntegrationError::Unauthorized` 的映射由它负责。
+- **完成记录**：2026-10-12：`nivlo-application::ports::integration`（`Integration` trait、`IntegrationRegistry`、`IntegrationCall` / `IntegrationError`）；`Step::Integration { integration, operation, params, into, optional }`（JSON Schema、校验：需声明网络权限与主机、`params` 模板检查、即时运行跳过）；`IntegrationExecutor`（`optional` 只吞连接类失败，参数 / 权限错误永远报出）；`HttpRequest.headers`（值为 `Secret`，`Debug` 遮蔽；`ReqwestHttp` 只把它发给最初的来源，重定向到别的主机名 / 端口时丢弃，有测试）；`FailureAction`（`OPEN_INTEGRATION_SETTINGS:<id>` / `CONFIRM_SCRIPT_PERMISSIONS`）沿 `StepError` → `WorkflowFailure` → IPC，运行记录把动作附在 `error_kind` 的 `#` 之后（不改表结构）。桌面端启动时创建空注册表并接上 Integration Step，具体集成在 9.3 / 9.4 注册。**未做**：设置页「集成」区块（9.5），所以按钮目前只能跳到设置页，不能定位到具体集成；`CONFIRM_SCRIPT_PERMISSIONS` 动作还没有界面按钮（编辑区已有确认条）。
 
 ### 9.3 Jira API
 

@@ -810,6 +810,9 @@
       "confirm": "Import",
       "cancel": "Cancel",
       "done": "Imported “{{name}}” (disabled)"
+    },
+    "action": {
+      "openIntegrationSettings": "Open settings to connect {{name}}"
     }
   },
   "dateFormat": {

@@ -22,6 +22,7 @@ pub mod file_step;
 pub mod glob;
 pub mod html_meta;
 pub mod http_step;
+pub mod integration_step;
 pub mod jsonpath;
 pub mod matcher;
 pub mod pattern;

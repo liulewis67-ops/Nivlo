@@ -113,19 +113,25 @@ pub fn build_app_state(
         };
     // 脚本只在独立的 Worker 线程里运行；授权记录存在 settings 表（指纹变化需重新确认）。
     let script_worker = nivlo_script::ScriptWorker::spawn();
-    let engine: Arc<dyn WorkflowEngine> = Arc::new(
-        WorkflowEngineAdapter::with_ports(
-            http.clone(),
-            Some(Arc::new(nivlo_capture::FsFileInspector)),
-        )
-        .with_script(
-            script_worker.handle(),
-            http,
-            Arc::new(crate::script_grants::SettingsScriptGrants::new(
-                settings.clone(),
-            )),
-        ),
+    let mut adapter = WorkflowEngineAdapter::with_ports(
+        http.clone(),
+        Some(Arc::new(nivlo_capture::FsFileInspector)),
+    )
+    .with_script(
+        script_worker.handle(),
+        http.clone(),
+        Arc::new(crate::script_grants::SettingsScriptGrants::new(
+            settings.clone(),
+        )),
     );
+    // 第三方集成（Jira / GitHub，9.3 / 9.4 注册具体实现）只经 IntegrationRegistry 抽象调用。
+    if let Some(http) = http {
+        adapter = adapter.with_integrations(
+            Arc::new(nivlo_application::ports::integration::IntegrationRegistry::new()),
+            http,
+        );
+    }
+    let engine: Arc<dyn WorkflowEngine> = Arc::new(adapter);
     // 网页标题等联网的补全在后台队列里做，捕获本身不等网络。
     let (enrichment_tx, enrichment_rx) = tokio::sync::mpsc::unbounded_channel();
     let capture = CaptureService::new(

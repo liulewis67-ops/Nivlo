@@ -15,6 +15,7 @@ url.workspace = true
 encoding_rs.workspace = true
 nivlo-common.workspace = true
 nivlo-domain.workspace = true
+nivlo-platform.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
 tokio = { workspace = true, features = ["macros", "sync"] }

@@ -14,6 +14,7 @@ use super::ReqwestHttp;
 async fn serve() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
+    let port = addr.port();
     tokio::spawn(async move {
         loop {
             let Ok((mut socket, _)) = listener.accept().await else {
@@ -31,7 +32,21 @@ async fn serve() -> String {
                     .next()
                     .unwrap_or("/")
                     .to_owned();
+                // 把收到的 Authorization 头放进响应体，方便测试断言它有没有被带上。
+                let auth = head
+                    .lines()
+                    .find_map(|line| {
+                        let (name, value) = line.split_once(':')?;
+                        name.eq_ignore_ascii_case("authorization")
+                            .then(|| value.trim().to_owned())
+                    })
+                    .unwrap_or_else(|| "(none)".to_owned());
                 let response = match path.as_str() {
+                    "/echo-auth" => ok("text/plain", auth.as_bytes()),
+                    "/redirect-same-origin" => redirect("/echo-auth"),
+                    "/redirect-other-host" => {
+                        redirect(&format!("http://localhost:{port}/echo-auth"))
+                    }
                     "/hello" => ok("text/plain; charset=utf-8", "你好".as_bytes()),
                     "/redirect-in" => redirect("/hello"),
                     "/redirect-out" => redirect("http://evil.example/steal"),
@@ -192,4 +207,37 @@ async fn a_slow_server_times_out() {
     request.timeout = Duration::from_millis(150);
     let error = http.get(&request, &local_policy()).await.unwrap_err();
     assert_eq!(error, HttpError::Timeout);
+}
+
+#[tokio::test]
+async fn auth_headers_are_sent_to_the_original_origin_only() {
+    use nivlo_platform::credential::Secret;
+
+    let addr = serve().await;
+    let http = ReqwestHttp::new().unwrap();
+    let policy = HostPolicy::new(["127.0.0.1", "localhost"]).allowing_private_network_for_tests();
+    let request = |path: &str| {
+        HttpRequest::get(format!("http://{addr}{path}"))
+            .with_header("Authorization", Secret::new("Bearer t0k3n"))
+    };
+
+    // 直接请求、同源重定向：带上。
+    let direct = http.get(&request("/echo-auth"), &policy).await.unwrap();
+    assert_eq!(direct.text(), "Bearer t0k3n");
+    let same = http
+        .get(&request("/redirect-same-origin"), &policy)
+        .await
+        .unwrap();
+    assert_eq!(same.text(), "Bearer t0k3n");
+
+    // 重定向到另一个主机名（即使是同一台机器、同一个端口）：不带。
+    let cross = http
+        .get(&request("/redirect-other-host"), &policy)
+        .await
+        .unwrap();
+    assert_eq!(cross.text(), "(none)");
+
+    // Debug 输出里没有请求头的值。
+    let debug = format!("{:?}", request("/x"));
+    assert!(!debug.contains("t0k3n"), "{debug}");
 }

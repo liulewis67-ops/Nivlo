@@ -892,6 +892,8 @@ export type DryRunResultDto = {
 	steps: StepReportDto[],
 	/**  失败说明；成功为 `None`。 */
 	error: string | null,
+	/**  失败后界面应当提供的动作（如 `OPEN_INTEGRATION_SETTINGS:jira`）；没有为 `None`。 */
+	errorAction: string | null,
 	/**  总耗时（毫秒）。 */
 	durationMs: number,
 };
@@ -1420,6 +1422,8 @@ export type WorkflowRunDto = {
 	status: string,
 	/**  失败说明。 */
 	errorMessage: string | null,
+	/**  失败后界面应当提供的动作（如 `OPEN_INTEGRATION_SETTINGS:jira`）；没有为 `None`。 */
+	errorAction: string | null,
 	/**  创建的 Item 数。 */
 	itemsCreated: number,
 	/**  总耗时（毫秒）。 */

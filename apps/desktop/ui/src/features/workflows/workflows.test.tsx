@@ -139,6 +139,7 @@ describe("Workflow 管理页", () => {
       inputKind: "url",
       inputSummary: "example.com/a",
       status: "failed",
+      errorAction: null,
       errorMessage: "boom",
       itemsCreated: 1,
       durationMs: 4,
@@ -300,5 +301,35 @@ describe("导入与导出", () => {
     await waitFor(() =>
       expect(ipc.calls.some((c) => c.startsWith("exportWorkflowFile:"))).toBe(true),
     );
+  });
+});
+
+describe("集成失败的下一步", () => {
+  it("需要连接时试运行显示「需要连接」和跳转按钮，而不是 HTTP 错误", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "新建规则" }));
+    await userEvent.click(await screen.findByRole("tab", { name: "JSON" }));
+    const editor = screen.getByRole("textbox", { name: "JSON" });
+    fireEvent.change(editor, {
+      target: {
+        value: JSON.stringify({
+          schemaVersion: 1,
+          id: "user.hub",
+          name: "集成",
+          matcher: { field: "input.type", op: "equals", value: "text" },
+          permissions: { network: true, hosts: ["jira.example.com"] },
+          steps: [
+            { type: "integration", integration: "jira", operation: "issue", into: "j" },
+            { type: "createItem", itemType: "todo", title: "x" },
+          ],
+        }),
+      },
+    });
+    await userEvent.type(screen.getByLabelText("样例"), "APP-1");
+    await userEvent.click(screen.getByRole("button", { name: "试运行" }));
+    expect((await screen.findAllByText(/需要连接 jira/)).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/HTTP/)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "打开设置，连接 jira" })).toBeInTheDocument();
   });
 });

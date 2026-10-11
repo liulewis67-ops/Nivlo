@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::NaiveDate;
+use nivlo_application::workflow::FailureAction;
 use nivlo_domain::capture::FileRef;
 use nivlo_domain::item::{ItemType, Priority};
 use nivlo_domain::workflow::{ForEach, Op, Permissions, Step};
@@ -44,6 +45,8 @@ pub struct StepError {
     pub kind: ErrorKind,
     /// 面向用户的说明（不含敏感内容全文）。
     pub message: String,
+    /// 界面应当提供的下一步动作（如去连接某个集成）。
+    pub action: Option<FailureAction>,
 }
 
 impl StepError {
@@ -52,6 +55,7 @@ impl StepError {
         Self {
             kind: ErrorKind::InvalidInput,
             message: message.into(),
+            action: None,
         }
     }
 
@@ -60,7 +64,15 @@ impl StepError {
         Self {
             kind: ErrorKind::Fatal,
             message: message.into(),
+            action: None,
         }
+    }
+
+    /// 附上下一步动作。
+    #[must_use]
+    pub fn with_action(mut self, action: FailureAction) -> Self {
+        self.action = Some(action);
+        self
     }
 }
 
@@ -180,6 +192,7 @@ pub fn step_kind(step: &Step) -> &'static str {
         Step::HtmlMeta { .. } => "htmlMeta",
         Step::ReadFile { .. } => "readFile",
         Step::Script { .. } => "script",
+        Step::Integration { .. } => "integration",
     }
 }
 

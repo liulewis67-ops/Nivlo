@@ -806,6 +806,9 @@
       "confirm": "导入",
       "cancel": "取消",
       "done": "已导入“{{name}}”（未启用）"
+    },
+    "action": {
+      "openIntegrationSettings": "打开设置，连接 {{name}}"
     }
   },
   "dateFormat": {

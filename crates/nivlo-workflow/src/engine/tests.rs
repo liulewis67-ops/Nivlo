@@ -176,6 +176,7 @@ async fn a_failing_step_short_circuits_with_its_classification() {
         failing.result = Err(StepError {
             kind,
             message: "坏了".into(),
+            action: None,
         });
         let engine = fake_engine(
             vec![fake("transform", &log), failing, fake("createItem", &log)],

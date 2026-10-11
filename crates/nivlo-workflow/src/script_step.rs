@@ -12,6 +12,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use nivlo_application::ports::http::{HostPolicy, HttpPort, HttpRequest};
+use nivlo_application::workflow::FailureAction;
 use nivlo_domain::item::ItemType;
 use nivlo_domain::workflow::{Permissions, Step};
 use nivlo_script::{
@@ -138,7 +139,11 @@ fn step_error(error: &ScriptError) -> StepError {
         } => format!("脚本出错（第 {line} 行）：{message}"),
         other => other.to_string(),
     };
-    StepError { kind, message }
+    StepError {
+        kind,
+        message,
+        action: None,
+    }
 }
 
 /// 取出变量表里某个前缀下的条目，组成 JSON 对象文本（键去掉前缀）。
@@ -233,6 +238,7 @@ impl StepExecutor for ScriptExecutor {
             return Err(StepError {
                 kind: ErrorKind::PermissionDenied,
                 message: "脚本声明的权限超出了 Workflow 的权限".to_owned(),
+                action: None,
             });
         }
         // 没有声明任何主机的脚本没有额外能力（纯计算，受时间 / 内存上限约束），不需要用户确认。
@@ -241,6 +247,7 @@ impl StepExecutor for ScriptExecutor {
             return Err(StepError {
                 kind: ErrorKind::UserActionRequired,
                 message: "脚本需要先在 Workflow 设置里确认它的权限".to_owned(),
+                action: Some(FailureAction::ConfirmScriptPermissions),
             });
         }
 

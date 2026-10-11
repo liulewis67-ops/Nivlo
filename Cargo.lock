@@ -2737,6 +2737,7 @@ dependencies = [
  "nivlo-capture",
  "nivlo-common",
  "nivlo-domain",
+ "nivlo-platform",
  "serde_json",
  "thiserror 2.0.21",
  "tokio",
@@ -2841,6 +2842,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "nivlo-application",
+ "nivlo-platform",
  "reqwest",
  "tokio",
  "tracing",

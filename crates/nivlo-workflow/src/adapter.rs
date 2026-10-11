@@ -52,6 +52,18 @@ impl WorkflowEngineAdapter {
         }
     }
 
+    /// 在已有配置上启用 `integration` Step。
+    #[must_use]
+    pub fn with_integrations(
+        self,
+        registry: std::sync::Arc<nivlo_application::ports::integration::IntegrationRegistry>,
+        http: std::sync::Arc<dyn nivlo_application::ports::http::HttpPort>,
+    ) -> Self {
+        Self {
+            engine: self.engine.with_integrations(registry, http),
+        }
+    }
+
     /// 在已有配置上启用 `script` Step。
     #[must_use]
     pub fn with_script(
@@ -144,6 +156,7 @@ fn result_of(
         Err(failure) => (
             Err(WorkflowFailure {
                 kind: failure_kind(failure.error.kind),
+                action: failure.error.action,
                 message: failure.error.message,
                 failed_step: failure.failed_step,
             }),

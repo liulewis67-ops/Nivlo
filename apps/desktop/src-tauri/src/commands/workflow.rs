@@ -210,6 +210,8 @@ pub struct DryRunResultDto {
     pub steps: Vec<StepReportDto>,
     /// 失败说明；成功为 `None`。
     pub error: Option<String>,
+    /// 失败后界面应当提供的动作（如 `OPEN_INTEGRATION_SETTINGS:jira`）；没有为 `None`。
+    pub error_action: Option<String>,
     /// 总耗时（毫秒）。
     pub duration_ms: u32,
 }
@@ -217,14 +219,22 @@ pub struct DryRunResultDto {
 impl From<&WorkflowRunResult> for DryRunResultDto {
     /// Application → DTO。
     fn from(value: &WorkflowRunResult) -> Self {
-        let (items, error) = match &value.result {
-            Ok(items) => (items.iter().map(PlannedItemDto::from).collect(), None),
-            Err(failure) => (Vec::new(), Some(failure.message.clone())),
+        let (items, error, error_action) = match &value.result {
+            Ok(items) => (items.iter().map(PlannedItemDto::from).collect(), None, None),
+            Err(failure) => (
+                Vec::new(),
+                Some(failure.message.clone()),
+                failure
+                    .action
+                    .as_ref()
+                    .map(nivlo_application::workflow::FailureAction::code),
+            ),
         };
         Self {
             items,
             steps: value.steps.iter().map(StepReportDto::from).collect(),
             error,
+            error_action,
             duration_ms: u32::try_from(value.duration_ms).unwrap_or(u32::MAX),
         }
     }
@@ -248,6 +258,8 @@ pub struct WorkflowRunDto {
     pub status: String,
     /// 失败说明。
     pub error_message: Option<String>,
+    /// 失败后界面应当提供的动作（如 `OPEN_INTEGRATION_SETTINGS:jira`）；没有为 `None`。
+    pub error_action: Option<String>,
     /// 创建的 Item 数。
     pub items_created: u32,
     /// 总耗时（毫秒）。
@@ -269,6 +281,12 @@ impl From<&RunRecord> for WorkflowRunDto {
             input_summary: value.input_summary.clone(),
             status: value.status.as_str().to_owned(),
             error_message: value.error_message.clone(),
+            // 运行记录的失败分类里 `#` 之后是动作（见 `CaptureService` 写记录的地方）。
+            error_action: value
+                .error_kind
+                .as_deref()
+                .and_then(|kind| kind.split_once('#'))
+                .map(|(_, action)| action.to_owned()),
             items_created: value.items_created,
             duration_ms: u32::try_from(value.duration_ms).unwrap_or(u32::MAX),
             started_at: format_utc(value.started_at),

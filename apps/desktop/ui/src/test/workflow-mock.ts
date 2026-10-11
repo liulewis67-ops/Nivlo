@@ -508,7 +508,31 @@ export function createWorkflowMock(): WorkflowMock {
               },
             ],
             error: null,
+            errorAction: null,
             durationMs: 2,
+          });
+        }
+        // 内存版没有任何已连接的集成：`integration` Step 总是「需要连接」。
+        const integrationStep = (definition.steps as Record<string, unknown>[]).find(
+          (s) => s.type === "integration",
+        );
+        if (integrationStep !== undefined) {
+          const name = String(integrationStep.integration);
+          return Promise.resolve({
+            items: [],
+            steps: [
+              {
+                index: 0,
+                kind: "integration",
+                outcome: "failed",
+                durationMs: 1,
+                message: `需要连接 ${name}`,
+                logs: [],
+              },
+            ],
+            error: `需要连接 ${name}`,
+            errorAction: `OPEN_INTEGRATION_SETTINGS:${name}`,
+            durationMs: 1,
           });
         }
         const create = (definition.steps as Record<string, unknown>[]).find(
@@ -538,6 +562,7 @@ export function createWorkflowMock(): WorkflowMock {
             logs: [],
           })),
           error: null,
+          errorAction: null,
           durationMs: 1,
         });
       } catch (error) {
