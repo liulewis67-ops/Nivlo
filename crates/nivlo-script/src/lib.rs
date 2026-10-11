@@ -11,6 +11,8 @@
 //!
 //! 禁止依赖：`tauri`、其他 Adapter 的内部实现（参见后端规范 §3.1）。
 
+mod step;
+
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::sync::{Arc, Mutex, PoisonError};
@@ -19,6 +21,9 @@ use std::time::{Duration, Instant};
 
 use rquickjs::{CatchResultExt, CaughtError, Context, Runtime};
 use tokio::sync::oneshot;
+
+use step::{BridgeState, run_step};
+pub use step::{HostHttpReply, ScriptHost, ScriptPermissions, validate_item_result};
 
 /// 默认超时。
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(3);
@@ -92,9 +97,33 @@ pub enum ScriptError {
     /// 返回值不能序列化为 JSON。
     #[error("脚本的返回值无法转换为 JSON")]
     BadResult,
+    /// 脚本调用了没有授权的能力（如未授权主机的 `ctx.http`）。
+    #[error("权限不足：{message}")]
+    PermissionDenied {
+        /// 越权的说明。
+        message: String,
+    },
+    /// 返回值不是合法的 Item 结构。
+    #[error("返回值的 {field} 不合法：{message}")]
+    InvalidInput {
+        /// 出问题的字段。
+        field: String,
+        /// 说明。
+        message: String,
+    },
     /// Worker 已经停止。
     #[error("脚本运行器已停止")]
     WorkerGone,
+}
+
+/// 脚本的运行方式。
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ScriptMode {
+    /// 求值源码，最后一个表达式的值就是结果（8.1）。
+    #[default]
+    Expression,
+    /// Script Step：`export default async function (ctx)` 或 `transform(input)`，返回值按 Item 结构校验（8.2）。
+    Step,
 }
 
 /// 一次脚本运行请求。
@@ -106,6 +135,12 @@ pub struct ScriptRequest {
     pub context_json: String,
     /// 资源策略（会被限制在上限内）。
     pub policy: ScriptPolicy,
+    /// 运行方式。
+    pub mode: ScriptMode,
+    /// 授予脚本的权限（默认什么都不允许）。
+    pub permissions: ScriptPermissions,
+    /// 宿主提供的能力实现；没有时 `ctx.http` 不可用。
+    pub host: Option<Arc<dyn ScriptHost>>,
 }
 
 /// 脚本的结果。
@@ -257,7 +292,21 @@ fn execute(request: &ScriptRequest, cancel: &Arc<AtomicBool>) -> Result<ScriptOu
         line: None,
     })?;
 
+    let bridge = Arc::new(BridgeState::default());
     let outcome: Result<String, ScriptError> = context.with(|ctx| {
+        if request.mode == ScriptMode::Step {
+            let text = run_step(
+                &ctx,
+                &request.source,
+                &request.context_json,
+                &request.permissions,
+                request.host.as_ref(),
+                &bridge,
+            )
+            .catch(&ctx)
+            .map_err(|e| classify(&e, &timed_out, cancel))?;
+            return validate_item_result(&text).map(|()| text);
+        }
         // 注入 ctx；之后求值脚本，把最后一个表达式的值序列化为 JSON。
         let globals = ctx.globals();
         let json_parse: rquickjs::Function = ctx
@@ -290,6 +339,11 @@ fn execute(request: &ScriptRequest, cancel: &Arc<AtomicBool>) -> Result<ScriptOu
     });
     drop(context);
     drop(runtime);
+    // 越权优先于脚本自己看到的异常信息：即使脚本捕获后换了说法，也按越权报告。
+    let outcome = match (outcome, bridge.denied()) {
+        (Err(_), Some(message)) => Err(ScriptError::PermissionDenied { message }),
+        (other, _) => other,
+    };
     outcome.map(|result_json| ScriptOutput {
         result_json,
         elapsed: started.elapsed(),

@@ -2,10 +2,12 @@
 
 #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
+use std::sync::Arc;
 use std::time::Duration;
 
 use super::{
-    MAX_MEMORY_BYTES, MAX_TIMEOUT, ScriptError, ScriptPolicy, ScriptRequest, ScriptWorker,
+    HostHttpReply, MAX_MEMORY_BYTES, MAX_TIMEOUT, ScriptError, ScriptHost, ScriptMode,
+    ScriptPermissions, ScriptPolicy, ScriptRequest, ScriptWorker,
 };
 
 fn request(source: &str) -> ScriptRequest {
@@ -13,6 +15,9 @@ fn request(source: &str) -> ScriptRequest {
         source: source.to_owned(),
         context_json: r#"{"input":{"text":"你好"},"vars":{"n":2}}"#.to_owned(),
         policy: ScriptPolicy::default(),
+        mode: ScriptMode::Expression,
+        permissions: ScriptPermissions::default(),
+        host: None,
     }
 }
 
@@ -158,4 +163,138 @@ fn line_numbers_are_read_from_stack_frames() {
     assert_eq!(first_line_number("    at f (script.js:12)"), Some(12));
     assert_eq!(first_line_number("no frames here"), None);
     assert_eq!(first_line_number(""), None);
+}
+
+/// 记录调用的假宿主。
+#[derive(Debug)]
+struct FakeHost;
+
+impl ScriptHost for FakeHost {
+    fn http_get(&self, url: &str) -> Result<HostHttpReply, String> {
+        Ok(HostHttpReply {
+            status: 200,
+            body: format!("body of {url}"),
+        })
+    }
+}
+
+fn step(source: &str, hosts: &[&str]) -> ScriptRequest {
+    let mut r = request(source);
+    r.mode = ScriptMode::Step;
+    r.permissions = ScriptPermissions {
+        http_hosts: hosts.iter().map(|h| (*h).to_owned()).collect(),
+    };
+    r.host = Some(Arc::new(FakeHost));
+    r
+}
+
+#[tokio::test]
+async fn both_entry_forms_work_and_async_is_awaited() {
+    let worker = ScriptWorker::spawn();
+    let out = worker
+        .handle()
+        .run(step(
+            "export default async function (ctx) { const x = await Promise.resolve(ctx.vars.n); return { title: ctx.input.text + x, tags: ['a'] }; }",
+            &[],
+        ))
+        .await
+        .unwrap();
+    assert_eq!(out.result_json, r#"{"title":"你好2","tags":["a"]}"#);
+    let out = worker
+        .handle()
+        .run(step(
+            "function transform(input) { return { title: input.text.toUpperCase() + '  !  '.trim() }; }",
+            &[],
+        ))
+        .await
+        .unwrap();
+    assert_eq!(out.result_json, r#"{"title":"你好!"}"#);
+}
+
+#[tokio::test]
+async fn http_to_an_authorized_host_works_and_others_are_denied() {
+    let worker = ScriptWorker::spawn();
+    let code = "export default async function (ctx) { const r = ctx.http.get('https://api.example.com/x?y=1'); return { title: r.body }; }";
+    let out = worker
+        .handle()
+        .run(step(code, &["API.example.com"]))
+        .await
+        .unwrap();
+    assert_eq!(
+        out.result_json,
+        r#"{"title":"body of https://api.example.com/x?y=1"}"#
+    );
+    for url in [
+        "https://evil.test/",
+        "https://api.example.com.evil.test/",
+        "https://api.example.com@evil.test/",
+        "ftp://api.example.com/",
+    ] {
+        let source = format!(
+            "export default function (ctx) {{ ctx.http.get('{url}'); return {{ title: 'x' }}; }}"
+        );
+        let error = worker
+            .handle()
+            .run(step(&source, &["api.example.com"]))
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(error, ScriptError::PermissionDenied { .. }),
+            "{url} -> {error:?}"
+        );
+    }
+    // 脚本把越权异常吞掉再失败，仍然按越权报告。
+    let swallowed = "export default function (ctx) { try { ctx.http.get('https://evil.test/'); } catch (e) {} throw new Error('boom'); }";
+    let error = worker.handle().run(step(swallowed, &[])).await.unwrap_err();
+    assert!(matches!(error, ScriptError::PermissionDenied { .. }));
+}
+
+#[tokio::test]
+async fn invalid_results_name_the_field() {
+    let worker = ScriptWorker::spawn();
+    for (source, field) in [
+        ("export default () => 42", "(root)"),
+        ("export default () => ({})", "title"),
+        ("export default () => ({ title: '  ' })", "title"),
+        ("export default () => ({ title: 'a', tags: [1] })", "tags"),
+        ("export default () => ({ title: 'a', type: 'x' })", "type"),
+        ("export default () => ({ title: 'a', notes: 5 })", "notes"),
+    ] {
+        let error = worker.handle().run(step(source, &[])).await.unwrap_err();
+        match error {
+            ScriptError::InvalidInput { field: got, .. } => assert_eq!(got, field, "{source}"),
+            other => panic!("{source}: {other:?}"),
+        }
+    }
+}
+
+#[tokio::test]
+async fn dangerous_globals_are_absent() {
+    let worker = ScriptWorker::spawn();
+    let source = "export default function (ctx) { \
+        const names = ['require', 'process', 'fs', 'std', 'os', 'fetch', 'XMLHttpRequest', 'Deno', 'Bun', 'module']; \
+        return { title: names.filter((n) => typeof globalThis[n] !== 'undefined').join(',') || 'none', \
+                 notes: typeof ctx.file + ',' + typeof ctx.clipboard }; }";
+    let out = worker.handle().run(step(source, &[])).await.unwrap();
+    assert_eq!(
+        out.result_json,
+        r#"{"title":"none","notes":"undefined,undefined"}"#
+    );
+}
+
+#[tokio::test]
+async fn missing_entry_is_an_exception_and_infinite_loops_still_time_out() {
+    let worker = ScriptWorker::spawn();
+    let error = worker
+        .handle()
+        .run(step("const a = 1;", &[]))
+        .await
+        .unwrap_err();
+    assert!(matches!(error, ScriptError::Exception { .. }));
+    let mut looping = step("export default function () { while (true) {} }", &[]);
+    looping.policy.timeout = Duration::from_millis(150);
+    assert_eq!(
+        worker.handle().run(looping).await.unwrap_err(),
+        ScriptError::Timeout
+    );
 }

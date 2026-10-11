@@ -1385,7 +1385,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 8.2 Script Context 与 Capability API
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：8.1、6.1
 - **任务**：
   - 暴露 `ctx.input`、`ctx.vars`、`ctx.metadata`、`ctx.utils`、`ctx.item`、`ctx.http`；`ctx.file`、`ctx.clipboard` 默认不可用，需权限。
@@ -1393,10 +1393,10 @@ Phase 12 Backlog                        → 未排期
   - 支持 `export default async function(ctx)` 与 `transform(input)` 两种形式；返回值按标准 Item 结构校验。
   - 不暴露 Filesystem / Shell / Environment / Process / 原始网络 / OS Credential。
 - **验收标准**：
-  - [ ] 测试：越权调用 `ctx.http`（未授权 Host）→ PermissionDenied。
-  - [ ] 测试：返回非法结构 → InvalidInput，错误信息指明字段。
-  - [ ] 测试：脚本中无法访问 `require`、`process`、文件系统等全局对象。
-- **完成记录**：—
+  - [x] 测试：越权调用 `ctx.http`（未授权 Host）→ PermissionDenied（含 `.evil.test` 后缀、`user@host` 伪装、非 http 协议，以及脚本吞掉异常后仍按越权报告）。
+  - [x] 测试：返回非法结构 → InvalidInput，错误信息指明字段（root / title / notes / type / tags）。
+  - [x] 测试：脚本中无法访问 `require`、`process`、`fs`、`std`、`os`、`fetch` 等全局对象；`ctx.file` / `ctx.clipboard` 未授权时为 `undefined`。
+- **完成记录**：2026-10-11：`nivlo-script` 新增 `step` 模块——`ScriptMode::Step` 支持 `export default async function (ctx)`（异步结果在 Worker 内跑完待处理任务后取得）与 `transform(input)`；`ctx` 含 `input` / `vars` / `metadata` / `item`（由调用方以 JSON 注入）、`utils`（`trim` / `truncate`）、`http.get`；`ScriptPermissions { http_hosts }` 精确匹配主机，调用路径 JS → Bridge → 权限检查 → `ScriptHost` trait（宿主在 Worker 线程同步调用）；`validate_item_result` 按标准 Item 结构校验。`nivlo-script` 15 个测试通过，`clippy -D warnings` 干净。未做（留给 8.3）：把 `ScriptHost` 接到 `HttpPort` 的适配器与 Workflow 权限的子集检查；`ctx.file` / `ctx.clipboard` 的实际实现（目前只保证未授权时不存在）。
 
 ### 8.3 Script Step 与 Workflow 权限
 
