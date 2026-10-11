@@ -833,6 +833,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         scheduled: applyPatch(request.scheduled, current.scheduled),
         due: applyPatch(request.due, current.due),
         projectId: applyPatch(request.projectId, current.projectId),
+        reminderAt: applyPatch(request.reminderAt, current.reminderAt),
         updatedAt: new Date().toISOString(),
       };
       items[at] = next;

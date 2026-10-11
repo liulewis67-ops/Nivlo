@@ -9,6 +9,7 @@ import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { ProjectSelect, TagsField } from "@/features/organize";
 import { useDeleteItems } from "@/features/trash";
+import { reminderPresets } from "./model/reminder-presets";
 import { SourceSection } from "./SourceSection";
 import { useItemDraft } from "./use-item-draft";
 
@@ -219,6 +220,53 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
               onChange={(event) => edit({ title: event.target.value })}
             />
           </Field>
+          {kind !== "note" && (
+            <Field label={t("detail.field.reminder")}>
+              <Input
+                type="datetime-local"
+                aria-label={t("detail.reminder.input")}
+                value={draft.reminder}
+                onChange={(event) => edit({ reminder: event.target.value })}
+              />
+              <div className="flex flex-wrap items-center gap-1.5">
+                {reminderPresets(draft).map((preset) => {
+                  const reason =
+                    preset.value !== null
+                      ? undefined
+                      : preset.kind === "minutes15" || preset.kind === "hour1"
+                        ? t("detail.reminder.needTime")
+                        : t("detail.reminder.needDate");
+                  return (
+                    <Button
+                      key={preset.kind}
+                      size="sm"
+                      variant={
+                        preset.value !== null && preset.value === draft.reminder
+                          ? "primary"
+                          : "secondary"
+                      }
+                      disabled={preset.value === null}
+                      title={reason}
+                      onClick={() => preset.value !== null && edit({ reminder: preset.value })}
+                    >
+                      {t(`detail.reminder.preset.${preset.kind}`)}
+                    </Button>
+                  );
+                })}
+                {draft.reminder !== "" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    aria-label={t("detail.reminder.clear")}
+                    onClick={() => edit({ reminder: "" })}
+                  >
+                    {"✕"}
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted">{t("detail.reminder.hint")}</p>
+            </Field>
+          )}
           <Field label={t("detail.field.project")}>
             <ProjectSelect value={draft.projectId} onChange={(projectId) => edit({ projectId })} />
           </Field>

@@ -1,3 +1,4 @@
+import { reminderToLocal, reminderToUtc } from "./reminder-presets";
 import type {
   ContentFormatDto,
   DatePointDto,
@@ -35,6 +36,8 @@ export type ItemDraft = {
   dueTime: string;
   /** 所属项目 ID；空串表示没有项目。 */
   projectId: string;
+  /** 提醒时间（本地，`YYYY-MM-DDTHH:mm`）；空串表示没有。 */
+  reminder: string;
 };
 
 /**
@@ -67,6 +70,7 @@ export function toDraft(item: ItemDto): ItemDraft {
     dueDate: due.date,
     dueTime: due.time,
     projectId: item.projectId ?? "",
+    reminder: reminderToLocal(item.reminderAt),
   };
 }
 
@@ -120,6 +124,12 @@ export function buildPatch(item: ItemDto, draft: ItemDraft): UpdateItemRequest |
     draft.dueTime,
   );
   if (due !== undefined) patch.due = due;
+  if (draft.reminder !== before.reminder) {
+    const utc = draft.reminder === "" ? null : reminderToUtc(draft.reminder);
+    // 输入到一半（无法解析）时先不发送，等输入完整再保存。
+    if (draft.reminder === "") patch.reminderAt = { kind: "clear" };
+    else if (utc !== null) patch.reminderAt = { kind: "set", value: utc };
+  }
   if (draft.projectId !== before.projectId) {
     patch.projectId =
       draft.projectId === "" ? { kind: "clear" } : { kind: "set", value: draft.projectId };

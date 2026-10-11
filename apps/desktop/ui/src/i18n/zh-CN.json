@@ -100,7 +100,8 @@
       "dueTime": "截止时间",
       "priority": "优先级",
       "project": "项目",
-      "tags": "标签"
+      "tags": "标签",
+      "reminder": "提醒"
     },
     "source": {
       "label": "来源",
@@ -125,6 +126,19 @@
       "remove": "移除标签「{{name}}」",
       "suggestions": "标签建议",
       "empty": "还没有标签"
+    },
+    "reminder": {
+      "input": "提醒时间",
+      "clear": "清除提醒",
+      "hint": "到点时用系统通知提醒你。",
+      "needDate": "先设置日期，才能用这个预设",
+      "needTime": "先设置具体时间，才能用这个预设",
+      "preset": {
+        "minutes15": "提前 15 分钟",
+        "hour1": "提前 1 小时",
+        "sameDay9": "当天 9:00",
+        "dayBefore9": "前一天 9:00"
+      }
     }
   },
   "shortcut": {
@@ -280,6 +294,11 @@
     "empty": {
       "title": "今天还没有安排",
       "hint": "按下 Ctrl+Shift+Space 快速添加一条待办。"
+    },
+    "due": {
+      "overdue": "已过截止",
+      "today": "今天截止",
+      "tomorrow": "明天截止"
     }
   },
   "menu": {

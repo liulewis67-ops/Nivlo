@@ -23,6 +23,7 @@ import type { MenuItemSpec } from "@/components";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto } from "@/lib/ipc";
 import { ItemTitle } from "./ItemTitle";
+import { dueStatus } from "./model/due-status";
 import { TodoCheck } from "./TodoCheck";
 import type { PostponeKind } from "./useRescheduleTodo";
 
@@ -63,6 +64,8 @@ const detectCollisions: CollisionDetection = (args) => {
 export type SortableTodoListProps = {
   /** 待办，已按 Today Order 排序。 */
   todos: TodayItemDto[];
+  /** 今天（`YYYY-MM-DD`），用来判断截止状态。 */
+  today: string;
   /** 勾选一条待办。 */
   onComplete: (item: TodayItemDto) => void;
   /** 拖拽 / 键盘排序结束：`activeId` 被放到了 `overId` 的位置。 */
@@ -75,6 +78,8 @@ export type SortableTodoListProps = {
 type SortableTodoProps = {
   /** 这一行的待办。 */
   item: TodayItemDto;
+  /** 今天（`YYYY-MM-DD`）。 */
+  today: string;
   /** 勾选回调。 */
   onComplete: (item: TodayItemDto) => void;
   /** 推迟回调。 */
@@ -111,7 +116,7 @@ function postponeItems(
  * @param props 待办与回调。
  * @returns 列表项。
  */
-function SortableTodo({ item, onComplete, onPostpone }: SortableTodoProps) {
+function SortableTodo({ item, today, onComplete, onPostpone }: SortableTodoProps) {
   const { t } = useTranslation();
   const {
     attributes,
@@ -123,6 +128,7 @@ function SortableTodo({ item, onComplete, onPostpone }: SortableTodoProps) {
     isDragging,
   } = useSortable({ id: item.id });
   const menuItems = postponeItems(item, t, onPostpone);
+  const due = dueStatus(item, today);
   return (
     <ContextMenu items={menuItems}>
       <li
@@ -161,6 +167,16 @@ function SortableTodo({ item, onComplete, onPostpone }: SortableTodoProps) {
           onToggle={() => onComplete(item)}
         />
         <ItemTitle id={item.id} title={item.title} />
+        {due !== null && (
+          <span
+            className={cx(
+              "shrink-0 rounded-sm border px-1.5 text-xs",
+              due === "tomorrow" ? "border-border text-muted" : "border-danger text-danger",
+            )}
+          >
+            {t(`today.due.${due}`)}
+          </span>
+        )}
         {item.isOverdue && (
           <span className="shrink-0 rounded-sm bg-danger px-1.5 text-xs text-danger-contrast">
             {t("today.overdue")}
@@ -232,7 +248,13 @@ function PostponeZone({ kind }: PostponeZoneProps) {
  * @param props 待办与回调。
  * @returns 带 `aria-label` 的待办列表（及拖动时出现的推迟目标）。
  */
-export function SortableTodoList({ todos, onComplete, onMove, onPostpone }: SortableTodoListProps) {
+export function SortableTodoList({
+  todos,
+  today,
+  onComplete,
+  onMove,
+  onPostpone,
+}: SortableTodoListProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const sensors = useSensors(
@@ -300,6 +322,7 @@ export function SortableTodoList({ todos, onComplete, onMove, onPostpone }: Sort
             <SortableTodo
               key={item.id}
               item={item}
+              today={today}
               onComplete={onComplete}
               onPostpone={onPostpone}
             />

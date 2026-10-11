@@ -53,6 +53,7 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
       {view.todos.length > 0 && (
         <SortableTodoList
           todos={view.todos}
+          today={view.date}
           onComplete={onComplete}
           onMove={onMove}
           onPostpone={onPostpone}

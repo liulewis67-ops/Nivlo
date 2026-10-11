@@ -218,4 +218,58 @@ describe("ItemDetailPanel", () => {
     await advance(0);
     expect(screen.queryByRole("region", { name: "来源" })).not.toBeInTheDocument();
   });
+
+  it("提醒：点预设填入时间并自动保存为 UTC，✕ 清除；笔记没有提醒字段", async () => {
+    const ipc = createMemoryIpc();
+    const item = await ipc.createItem({
+      itemType: "todo",
+      title: "交报告",
+      content: null,
+      contentFormat: "plain",
+      priority: null,
+      scheduled: null,
+      due: { date: "2026-10-16", time: "17:30:00" },
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<ItemDetailPanel id={item.id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    expect(screen.getByLabelText("提醒时间")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "提前 15 分钟" }));
+    expect(screen.getByLabelText("提醒时间")).toHaveValue("2026-10-16T17:15");
+    await advance(AUTOSAVE_DELAY_MS + 50);
+    const saved = ipc.updates.at(-1)?.request.reminderAt;
+    expect(saved).toEqual({ kind: "set", value: new Date("2026-10-16T17:15").toISOString() });
+
+    fireEvent.click(screen.getByRole("button", { name: "清除提醒" }));
+    await advance(AUTOSAVE_DELAY_MS + 50);
+    expect(ipc.updates.at(-1)?.request.reminderAt).toEqual({ kind: "clear" });
+
+    // 转成笔记后没有提醒字段。
+    fireEvent.click(screen.getByRole("button", { name: "笔记" }));
+    expect(screen.queryByLabelText("提醒时间")).not.toBeInTheDocument();
+  });
+
+  it("没有具体时间时「提前 …」预设置灰，9:00 预设可用", async () => {
+    const ipc = createMemoryIpc();
+    const item = await ipc.createItem({
+      itemType: "todo",
+      title: "只有日期",
+      content: null,
+      contentFormat: "plain",
+      priority: null,
+      scheduled: null,
+      due: { date: "2026-10-16", time: null },
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<ItemDetailPanel id={item.id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    expect(screen.getByRole("button", { name: "提前 15 分钟" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "提前 1 小时" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "前一天 9:00" }));
+    expect(screen.getByLabelText("提醒时间")).toHaveValue("2026-10-15T09:00");
+  });
 });
