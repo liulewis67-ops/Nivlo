@@ -74,6 +74,8 @@ pub enum ErrorCode {
     WorkflowReadOnly,
     /// 无法修改系统设置（如开机启动项）。
     SystemSettingFailed,
+    /// 导出诊断包 / 备份 / 数据失败（磁盘已满、没有写权限……）。
+    ExportFailed,
     /// 来源指向的文件已经不在原处。
     SourceFileMissing,
     /// 无法打开来源（没有可打开的来源、网址不合法，或系统打开失败）。
@@ -114,6 +116,7 @@ impl ErrorCode {
         Self::WorkflowInvalid,
         Self::WorkflowReadOnly,
         Self::SystemSettingFailed,
+        Self::ExportFailed,
         Self::SourceFileMissing,
         Self::SourceOpenFailed,
     ];
@@ -152,6 +155,7 @@ impl ErrorCode {
             Self::WorkflowInvalid => "WORKFLOW_INVALID",
             Self::WorkflowReadOnly => "WORKFLOW_READ_ONLY",
             Self::SystemSettingFailed => "SYSTEM_SETTING_FAILED",
+            Self::ExportFailed => "EXPORT_FAILED",
             Self::SourceFileMissing => "SOURCE_FILE_MISSING",
             Self::SourceOpenFailed => "SOURCE_OPEN_FAILED",
         }

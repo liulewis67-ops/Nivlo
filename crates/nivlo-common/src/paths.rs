@@ -194,6 +194,11 @@ impl AppPaths {
         self.root.join("workflows")
     }
 
+    /// 导出目录：诊断包、备份、数据导出都写在这里（按需创建）。
+    pub fn exports_dir(&self) -> PathBuf {
+        self.root.join("exports")
+    }
+
     /// 附件目录（仅存放没有原始路径的内容，如粘贴的截图）。
     pub fn attachments_dir(&self) -> PathBuf {
         self.root.join("attachments")

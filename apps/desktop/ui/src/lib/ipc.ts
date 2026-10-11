@@ -201,6 +201,8 @@ export interface IpcClient {
   purgeItems(ids: string[]): Promise<number>;
   /** 清空回收站，返回删除的数量。 */
   emptyTrash(): Promise<number>;
+  /** 导出诊断包（环境、Workflow 元数据、脱敏日志），并在文件管理器中显示；返回 zip 的路径。 */
+  exportDiagnostics(): Promise<string>;
   /** 全部 Workflow：内置在前，其次是用户的，各自按优先级从大到小。 */
   listWorkflows(): Promise<WorkflowDto[]>;
   /** 启用 / 禁用一个 Workflow（内置的也可以）。 */
@@ -397,6 +399,7 @@ const tauriIpc: IpcClient = {
   listTrash: () => call("list_trash", commands.listTrash()),
   purgeItems: (ids) => call("purge_items", commands.purgeItems(ids)),
   emptyTrash: () => call("empty_trash", commands.emptyTrash()),
+  exportDiagnostics: () => call("export_diagnostics", commands.exportDiagnostics()),
   listWorkflows: () => call("list_workflows", commands.listWorkflows()),
   setWorkflowEnabled: async (id, enabled) => {
     await call("set_workflow_enabled", commands.setWorkflowEnabled(id, enabled));
@@ -523,6 +526,7 @@ export const ipc: IpcClient = {
   listTrash: () => current.listTrash(),
   purgeItems: (ids) => current.purgeItems(ids),
   emptyTrash: () => current.emptyTrash(),
+  exportDiagnostics: () => current.exportDiagnostics(),
   listWorkflows: () => current.listWorkflows(),
   setWorkflowEnabled: (id, enabled) => current.setWorkflowEnabled(id, enabled),
   setWorkflowPriority: (id, priority) => current.setWorkflowPriority(id, priority),

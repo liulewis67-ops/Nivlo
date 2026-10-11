@@ -2792,6 +2792,7 @@ dependencies = [
  "nivlo-script",
  "nivlo-storage",
  "nivlo-workflow",
+ "regex",
  "serde",
  "serde_json",
  "specta",
@@ -2811,6 +2812,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "uuid",
+ "zip",
 ]
 
 [[package]]

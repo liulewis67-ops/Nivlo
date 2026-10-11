@@ -14,6 +14,7 @@ pub mod app;
 pub mod autostart;
 pub mod clipboard;
 pub mod commands;
+pub mod diagnostics;
 pub mod dto;
 pub mod events;
 pub mod lifecycle;
@@ -67,6 +68,7 @@ macro_rules! bindings_builder {
                 $crate::commands::trash::restore_deleted_items,
                 $crate::commands::trash::list_trash,
                 $crate::commands::trash::purge_items,
+                $crate::commands::diagnostics::export_diagnostics,
                 $crate::commands::workflow::list_workflows,
                 $crate::commands::workflow::set_workflow_enabled,
                 $crate::commands::workflow::set_workflow_priority,
@@ -260,6 +262,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 });
                 state.runtime.track_task(enricher);
             }
+            state.runtime.set_paths(environment.paths.clone());
             app.manage(state);
 
             let floating = windows::create_floating_window(app)?;

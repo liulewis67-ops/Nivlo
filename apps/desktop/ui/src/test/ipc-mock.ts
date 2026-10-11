@@ -1158,6 +1158,10 @@ ${(item.content ?? "").toLowerCase()}`;
     get workflows() {
       return workflowMock.workflows;
     },
+    exportDiagnostics: () => {
+      calls.push("exportDiagnostics");
+      return Promise.resolve("C:\\Nivlo\\exports\\nivlo-diagnostics-test.zip");
+    },
     listWorkflows: workflowMock.listWorkflows,
     setWorkflowEnabled: workflowMock.setWorkflowEnabled,
     setWorkflowPriority: workflowMock.setWorkflowPriority,

@@ -6,6 +6,17 @@ import { renderWithProviders } from "@/test/render";
 import { applyForm, parseDefinition, toForm } from "./model/definition";
 import { WorkflowsPage } from "./WorkflowsPage";
 
+/**
+ * 断言值存在并返回它（测试里代替非空断言）。
+ *
+ * @param value 可能为空的值。
+ * @returns 非空的值。
+ */
+function must<T>(value: T | null | undefined): T {
+  if (value === null || value === undefined) throw new Error("值不应为空");
+  return value;
+}
+
 describe("Workflow 定义模型", () => {
   const urlWorkflow = {
     id: "user.a",
@@ -19,7 +30,7 @@ describe("Workflow 定义模型", () => {
     const form = toForm(definition);
     expect(form).not.toBeNull();
     const next = applyForm(definition, {
-      ...form!,
+      ...must(form),
       itemType: "todo",
       tags: "#read, github",
     });
@@ -33,7 +44,7 @@ describe("Workflow 定义模型", () => {
   });
 
   it("多个条件写成 all，单个条件写成叶子", () => {
-    const form = toForm(urlWorkflow)!;
+    const form = must(toForm(urlWorkflow));
     const two = applyForm(urlWorkflow, {
       ...form,
       conditions: [...form.conditions, { field: "url.host", op: "equals", value: "github.com" }],
@@ -86,7 +97,7 @@ describe("Workflow 管理页", () => {
     // 副本出现在「我的」里并被选中，优先级比原件高。
     const mine = await screen.findByRole("list", { name: "我的" });
     expect(within(mine).getAllByRole("listitem")).toHaveLength(1);
-    const copy = ipc.workflows.find((w) => w.source === "user")!;
+    const copy = must(ipc.workflows.find((w) => w.source === "user"));
     expect(copy.priority).toBe(10);
 
     await userEvent.selectOptions(await screen.findByLabelText("创建"), "todo");
@@ -102,7 +113,7 @@ describe("Workflow 管理页", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "保存" }));
     await waitFor(() => {
-      const saved = ipc.workflows.find((w) => w.id === copy.id)!;
+      const saved = must(ipc.workflows.find((w) => w.id === copy.id));
       expect(saved.definitionJson).toContain('"read"');
       expect(saved.definitionJson).toContain('"todo"');
     });

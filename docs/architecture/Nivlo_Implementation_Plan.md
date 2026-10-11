@@ -149,7 +149,7 @@ Phase 12 Backlog                        → 未排期
 | | 6.7 | 自然语言日期解析 | ✅ |
 | **P7** | 7.1 | Desktop E2E 关键路径 | ⬜ |
 | | 7.2 | 性能预算与长稳验收 | ⬜ |
-| | 7.3 | Diagnostics 导出 | ⬜ |
+| | 7.3 | Diagnostics 导出 | ✅ |
 | | 7.4 | 备份与数据导出 | ⬜ |
 | | 7.5 | 首次运行引导与体验打磨 | 🟨 |
 | | 7.6 | 安装包、签名、Updater 与发布流水线 | ⬜ |
@@ -1220,13 +1220,13 @@ Phase 12 Backlog                        → 未排期
 
 ### 7.3 Diagnostics 导出
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：0.4
 - **任务**：
   - 设置页「Export Diagnostics」：App 版本、OS、架构、WebView 版本、DB Schema 版本、Workflow 元数据、最近脱敏日志，打包为 zip。
 - **验收标准**：
-  - [ ] 导出包中不含 Token、Note 全文、剪贴板内容、用户文件内容（自动化检查：使用含特征字符串的测试数据，断言导出包中不出现）。
-- **完成记录**：—
+  - [x] 导出包中不含 Token、Note 全文、剪贴板内容、用户文件内容（自动化检查：使用含特征字符串的测试数据，断言导出包中不出现）。
+- **完成记录**：2026-10-11 完成。设置页新增「数据与诊断 → 导出诊断信息」：`export_diagnostics` 在 `<数据目录>/exports/` 生成 `nivlo-diagnostics-<时间>.zip`（`environment.json`：应用版本 / OS / 架构 / WebView 版本 / Schema 版本 / Workflow 元数据（不含定义）；`logs/`：最近 3 个日志文件的末尾 512 KiB；`README.txt`），并在文件管理器中选中。日志逐行**防御性脱敏**：Authorization / Cookie 整行、Bearer / 常见令牌格式、`token|password|api_key|secret=…`、`title|content|text|clipboard|…="…"` 业务字段、URL 查询串与片段、邮箱、用户目录里的用户名。自动化检查 `diagnostics::tests::the_bundle_never_contains_note_text_clipboard_tokens_or_file_contents`：往日志里塞入含特征字符串的笔记全文 / 剪贴板 / 令牌 / URL 密钥 / 用户名，断言导出包中全部不出现；另有日志名不得逃出 `logs/`、数量上限、最近日志选择的测试。新增错误码 `EXPORT_FAILED`。
 
 ### 7.4 备份与数据导出
 

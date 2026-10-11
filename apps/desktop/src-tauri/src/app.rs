@@ -74,6 +74,8 @@ pub struct RuntimeHandles {
     scheduler_control: Arc<nivlo_scheduler::Control>,
     /// 全局快捷键控制器；窗口创建之后才能构造（回调要用 `AppHandle`），因此用 `OnceLock`。
     shortcut: OnceLock<Arc<ShortcutController>>,
+    /// 应用目录布局；启动时登记，导出诊断包 / 备份时使用。
+    paths: OnceLock<nivlo_common::paths::AppPaths>,
     /// 后台补全队列的接收端：由启动流程取走并交给后台任务（只能取一次）。
     enrichment_queue: Mutex<
         Option<tokio::sync::mpsc::UnboundedReceiver<nivlo_application::capture::EnrichmentJob>>,
@@ -102,8 +104,19 @@ impl RuntimeHandles {
             pending_main_view: Mutex::new(None),
             shortcut: OnceLock::new(),
             enrichment_queue: Mutex::new(None),
+            paths: OnceLock::new(),
             scheduler_control: Arc::new(nivlo_scheduler::Control::new()),
         }
+    }
+
+    /// 登记应用目录布局（只能登记一次）。
+    pub fn set_paths(&self, paths: nivlo_common::paths::AppPaths) {
+        let _ = self.paths.set(paths);
+    }
+
+    /// 应用目录布局；启动完成之前为 `None`。
+    pub fn paths(&self) -> Option<&nivlo_common::paths::AppPaths> {
+        self.paths.get()
     }
 
     /// 登记后台补全队列的接收端。

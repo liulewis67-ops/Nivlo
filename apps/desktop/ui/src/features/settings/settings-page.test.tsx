@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { AppError } from "@/lib/errors";
 import { useThemeStore } from "@/stores/theme-store";
@@ -104,5 +105,15 @@ describe("设置页", () => {
     fireEvent.click(pause);
     await waitFor(() => expect(ipc.appSettings.notificationsPaused).toBe(true));
     await waitFor(() => expect(pause).toHaveAttribute("aria-checked", "true"));
+  });
+});
+
+describe("设置页：数据与诊断", () => {
+  it("导出诊断信息后提示文件位置", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "导出" }));
+    await waitFor(() => expect(ipc.calls).toContain("exportDiagnostics"));
+    expect(await screen.findByText(/诊断包已导出/)).toBeInTheDocument();
   });
 });

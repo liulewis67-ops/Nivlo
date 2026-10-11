@@ -8,6 +8,7 @@ import { ipc } from "@/lib/ipc";
 import type { AppSettingsDto, LaterRuleDto, WeekStartDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
+import { useToastStore } from "@/stores/toast-store";
 import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
 
@@ -293,6 +294,26 @@ export function SettingsPage() {
                 </button>
               ))}
             </div>
+          </Row>
+        </Section>
+        <Section title={t("settings.section.data")}>
+          <Row label={t("settings.diagnostics.label")} hint={t("settings.diagnostics.hint")}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                ipc
+                  .exportDiagnostics()
+                  .then((path) =>
+                    useToastStore
+                      .getState()
+                      .push("success", t("settings.diagnostics.done", { path })),
+                  )
+                  .catch(reportError);
+              }}
+            >
+              {t("settings.diagnostics.action")}
+            </Button>
           </Row>
         </Section>
       </div>

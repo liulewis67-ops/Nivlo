@@ -15,6 +15,7 @@ const COMMANDS: &[&str] = &[
     "list_trash",
     "purge_items",
     "empty_trash",
+    "export_diagnostics",
     "list_workflows",
     "set_workflow_enabled",
     "set_workflow_priority",

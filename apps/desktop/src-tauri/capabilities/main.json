@@ -17,6 +17,7 @@
     "allow-list-trash",
     "allow-purge-items",
     "allow-empty-trash",
+    "allow-export-diagnostics",
     "allow-list-workflows",
     "allow-set-workflow-enabled",
     "allow-set-workflow-priority",

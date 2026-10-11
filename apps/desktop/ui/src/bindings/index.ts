@@ -109,6 +109,17 @@ export const commands = {
 	 */
 	purgeItems: (ids: string[]) => typedError<number, IpcError>(__TAURI_INVOKE("purge_items", { ids })),
 	/**
+	 *  导出诊断包：运行环境、Workflow 元数据与最近的日志（已脱敏）打成一个 zip，
+	 *  写在导出目录里并在文件管理器中显示。返回 zip 的完整路径。
+	 * 
+	 *  不包含笔记 / 待办的标题与内容、剪贴板、用户文件、任何令牌（见 `diagnostics` 模块）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  读取或写入失败返回 `EXPORT_FAILED`。
+	 */
+	exportDiagnostics: () => typedError<string, IpcError>(__TAURI_INVOKE("export_diagnostics")),
+	/**
 	 *  全部 Workflow：内置在前，其次是用户的，各自按优先级从大到小。
 	 * 
 	 *  # Errors
