@@ -23,6 +23,7 @@
     "allow-set-later-rule",
     "allow-get-calendar",
     "allow-set-week-start",
+    "allow-set-notifications-paused",
     "allow-list-projects",
     "allow-create-project",
     "allow-rename-project",

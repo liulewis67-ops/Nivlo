@@ -401,7 +401,8 @@
     "section": {
       "general": "通用",
       "floating": "悬浮窗",
-      "schedule": "日程"
+      "schedule": "日程",
+      "notifications": "通知"
     },
     "autostart": {
       "label": "开机自动启动",
@@ -438,6 +439,10 @@
       "hint": "影响日历的周视图与月视图。",
       "monday": "周一",
       "sunday": "周日"
+    },
+    "pauseNotifications": {
+      "label": "暂停通知",
+      "hint": "暂停期间不弹出提醒；到点的提醒不会丢，恢复后会汇总通知你。托盘菜单里也有这个开关。"
     }
   },
   "calendar": {

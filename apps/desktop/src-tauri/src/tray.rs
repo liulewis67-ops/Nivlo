@@ -4,12 +4,14 @@
 //! 打开 Nivlo、快速添加、重新显示悬浮窗或退出。菜单项的行为由纯函数 [`action_for`]
 //! 决定，因此可以脱离系统托盘做单元测试。
 
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Wry};
 use tauri_specta::Event;
 
+use crate::app::AppState;
 use crate::events::QuickAddRequestedEvent;
+use crate::scheduling::PauseMenuItem;
 use crate::windows::{self, FLOATING_WINDOW_LABEL};
 
 /// 托盘图标的 ID。
@@ -26,7 +28,7 @@ mod labels {
     pub const QUICK_ADD: &str = "快速添加待办";
     /// 显示 / 隐藏悬浮窗。
     pub const TOGGLE_FLOATING: &str = "显示 / 隐藏悬浮窗";
-    /// 暂停通知（Phase 4 前置灰）。
+    /// 暂停通知（勾选 = 已暂停）。
     pub const PAUSE_NOTIFICATIONS: &str = "暂停通知";
     /// 设置。
     pub const SETTINGS: &str = "设置";
@@ -59,19 +61,22 @@ pub enum TrayAction {
     QuickAdd,
     /// 切换悬浮窗的显示 / 隐藏。
     ToggleFloating,
+    /// 暂停 / 恢复系统通知。
+    TogglePause,
     /// 退出应用（走有序退出流程）。
     Quit,
 }
 
-/// 菜单项 ID → 动作。未知 ID 与置灰的项（暂停通知）没有动作。
+/// 菜单项 ID → 动作。未知 ID 没有动作。
 ///
-/// 「设置」目前打开主窗口；设置页本身在 3.5 加入。
+/// 「设置」打开主窗口（设置页在主窗口侧栏里）。
 #[must_use]
 pub fn action_for(id: &str) -> Option<TrayAction> {
     match id {
         ids::OPEN | ids::SETTINGS => Some(TrayAction::OpenMain),
         ids::QUICK_ADD => Some(TrayAction::QuickAdd),
         ids::TOGGLE_FLOATING => Some(TrayAction::ToggleFloating),
+        ids::PAUSE_NOTIFICATIONS => Some(TrayAction::TogglePause),
         ids::QUIT => Some(TrayAction::Quit),
         _ => None,
     }
@@ -92,14 +97,19 @@ pub fn setup(app: &AppHandle<Wry>) -> tauri::Result<()> {
         true,
         None::<&str>,
     )?;
-    // 通知在 Phase 4 才有，先置灰占位，菜单结构从一开始就是最终形态。
-    let pause = MenuItem::with_id(
+    // 勾选 = 通知已暂停；初始状态取自 Scheduler（启动时已读取上次保存的设置）。
+    let paused = app
+        .try_state::<AppState>()
+        .is_some_and(|state| state.runtime.scheduler_control().is_paused());
+    let pause = CheckMenuItem::with_id(
         app,
         ids::PAUSE_NOTIFICATIONS,
         labels::PAUSE_NOTIFICATIONS,
-        false,
+        true,
+        paused,
         None::<&str>,
     )?;
+    app.manage(PauseMenuItem(pause.clone()));
     let settings = MenuItem::with_id(app, ids::SETTINGS, labels::SETTINGS, true, None::<&str>)?;
     let quit = MenuItem::with_id(app, ids::QUIT, labels::QUIT, true, None::<&str>)?;
     let separator_top = PredefinedMenuItem::separator(app)?;
@@ -160,6 +170,26 @@ fn perform(app: &AppHandle<Wry>, action: TrayAction) {
                 .unwrap_or(true);
             set_floating_visible(app, !visible);
         }
+        TrayAction::TogglePause => {
+            // 勾选框已经被系统切换过：新的勾选状态就是用户想要的状态。
+            let paused = app
+                .try_state::<PauseMenuItem>()
+                .and_then(|item| item.0.is_checked().ok())
+                .unwrap_or(false);
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move {
+                let state = app.state::<AppState>();
+                if let Err(error) = crate::scheduling::set_paused(&app, &state, paused).await {
+                    tracing::warn!(event = "pause_notifications_failed", %error, "切换暂停通知失败");
+                    // 保存失败：把勾选状态还原成实际状态。
+                    if let Some(item) = app.try_state::<PauseMenuItem>() {
+                        let _ = item
+                            .0
+                            .set_checked(state.runtime.scheduler_control().is_paused());
+                    }
+                }
+            });
+        }
         TrayAction::Quit => {
             // 与主窗口的 quit_app 同一条路径：由 RunEvent::ExitRequested 触发有序退出。
             app.exit(0);
@@ -211,7 +241,10 @@ mod tests {
 
     #[test]
     fn disabled_and_unknown_items_have_no_action() {
-        assert_eq!(action_for("pause_notifications"), None);
+        assert_eq!(
+            action_for("pause_notifications"),
+            Some(TrayAction::TogglePause)
+        );
         assert_eq!(action_for("nope"), None);
     }
 }

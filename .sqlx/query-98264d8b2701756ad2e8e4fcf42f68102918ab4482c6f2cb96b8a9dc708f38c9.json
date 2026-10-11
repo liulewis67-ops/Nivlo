@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM trigger_log WHERE fire_at < ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "98264d8b2701756ad2e8e4fcf42f68102918ab4482c6f2cb96b8a9dc708f38c9"
+}

@@ -24,6 +24,8 @@ pub mod keys {
     pub const AUTOSTART_PROMPTED: &str = "autostart.prompted";
     /// 「稍后」指哪一天（`next_monday` / `in_three_days` / `in_one_week`），缺省为下周一。
     pub const LATER_RULE: &str = "schedule.later";
+    /// 是否暂停系统通知（`"true"` / `"false"`，托盘「暂停通知」），缺省为 `false`。
+    pub const NOTIFICATIONS_PAUSED: &str = "notifications.paused";
     /// 日历一周从哪天开始（`monday` / `sunday`），缺省为周一。
     pub const WEEK_START: &str = "calendar.week_start";
 }

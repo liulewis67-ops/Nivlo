@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO trigger_log (item_id, kind, fire_at, fired_at, missed)\n             VALUES (?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "04e6ec49424604e766a04d8797842d389ffa64f41c5bf71925c99c540b3b2d31"
+}

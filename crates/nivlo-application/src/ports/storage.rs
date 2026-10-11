@@ -20,6 +20,8 @@ use nivlo_domain::project::Project;
 use nivlo_domain::source::Source;
 use nivlo_domain::tag::{Tag, TagName};
 
+use crate::trigger::TriggerKey;
+
 /// 存储 Adapter 返回的错误。
 ///
 /// Adapter 必须把底层库的错误（如 `sqlx::Error`）转换为本类型，不向上泄漏具体实现。
@@ -86,6 +88,9 @@ pub trait Transaction: Send {
 
     /// 回收站（软删除）的 Repository 视图，与本事务共享同一个连接。
     fn trash(&mut self) -> &mut dyn TrashRepository;
+
+    /// Scheduler 触发记录的 Repository 视图，与本事务共享同一个连接。
+    fn triggers(&mut self) -> &mut dyn TriggerRepository;
 
     /// 提交事务。
     ///
@@ -478,4 +483,45 @@ pub trait TrashRepository: Send {
     ///
     /// 记录损坏时返回 [`StorageError::Corrupt`]。
     async fn deleted_before(&mut self, cutoff: DateTime<Utc>) -> Result<Vec<ItemId>, StorageError>;
+}
+
+/// Scheduler 的触发记录（`trigger_log` 表，实施计划 4.4）：只记录**哪些触发点已经通知过**。
+#[async_trait]
+pub trait TriggerRepository: Send {
+    /// 可能产生触发点的 Item：未完成、未归档、未删除，并且有提醒时间、或是带具体时间的 Tip /
+    /// 带具体截止时间的 Todo。是否真的会触发由 [`crate::trigger::triggers_of`] 推导。
+    ///
+    /// # Errors
+    ///
+    /// 记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
+    async fn list_trigger_sources(&mut self) -> Result<Vec<Item>, StorageError>;
+
+    /// 触发时刻不早于 `since` 的、已经通知过的触发点。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn list_fired_since(
+        &mut self,
+        since: DateTime<Utc>,
+    ) -> Result<Vec<TriggerKey>, StorageError>;
+
+    /// 记录一个触发点已经通知过；重复记录是空操作。`missed` 表示这是错过之后的补发。
+    ///
+    /// # Errors
+    ///
+    /// Item 不存在（外键）时返回 [`StorageError::Constraint`]。
+    async fn record_fired(
+        &mut self,
+        key: &TriggerKey,
+        fired_at: DateTime<Utc>,
+        missed: bool,
+    ) -> Result<(), StorageError>;
+
+    /// 删除触发时刻早于 `cutoff` 的记录，返回删除的数量。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn prune_fired_before(&mut self, cutoff: DateTime<Utc>) -> Result<u64, StorageError>;
 }

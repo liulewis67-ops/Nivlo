@@ -67,6 +67,8 @@ pub struct RuntimeHandles {
     /// 悬浮窗请求主窗口打开的视图。主窗口可能还没创建 / 还没开始监听事件，所以先存在这里，
     /// 由主窗口启动时取走（事件只负责通知已经在运行的主窗口）。
     pending_main_view: Mutex<Option<String>>,
+    /// Scheduler 的外部控制（唤醒、暂停通知）。
+    scheduler_control: Arc<nivlo_scheduler::Control>,
     /// 全局快捷键控制器；窗口创建之后才能构造（回调要用 `AppHandle`），因此用 `OnceLock`。
     shortcut: OnceLock<Arc<ShortcutController>>,
 }
@@ -92,7 +94,18 @@ impl RuntimeHandles {
             floating: OnceLock::new(),
             pending_main_view: Mutex::new(None),
             shortcut: OnceLock::new(),
+            scheduler_control: Arc::new(nivlo_scheduler::Control::new()),
         }
+    }
+
+    /// Scheduler 的外部控制句柄。
+    pub fn scheduler_control(&self) -> Arc<nivlo_scheduler::Control> {
+        self.scheduler_control.clone()
+    }
+
+    /// 数据库句柄的克隆（Scheduler 用它开启事务）。
+    pub fn database(&self) -> Database {
+        self.database.clone()
     }
 
     /// 设置全局快捷键控制器；只能设置一次，重复设置被忽略。

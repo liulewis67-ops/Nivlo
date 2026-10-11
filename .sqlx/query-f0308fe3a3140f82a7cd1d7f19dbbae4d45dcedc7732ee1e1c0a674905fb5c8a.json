@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id FROM items\n             WHERE status = 'open' AND archived_at IS NULL AND deleted_at IS NULL\n               AND (reminder_at IS NOT NULL\n                    OR (type = 'tip' AND scheduled_time IS NOT NULL)\n                    OR (type = 'todo' AND due_time IS NOT NULL))",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "f0308fe3a3140f82a7cd1d7f19dbbae4d45dcedc7732ee1e1c0a674905fb5c8a"
+}

@@ -6,6 +6,7 @@
 //! * [`calendar::CalendarService`]：Calendar 的查询（计划、截止与待安排）。
 //! * [`inbox::InboxService`]：Inbox 的列表（带来源与附件）与批量整理 / 撤销。
 //! * [`organize::ProjectService`] / [`organize::TagService`]：项目与标签。
+//! * [`trigger`]：由 Item 推导 Scheduler 的触发点（提醒 / Tip / 截止）。
 //! * [`trash::TrashService`]：删除、回收站、恢复与永久清除。
 //! * [`today::TodayService`]：Today 视图（待办 / 提示 / 今日已完成）的查询。
 //! * [`day_change`]：本地日期切换监视器。
@@ -31,6 +32,7 @@ pub mod ports;
 pub mod settings;
 pub mod today;
 pub mod trash;
+pub mod trigger;
 
 #[cfg(any(test, feature = "testing"))]
 pub mod testing;

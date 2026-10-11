@@ -17,11 +17,13 @@ use nivlo_domain::project::Project;
 use nivlo_domain::source::Source;
 use nivlo_domain::tag::{Tag, TagName};
 
+use crate::trigger::TriggerKey;
+
 use crate::event::EventPublisher;
 use crate::ports::{
     AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
     SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
-    Transaction, TrashRepository, UnitOfWork,
+    Transaction, TrashRepository, TriggerRepository, UnitOfWork,
 };
 
 /// 内存数据库中的全部数据。事务开始时整体克隆为工作副本，提交时整体替换。
@@ -45,6 +47,8 @@ struct FakeData {
     item_tags: BTreeSet<(ItemId, TagId)>,
     /// 回收站：Item ID → 删除时间。
     deleted: BTreeMap<ItemId, DateTime<Utc>>,
+    /// 已触发的触发点：键 → (通知时间, 是否补发)。
+    fired: BTreeMap<TriggerKey, (DateTime<Utc>, bool)>,
 }
 
 /// 内存数据库的共享状态。
@@ -182,6 +186,11 @@ impl Transaction for FakeTransaction {
         self
     }
 
+    /// 返回触发记录 Repository 视图。
+    fn triggers(&mut self) -> &mut dyn TriggerRepository {
+        self
+    }
+
     /// 提交：把工作副本写回共享状态。
     async fn commit(self: Box<Self>) -> Result<(), StorageError> {
         let mut state = self.shared.lock();
@@ -205,6 +214,7 @@ impl ItemRepository for FakeTransaction {
     async fn delete(&mut self, id: ItemId) -> Result<(), StorageError> {
         self.working.items.remove(&id);
         self.working.deleted.remove(&id);
+        self.working.fired.retain(|key, _| key.item_id != id);
         self.working.item_tags.retain(|(item, _)| *item != id);
         self.working.sources.retain(|s| s.item_id != id);
         self.working.attachments.retain(|a| a.item_id != id);
@@ -905,5 +915,62 @@ impl TrashRepository for FakeTransaction {
             .collect();
         ids.sort();
         Ok(ids.into_iter().map(|(_, id)| id).collect())
+    }
+}
+
+#[async_trait]
+impl TriggerRepository for FakeTransaction {
+    /// 可能产生触发点的 Item。
+    async fn list_trigger_sources(&mut self) -> Result<Vec<Item>, StorageError> {
+        Ok(self
+            .working
+            .items
+            .values()
+            .filter(|i| !i.is_done() && !i.is_archived())
+            .filter(|i| !self.working.deleted.contains_key(&i.id()))
+            .filter(|i| {
+                i.reminder_at().is_some()
+                    || (i.item_type() == ItemType::Tip
+                        && i.scheduled().is_some_and(|p| p.time().is_some()))
+                    || (i.item_type() == ItemType::Todo
+                        && i.due().is_some_and(|p| p.time().is_some()))
+            })
+            .cloned()
+            .collect())
+    }
+
+    /// 已通知过的触发点。
+    async fn list_fired_since(
+        &mut self,
+        since: DateTime<Utc>,
+    ) -> Result<Vec<TriggerKey>, StorageError> {
+        Ok(self
+            .working
+            .fired
+            .keys()
+            .filter(|key| key.fire_at >= since)
+            .copied()
+            .collect())
+    }
+
+    /// 记录已通知；重复记录保留第一次。
+    async fn record_fired(
+        &mut self,
+        key: &TriggerKey,
+        fired_at: DateTime<Utc>,
+        missed: bool,
+    ) -> Result<(), StorageError> {
+        if !self.working.items.contains_key(&key.item_id) {
+            return Err(StorageError::Constraint("Item 不存在".to_owned()));
+        }
+        self.working.fired.entry(*key).or_insert((fired_at, missed));
+        Ok(())
+    }
+
+    /// 清理旧记录。
+    async fn prune_fired_before(&mut self, cutoff: DateTime<Utc>) -> Result<u64, StorageError> {
+        let before = self.working.fired.len();
+        self.working.fired.retain(|key, _| key.fire_at >= cutoff);
+        Ok((before - self.working.fired.len()) as u64)
     }
 }

@@ -45,11 +45,13 @@ pub async fn get_app_settings<R: Runtime>(
         .is_none_or(|value| value != "false");
     let later_rule = state.services.settings.later_rule().await?;
     let week_start = state.services.settings.week_start().await?;
+    let notifications_paused = state.runtime.scheduler_control().is_paused();
     Ok(AppSettingsDto {
         autostart,
         floating_always_on_top: always_on_top,
         later_rule: later_rule.into(),
         week_start: week_start.into(),
+        notifications_paused,
     })
 }
 
@@ -148,5 +150,23 @@ pub async fn set_week_start(
         .settings
         .set_week_start(week_start.into())
         .await?;
+    Ok(())
+}
+
+/// 暂停或恢复系统通知（与托盘的「暂停通知」同一个开关）。
+///
+/// 暂停期间到点的提醒不会丢：恢复后作为「错过的提醒」通知（多了就合并成一条汇总）。
+///
+/// # Errors
+///
+/// 保存失败时返回存储错误，开关保持原来的状态。
+#[tauri::command]
+#[specta::specta]
+pub async fn set_notifications_paused<R: Runtime>(
+    app: AppHandle<R>,
+    state: State<'_, AppState>,
+    paused: bool,
+) -> Result<(), IpcError> {
+    crate::scheduling::set_paused(&app, &state, paused).await?;
     Ok(())
 }

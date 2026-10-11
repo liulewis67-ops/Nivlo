@@ -170,6 +170,16 @@ export const commands = {
 	 */
 	setWeekStart: (weekStart: WeekStartDto) => typedError<null, IpcError>(__TAURI_INVOKE("set_week_start", { weekStart })),
 	/**
+	 *  暂停或恢复系统通知（与托盘的「暂停通知」同一个开关）。
+	 * 
+	 *  暂停期间到点的提醒不会丢：恢复后作为「错过的提醒」通知（多了就合并成一条汇总）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  保存失败时返回存储错误，开关保持原来的状态。
+	 */
+	setNotificationsPaused: (paused: boolean) => typedError<null, IpcError>(__TAURI_INVOKE("set_notifications_paused", { paused })),
+	/**
 	 *  列出项目（创建时间从早到晚）与各自未完成的 Item 数量。
 	 * 
 	 *  # Errors
@@ -493,6 +503,8 @@ export type AppSettingsDto = {
 	laterRule: LaterRuleDto,
 	/**  日历一周从哪天开始。 */
 	weekStart: WeekStartDto,
+	/**  是否暂停系统通知（托盘「暂停通知」）。 */
+	notificationsPaused: boolean,
 };
 
 /**  附件（IPC 表示）。 */

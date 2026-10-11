@@ -7,6 +7,19 @@ publish.workspace = true
 description = "Nivlo scheduler crate"
 
 [dependencies]
+chrono.workspace = true
+chrono-tz.workspace = true
+nivlo-application.workspace = true
+nivlo-common.workspace = true
+nivlo-domain.workspace = true
+nivlo-platform.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "macros", "rt"] }
+tracing.workspace = true
+
+[dev-dependencies]
+nivlo-application = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["macros", "rt", "test-util", "sync", "time"] }
+uuid.workspace = true
 
 [lints]
 workspace = true

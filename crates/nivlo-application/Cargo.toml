@@ -9,6 +9,7 @@ description = "Nivlo application crate"
 [dependencies]
 async-trait.workspace = true
 chrono.workspace = true
+chrono-tz.workspace = true
 nivlo-common.workspace = true
 nivlo-domain.workspace = true
 thiserror.workspace = true
@@ -22,7 +23,6 @@ testing = []
 [dev-dependencies]
 nivlo-capture.workspace = true
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
-chrono-tz.workspace = true
 uuid.workspace = true
 serde_json.workspace = true
 

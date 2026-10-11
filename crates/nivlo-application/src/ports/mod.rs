@@ -8,5 +8,5 @@ pub use files::{AttachmentFiles, StoredFile};
 pub use storage::{
     AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
     SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
-    Transaction, TrashRepository, UnitOfWork,
+    Transaction, TrashRepository, TriggerRepository, UnitOfWork,
 };

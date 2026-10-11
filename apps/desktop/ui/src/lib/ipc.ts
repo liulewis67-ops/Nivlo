@@ -164,6 +164,11 @@ export interface IpcClient {
   /** 修改日历一周从哪天开始。 */
   setWeekStart(weekStart: WeekStartDto): Promise<void>;
   /**
+   * 暂停 / 恢复系统通知（与托盘的「暂停通知」同一个开关）。暂停期间到点的提醒不会丢：
+   * 恢复后作为「错过的提醒」通知，多了合并成一条汇总。
+   */
+  setNotificationsPaused(paused: boolean): Promise<void>;
+  /**
    * 删除一批条目：移进回收站（软删除），30 天内可以恢复。一个事务，任何一个不存在整批不变。
    * 条目立刻从所有视图与搜索里消失。
    */
@@ -341,6 +346,9 @@ const tauriIpc: IpcClient = {
     await call("set_later_rule", commands.setLaterRule(rule));
   },
   getCalendar: (request) => call("get_calendar", commands.getCalendar(request)),
+  setNotificationsPaused: async (paused) => {
+    await call("set_notifications_paused", commands.setNotificationsPaused(paused));
+  },
   setWeekStart: async (weekStart) => {
     await call("set_week_start", commands.setWeekStart(weekStart));
   },
@@ -456,6 +464,7 @@ export const ipc: IpcClient = {
   setLaterRule: (rule) => current.setLaterRule(rule),
   getCalendar: (request) => current.getCalendar(request),
   setWeekStart: (weekStart) => current.setWeekStart(weekStart),
+  setNotificationsPaused: (paused) => current.setNotificationsPaused(paused),
   deleteItems: (ids) => current.deleteItems(ids),
   restoreDeletedItems: (ids) => current.restoreDeletedItems(ids),
   listTrash: () => current.listTrash(),

@@ -197,6 +197,24 @@ export function SettingsPage() {
             <ShortcutSetting />
           </Row>
         </Section>
+        <Section title={t("settings.section.notifications")}>
+          <Row
+            label={t("settings.pauseNotifications.label")}
+            hint={t("settings.pauseNotifications.hint")}
+          >
+            <Switch
+              label={t("settings.pauseNotifications.label")}
+              checked={current?.notificationsPaused ?? false}
+              disabled={current === undefined}
+              onCheckedChange={(paused) =>
+                change.mutate({
+                  patch: { notificationsPaused: paused },
+                  apply: () => ipc.setNotificationsPaused(paused),
+                })
+              }
+            />
+          </Row>
+        </Section>
         <Section title={t("settings.section.schedule")}>
           <Row label={t("settings.later.label")} hint={t("settings.later.hint")}>
             <div

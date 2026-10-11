@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT item_id, kind, fire_at FROM trigger_log WHERE fire_at >= ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "item_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "kind",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "fire_at",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "d515c9512224f75e27088ee280818acd49157ae8ef290358e760611811134a3c"
+}

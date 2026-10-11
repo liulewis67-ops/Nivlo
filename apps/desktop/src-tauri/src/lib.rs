@@ -18,6 +18,7 @@ pub mod dto;
 pub mod events;
 pub mod lifecycle;
 pub mod open;
+pub mod scheduling;
 pub mod shortcut;
 pub mod tray;
 pub mod windows;
@@ -73,6 +74,7 @@ macro_rules! bindings_builder {
                 $crate::commands::settings::set_later_rule,
                 $crate::commands::calendar::get_calendar,
                 $crate::commands::settings::set_week_start,
+                $crate::commands::settings::set_notifications_paused::<$runtime>,
                 $crate::commands::organize::list_projects,
                 $crate::commands::organize::create_project,
                 $crate::commands::organize::rename_project,
@@ -142,6 +144,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             Some(vec![autostart::AUTOSTART_ARG]),
         ))
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(builder.invoke_handler())
         .on_window_event(windows::on_window_event)
@@ -244,6 +247,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 tauri::async_runtime::block_on(controller.start());
                 app.state::<AppState>().runtime.set_shortcut(controller);
             }
+
+            // Scheduler：提醒 / Tip / 截止的触发与唤醒后的 Reconcile；通知是尽力而为的，不影响启动。
+            scheduling::spawn(app.handle(), &app.state::<AppState>());
 
             // 托盘不是必需功能：创建失败只记录，应用继续以悬浮窗运行。
             if let Err(error) = tray::setup(app.handle()) {

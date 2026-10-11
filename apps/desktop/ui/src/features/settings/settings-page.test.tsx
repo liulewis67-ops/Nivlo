@@ -93,4 +93,16 @@ describe("设置页", () => {
     expect(language).toHaveValue("zh-CN");
     expect(screen.getAllByRole("option", { name: "简体中文" })).toHaveLength(1);
   });
+
+  it("暂停通知的开关会保存（与托盘同一个开关）", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    const pause = await screen.findByRole("switch", { name: "暂停通知" });
+    await waitFor(() => expect(pause).toBeEnabled());
+    expect(pause).toHaveAttribute("aria-checked", "false");
+
+    fireEvent.click(pause);
+    await waitFor(() => expect(ipc.appSettings.notificationsPaused).toBe(true));
+    await waitFor(() => expect(pause).toHaveAttribute("aria-checked", "true"));
+  });
 });

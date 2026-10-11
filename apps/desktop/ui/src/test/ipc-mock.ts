@@ -233,6 +233,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     floatingAlwaysOnTop: true,
     laterRule: "nextMonday" as LaterRuleDto,
     weekStart: "monday" as WeekStartDto,
+    notificationsPaused: false,
   };
   let settingFailure: AppError | undefined;
   /** 回收站：Item ID → 删除时间（ISO）。 */
@@ -928,6 +929,16 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     get appSettings() {
       return appSettings;
+    },
+    setNotificationsPaused: (paused: boolean) => {
+      calls.push("setNotificationsPaused");
+      if (settingFailure !== undefined) {
+        const failure = settingFailure;
+        settingFailure = undefined;
+        return Promise.reject(failure);
+      }
+      appSettings = { ...appSettings, notificationsPaused: paused };
+      return Promise.resolve();
     },
     setWeekStart: (weekStart: WeekStartDto) => {
       calls.push("setWeekStart");

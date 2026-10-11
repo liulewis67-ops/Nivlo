@@ -18,6 +18,7 @@ mod error;
 mod item_repository;
 mod organize_repository;
 mod trash_repository;
+mod trigger_repository;
 
 pub use attachment_files::FsAttachmentFiles;
 pub use database::Database;

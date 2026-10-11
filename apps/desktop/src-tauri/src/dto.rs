@@ -1067,6 +1067,8 @@ pub struct AppSettingsDto {
     pub later_rule: LaterRuleDto,
     /// 日历一周从哪天开始。
     pub week_start: WeekStartDto,
+    /// 是否暂停系统通知（托盘「暂停通知」）。
+    pub notifications_paused: bool,
 }
 
 /// 一周从哪天开始（IPC 表示）。
