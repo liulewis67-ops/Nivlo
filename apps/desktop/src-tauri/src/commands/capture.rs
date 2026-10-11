@@ -7,6 +7,21 @@ use tauri::State;
 use crate::app::AppState;
 use crate::dto::{CaptureRequestDto, CaptureResultDto, IpcError, parse_item_id};
 
+/// 在阻塞线程里识别来源应用（Win32 调用很快，但不放在异步运行时线程上）；识别失败时原样返回。
+async fn detect_source_application(request: CaptureRequest) -> CaptureRequest {
+    let fallback = request.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut request = request;
+        crate::source_app::fill_source_application(
+            &mut request,
+            crate::source_app::platform_source_application().as_ref(),
+        );
+        request
+    })
+    .await
+    .unwrap_or(fallback)
+}
+
 /// 捕获一次输入（文本 / URL / 文件 / 图片），创建 Item + Source + Attachment 并放进 Inbox。
 ///
 /// 整个过程是一个事务；失败时不留下任何记录。返回创建的 Item 与撤销句柄。
@@ -21,7 +36,9 @@ pub async fn capture(
     state: State<'_, AppState>,
     request: CaptureRequestDto,
 ) -> Result<CaptureResultDto, IpcError> {
-    let request = CaptureRequest::try_from(request)?;
+    let mut request = CaptureRequest::try_from(request)?;
+    // 拖放 / 粘贴来自别的应用：捕获发生的这一刻识别一次来源应用（只记录应用名）。
+    request = detect_source_application(request).await;
     let result = state.services.capture.capture(request).await?;
     Ok(CaptureResultDto::from(&result))
 }
@@ -77,7 +94,7 @@ pub async fn capture_from_clipboard(
     let result = state
         .services
         .capture
-        .capture(CaptureRequest::new(input, CaptureOrigin::Paste))
+        .capture(detect_source_application(CaptureRequest::new(input, CaptureOrigin::Paste)).await)
         .await?;
     Ok(CaptureResultDto::from(&result))
 }

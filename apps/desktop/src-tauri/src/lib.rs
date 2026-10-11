@@ -26,6 +26,7 @@ pub mod open;
 pub mod scheduling;
 pub mod script_grants;
 pub mod shortcut;
+pub mod source_app;
 pub mod tray;
 pub mod windows;
 

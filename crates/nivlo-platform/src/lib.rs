@@ -4,6 +4,7 @@
 //!
 //! * [`clipboard::ClipboardPort`]：读取剪贴板（只在用户粘贴时调用，没有监听接口）。
 //! * [`credential::CredentialPort`]：读写系统凭据库（Token 只存在那里，实施计划 9.1）。
+//! * [`source_app::SourceApplicationPort`]：识别用户之前所在的应用（来源应用，实施计划 10.4）。
 //! * [`notification::NotificationPort`]：发送系统通知（提醒、Tip、截止）。
 //! * [`open::OpenPort`]：受限的外部打开能力（默认浏览器打开 http(s) 网址、在资源管理器里定位文件）。
 //! * [`floating_window::FloatingWindowPort`]：悬浮窗的位置 / 尺寸 / 置顶 / 焦点。
@@ -26,3 +27,4 @@ pub mod notification;
 pub mod open;
 pub mod placement;
 pub mod shortcut;
+pub mod source_app;

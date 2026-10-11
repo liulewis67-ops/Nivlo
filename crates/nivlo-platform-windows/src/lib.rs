@@ -13,3 +13,4 @@ pub mod clipboard;
 pub mod credential;
 pub mod foreground;
 pub mod shortcut;
+pub mod source_app;

@@ -1548,14 +1548,14 @@ Phase 12 Backlog                        → 未排期
 
 ### 10.4 来源应用识别
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：2.1
 - **任务**：
   - Drop / Paste 时识别来源应用（前台窗口进程名），写入 `source_app`，用于 `source.application` Matcher。
 - **验收标准**：
   - [ ] 从 Chrome、Edge、Explorer、VS Code 拖入时 `source_app` 正确。
-  - [ ] Matcher `source.application == Chrome` 可生效。
-- **完成记录**：—
+  - [x] Matcher `source.application == Chrome` 可生效（`facts` 测试带 `source_application: Some("Chrome")`；比较不区分大小写，识别层把 `chrome` / `msedge` / `explorer` / `code` 等整理成 `Chrome` / `Edge` / `Explorer` / `VS Code`）。
+- **完成记录**：2026-10-12（进行中）：`nivlo-platform::source_app`（`SourceApplicationPort`、`friendly_app_name`，有测试）；`WindowsSourceApplication`（取前台钩子记录的「最近一个其他进程的前台窗口」，没有钩子时退回当前前台窗口 → `GetWindowThreadProcessId` → `QueryFullProcessImageNameW` → 文件名 → 显示名；是 Nivlo 自己时返回 `None`；用当前进程验证了进程号 → 可执行文件名这条 Win32 路径）；桌面端 `capture` 与 `capture_from_clipboard` 在**拖放 / 粘贴**时补上来源应用（手动 / 快速添加 / 快捷键不记录，调用方明确给了值则保持），只记录应用名，不含窗口标题或路径。**未验证**：第一条验收（从 Chrome、Edge、Explorer、VS Code 真实拖入）需要在真机上手动做，目前只验证了识别函数本身与接入规则。
 
 ### 10.5 原生电源 / 时钟事件
 
