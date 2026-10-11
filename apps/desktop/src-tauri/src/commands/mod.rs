@@ -9,6 +9,7 @@ pub mod capture;
 pub mod data;
 pub mod diagnostics;
 pub mod inbox;
+pub mod integration;
 pub mod item;
 pub mod organize;
 pub mod settings;

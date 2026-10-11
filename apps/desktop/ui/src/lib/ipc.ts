@@ -33,6 +33,8 @@ import type {
   RestoreStagedDto,
   WorkflowDto,
   WorkflowImportPreviewDto,
+  IntegrationConnectionDto,
+  IntegrationTestDto,
   WorkflowRunDto,
 } from "@/bindings";
 import { toAppError } from "./errors";
@@ -88,6 +90,8 @@ export type {
   StepReportDto,
   WorkflowDto,
   WorkflowImportPreviewDto,
+  IntegrationConnectionDto,
+  IntegrationTestDto,
   WorkflowRunDto,
 } from "@/bindings";
 
@@ -249,6 +253,18 @@ export interface IpcClient {
   pickWorkflowImport(): Promise<WorkflowImportPreviewDto | null>;
   /** 确认导入预览里的定义（来源 Imported、默认禁用）。 */
   importWorkflow(definitionJson: string): Promise<WorkflowDto>;
+  /** 已连接的集成账号（只含元数据，不含任何凭据）。 */
+  listIntegrations(): Promise<IntegrationConnectionDto[]>;
+  /** 连接 / 更新凭据：秘密只写入系统凭据库，之后读不回来。 */
+  connectIntegration(
+    integration: string,
+    account: string,
+    secret: string,
+  ): Promise<IntegrationConnectionDto>;
+  /** 断开：从系统凭据库删除凭据。 */
+  disconnectIntegration(integration: string, account: string): Promise<void>;
+  /** 测试连接，区分认证失败 / 权限不足 / 网络问题。 */
+  testIntegration(integration: string, account: string): Promise<IntegrationTestDto>;
   /** 确认 Workflow 里脚本的权限（脚本或权限被修改后需要再次确认才会运行）。 */
   confirmScriptPermissions(id: string): Promise<WorkflowDto>;
   /** 最近的运行记录（新的在前）。 */
@@ -459,6 +475,14 @@ const tauriIpc: IpcClient = {
   rerunWorkflow: (id) => call("rerun_workflow", commands.rerunWorkflow(id)),
   confirmScriptPermissions: (id) =>
     call("confirm_script_permissions", commands.confirmScriptPermissions(id)),
+  listIntegrations: () => call("list_integrations", commands.listIntegrations()),
+  connectIntegration: (integration, account, secret) =>
+    call("connect_integration", commands.connectIntegration(integration, account, secret)),
+  disconnectIntegration: async (integration, account) => {
+    await call("disconnect_integration", commands.disconnectIntegration(integration, account));
+  },
+  testIntegration: (integration, account) =>
+    call("test_integration", commands.testIntegration(integration, account)),
   exportWorkflowFile: (id) => call("export_workflow_file", commands.exportWorkflowFile(id)),
   pickWorkflowImport: () => call("pick_workflow_import", commands.pickWorkflowImport()),
   importWorkflow: (definitionJson) =>
@@ -591,6 +615,12 @@ export const ipc: IpcClient = {
   dryRunWorkflow: (definitionJson, input) => current.dryRunWorkflow(definitionJson, input),
   rerunWorkflow: (id) => current.rerunWorkflow(id),
   confirmScriptPermissions: (id) => current.confirmScriptPermissions(id),
+  listIntegrations: () => current.listIntegrations(),
+  connectIntegration: (integration, account, secret) =>
+    current.connectIntegration(integration, account, secret),
+  disconnectIntegration: (integration, account) =>
+    current.disconnectIntegration(integration, account),
+  testIntegration: (integration, account) => current.testIntegration(integration, account),
   exportWorkflowFile: (id) => current.exportWorkflowFile(id),
   pickWorkflowImport: () => current.pickWorkflowImport(),
   importWorkflow: (definitionJson) => current.importWorkflow(definitionJson),

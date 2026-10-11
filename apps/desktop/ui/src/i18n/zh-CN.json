@@ -442,7 +442,8 @@
       "appearance": "悬浮窗外观",
       "schedule": "日程",
       "notifications": "通知",
-      "data": "数据与诊断"
+      "data": "数据与诊断",
+      "integrations": "集成"
     },
     "autostart": {
       "label": "开机自动启动",
@@ -601,6 +602,43 @@
       "showCount": {
         "label": "显示数字",
         "hint": "在皮肤旁保留剩余待办数。"
+      }
+    },
+    "integrations": {
+      "name": {
+        "github": "GitHub",
+        "jira": "Jira"
+      },
+      "notConnected": "未连接",
+      "connectedCount": "已连接（{{count}} 个账号）",
+      "githubAccount": "GitHub 账号",
+      "connect": "连接",
+      "connected": "已连接。",
+      "disconnect": "断开",
+      "disconnectConfirm": "确定断开？",
+      "disconnected": "已断开，令牌已从本机的系统凭据库中删除。",
+      "test": "测试连接",
+      "jiraAddress": "Jira 地址",
+      "jiraAddressPlaceholder": "https://your-team.atlassian.net",
+      "email": "账号邮箱",
+      "emailPlaceholder": "you@example.com",
+      "token": {
+        "github": "个人访问令牌",
+        "jira": "个人访问令牌（PAT）",
+        "apiToken": "API Token"
+      },
+      "help": {
+        "github": "需要对你要捕获链接的仓库有读取权限的令牌。令牌保存在系统凭据库里，之后无法读回。",
+        "jira": "Jira Cloud：账号邮箱 + API Token；自托管 Jira：个人访问令牌。保存在系统凭据库里，之后无法读回。"
+      },
+      "lastError": "最近一次检查失败：{{message}}",
+      "result": {
+        "ok": "已连接，账号：{{message}}。",
+        "notConnected": "还没有连接。",
+        "authFailed": "认证失败：令牌无效或已过期，请用新的令牌重新连接。",
+        "permissionDenied": "令牌有效，但权限不足。{{message}}",
+        "network": "连不上服务：{{message}}",
+        "failed": "检查失败：{{message}}"
       }
     }
   },

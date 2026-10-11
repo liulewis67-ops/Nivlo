@@ -123,6 +123,57 @@ impl Integration for GithubIntegration {
         "GitHub"
     }
 
+    /// 测试连接：`GET /user`，返回登录名。
+    async fn test_connection(
+        &self,
+        _account: &str,
+        _scheme: &str,
+        ctx: &IntegrationContext<'_>,
+    ) -> Result<String, IntegrationError> {
+        let key = CredentialKey::new("github", ACCOUNT)
+            .map_err(|_| IntegrationError::Fatal("凭据标识不合法".to_owned()))?;
+        let secret = match self.credentials.get(&key) {
+            Ok(Some(secret)) => secret,
+            Ok(None) => return Err(IntegrationError::NotConnected),
+            Err(_) => return Err(IntegrationError::Fatal("无法读取系统凭据库".to_owned())),
+        };
+        let request = HttpRequest::get(format!("https://{API_HOST}/user"))
+            .with_header(
+                "Authorization",
+                Secret::new(format!("Bearer {}", secret.expose())),
+            )
+            .with_header("Accept", Secret::new("application/vnd.github+json"))
+            .with_header("X-GitHub-Api-Version", Secret::new("2022-11-28"));
+        let response = ctx
+            .http
+            .get(&request, ctx.policy)
+            .await
+            .map_err(|e| http_error(&e))?;
+        match response.status {
+            200..=299 => {}
+            401 => return Err(IntegrationError::Unauthorized),
+            403 => {
+                let body = String::from_utf8_lossy(&response.body).to_ascii_lowercase();
+                return Err(if body.contains("rate limit") {
+                    IntegrationError::Retryable("GitHub 请求被限流".to_owned())
+                } else {
+                    IntegrationError::Forbidden("Token 有效，但权限不足".to_owned())
+                });
+            }
+            429 | 500..=599 => {
+                return Err(IntegrationError::Retryable("GitHub 暂时不可用".to_owned()));
+            }
+            other => {
+                return Err(IntegrationError::Fatal(format!(
+                    "GitHub 返回了错误（HTTP {other}）"
+                )));
+            }
+        }
+        let me: Value = serde_json::from_slice(&response.body)
+            .map_err(|_| IntegrationError::Fatal("GitHub 的响应格式不认识".to_owned()))?;
+        Ok(text(&me, "/login"))
+    }
+
     /// 支持的操作：`issue` / `pull`（参数 `owner`、`repo`、`number`）。
     async fn call(
         &self,

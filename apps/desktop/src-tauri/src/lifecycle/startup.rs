@@ -125,17 +125,25 @@ pub fn build_app_state(
         )),
     );
     // 第三方集成只经 IntegrationRegistry 抽象调用；凭据只在各集成内部从系统凭据库读取。
-    if let Some(http) = http {
-        let mut integrations = nivlo_application::ports::integration::IntegrationRegistry::new();
-        let credentials = crate::credentials::system_credentials();
-        integrations.register(Arc::new(nivlo_integrations::JiraIntegration::new(
-            credentials.clone(),
-        )));
-        integrations.register(Arc::new(nivlo_integrations::GithubIntegration::new(
-            credentials,
-        )));
-        adapter = adapter.with_integrations(Arc::new(integrations), http);
+    let credentials = crate::credentials::system_credentials();
+    let mut registry = nivlo_application::ports::integration::IntegrationRegistry::new();
+    registry.register(Arc::new(nivlo_integrations::JiraIntegration::new(
+        credentials.clone(),
+    )));
+    registry.register(Arc::new(nivlo_integrations::GithubIntegration::new(
+        credentials.clone(),
+    )));
+    let registry = Arc::new(registry);
+    if let Some(http) = http.clone() {
+        adapter = adapter.with_integrations(registry.clone(), http);
     }
+    let integrations = crate::integration_service::IntegrationService::new(
+        settings.clone(),
+        credentials,
+        registry,
+        http,
+        clock.clone(),
+    );
     let engine: Arc<dyn WorkflowEngine> = Arc::new(adapter);
     // 网页标题等联网的补全在后台队列里做，捕获本身不等网络。
     let (enrichment_tx, enrichment_rx) = tokio::sync::mpsc::unbounded_channel();
@@ -183,6 +191,7 @@ pub fn build_app_state(
             calendar,
             workflows,
             export,
+            integrations,
         },
         runtime,
     }

@@ -328,3 +328,67 @@ async fn a_connected_intranet_host_may_bypass_the_private_address_limit_but_noth
             .is_err()
     );
 }
+
+const MYSELF: &str = include_str!("../../../../fixtures/jira/api/myself.json");
+
+async fn test_connection(
+    store: Arc<MemoryCredentials>,
+    http: &FakeHttp,
+    host: &str,
+) -> Result<String, IntegrationError> {
+    let policy = HostPolicy::new(["*"]);
+    JiraIntegration::new(store)
+        .test_connection(
+            host,
+            "https",
+            &IntegrationContext {
+                http,
+                policy: &policy,
+            },
+        )
+        .await
+}
+
+#[tokio::test]
+async fn testing_the_connection_tells_network_auth_and_permission_problems_apart() {
+    let host = "acme.atlassian.net";
+    let store = || credentials(host, "me@acme.com:token");
+
+    let http = FakeHttp::json(200, MYSELF);
+    assert_eq!(test_connection(store(), &http, host).await.unwrap(), "林悦");
+    assert!(
+        http.seen.lock().unwrap()[0]
+            .0
+            .ends_with("/rest/api/2/myself")
+    );
+    assert!(http.header("Authorization").starts_with("Basic "));
+
+    let auth = test_connection(store(), &FakeHttp::json(401, "{}"), host).await;
+    assert_eq!(auth.unwrap_err(), IntegrationError::Unauthorized);
+    let permission = test_connection(store(), &FakeHttp::json(403, "{}"), host).await;
+    assert!(matches!(
+        permission.unwrap_err(),
+        IntegrationError::Forbidden(_)
+    ));
+    let network = test_connection(
+        store(),
+        &FakeHttp::reply(Err(HttpError::Network("无法连接".into()))),
+        host,
+    )
+    .await;
+    assert!(matches!(
+        network.unwrap_err(),
+        IntegrationError::Retryable(_)
+    ));
+    let unreachable =
+        test_connection(store(), &FakeHttp::reply(Err(HttpError::Timeout)), host).await;
+    assert_eq!(unreachable.unwrap_err(), IntegrationError::Timeout);
+
+    let missing = test_connection(
+        Arc::new(MemoryCredentials::new()),
+        &FakeHttp::json(200, MYSELF),
+        host,
+    )
+    .await;
+    assert_eq!(missing.unwrap_err(), IntegrationError::NotConnected);
+}

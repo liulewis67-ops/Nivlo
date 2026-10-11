@@ -14,7 +14,7 @@ use std::path::Path;
 
 use nivlo_common::paths::AppPaths;
 use nivlo_desktop_lib::lifecycle::startup::{build_app_state, open_database};
-use nivlo_platform::credential::{CredentialKey, CredentialPort, Secret};
+use nivlo_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials, Secret};
 
 /// 带特征的测试 Token：足够独特，不会和普通数据碰撞。
 const CANARY: &str = "nivlo-canary-token-7f3a9c1e5b2d4086";
@@ -83,6 +83,35 @@ async fn a_stored_token_never_shows_up_in_the_database_logs_or_config() {
         .set("integration.jira.connected", "true")
         .await
         .unwrap();
+
+    // 经过连接管理的完整流程（真实的 SQLite 设置表 + 内存凭据库，避免动用开发机上的真实凭据）：
+    // 秘密只进凭据库，设置表里只有元数据。
+    {
+        use nivlo_application::ports::integration::IntegrationRegistry;
+        let canary_store = std::sync::Arc::new(MemoryCredentials::new());
+        let mut registry = IntegrationRegistry::new();
+        registry.register(std::sync::Arc::new(
+            nivlo_integrations::GithubIntegration::new(canary_store.clone()),
+        ));
+        let service = nivlo_desktop_lib::integration_service::IntegrationService::new(
+            state.services.settings.clone(),
+            canary_store.clone(),
+            std::sync::Arc::new(registry),
+            None,
+            state.runtime.clock.clone(),
+        );
+        service.connect("github", "", CANARY).await.unwrap();
+        let github = CredentialKey::new("github", "github.com").unwrap();
+        assert_eq!(
+            canary_store
+                .get(&github)
+                .unwrap()
+                .as_ref()
+                .map(Secret::expose),
+            Some(CANARY)
+        );
+        assert_eq!(service.list().await.unwrap().len(), 1);
+    }
 
     // 凭据确实在系统凭据库里，只是不在数据目录里。
     assert_eq!(

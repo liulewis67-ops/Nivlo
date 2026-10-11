@@ -1,4 +1,4 @@
-import type { UiPrefName } from "@/lib/ipc";
+import type { IntegrationConnectionDto, IntegrationTestDto, UiPrefName } from "@/lib/ipc";
 import { visibleRange } from "@/features/calendar/model/calendar-grid";
 import { AppError } from "@/lib/errors";
 import { createWorkflowMock } from "./workflow-mock";
@@ -51,6 +51,10 @@ export const EMPTY_TODAY: TodayViewDto = {
 export interface MemoryIpc extends IpcClient, WorkflowMock {
   /** 设置 `restoreBackup` 时用户是选了文件（`true`）还是取消了（`false`）。 */
   chooseRestoreFile(chosen: boolean): void;
+  /** 让下一次 `testIntegration` 返回指定的状态（测试用）。 */
+  scriptIntegrationTest(status: IntegrationTestDto["status"], message?: string): void;
+  /** 模拟凭据库里目前保存的秘密（测试用，真实应用里前端读不到）。 */
+  readonly integrationSecrets: ReadonlyMap<string, string>;
   /** 模拟用户在导入文件选择框里选中的内容；`null` 表示取消。 */
   offerWorkflowFile(json: string | null): void;
   /** 让 `rerunWorkflow` 失败（来源不支持）。 */
@@ -246,6 +250,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const itemTags = new Map<string, string[]>();
   let nextOrganizeId = 1;
   const uiPrefs = new Map<string, string>();
+  const integrationRecords: IntegrationConnectionDto[] = [];
+  const integrationSecrets = new Map<string, string>();
+  let nextTest: IntegrationTestDto = { status: "ok", message: "octocat" };
   let appSettings: AppSettingsDto = {
     autostart: false,
     floatingAlwaysOnTop: true,
@@ -1227,6 +1234,60 @@ ${(item.content ?? "").toLowerCase()}`;
     setWorkflowEnabled: workflowMock.setWorkflowEnabled,
     setWorkflowPriority: workflowMock.setWorkflowPriority,
     duplicateWorkflow: workflowMock.duplicateWorkflow,
+    integrationSecrets,
+    scriptIntegrationTest: (status: IntegrationTestDto["status"], message = "") => {
+      nextTest = { status, message };
+    },
+    listIntegrations: () => {
+      calls.push("listIntegrations");
+      return Promise.resolve(integrationRecords.map((c) => ({ ...c })));
+    },
+    connectIntegration: (integration: string, account: string, secret: string) => {
+      calls.push("connectIntegration");
+      if (secret.trim() === "") {
+        return Promise.reject(new AppError("INVALID_INPUT", "请填写有效的令牌"));
+      }
+      const host =
+        integration === "github"
+          ? "github.com"
+          : (account.replace(/^https?:\/\//, "").split(/[/?#]/)[0] ?? "");
+      const key = `${integration}:${host}`;
+      integrationSecrets.set(key, secret);
+      const record: IntegrationConnectionDto = {
+        integration,
+        account: host,
+        scheme: "https",
+        connectedAt: "2026-10-12T08:00:00Z",
+        lastCheckedAt: null,
+        lastError: null,
+      };
+      const at = integrationRecords.findIndex(
+        (c) => c.integration === integration && c.account === host,
+      );
+      if (at >= 0) integrationRecords.splice(at, 1);
+      integrationRecords.push(record);
+      return Promise.resolve({ ...record });
+    },
+    disconnectIntegration: (integration: string, account: string) => {
+      calls.push("disconnectIntegration");
+      integrationSecrets.delete(`${integration}:${account}`);
+      const at = integrationRecords.findIndex(
+        (c) => c.integration === integration && c.account === account,
+      );
+      if (at >= 0) integrationRecords.splice(at, 1);
+      return Promise.resolve();
+    },
+    testIntegration: (integration: string, account: string) => {
+      calls.push("testIntegration");
+      const record = integrationRecords.find(
+        (c) => c.integration === integration && c.account === account,
+      );
+      if (record !== undefined) {
+        record.lastCheckedAt = "2026-10-12T08:05:00Z";
+        record.lastError = nextTest.status === "ok" ? null : nextTest.message;
+      }
+      return Promise.resolve({ ...nextTest });
+    },
     exportWorkflowFile: (id: string) => {
       calls.push(`exportWorkflowFile:${id}`);
       return workflowMock.exportWorkflowFile(id);

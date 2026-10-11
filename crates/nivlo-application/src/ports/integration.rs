@@ -39,6 +39,9 @@ pub enum IntegrationError {
     /// 凭据被服务拒绝（401 / 403）：过期、撤销或权限不够。
     #[error("凭据被拒绝，需要重新连接")]
     Unauthorized,
+    /// 凭据有效，但权限不足（仅「测试连接」会区分；运行时的 403 按凭据失效处理，提示重新连接）。
+    #[error("权限不足：{0}")]
+    Forbidden(String),
     /// 访问被权限策略拒绝（主机没有声明）。
     #[error("没有访问权限：{0}")]
     PermissionDenied(String),
@@ -72,6 +75,24 @@ pub trait Integration: Send + Sync {
 
     /// 面向用户的名称（如 `Jira`），用于「需要连接 Jira」之类的提示。
     fn display_name(&self) -> &'static str;
+
+    /// 「测试连接」：用保存的凭据做一次最轻量的认证请求，成功时返回账号名（如用户名）。
+    ///
+    /// `account` 是连接时填写的账号标识（Jira 的主机、GitHub 的 `github.com`），`scheme` 是 `http` / `https`。
+    /// 能区分的失败：没连接（[`IntegrationError::NotConnected`]）、认证失败（[`IntegrationError::Unauthorized`]）、
+    /// 权限不足（[`IntegrationError::Forbidden`]）、网络问题（[`IntegrationError::Retryable`] / [`IntegrationError::Timeout`]）。
+    ///
+    /// # Errors
+    ///
+    /// 见上。默认实现表示这个集成不支持测试。
+    async fn test_connection(
+        &self,
+        _account: &str,
+        _scheme: &str,
+        _ctx: &IntegrationContext<'_>,
+    ) -> Result<String, IntegrationError> {
+        Err(IntegrationError::Fatal("这个集成不支持测试连接".to_owned()))
+    }
 
     /// 执行一次调用。
     ///

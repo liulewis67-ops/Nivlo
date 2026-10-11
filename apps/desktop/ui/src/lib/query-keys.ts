@@ -27,6 +27,7 @@ export const queryKeys = {
   trash: () => ["trash"] as const,
   /** Workflow 列表。 */
   workflows: () => ["workflows"] as const,
+  integrations: () => ["integrations"] as const,
   /** Workflow 最近的运行记录。 */
   workflowRuns: () => ["workflows", "runs"] as const,
   /** Today 视图（待办 / 提示 / 今日已完成）。 */

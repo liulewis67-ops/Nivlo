@@ -445,7 +445,8 @@
       "appearance": "Appearance",
       "schedule": "Schedule",
       "notifications": "Notifications",
-      "data": "Data and diagnostics"
+      "data": "Data and diagnostics",
+      "integrations": "Integrations"
     },
     "autostart": {
       "label": "Launch at startup",
@@ -604,6 +605,44 @@
       "showCount": {
         "label": "Show count",
         "hint": "Keep the number of remaining to-dos next to the skin."
+      }
+    },
+    "integrations": {
+      "name": {
+        "github": "GitHub",
+        "jira": "Jira"
+      },
+      "notConnected": "Not connected",
+      "connectedCount_one": "Connected ({{count}} account)",
+      "connectedCount_other": "Connected ({{count}} accounts)",
+      "githubAccount": "GitHub account",
+      "connect": "Connect",
+      "connected": "Connected.",
+      "disconnect": "Disconnect",
+      "disconnectConfirm": "Disconnect for good?",
+      "disconnected": "Disconnected. The token was removed from this computer’s credential store.",
+      "test": "Test connection",
+      "jiraAddress": "Jira address",
+      "jiraAddressPlaceholder": "https://your-team.atlassian.net",
+      "email": "Account email",
+      "emailPlaceholder": "you@example.com",
+      "token": {
+        "github": "Personal access token",
+        "jira": "Personal access token (PAT)",
+        "apiToken": "API token"
+      },
+      "help": {
+        "github": "Needs a token with read access to the repositories you capture links from. It is saved in the system credential store and can’t be read back.",
+        "jira": "Jira Cloud: your account email plus an API token. Self-hosted Jira: a personal access token. Saved in the system credential store and can’t be read back."
+      },
+      "lastError": "Last check failed: {{message}}",
+      "result": {
+        "ok": "Connected as {{message}}.",
+        "notConnected": "Not connected yet.",
+        "authFailed": "Authentication failed: the token is invalid or has expired. Reconnect with a new token.",
+        "permissionDenied": "The token is valid but doesn’t have enough permission. {{message}}",
+        "network": "Couldn’t reach the service: {{message}}",
+        "failed": "The check failed: {{message}}"
       }
     }
   },

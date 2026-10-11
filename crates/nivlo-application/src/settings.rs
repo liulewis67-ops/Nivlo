@@ -38,6 +38,8 @@ pub mod keys {
     pub const UI_THEME: &str = "ui.theme";
     /// Today 是否隐藏今日已完成的 Todo（`"true"` / `"false"`），缺省为显示。
     pub const UI_HIDE_COMPLETED: &str = "ui.hide_completed";
+    /// 已连接的集成账号（JSON，只含非秘密的元数据；秘密只在系统凭据库里，实施计划 9.5）。
+    pub const INTEGRATION_CONNECTIONS: &str = "integrations.connections";
     /// 日历一周从哪天开始（`monday` / `sunday`），缺省为周一。
     pub const WEEK_START: &str = "calendar.week_start";
 }

@@ -1470,7 +1470,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 9.3 Jira API
 
-- **状态**：🟨
+- **状态**：✅
 - **依赖**：9.2、6.4
 - **任务**：
   - Jira Cloud（Email + API Token）与 Server / Data Center（PAT）。
@@ -1480,28 +1480,28 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [x] fixtures（`fixtures/jira/api/` 下 Cloud / Server / 全空字段三份响应）测试覆盖字段映射（key、title、description、status、priority、assignee、start / due、labels、project、url），另覆盖认证方式、错误分类、凭据按主机区分、参数校验与内网豁免范围（`jira/tests.rs`）。注：这些响应是按 Jira REST v2 的结构手写的样本，不是从真实实例录制的。
   - [x] 凭据失效时自动降级并提示用户重新连接（`tests/jira_workflow.rs`：401 → 改用页面标题创建待办，同时返回带 `OPEN_INTEGRATION_SETTINGS:jira` 的运行提示，写入运行记录并在 Run Inspector 显示；从没连接过则静默走旧路径）。
-- **完成记录**：2026-10-12（进行中）：`JiraIntegration`（`nivlo-integrations`）——REST v2；Cloud（`*.atlassian.net`）Basic（凭据库存 `email:token`）、Server / DC Bearer PAT；`issue` 操作；401 / 403 → `Unauthorized`，无凭据 → `NotConnected`（不发请求），404 / 429 / 5xx / 超时分别归类；200 返回登录页 HTML 视为凭据失效。内网 / 自托管：`HostPolicy::with_configured_private_hosts` 只对**用户连接过的那个主机**放行私网限制（凭据按主机保存，所以没连接过的主机根本不会发请求）。降级链：内置 Jira Workflow（v2）在读页面之前加一个 `optional` 的 `integration` Step，标题回退写成 `vars.api_title → vars.issue_title → 空`，元数据增加 status / priority / assignee / project / labels / startDate / dueDate；新增模板变量 `url.authority`（主机 + 显式端口）。引擎增加「运行提示」（`RunNotice`）：成功但降级时随结果返回，运行记录里以 `degraded#<动作>` 记录。桌面端启动时注册 Jira，凭据库在 Windows 用 Credential Manager、其他平台暂用内存版。**重要：目前界面里还没有地方保存凭据（9.5），所以 API 路径在真机上还用不起来**；Start date 用 `customfield_10015`（Cloud 默认），自托管实例的自定义字段 ID 可能不同；没有对真实 Jira 实例做过验证；映射到 Item 的只有标题 / 描述，其余字段放在 `metadata_json`，没有映射到 Item 的优先级 / 计划日期。
+- **完成记录**：2026-10-12（进行中）：`JiraIntegration`（`nivlo-integrations`）——REST v2；Cloud（`*.atlassian.net`）Basic（凭据库存 `email:token`）、Server / DC Bearer PAT；`issue` 操作；401 / 403 → `Unauthorized`，无凭据 → `NotConnected`（不发请求），404 / 429 / 5xx / 超时分别归类；200 返回登录页 HTML 视为凭据失效。内网 / 自托管：`HostPolicy::with_configured_private_hosts` 只对**用户连接过的那个主机**放行私网限制（凭据按主机保存，所以没连接过的主机根本不会发请求）。降级链：内置 Jira Workflow（v2）在读页面之前加一个 `optional` 的 `integration` Step，标题回退写成 `vars.api_title → vars.issue_title → 空`，元数据增加 status / priority / assignee / project / labels / startDate / dueDate；新增模板变量 `url.authority`（主机 + 显式端口）。引擎增加「运行提示」（`RunNotice`）：成功但降级时随结果返回，运行记录里以 `degraded#<动作>` 记录。桌面端启动时注册 Jira，凭据库在 Windows 用 Credential Manager、其他平台暂用内存版。设置页「集成」区块（9.5）已提供连接入口；Start date 用 `customfield_10015`（Cloud 默认），自托管实例的自定义字段 ID 可能不同；没有对真实 Jira 实例做过验证；映射到 Item 的只有标题 / 描述，其余字段放在 `metadata_json`，没有映射到 Item 的优先级 / 计划日期。
 
 ### 9.4 GitHub API
 
-- **状态**：🟨
+- **状态**：✅
 - **依赖**：9.2、6.5
 - **任务**：
   - Token 认证；Issue / PR 的标题、状态、标签、指派人、里程碑。
 - **验收标准**：
   - [x] fixtures 测试覆盖 Issue 与 PR（`fixtures/github/api/` 下 issue / pull（已合并）/ pull-draft / rate-limited，`github/tests.rs`）；私有仓库在配置 Token 后可获取（`tests/github_workflow.rs`：假服务器对匿名请求返回 404、对带 Bearer 的请求返回内容；配置 Token 前后对比）。注：样本是按 GitHub REST 的结构手写的，不是从真实 API 录制的。
-- **完成记录**：2026-10-12（进行中）：`GithubIntegration`（`issue` / `pull` 两个操作，只访问 `api.github.com`，`Authorization: Bearer <PAT>` + `X-GitHub-Api-Version`）；映射 title / state（PR 已合并显示 `merged`）/ draft / body / author / labels / assignees / milestone / url；401 → 凭据失效，403 按响应说明区分限流（可重试）与权限不足（提示重新连接），404 提示「找不到或 Token 没有权限」；没有 Token → `NotConnected`（不发请求）。内置 GitHub Issue / PR Workflow（v2）在匿名 API 之前加了一个 `optional` 的 `integration` Step：标题回退 带认证 API → 匿名 API → 页面标题，元数据新增 labels / assignees / milestone，`state` 优先用认证 API 的结果。桌面端启动时注册。**同样受限于 9.5**：界面里还没有保存 Token 的地方，所以真机上目前只能走匿名路径；GitHub Enterprise 不支持；没有对真实 GitHub 做过验证。
+- **完成记录**：2026-10-12（进行中）：`GithubIntegration`（`issue` / `pull` 两个操作，只访问 `api.github.com`，`Authorization: Bearer <PAT>` + `X-GitHub-Api-Version`）；映射 title / state（PR 已合并显示 `merged`）/ draft / body / author / labels / assignees / milestone / url；401 → 凭据失效，403 按响应说明区分限流（可重试）与权限不足（提示重新连接），404 提示「找不到或 Token 没有权限」；没有 Token → `NotConnected`（不发请求）。内置 GitHub Issue / PR Workflow（v2）在匿名 API 之前加了一个 `optional` 的 `integration` Step：标题回退 带认证 API → 匿名 API → 页面标题，元数据新增 labels / assignees / milestone，`state` 优先用认证 API 的结果。桌面端启动时注册。设置页「集成」区块（9.5）已提供保存令牌的入口；GitHub Enterprise 不支持；没有对真实 GitHub 做过验证。
 
 ### 9.5 Integration 设置 UI
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：9.3、9.4
 - **任务**：
   - 连接 / 测试连接 / 断开；显示连接状态与最近错误。
 - **验收标准**：
-  - [ ] 断开后凭据从 OS 凭据库删除（验证）。
-  - [ ] 「测试连接」可区分网络错误、认证错误与权限不足。
-- **完成记录**：—
+  - [x] 断开后凭据从 OS 凭据库删除（验证）：`tests/integration_credentials.rs` 在真实的 Windows Credential Manager 上连接 → 读取 → 断开 → 确认已不存在（目标名 `Nivlo/nivlo-test/github.com`，不碰真实集成凭据）；`IntegrationService` 单测另覆盖「秘密只进凭据库、设置表里只有元数据」，`secret_leak.rs` 把连接流程加进了磁盘泄漏扫描。
+  - [x] 「测试连接」可区分网络错误、认证错误与权限不足（`Integration::test_connection` → `TestOutcome`：ok / notConnected / authFailed / permissionDenied / network / failed，Jira 调 `/rest/api/2/myself`、GitHub 调 `/user`；适配器与 `IntegrationService` 单测、设置页界面测试覆盖各状态的提示文案）。
+- **完成记录**：2026-10-12：后端 `IntegrationService`（`integrations.connections` 只存非秘密元数据：集成、账号、协议、连接时间、最近检查时间与错误；秘密经 `CredentialPort` 写入 / 删除）；命令 `list_integrations` / `connect_integration` / `disconnect_integration` / `test_integration`（仅主窗口，没有任何命令返回凭据）；Jira 地址接受 `https://…` / `主机:端口` 并记录协议，Cloud 需要「邮箱:API Token」；设置页新增「集成」区块（GitHub 令牌、Jira 地址 + 邮箱 / PAT，令牌输入框提交后立即清空，页面读不回；已连接账号可测试连接、二次确认断开，显示最近一次错误）。**局限**：没有对真实的 Jira / GitHub 做过连接测试；非 Windows 平台的凭据库是内存版（重启后需重新连接）；失败动作按钮目前只跳到设置页，不定位到具体集成。
 
 ---
 

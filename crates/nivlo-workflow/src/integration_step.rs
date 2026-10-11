@@ -66,7 +66,7 @@ fn step_error(error: &IntegrationError, integration: &str, display_name: &str) -
             message: format!("需要连接 {display_name}"),
             action: Some(connect()),
         },
-        IntegrationError::Unauthorized => StepError {
+        IntegrationError::Forbidden(_) | IntegrationError::Unauthorized => StepError {
             kind: ErrorKind::UserActionRequired,
             message: format!("{display_name} 的连接已失效，需要重新连接"),
             action: Some(connect()),

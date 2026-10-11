@@ -160,6 +160,74 @@ impl Integration for JiraIntegration {
         "Jira"
     }
 
+    /// 测试连接：`GET /rest/api/2/myself`，返回账号的显示名。
+    async fn test_connection(
+        &self,
+        account: &str,
+        scheme: &str,
+        ctx: &IntegrationContext<'_>,
+    ) -> Result<String, IntegrationError> {
+        let host = account.trim().to_ascii_lowercase();
+        if !valid_host(&host) {
+            return Err(IntegrationError::InvalidInput("Jira 主机不合法".to_owned()));
+        }
+        let scheme = if scheme == "http" { "http" } else { "https" };
+        let key = CredentialKey::new("jira", &host)
+            .map_err(|_| IntegrationError::InvalidInput("Jira 主机不合法".to_owned()))?;
+        let secret = match self.credentials.get(&key) {
+            Ok(Some(secret)) => secret,
+            Ok(None) => return Err(IntegrationError::NotConnected),
+            Err(_) => return Err(IntegrationError::Fatal("无法读取系统凭据库".to_owned())),
+        };
+        let request = HttpRequest::get(format!("{scheme}://{host}/rest/api/2/myself"))
+            .with_header("Authorization", authorization(&host, &secret))
+            .with_header("Accept", Secret::new("application/json"));
+        let policy = ctx
+            .policy
+            .clone()
+            .with_configured_private_hosts([hostname(&host)]);
+        let response = ctx
+            .http
+            .get(&request, &policy)
+            .await
+            .map_err(|e| http_error(&e))?;
+        match response.status {
+            200..=299 => {}
+            401 => return Err(IntegrationError::Unauthorized),
+            403 => {
+                return Err(IntegrationError::Forbidden(
+                    "凭据有效，但没有访问权限".to_owned(),
+                ));
+            }
+            429 | 500..=599 => {
+                return Err(IntegrationError::Retryable("Jira 暂时不可用".to_owned()));
+            }
+            other => {
+                return Err(IntegrationError::Fatal(format!(
+                    "Jira 返回了错误（HTTP {other}）"
+                )));
+            }
+        }
+        let me: Value = serde_json::from_slice(&response.body).map_err(|_| {
+            // 登录页 HTML：凭据无效。
+            if response
+                .content_type
+                .as_deref()
+                .is_some_and(|t| t.to_ascii_lowercase().contains("html"))
+            {
+                IntegrationError::Unauthorized
+            } else {
+                IntegrationError::Fatal("Jira 的响应格式不认识".to_owned())
+            }
+        })?;
+        let name = text(&me, "/displayName");
+        Ok(if name.is_empty() {
+            text(&me, "/name")
+        } else {
+            name
+        })
+    }
+
     /// 支持的操作：`issue`（参数 `key`、`host`，可选 `scheme`）。
     async fn call(
         &self,

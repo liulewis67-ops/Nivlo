@@ -19,6 +19,7 @@ pub mod credentials;
 pub mod diagnostics;
 pub mod dto;
 pub mod events;
+pub mod integration_service;
 pub mod lifecycle;
 pub mod native_i18n;
 pub mod open;
@@ -92,6 +93,10 @@ macro_rules! bindings_builder {
                 $crate::commands::workflow::import_workflow,
                 $crate::commands::trash::empty_trash,
                 $crate::commands::settings::get_app_settings::<$runtime>,
+                $crate::commands::integration::list_integrations,
+                $crate::commands::integration::connect_integration,
+                $crate::commands::integration::disconnect_integration,
+                $crate::commands::integration::test_integration,
                 $crate::commands::settings::get_ui_pref,
                 $crate::commands::settings::set_ui_pref::<$runtime>,
                 $crate::commands::settings::set_autostart::<$runtime>,

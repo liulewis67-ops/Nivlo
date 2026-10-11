@@ -304,6 +304,39 @@ export const commands = {
 	 */
 	getAppSettings: () => typedError<AppSettingsDto, IpcError>(__TAURI_INVOKE("get_app_settings")),
 	/**
+	 *  全部已连接的账号。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	listIntegrations: () => typedError<IntegrationConnectionDto[], IpcError>(__TAURI_INVOKE("list_integrations")),
+	/**
+	 *  连接（或更新凭据）。`account` 对 Jira 是地址，对 GitHub 被忽略；`secret` 对 Jira Cloud 是
+	 *  `邮箱:API Token`，其余是令牌。秘密只写入系统凭据库，之后无法读回。
+	 * 
+	 *  # Errors
+	 * 
+	 *  地址 / 凭据不合法返回 `INVALID_INPUT`；凭据库不可用返回 `SYSTEM_SETTING_FAILED`。
+	 */
+	connectIntegration: (integration: string, account: string, secret: string) => typedError<IntegrationConnectionDto, IpcError>(__TAURI_INVOKE("connect_integration", { integration, account, secret })),
+	/**
+	 *  断开：从系统凭据库删除凭据并移除记录。
+	 * 
+	 *  # Errors
+	 * 
+	 *  凭据库不可用返回 `SYSTEM_SETTING_FAILED`（记录保留）。
+	 */
+	disconnectIntegration: (integration: string, account: string) => typedError<null, IpcError>(__TAURI_INVOKE("disconnect_integration", { integration, account })),
+	/**
+	 *  测试连接：区分成功 / 没连接 / 认证失败 / 权限不足 / 网络问题 / 其他，并记下最近一次的结果。
+	 * 
+	 *  # Errors
+	 * 
+	 *  集成不存在返回 `INVALID_INPUT`；存储失败返回存储错误。测试本身的失败体现在返回值里。
+	 */
+	testIntegration: (integration: string, account: string) => typedError<IntegrationTestDto, IpcError>(__TAURI_INVOKE("test_integration", { integration, account })),
+	/**
 	 *  读取界面偏好（`appearance` / `skin` / `language` / `theme`）的 JSON 文本；没保存过返回 `None`。
 	 * 
 	 *  偏好存于 `settings` 表，因此随备份导出 / 恢复（实施计划 D-14）。
@@ -949,6 +982,30 @@ export type InboxEntryDto = {
 	attachments: AttachmentDto[],
 	/**  标签，按名称排序。 */
 	tags: TagDto[],
+};
+
+/**  一个已连接的账号（IPC 表示；不含任何秘密）。 */
+export type IntegrationConnectionDto = {
+	/**  集成标识（`jira` / `github`）。 */
+	integration: string,
+	/**  账号标识（Jira 的主机，GitHub 为 `github.com`）。 */
+	account: string,
+	/**  `http` / `https`。 */
+	scheme: string,
+	/**  连接时间（RFC 3339，UTC）。 */
+	connectedAt: string,
+	/**  最近一次测试连接的时间。 */
+	lastCheckedAt: string | null,
+	/**  最近一次测试失败的原因。 */
+	lastError: string | null,
+};
+
+/**  测试连接的结果（IPC 表示）。 */
+export type IntegrationTestDto = {
+	/**  `ok` / `notConnected` / `authFailed` / `permissionDenied` / `network` / `failed`。 */
+	status: string,
+	/**  说明（成功时是账号名）；不含任何凭据。 */
+	message: string,
 };
 
 /**  IPC 统一的错误结构 `{ code, message, action }`（架构文档 §43）。 */

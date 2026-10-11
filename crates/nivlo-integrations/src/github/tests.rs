@@ -282,3 +282,58 @@ async fn only_the_api_host_is_reachable() {
     assert!(matches!(error, IntegrationError::PermissionDenied(_)));
     assert!(http.seen.lock().unwrap().is_empty());
 }
+
+const USER: &str = include_str!("../../../../fixtures/github/api/user.json");
+
+async fn test_connection(
+    store: Arc<MemoryCredentials>,
+    http: &FakeHttp,
+) -> Result<String, IntegrationError> {
+    let policy = HostPolicy::new(["api.github.com"]);
+    GithubIntegration::new(store)
+        .test_connection(
+            "github.com",
+            "https",
+            &IntegrationContext {
+                http,
+                policy: &policy,
+            },
+        )
+        .await
+}
+
+#[tokio::test]
+async fn testing_the_connection_tells_network_auth_and_permission_problems_apart() {
+    let http = FakeHttp::json(200, USER);
+    assert_eq!(
+        test_connection(connected(), &http).await.unwrap(),
+        "octocat"
+    );
+    assert_eq!(
+        http.seen.lock().unwrap()[0].0,
+        "https://api.github.com/user"
+    );
+
+    let auth = test_connection(connected(), &FakeHttp::json(401, "{}")).await;
+    assert_eq!(auth.unwrap_err(), IntegrationError::Unauthorized);
+    let permission = test_connection(
+        connected(),
+        &FakeHttp::json(403, r#"{"message":"Resource not accessible"}"#),
+    )
+    .await;
+    assert!(matches!(
+        permission.unwrap_err(),
+        IntegrationError::Forbidden(_)
+    ));
+    let limited = test_connection(connected(), &FakeHttp::json(403, RATE_LIMITED)).await;
+    assert!(matches!(
+        limited.unwrap_err(),
+        IntegrationError::Retryable(_)
+    ));
+    let missing = test_connection(
+        Arc::new(MemoryCredentials::new()),
+        &FakeHttp::json(200, USER),
+    )
+    .await;
+    assert_eq!(missing.unwrap_err(), IntegrationError::NotConnected);
+}
