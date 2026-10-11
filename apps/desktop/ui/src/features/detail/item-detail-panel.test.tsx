@@ -192,6 +192,16 @@ describe("ItemDetailPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "在浏览器中打开" }));
     await advance(0);
     expect(ipc.openedSources).toEqual([id]);
+
+    fireEvent.click(screen.getByRole("button", { name: "重新运行规则" }));
+    await advance(0);
+    expect(ipc.calls).toContain(`rerunWorkflow:${id}`);
+    expect(useToastStore.getState().toasts.at(-1)?.message).toContain("已重新运行");
+
+    ipc.failRerun(true);
+    fireEvent.click(screen.getByRole("button", { name: "重新运行规则" }));
+    await advance(0);
+    expect(useToastStore.getState().toasts.at(-1)?.message).toContain("没能重新运行");
   });
 
   it("打开来源失败（文件已不在）：提示原因", async () => {

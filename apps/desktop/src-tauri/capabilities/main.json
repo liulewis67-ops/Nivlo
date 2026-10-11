@@ -30,6 +30,7 @@
     "allow-delete-workflow",
     "allow-dry-run-workflow",
     "allow-list-workflow-runs",
+    "allow-rerun-workflow",
     "allow-get-app-settings",
     "allow-set-autostart",
     "allow-set-floating-always-on-top",

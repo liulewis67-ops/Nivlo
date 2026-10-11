@@ -6,6 +6,7 @@ import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
 import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
+import { useToastStore } from "@/stores/toast-store";
 import { reportError } from "@/lib/report-error";
 import { ProjectSelect, TagsField } from "@/features/organize";
 import { useDeleteItems } from "@/features/trash";
@@ -143,6 +144,18 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   /** 打开来源；失败（文件已不存在等）统一提示。 */
   function openSource(): void {
     ipc.openItemSource(id).catch(reportError);
+  }
+
+  /** 重新运行这个条目的来源规则，并提示结果。 */
+  function rerun(): void {
+    ipc
+      .rerunWorkflow(id)
+      .then((changed) =>
+        useToastStore
+          .getState()
+          .push("success", t(changed ? "detail.source.rerunDone" : "detail.source.rerunSame")),
+      )
+      .catch(reportError);
   }
 
   const kind = draft?.itemType ?? "todo";
@@ -341,7 +354,7 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
               </Field>
             </>
           )}
-          <SourceSection detail={query.data} onOpen={openSource} />
+          <SourceSection detail={query.data} onOpen={openSource} onRerun={rerun} />
         </div>
       )}
     </aside>

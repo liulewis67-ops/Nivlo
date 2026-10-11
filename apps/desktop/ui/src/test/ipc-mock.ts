@@ -50,6 +50,8 @@ export const EMPTY_TODAY: TodayViewDto = {
 export interface MemoryIpc extends IpcClient, WorkflowMock {
   /** 设置 `restoreBackup` 时用户是选了文件（`true`）还是取消了（`false`）。 */
   chooseRestoreFile(chosen: boolean): void;
+  /** 让 `rerunWorkflow` 失败（来源不支持）。 */
+  failRerun(fails: boolean): void;
   /** 当前保存的全部 Item（按创建顺序）。 */
   readonly items: readonly ItemDto[];
   /** `openMain` 被调用的次数。 */
@@ -227,6 +229,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const workflowMock = createWorkflowMock();
   /** `restoreBackup` 里用户是否选了文件（测试用 `chooseRestoreFile` 控制）。 */
   let restoreChoice: string | null = "picked";
+  /** `rerunWorkflow` 是否失败（测试用 `failRerun` 控制）。 */
+  let rerunFails = false;
   const items: ItemDto[] = [];
   const listeners = new Set<() => void>();
   const pointerLeftListeners = new Set<() => void>();
@@ -1195,6 +1199,15 @@ ${(item.content ?? "").toLowerCase()}`;
     },
     chooseRestoreFile: (chosen: boolean) => {
       restoreChoice = chosen ? "picked" : null;
+    },
+    rerunWorkflow: (id: string) => {
+      calls.push(`rerunWorkflow:${id}`);
+      return rerunFails
+        ? Promise.reject(new AppError("WORKFLOW_RUN_FAILED", "unsupported"))
+        : Promise.resolve(true);
+    },
+    failRerun: (fails: boolean) => {
+      rerunFails = fails;
     },
     listWorkflows: workflowMock.listWorkflows,
     setWorkflowEnabled: workflowMock.setWorkflowEnabled,

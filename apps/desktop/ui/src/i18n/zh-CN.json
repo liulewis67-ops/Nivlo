@@ -123,7 +123,10 @@
         "text": "文字",
         "image": "图片",
         "manual": "手动创建"
-      }
+      },
+      "rerun": "重新运行规则",
+      "rerunDone": "已重新运行，标题和内容已更新",
+      "rerunSame": "已重新运行，没有变化"
     },
     "project": {
       "none": "无项目",
@@ -350,7 +353,8 @@
     "WORKFLOW_INVALID": "这个 Workflow 的定义有问题，请按提示修改后再保存。",
     "WORKFLOW_READ_ONLY": "内置 Workflow 不能直接修改。先「复制」一份，再改复制出来的这份。",
     "EXPORT_FAILED": "导出失败，请检查磁盘空间和文件夹的写入权限后重试。",
-    "SYSTEM_SETTING_FAILED": "系统没有允许这次修改，请稍后重试，或在系统设置里手动调整。"
+    "SYSTEM_SETTING_FAILED": "系统没有允许这次修改，请稍后重试，或在系统设置里手动调整。",
+    "WORKFLOW_RUN_FAILED": "没能重新运行：这条内容的来源不支持，或规则本身出错了。"
   },
   "errorAction": {
     "OPEN_DIAGNOSTICS": "打开诊断信息"

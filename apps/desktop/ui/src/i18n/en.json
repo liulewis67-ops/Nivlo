@@ -124,7 +124,10 @@
         "text": "Text",
         "image": "Image",
         "manual": "Created manually"
-      }
+      },
+      "rerun": "Re-run rule",
+      "rerunDone": "Re-ran the rule; title and content updated",
+      "rerunSame": "Re-ran the rule; nothing changed"
     },
     "project": {
       "none": "No project",
@@ -351,7 +354,8 @@
     "WORKFLOW_INVALID": "There's a problem with this workflow's definition. Fix it as indicated, then save again.",
     "WORKFLOW_READ_ONLY": "Built-in workflows can't be edited directly. Duplicate it first, then edit the copy.",
     "EXPORT_FAILED": "Export failed. Check the disk space and the folder's write permission, then try again.",
-    "SYSTEM_SETTING_FAILED": "The system didn't allow this change. Try again later, or adjust it in system settings."
+    "SYSTEM_SETTING_FAILED": "The system didn't allow this change. Try again later, or adjust it in system settings.",
+    "WORKFLOW_RUN_FAILED": "Couldn't re-run: this item's source doesn't support it, or the rule itself failed."
   },
   "errorAction": {
     "OPEN_DIAGNOSTICS": "Open diagnostics"

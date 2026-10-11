@@ -225,3 +225,36 @@ async fn gbk_encoded_pages_get_a_readable_title() {
     assert_eq!(f.capture.enrich(job).await, 1);
     assert_eq!(f.uow.committed_items()[0].title().as_str(), "你好");
 }
+
+#[tokio::test]
+async fn rerun_overwrites_on_request_and_refuses_sources_it_cannot_replay() {
+    let f = fixture(html(PAGE)).await;
+    let url = f
+        .capture
+        .capture(url_request("https://example.com/post"))
+        .await
+        .unwrap();
+    f.clock.advance(Duration::seconds(2));
+    // 用户改过标题也会被覆盖——这是明确的请求。
+    assert!(f.capture.rerun(url.items[0].id()).await.unwrap());
+    assert_eq!(
+        f.uow.committed_items()[0].title().as_str(),
+        "真正的页面标题"
+    );
+    f.clock.advance(Duration::seconds(2));
+    assert!(
+        !f.capture.rerun(url.items[0].id()).await.unwrap(),
+        "没有变化"
+    );
+
+    let text = f
+        .capture
+        .capture(CaptureRequest::new(
+            normalize_text("买牛奶").unwrap(),
+            CaptureOrigin::QuickAdd,
+        ))
+        .await
+        .unwrap();
+    let error = f.capture.rerun(text.items[0].id()).await.unwrap_err();
+    assert_eq!(error.code.as_str(), "WORKFLOW_RUN_FAILED");
+}

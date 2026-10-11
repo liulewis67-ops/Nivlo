@@ -8,6 +8,8 @@ export type SourceSectionProps = {
   detail: InboxEntryDto;
   /** 点击「打开」。 */
   onOpen: () => void;
+  /** 点击「重新运行规则」。 */
+  onRerun: () => void;
 };
 
 /**
@@ -23,7 +25,7 @@ export type SourceSectionProps = {
  * @param props 详情与回调。
  * @returns 来源区块；没有来源时返回 `null`。
  */
-export function SourceSection({ detail, onOpen }: SourceSectionProps) {
+export function SourceSection({ detail, onOpen, onRerun }: SourceSectionProps) {
   const { t } = useTranslation();
   const source = detail.sources[0];
   if (source === undefined) return null;
@@ -54,9 +56,12 @@ export function SourceSection({ detail, onOpen }: SourceSectionProps) {
         </p>
       )}
       {(source.sourceUrl !== null || isFile) && (
-        <div>
+        <div className="flex gap-2">
           <Button size="sm" disabled={missing} onClick={onOpen}>
             {isFile ? t("detail.source.reveal") : t("detail.source.open")}
+          </Button>
+          <Button size="sm" variant="secondary" disabled={missing} onClick={onRerun}>
+            {t("detail.source.rerun")}
           </Button>
         </div>
       )}

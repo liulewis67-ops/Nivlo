@@ -82,6 +82,7 @@ macro_rules! bindings_builder {
                 $crate::commands::workflow::delete_workflow,
                 $crate::commands::workflow::dry_run_workflow,
                 $crate::commands::workflow::list_workflow_runs,
+                $crate::commands::workflow::rerun_workflow,
                 $crate::commands::trash::empty_trash,
                 $crate::commands::settings::get_app_settings::<$runtime>,
                 $crate::commands::settings::set_autostart::<$runtime>,

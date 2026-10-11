@@ -72,6 +72,8 @@ pub enum ErrorCode {
     WorkflowInvalid,
     /// 试图修改或删除只读的内置 Workflow。
     WorkflowReadOnly,
+    /// 重新运行 Workflow 失败（来源不支持、规则出错）。
+    WorkflowRunFailed,
     /// 无法修改系统设置（如开机启动项）。
     SystemSettingFailed,
     /// 导出诊断包 / 备份 / 数据失败（磁盘已满、没有写权限……）。
@@ -115,6 +117,7 @@ impl ErrorCode {
         Self::WorkflowNotFound,
         Self::WorkflowInvalid,
         Self::WorkflowReadOnly,
+        Self::WorkflowRunFailed,
         Self::SystemSettingFailed,
         Self::ExportFailed,
         Self::SourceFileMissing,
@@ -154,6 +157,7 @@ impl ErrorCode {
             Self::WorkflowNotFound => "WORKFLOW_NOT_FOUND",
             Self::WorkflowInvalid => "WORKFLOW_INVALID",
             Self::WorkflowReadOnly => "WORKFLOW_READ_ONLY",
+            Self::WorkflowRunFailed => "WORKFLOW_RUN_FAILED",
             Self::SystemSettingFailed => "SYSTEM_SETTING_FAILED",
             Self::ExportFailed => "EXPORT_FAILED",
             Self::SourceFileMissing => "SOURCE_FILE_MISSING",

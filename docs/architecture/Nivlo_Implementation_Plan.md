@@ -1040,7 +1040,7 @@ Phase 12 Backlog                        → 未排期
   - [x] 测试：Workflow 在任一 Step 失败时，原始输入仍作为 Inbox Item 保存。
   - [ ] 本地 Workflow 从 Drop 到进入「处理中」状态 < 100ms。
   - [x] 2.3 原有测试在改写后全部通过（行为不回退）。
-- **完成记录**：2026-10-11 完成主体。`CaptureService::with_workflows`：Resolver → Engine → 同一事务写入 Item / Source / Attachment / Tag；无匹配、无产出或失败时退回默认规则，失败原因写进 Source 元数据（`workflowError`），捕获永不丢失。内置 Generic Workflow 复刻原有规则；原 2.3 测试未改动且全部通过，另有 `crates/nivlo-workflow/tests/capture.rs`（内置复刻、复制后高优先级获胜、Step 失败兜底）。未完成：Drop → 「处理中」状态的 UI 与 < 100ms 度量，Item 上「重新运行 Workflow」。
+- **完成记录**：2026-10-11 完成主体。`CaptureService::with_workflows`：Resolver → Engine → 同一事务写入 Item / Source / Attachment / Tag；无匹配、无产出或失败时退回默认规则，失败原因写进 Source 元数据（`workflowError`），捕获永不丢失。内置 Generic Workflow 复刻原有规则；原 2.3 测试未改动且全部通过，另有 `crates/nivlo-workflow/tests/capture.rs`（内置复刻、复制后高优先级获胜、Step 失败兜底）。2026-10-11 补充：Item 详情的来源区新增「重新运行规则」（`rerun_workflow`，按来源重新匹配并完整运行，用户主动触发所以覆盖标题与内容；文字 / 图片来源报 `WORKFLOW_RUN_FAILED`），测试 `rerun_overwrites_on_request_and_refuses_sources_it_cannot_replay`。「处理中」状态改为：捕获本身即时完成（不等网络），联网补全在后台进行，因此没有单独的处理中 UI。仍待真机度量 Drop → 创建 < 100ms。
 
 ### 5.6 Workflow Run 记录与调试
 

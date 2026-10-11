@@ -28,6 +28,7 @@ const COMMANDS: &[&str] = &[
     "delete_workflow",
     "dry_run_workflow",
     "list_workflow_runs",
+    "rerun_workflow",
     "get_app_settings",
     "set_autostart",
     "set_floating_always_on_top",

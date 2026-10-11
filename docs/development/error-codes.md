@@ -40,6 +40,7 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 | `WORKFLOW_NOT_FOUND` | Workflow 不存在 | Application | |
 | `WORKFLOW_INVALID` | Workflow 定义没有通过校验（消息里带出错位置） | Application | |
 | `WORKFLOW_READ_ONLY` | 试图修改或删除只读的内置 Workflow | Application | 先「复制」再修改 |
+| `WORKFLOW_RUN_FAILED` | 重新运行 Workflow 失败（来源不支持重新运行，或规则本身出错） | Application | 提示检查规则或来源 |
 | `EXPORT_FAILED` | 导出诊断包 / 备份 / 数据失败（磁盘已满、没有写权限等） | Host | 提示换个位置或检查磁盘空间 |
 | `SYSTEM_SETTING_FAILED` | 无法修改系统设置（如开机启动项） | Host | |
 | `SOURCE_FILE_MISSING` | 来源指向的文件已经不在原处（被移动或删除） | Host | UI 提示「文件不存在」 |

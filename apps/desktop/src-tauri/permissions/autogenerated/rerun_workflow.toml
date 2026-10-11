@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-rerun-workflow"
+description = "Enables the rerun_workflow command without any pre-configured scope."
+commands.allow = ["rerun_workflow"]
+
+[[permission]]
+identifier = "deny-rerun-workflow"
+description = "Denies the rerun_workflow command without any pre-configured scope."
+commands.deny = ["rerun_workflow"]

@@ -376,3 +376,15 @@ pub async fn list_workflow_runs(
         .await?;
     Ok(runs.iter().map(WorkflowRunDto::from).collect())
 }
+
+/// 重新运行 Workflow：按这个条目的来源重新匹配并完整运行，更新标题与内容。返回是否有变化。
+///
+/// # Errors
+///
+/// 来源不支持、没有匹配的规则或规则出错返回 `WORKFLOW_RUN_FAILED`；条目不存在返回 `ITEM_NOT_FOUND`。
+#[tauri::command]
+#[specta::specta]
+pub async fn rerun_workflow(state: State<'_, AppState>, id: String) -> Result<bool, IpcError> {
+    let item_id = crate::dto::parse_item_id(&id)?;
+    Ok(state.services.capture.rerun(item_id).await?)
+}

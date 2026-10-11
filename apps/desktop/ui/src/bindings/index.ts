@@ -219,6 +219,14 @@ export const commands = {
 	 */
 	listWorkflowRuns: (limit: number | null) => typedError<WorkflowRunDto[], IpcError>(__TAURI_INVOKE("list_workflow_runs", { limit })),
 	/**
+	 *  重新运行 Workflow：按这个条目的来源重新匹配并完整运行，更新标题与内容。返回是否有变化。
+	 * 
+	 *  # Errors
+	 * 
+	 *  来源不支持、没有匹配的规则或规则出错返回 `WORKFLOW_RUN_FAILED`；条目不存在返回 `ITEM_NOT_FOUND`。
+	 */
+	rerunWorkflow: (id: string) => typedError<boolean, IpcError>(__TAURI_INVOKE("rerun_workflow", { id })),
+	/**
 	 *  清空回收站。返回删除的数量。
 	 * 
 	 *  # Errors
