@@ -6,6 +6,7 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
+use nivlo_application::calendar::CalendarService;
 use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
 use nivlo_application::inbox::InboxService;
@@ -41,6 +42,8 @@ pub struct ApplicationServices {
     pub tags: TagService,
     /// 删除与回收站（恢复、永久清除、30 天自动清除）。
     pub trash: TrashService,
+    /// Calendar 查询。
+    pub calendar: CalendarService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

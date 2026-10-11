@@ -9,7 +9,7 @@ use tauri::{AppHandle, Runtime, State};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::app::AppState;
-use crate::dto::{AppSettingsDto, IpcError, LaterRuleDto};
+use crate::dto::{AppSettingsDto, IpcError, LaterRuleDto, WeekStartDto};
 
 /// 系统设置（开机启动项）修改失败时的错误。
 fn system_error(what: &str, error: &dyn std::fmt::Display) -> IpcError {
@@ -44,10 +44,12 @@ pub async fn get_app_settings<R: Runtime>(
         .await?
         .is_none_or(|value| value != "false");
     let later_rule = state.services.settings.later_rule().await?;
+    let week_start = state.services.settings.week_start().await?;
     Ok(AppSettingsDto {
         autostart,
         floating_always_on_top: always_on_top,
         later_rule: later_rule.into(),
+        week_start: week_start.into(),
     })
 }
 
@@ -127,5 +129,24 @@ pub async fn set_later_rule(
     rule: LaterRuleDto,
 ) -> Result<(), IpcError> {
     state.services.settings.set_later_rule(rule.into()).await?;
+    Ok(())
+}
+
+/// 修改日历一周从哪天开始（Calendar 的周视图与月视图随之变化）。
+///
+/// # Errors
+///
+/// 存储失败时返回 [`IpcError`]，设置不变。
+#[tauri::command]
+#[specta::specta]
+pub async fn set_week_start(
+    state: State<'_, AppState>,
+    week_start: WeekStartDto,
+) -> Result<(), IpcError> {
+    state
+        .services
+        .settings
+        .set_week_start(week_start.into())
+        .await?;
     Ok(())
 }

@@ -21,6 +21,8 @@
     "allow-set-autostart",
     "allow-set-floating-always-on-top",
     "allow-set-later-rule",
+    "allow-get-calendar",
+    "allow-set-week-start",
     "allow-list-projects",
     "allow-create-project",
     "allow-rename-project",

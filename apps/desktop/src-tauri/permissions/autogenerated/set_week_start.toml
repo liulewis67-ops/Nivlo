@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-set-week-start"
+description = "Enables the set_week_start command without any pre-configured scope."
+commands.allow = ["set_week_start"]
+
+[[permission]]
+identifier = "deny-set-week-start"
+description = "Denies the set_week_start command without any pre-configured scope."
+commands.deny = ["set_week_start"]

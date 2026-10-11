@@ -9,6 +9,7 @@ use std::sync::Arc;
 use chrono::{Duration, NaiveDate};
 use nivlo_common::clock::Clock;
 
+use crate::calendar::WeekStart;
 use crate::error::{AppError, ErrorCode};
 use crate::item::next_monday_after;
 use crate::ports::{Transaction, UnitOfWork};
@@ -23,6 +24,8 @@ pub mod keys {
     pub const AUTOSTART_PROMPTED: &str = "autostart.prompted";
     /// 「稍后」指哪一天（`next_monday` / `in_three_days` / `in_one_week`），缺省为下周一。
     pub const LATER_RULE: &str = "schedule.later";
+    /// 日历一周从哪天开始（`monday` / `sunday`），缺省为周一。
+    pub const WEEK_START: &str = "calendar.week_start";
 }
 
 /// 「稍后」（推迟）指哪一天（实施计划 3.5）。
@@ -84,6 +87,21 @@ pub(crate) async fn read_later_rule(tx: &mut dyn Transaction) -> Result<LaterRul
         .unwrap_or_default())
 }
 
+/// 在已开启的事务里读取一周的起始日；没设置过或值不认识时是周一。
+///
+/// # Errors
+///
+/// 存储错误。
+pub(crate) async fn read_week_start(tx: &mut dyn Transaction) -> Result<WeekStart, AppError> {
+    Ok(tx
+        .settings()
+        .get(keys::WEEK_START)
+        .await?
+        .as_deref()
+        .and_then(WeekStart::parse)
+        .unwrap_or_default())
+}
+
 /// 设置 key 允许的最大长度。
 const MAX_KEY_LEN: usize = 100;
 
@@ -142,6 +160,25 @@ impl SettingsService {
     pub async fn later_rule(&self) -> Result<LaterRule, AppError> {
         let mut tx = self.uow.begin().await?;
         read_later_rule(&mut *tx).await
+    }
+
+    /// 读取一周的起始日；没设置过或值不认识时是周一。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误。
+    pub async fn week_start(&self) -> Result<WeekStart, AppError> {
+        let mut tx = self.uow.begin().await?;
+        read_week_start(&mut *tx).await
+    }
+
+    /// 修改一周的起始日（Calendar 的 Week / Month 视图随之变化）。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误，事务已回滚。
+    pub async fn set_week_start(&self, week_start: WeekStart) -> Result<(), AppError> {
+        self.set(keys::WEEK_START, week_start.as_str()).await
     }
 
     /// 修改「稍后」的规则。

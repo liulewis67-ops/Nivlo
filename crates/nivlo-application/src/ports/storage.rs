@@ -210,6 +210,26 @@ pub trait ItemRepository: Send {
     /// 任一记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
     async fn list(&mut self, filter: &ItemFilter) -> Result<Vec<Item>, StorageError>;
 
+    /// Calendar 的数据来源：计划日期**或**截止日期落在 `[from, to]`（闭区间）内的未归档、未删除 Item。
+    ///
+    /// 同时满足两者的 Item 只返回一次，由调用方拆成计划条目与截止标记。
+    ///
+    /// # Errors
+    ///
+    /// 记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
+    async fn list_calendar(
+        &mut self,
+        from: NaiveDate,
+        to: NaiveDate,
+    ) -> Result<Vec<Item>, StorageError>;
+
+    /// 没有计划日期的未完成、未归档、未删除 Todo（Calendar 的「待安排」），最近创建的在前。
+    ///
+    /// # Errors
+    ///
+    /// 记录无法还原为合法 Item 时返回 [`StorageError::Corrupt`]。
+    async fn list_unscheduled_open_todos(&mut self, limit: u32) -> Result<Vec<Item>, StorageError>;
+
     /// 全文搜索（实施计划 3.4）：在标题、正文与来源（原始标题 / 网址 / 路径）里按子串匹配，
     /// 忽略大小写；中文也按子串匹配（「登录」能找到「修复登录超时」）。
     ///

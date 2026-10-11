@@ -19,6 +19,8 @@ const COMMANDS: &[&str] = &[
     "set_autostart",
     "set_floating_always_on_top",
     "set_later_rule",
+    "get_calendar",
+    "set_week_start",
     "list_projects",
     "create_project",
     "rename_project",

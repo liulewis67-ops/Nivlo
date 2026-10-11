@@ -341,6 +341,48 @@ impl ItemRepository for FakeTransaction {
         Ok(items)
     }
 
+    /// Calendar：计划或截止日期落在范围内的未归档、未删除 Item，创建时间从早到晚。
+    async fn list_calendar(
+        &mut self,
+        from: NaiveDate,
+        to: NaiveDate,
+    ) -> Result<Vec<Item>, StorageError> {
+        let in_range = |date: NaiveDate| date >= from && date <= to;
+        let mut items: Vec<Item> = self
+            .working
+            .items
+            .values()
+            .filter(|i| !i.is_archived() && !self.working.deleted.contains_key(&i.id()))
+            .filter(|i| {
+                i.scheduled().is_some_and(|p| in_range(p.date()))
+                    || i.due().is_some_and(|p| in_range(p.date()))
+            })
+            .cloned()
+            .collect();
+        items.sort_by_key(|i| (i.created_at(), i.id()));
+        Ok(items)
+    }
+
+    /// 待安排：没有计划日期的未完成 Todo，最近创建的在前。
+    async fn list_unscheduled_open_todos(&mut self, limit: u32) -> Result<Vec<Item>, StorageError> {
+        let mut items: Vec<Item> = self
+            .working
+            .items
+            .values()
+            .filter(|i| i.item_type() == ItemType::Todo && i.status() == ItemStatus::Open)
+            .filter(|i| i.scheduled().is_none() && !i.is_archived())
+            .filter(|i| !self.working.deleted.contains_key(&i.id()))
+            .cloned()
+            .collect();
+        items.sort_by(|a, b| {
+            b.created_at()
+                .cmp(&a.created_at())
+                .then(b.id().cmp(&a.id()))
+        });
+        items.truncate(limit as usize);
+        Ok(items)
+    }
+
     /// 搜索：忽略大小写的子串匹配（标题 / 正文 / 来源），所有词都要出现；标题命中在前。
     async fn search(
         &mut self,

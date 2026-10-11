@@ -151,6 +151,25 @@ export const commands = {
 	 */
 	setLaterRule: (rule: LaterRuleDto) => typedError<null, IpcError>(__TAURI_INVOKE("set_later_rule", { rule })),
 	/**
+	 *  查询 Calendar：可见范围（月视图的整周网格 / 周视图的一周）内的计划与截止条目，
+	 *  以及还没有安排日期的待办。
+	 * 
+	 *  范围由后端按「一周从哪天开始」的设置计算，前端只负责排版。
+	 * 
+	 *  # Errors
+	 * 
+	 *  锚点日期格式不对返回 `INVALID_INPUT`；存储失败时返回 [`IpcError`]。
+	 */
+	getCalendar: (request: CalendarRequest) => typedError<CalendarDto, IpcError>(__TAURI_INVOKE("get_calendar", { request })),
+	/**
+	 *  修改日历一周从哪天开始（Calendar 的周视图与月视图随之变化）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]，设置不变。
+	 */
+	setWeekStart: (weekStart: WeekStartDto) => typedError<null, IpcError>(__TAURI_INVOKE("set_week_start", { weekStart })),
+	/**
 	 *  列出项目（创建时间从早到晚）与各自未完成的 Item 数量。
 	 * 
 	 *  # Errors
@@ -472,6 +491,8 @@ export type AppSettingsDto = {
 	floatingAlwaysOnTop: boolean,
 	/**  「稍后」指哪一天。 */
 	laterRule: LaterRuleDto,
+	/**  日历一周从哪天开始。 */
+	weekStart: WeekStartDto,
 };
 
 /**  附件（IPC 表示）。 */
@@ -489,6 +510,65 @@ export type AttachmentDto = {
 	/**  被引用的文件现在是否还在；保存的图片恒为 `true`。展示「文件不存在」状态用，不会因此报错。 */
 	exists: boolean,
 };
+
+/**  Calendar 查询的结果（IPC 表示）。 */
+export type CalendarDto = {
+	/**  可见范围的第一天。 */
+	from: string,
+	/**  可见范围的最后一天。 */
+	to: string,
+	/**  今天（用户本地日期）。 */
+	today: string,
+	/**  一周从哪天开始。 */
+	weekStart: WeekStartDto,
+	/**  范围内的条目。 */
+	entries: CalendarEntryDto[],
+	/**  还没有计划日期的未完成待办（待安排）。 */
+	unscheduled: CalendarItemDto[],
+};
+
+/**  Calendar 里某个 Item 在某一天的出现（IPC 表示）。 */
+export type CalendarEntryDto = {
+	/**  Item。 */
+	item: CalendarItemDto,
+	/**  出现在哪一天（`YYYY-MM-DD`）。 */
+	date: string,
+	/**  计划还是截止。 */
+	kind: EntryKindDto,
+};
+
+/**  Calendar 里的一个条目：只带显示需要的字段（不含正文，避免长笔记拖慢查询）。 */
+export type CalendarItemDto = {
+	/**  Item ID。 */
+	id: string,
+	/**  类型。 */
+	itemType: ItemTypeDto,
+	/**  标题。 */
+	title: string,
+	/**  状态。 */
+	status: ItemStatusDto,
+	/**  优先级。 */
+	priority: PriorityDto,
+	/**  计划日期。 */
+	scheduled: DatePointDto | null,
+	/**  截止日期。 */
+	due: DatePointDto | null,
+};
+
+/**  查询 Calendar 的请求。 */
+export type CalendarRequest = {
+	/**  视图。 */
+	view: CalendarViewDto,
+	/**  锚点日期（本地日期 `YYYY-MM-DD`）：月视图取它所在的月，周视图取它所在的周。 */
+	anchor: string,
+};
+
+/**  Calendar 的视图（IPC 表示）。 */
+export type CalendarViewDto = 
+/**  月视图。 */
+"month" | 
+/**  周视图。 */
+"week";
 
 /**  捕获的内容（IPC 表示）：前端只传原始材料，规范化（识别 URL、探测文件）在后端完成。 */
 export type CaptureInputDto = 
@@ -578,6 +658,13 @@ export type DayChangedEvent = {
 	/**  新的本地日期，`YYYY-MM-DD`。 */
 	date: string,
 };
+
+/**  一条 Calendar 条目的种类（IPC 表示）。 */
+export type EntryKindDto = 
+/**  计划在这一天。 */
+"scheduled" | 
+/**  这一天截止。 */
+"due";
 
 /**  展开悬浮窗的请求：面板期望的 logical 尺寸。 */
 export type ExpandFloatingRequest = {
@@ -964,6 +1051,13 @@ export type VerticalAnchorDto =
 "top" | 
 /**  徽标在面板下侧，面板向上展开。 */
 "bottom";
+
+/**  一周从哪天开始（IPC 表示）。 */
+export type WeekStartDto = 
+/**  周一。 */
+"monday" | 
+/**  周日。 */
+"sunday";
 
 /* Tauri Specta runtime */
 async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {

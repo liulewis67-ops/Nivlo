@@ -3,6 +3,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use nivlo_application::calendar::CalendarService;
 use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
 use nivlo_application::inbox::InboxService;
@@ -120,6 +121,7 @@ pub fn build_app_state(
         Arc::new(event_bus.clone()),
         Arc::new(FsAttachmentFiles::new(attachments_dir.clone())),
     );
+    let calendar = CalendarService::new(Arc::new(database.clone()), clock.clone());
     AppState {
         services: ApplicationServices {
             items,
@@ -130,6 +132,7 @@ pub fn build_app_state(
             projects,
             tags,
             trash,
+            calendar,
         },
         runtime: RuntimeHandles::new(event_bus, database, clock, log_guard),
     }

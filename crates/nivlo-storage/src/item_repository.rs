@@ -426,6 +426,54 @@ impl ItemRepository for SqliteTransaction {
         rows.into_iter().map(row_to_item).collect()
     }
 
+    /// 计划日期或截止日期落在 `[from, to]` 内的 Item；用到 `idx_items_scheduled_date` / `idx_items_due_date`。
+    async fn list_calendar(
+        &mut self,
+        from: NaiveDate,
+        to: NaiveDate,
+    ) -> Result<Vec<Item>, StorageError> {
+        let from = format_date(from);
+        let to = format_date(to);
+        let rows = sqlx::query_as!(
+            ItemRow,
+            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,
+                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at
+             FROM items
+             WHERE archived_at IS NULL AND deleted_at IS NULL
+               AND ((scheduled_date >= ?1 AND scheduled_date <= ?2)
+                    OR (due_date >= ?1 AND due_date <= ?2))
+             ORDER BY created_at ASC, id ASC",
+            from,
+            to
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter().map(row_to_item).collect()
+    }
+
+    /// 没有计划日期的未完成 Todo，最近创建的在前。
+    async fn list_unscheduled_open_todos(&mut self, limit: u32) -> Result<Vec<Item>, StorageError> {
+        let limit = i64::from(limit);
+        let rows = sqlx::query_as!(
+            ItemRow,
+            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,
+                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at
+             FROM items
+             WHERE type = 'todo' AND status = 'open' AND scheduled_date IS NULL
+               AND archived_at IS NULL AND deleted_at IS NULL
+             ORDER BY created_at DESC, id DESC
+             LIMIT ?",
+            limit
+        )
+        .fetch_all(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        rows.into_iter().map(row_to_item).collect()
+    }
+
     /// 全文搜索：词都不短时走 FTS5（trigram），否则退化为 LIKE 扫描。
     async fn search(
         &mut self,

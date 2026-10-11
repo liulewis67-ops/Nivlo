@@ -24,6 +24,7 @@ nivlo-capture.workspace = true
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
 chrono-tz.workspace = true
 uuid.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true

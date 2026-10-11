@@ -921,3 +921,120 @@ async fn deleting_moves_items_to_the_trash_and_survives_a_restart() {
         "ITEM_NOT_FOUND"
     );
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn get_calendar_returns_scheduled_and_due_entries_and_unscheduled_todos() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+
+    let scheduled = invoke(&webview, "create_item", todo_request("计划在 12 号")).unwrap();
+    let scheduled_id = scheduled["id"].as_str().unwrap().to_owned();
+    let with_due = invoke(
+        &webview,
+        "create_item",
+        json!({ "request": {
+            "itemType": "todo", "title": "20 号截止", "content": null, "contentFormat": null,
+            "priority": null, "scheduled": null, "due": { "date": "2026-10-20", "time": null },
+            "reminderAt": null, "projectId": null
+        }}),
+    )
+    .unwrap();
+    let with_due_id = with_due["id"].as_str().unwrap().to_owned();
+    let loose = invoke(
+        &webview,
+        "create_item",
+        json!({ "request": {
+            "itemType": "todo", "title": "还没安排", "content": null, "contentFormat": null,
+            "priority": null, "scheduled": null, "due": null, "reminderAt": null, "projectId": null
+        }}),
+    )
+    .unwrap();
+
+    let query = |anchor: &str, view: &str| {
+        invoke(
+            &webview,
+            "get_calendar",
+            json!({ "request": { "view": view, "anchor": anchor } }),
+        )
+    };
+    let month = query("2026-10-14", "month").unwrap();
+    assert_eq!(month["from"], "2026-09-28");
+    assert_eq!(month["to"], "2026-11-01");
+    assert_eq!(month["weekStart"], "monday");
+    let entries = month["entries"].as_array().unwrap();
+    let seen: Vec<(String, String, String)> = entries
+        .iter()
+        .map(|e| {
+            (
+                e["date"].as_str().unwrap().to_owned(),
+                e["kind"].as_str().unwrap().to_owned(),
+                e["item"]["title"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        seen,
+        [
+            (
+                "2026-10-12".to_owned(),
+                "scheduled".to_owned(),
+                "计划在 12 号".to_owned()
+            ),
+            (
+                "2026-10-20".to_owned(),
+                "due".to_owned(),
+                "20 号截止".to_owned()
+            ),
+        ]
+    );
+    // 待安排：没有计划日期的待办（按创建时间从新到旧）。
+    let titles: Vec<&str> = month["unscheduled"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| i["title"].as_str().unwrap())
+        .collect();
+    assert_eq!(titles, ["还没安排", "20 号截止"]);
+    // 列表里不带正文，保持查询轻量。
+    assert!(month["unscheduled"][0].get("content").is_none());
+
+    // 周视图只有一周。
+    let week = query("2026-10-14", "week").unwrap();
+    assert_eq!(
+        (week["from"].as_str().unwrap(), week["to"].as_str().unwrap()),
+        ("2026-10-12", "2026-10-18")
+    );
+
+    // 把「还没安排」的待办拖到某一天（reschedule exact），它离开待安排、出现在那天。
+    let loose_id = loose["id"].as_str().unwrap();
+    invoke(
+        &webview,
+        "reschedule_item",
+        json!({ "id": loose_id, "target": { "kind": "exact", "scheduled": { "date": "2026-10-15", "time": null } } }),
+    )
+    .unwrap();
+    let after = query("2026-10-14", "week").unwrap();
+    assert!(
+        after["entries"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|e| e["date"] == "2026-10-15" && e["item"]["title"] == "还没安排")
+    );
+    assert!(
+        !after["unscheduled"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|i| i["id"] == loose_id)
+    );
+
+    assert_eq!(
+        query("not-a-date", "week").unwrap_err()["code"],
+        "INVALID_INPUT"
+    );
+    let _ = (scheduled_id, with_due_id);
+}

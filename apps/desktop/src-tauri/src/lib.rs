@@ -71,6 +71,8 @@ macro_rules! bindings_builder {
                 $crate::commands::settings::set_autostart::<$runtime>,
                 $crate::commands::settings::set_floating_always_on_top,
                 $crate::commands::settings::set_later_rule,
+                $crate::commands::calendar::get_calendar,
+                $crate::commands::settings::set_week_start,
                 $crate::commands::organize::list_projects,
                 $crate::commands::organize::create_project,
                 $crate::commands::organize::rename_project,

@@ -3,6 +3,7 @@
 //! * [`ports`]：Application 需要外部世界提供的能力（存储、时钟等）的 trait。
 //!   Port 在本层定义，由 Adapter crate 实现（后端规范 §4.2）。
 //! * [`item::ItemService`]：Item 的创建 / 更新 / 读取 / 列表 Use Case。
+//! * [`calendar::CalendarService`]：Calendar 的查询（计划、截止与待安排）。
 //! * [`inbox::InboxService`]：Inbox 的列表（带来源与附件）与批量整理 / 撤销。
 //! * [`organize::ProjectService`] / [`organize::TagService`]：项目与标签。
 //! * [`trash::TrashService`]：删除、回收站、恢复与永久清除。
@@ -18,6 +19,7 @@
 //! 禁止依赖：`tauri`、`sqlx`、`reqwest`、`rquickjs`、`windows`、任何 Adapter crate
 //! （参见后端规范 §3.1）。
 
+pub mod calendar;
 pub mod capture;
 pub mod day_change;
 pub mod error;

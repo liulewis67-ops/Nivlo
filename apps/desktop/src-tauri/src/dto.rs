@@ -9,6 +9,9 @@
 
 use base64::Engine;
 use chrono::{DateTime, NaiveDate, NaiveTime, SecondsFormat, Utc};
+use nivlo_application::calendar::{
+    CalendarData, CalendarEntry, CalendarView, EntryKind, WeekStart,
+};
 use nivlo_application::capture::CaptureResult;
 use nivlo_application::error::{AppError, ErrorCode};
 use nivlo_application::inbox::{
@@ -1062,6 +1065,176 @@ pub struct AppSettingsDto {
     pub floating_always_on_top: bool,
     /// 「稍后」指哪一天。
     pub later_rule: LaterRuleDto,
+    /// 日历一周从哪天开始。
+    pub week_start: WeekStartDto,
+}
+
+/// 一周从哪天开始（IPC 表示）。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum WeekStartDto {
+    /// 周一。
+    Monday,
+    /// 周日。
+    Sunday,
+}
+
+impl From<WeekStart> for WeekStartDto {
+    /// Application → DTO。
+    fn from(value: WeekStart) -> Self {
+        match value {
+            WeekStart::Monday => Self::Monday,
+            WeekStart::Sunday => Self::Sunday,
+        }
+    }
+}
+
+impl From<WeekStartDto> for WeekStart {
+    /// DTO → Application。
+    fn from(value: WeekStartDto) -> Self {
+        match value {
+            WeekStartDto::Monday => Self::Monday,
+            WeekStartDto::Sunday => Self::Sunday,
+        }
+    }
+}
+
+/// Calendar 的视图（IPC 表示）。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum CalendarViewDto {
+    /// 月视图。
+    Month,
+    /// 周视图。
+    Week,
+}
+
+impl From<CalendarViewDto> for CalendarView {
+    /// DTO → Application。
+    fn from(value: CalendarViewDto) -> Self {
+        match value {
+            CalendarViewDto::Month => Self::Month,
+            CalendarViewDto::Week => Self::Week,
+        }
+    }
+}
+
+/// 查询 Calendar 的请求。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarRequest {
+    /// 视图。
+    pub view: CalendarViewDto,
+    /// 锚点日期（本地日期 `YYYY-MM-DD`）：月视图取它所在的月，周视图取它所在的周。
+    pub anchor: String,
+}
+
+/// Calendar 里的一个条目：只带显示需要的字段（不含正文，避免长笔记拖慢查询）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarItemDto {
+    /// Item ID。
+    pub id: String,
+    /// 类型。
+    pub item_type: ItemTypeDto,
+    /// 标题。
+    pub title: String,
+    /// 状态。
+    pub status: ItemStatusDto,
+    /// 优先级。
+    pub priority: PriorityDto,
+    /// 计划日期。
+    pub scheduled: Option<DatePointDto>,
+    /// 截止日期。
+    pub due: Option<DatePointDto>,
+}
+
+impl From<&Item> for CalendarItemDto {
+    /// Domain → DTO。
+    fn from(item: &Item) -> Self {
+        let full = ItemDto::from(item);
+        Self {
+            id: full.id,
+            item_type: full.item_type,
+            title: full.title,
+            status: full.status,
+            priority: full.priority,
+            scheduled: full.scheduled,
+            due: full.due,
+        }
+    }
+}
+
+/// 一条 Calendar 条目的种类（IPC 表示）。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum EntryKindDto {
+    /// 计划在这一天。
+    Scheduled,
+    /// 这一天截止。
+    Due,
+}
+
+/// Calendar 里某个 Item 在某一天的出现（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarEntryDto {
+    /// Item。
+    pub item: CalendarItemDto,
+    /// 出现在哪一天（`YYYY-MM-DD`）。
+    pub date: String,
+    /// 计划还是截止。
+    pub kind: EntryKindDto,
+}
+
+impl From<&CalendarEntry> for CalendarEntryDto {
+    /// Application → DTO。
+    fn from(value: &CalendarEntry) -> Self {
+        Self {
+            item: CalendarItemDto::from(&value.item),
+            date: value.date.format("%Y-%m-%d").to_string(),
+            kind: match value.kind {
+                EntryKind::Scheduled => EntryKindDto::Scheduled,
+                EntryKind::Due => EntryKindDto::Due,
+            },
+        }
+    }
+}
+
+/// Calendar 查询的结果（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarDto {
+    /// 可见范围的第一天。
+    pub from: String,
+    /// 可见范围的最后一天。
+    pub to: String,
+    /// 今天（用户本地日期）。
+    pub today: String,
+    /// 一周从哪天开始。
+    pub week_start: WeekStartDto,
+    /// 范围内的条目。
+    pub entries: Vec<CalendarEntryDto>,
+    /// 还没有计划日期的未完成待办（待安排）。
+    pub unscheduled: Vec<CalendarItemDto>,
+}
+
+impl From<&CalendarData> for CalendarDto {
+    /// Application → DTO。
+    fn from(value: &CalendarData) -> Self {
+        Self {
+            from: value.from.format("%Y-%m-%d").to_string(),
+            to: value.to.format("%Y-%m-%d").to_string(),
+            today: value.today.format("%Y-%m-%d").to_string(),
+            week_start: value.week_start.into(),
+            entries: value.entries.iter().map(CalendarEntryDto::from).collect(),
+            unscheduled: value
+                .unscheduled
+                .iter()
+                .map(CalendarItemDto::from)
+                .collect(),
+        }
+    }
 }
 
 #[cfg(test)]
