@@ -893,3 +893,61 @@ async fn workflow_runs_are_listed_newest_first_with_steps_and_pruned_by_count_an
     assert_eq!(removed, 1);
     assert_eq!(tx.workflows().list_runs(10).await.unwrap().len(), 2);
 }
+
+// ---- 备份快照（7.4） ----
+
+#[tokio::test]
+async fn a_snapshot_is_a_consistent_independent_copy_that_verifies() {
+    let (dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&simple(1, ItemType::Todo, "买牛奶", t(8, 0)))
+        .await
+        .unwrap();
+    tx.items()
+        .insert(&simple(2, ItemType::Note, "读书笔记", t(8, 1)))
+        .await
+        .unwrap();
+    tx.workflows()
+        .upsert(&sample_workflow("user.a", 5), t(8, 2))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let snapshot = dir.path().join("snapshot.db");
+    db.snapshot_to(&snapshot).await.unwrap();
+    assert_eq!(Database::verify_file(&snapshot).await.unwrap(), Some(6));
+
+    // 快照之后原库继续变化，不影响快照。
+    let mut tx = db.begin().await.unwrap();
+    tx.items().delete(id(1)).await.unwrap();
+    tx.commit().await.unwrap();
+
+    let copy = Database::open(&snapshot).await.unwrap();
+    let mut tx = copy.begin().await.unwrap();
+    let items = tx.items().list(&ItemFilter::default()).await.unwrap();
+    assert_eq!(items.len(), 2, "快照保留了快照时刻的数据");
+    assert_eq!(tx.workflows().list().await.unwrap().len(), 1);
+    drop(tx);
+    copy.close().await;
+
+    // 目标已存在时拒绝覆盖。
+    assert!(db.snapshot_to(&snapshot).await.is_err());
+}
+
+#[tokio::test]
+async fn verification_rejects_files_that_are_not_healthy_databases() {
+    let dir = tempfile::tempdir().unwrap();
+    let garbage = dir.path().join("garbage.db");
+    std::fs::write(
+        &garbage,
+        b"this is definitely not sqlite, just some text padding....",
+    )
+    .unwrap();
+    assert!(Database::verify_file(&garbage).await.is_err());
+    assert!(
+        Database::verify_file(&dir.path().join("missing.db"))
+            .await
+            .is_err()
+    );
+}

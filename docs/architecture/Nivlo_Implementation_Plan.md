@@ -150,7 +150,7 @@ Phase 12 Backlog                        → 未排期
 | **P7** | 7.1 | Desktop E2E 关键路径 | ⬜ |
 | | 7.2 | 性能预算与长稳验收 | ⬜ |
 | | 7.3 | Diagnostics 导出 | ✅ |
-| | 7.4 | 备份与数据导出 | ⬜ |
+| | 7.4 | 备份与数据导出 | ✅ |
 | | 7.5 | 首次运行引导与体验打磨 | 🟨 |
 | | 7.6 | 安装包、签名、Updater 与发布流水线 | ⬜ |
 | **P8** | 8.1 | QuickJS Runtime 与 Script Worker | ⬜ |
@@ -1230,16 +1230,16 @@ Phase 12 Backlog                        → 未排期
 
 ### 7.4 备份与数据导出
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：Phase 3
 - **任务**：
   - Export Backup：SQLite 一致性快照（`VACUUM INTO` 或备份 API）+ Workflow + Settings，不含 Secret。
   - 导出为 JSON 与 Markdown（每个 Note / Todo 一个文件或单文件，按选项）。
   - 从 Backup 恢复（替换当前数据前自动备份当前数据）。
 - **验收标准**：
-  - [ ] 备份 → 清空 → 恢复后数据完全一致（自动化测试比较）。
-  - [ ] 导出的 Markdown 可在任意编辑器中阅读，含 Source 信息。
-- **完成记录**：—
+  - [x] 备份 → 清空 → 恢复后数据完全一致（自动化测试比较）。
+  - [x] 导出的 Markdown 可在任意编辑器中阅读，含 Source 信息。
+- **完成记录**：2026-10-11 完成。设置页「数据与诊断」新增三项。**备份**：`Database::snapshot_to`（`VACUUM INTO`，事务一致，应用运行中即可）+ 清单 + Nivlo 自己保存的附件打成 zip（先写 `.partial` 再改名，失败不留半成品）；Workflow 与设置都在库里，不含任何 Secret，也不含用户被引用的原始文件。**恢复**：选择备份 → 校验（格式 / 版本、只允许 `nivlo.db` 与 `attachments/`、路径穿越拒绝、SQLite `integrity_check`、Schema 版本不得比本程序新）→ **先自动为当前数据做一份 `nivlo-before-restore-*.zip`**（做不成就不继续）→ 暂存 → 提示重启；下次启动在**打开数据库之前**把当前数据整体挪到 `replaced-<时间>/`（不删除）再换上备份，失败会回滚。**导出**：JSON（完整，含来源 / 标签 / 项目 / 时间戳）、Markdown 单文件、Markdown 每条一个文件（zip，文件名净化且唯一，带 YAML front matter），回收站不导出，Integration 内部元数据不导出。测试：`backup::tests::backup_then_wipe_then_restore_gives_back_identical_data`（备份 → 清空 → 恢复，Item 与附件完全一致，被替换的数据仍在 replaced 目录）、坏备份（缺 manifest / 路径穿越 / 多余文件 / 缺库 / 库损坏 / 格式不对 / 来自更新版本）全部拒绝且不留暂存数据；`export::tests`（JSON / Markdown 内容、来源行、文件名安全、回收站）；storage 的快照 / 校验测试；UI 测试覆盖导出 / 备份 / 恢复流程与取消。偏差：恢复需要重启才生效（运行中的应用不能替换自己正在用的数据库）；「按选项」的导出选项做成三种格式的下拉。
 
 ### 7.5 首次运行引导与体验打磨
 

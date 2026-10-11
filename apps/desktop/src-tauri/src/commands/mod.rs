@@ -6,6 +6,7 @@
 
 pub mod calendar;
 pub mod capture;
+pub mod data;
 pub mod diagnostics;
 pub mod inbox;
 pub mod item;

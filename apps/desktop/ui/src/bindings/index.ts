@@ -120,6 +120,40 @@ export const commands = {
 	 */
 	exportDiagnostics: () => typedError<string, IpcError>(__TAURI_INVOKE("export_diagnostics")),
 	/**
+	 *  创建备份：数据库快照 + 附件打成一个压缩包，写在导出目录并在文件管理器中显示。返回路径。
+	 * 
+	 *  # Errors
+	 * 
+	 *  失败返回 `EXPORT_FAILED`，不会留下半成品。
+	 */
+	createBackupFile: () => typedError<string, IpcError>(__TAURI_INVOKE("create_backup_file")),
+	/**
+	 *  导出全部笔记 / 待办。`format`：`json`、`markdown`（单文件）、`markdownFiles`（每条一个文件，打成压缩包）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  格式不认识返回 `INVALID_INPUT`；写入失败返回 `EXPORT_FAILED`。
+	 */
+	exportData: (format: string) => typedError<ExportResultDto, IpcError>(__TAURI_INVOKE("export_data", { format })),
+	/**
+	 *  从备份恢复：弹出文件选择框选一个备份包 → 校验 → **先为当前数据自动做一份备份** → 暂存。
+	 *  数据在下次启动时替换（调用 `restart_app` 立即重启）。用户取消选择时返回 `null`。
+	 * 
+	 *  # Errors
+	 * 
+	 *  备份包无效返回 `EXPORT_FAILED`（原数据不受影响）。
+	 */
+	restoreBackup: () => typedError<{
+	/**  备份的创建时间（RFC 3339）。 */
+	createdAt: string,
+	/**  创建备份的应用版本。 */
+	appVersion: string,
+	/**  恢复前自动为当前数据做的备份的路径。 */
+	safetyBackup: string,
+} | null, IpcError>(__TAURI_INVOKE("restore_backup")),
+	/**  重启应用（恢复备份后使用）。 */
+	restartApp: () => __TAURI_INVOKE<void>("restart_app"),
+	/**
 	 *  全部 Workflow：内置在前，其次是用户的，各自按优先级从大到小。
 	 * 
 	 *  # Errors
@@ -800,6 +834,14 @@ export type ExpandedLayoutDto = {
 	vertical: VerticalAnchorDto,
 };
 
+/**  导出结果。 */
+export type ExportResultDto = {
+	/**  写出的文件或文件夹（压缩包）路径。 */
+	path: string,
+	/**  导出了多少个 Item。 */
+	itemCount: number,
+};
+
 /**  悬浮窗发现指针已经离开（由后端看门狗补发，弥补 WebView 漏发 `pointerleave`）。 */
 export type FloatingPointerLeftEvent = Record<string, never>;
 
@@ -1058,6 +1100,16 @@ export type RescheduleTargetDto =
 { kind: "exact"; 
 /**  要设置的计划；`null` 表示清除。 */
 scheduled: DatePointDto | null };
+
+/**  选中的备份已经暂存，等待重启后应用。 */
+export type RestoreStagedDto = {
+	/**  备份的创建时间（RFC 3339）。 */
+	createdAt: string,
+	/**  创建备份的应用版本。 */
+	appVersion: string,
+	/**  恢复前自动为当前数据做的备份的路径。 */
+	safetyBackup: string,
+};
 
 /**  安排日期的目标（IPC 表示）。 */
 export type ScheduleTargetDto = 

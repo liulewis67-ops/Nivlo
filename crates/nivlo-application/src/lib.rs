@@ -26,6 +26,7 @@ pub mod capture;
 pub mod day_change;
 pub mod error;
 pub mod event;
+pub mod export;
 pub mod inbox;
 pub mod item;
 pub mod organize;

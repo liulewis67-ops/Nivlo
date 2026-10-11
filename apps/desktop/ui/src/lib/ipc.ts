@@ -29,6 +29,8 @@ import type {
   WeekStartDto,
   DryRunInputDto,
   DryRunResultDto,
+  ExportResultDto,
+  RestoreStagedDto,
   WorkflowDto,
   WorkflowRunDto,
 } from "@/bindings";
@@ -76,6 +78,8 @@ export type {
   UpdateItemRequest,
   DryRunInputDto,
   DryRunResultDto,
+  ExportResultDto,
+  RestoreStagedDto,
   PlannedItemDto,
   StepReportDto,
   WorkflowDto,
@@ -203,6 +207,17 @@ export interface IpcClient {
   emptyTrash(): Promise<number>;
   /** 导出诊断包（环境、Workflow 元数据、脱敏日志），并在文件管理器中显示；返回 zip 的路径。 */
   exportDiagnostics(): Promise<string>;
+  /** 创建备份包（数据库快照 + 附件），在文件管理器中显示；返回路径。 */
+  createBackupFile(): Promise<string>;
+  /** 导出全部笔记 / 待办：`json`、`markdown`（单文件）、`markdownFiles`（每条一个文件，压缩包）。 */
+  exportData(format: "json" | "markdown" | "markdownFiles"): Promise<ExportResultDto>;
+  /**
+   * 从备份恢复：选择备份包 → 校验 → 先自动备份当前数据 → 暂存，重启后生效。
+   * 用户取消选择时返回 `null`；备份无效抛出 `EXPORT_FAILED`。
+   */
+  restoreBackup(): Promise<RestoreStagedDto | null>;
+  /** 重启应用（让暂存的恢复生效）。 */
+  restartApp(): Promise<void>;
   /** 全部 Workflow：内置在前，其次是用户的，各自按优先级从大到小。 */
   listWorkflows(): Promise<WorkflowDto[]>;
   /** 启用 / 禁用一个 Workflow（内置的也可以）。 */
@@ -400,6 +415,10 @@ const tauriIpc: IpcClient = {
   purgeItems: (ids) => call("purge_items", commands.purgeItems(ids)),
   emptyTrash: () => call("empty_trash", commands.emptyTrash()),
   exportDiagnostics: () => call("export_diagnostics", commands.exportDiagnostics()),
+  createBackupFile: () => call("create_backup_file", commands.createBackupFile()),
+  exportData: (format) => call("export_data", commands.exportData(format)),
+  restoreBackup: () => call("restore_backup", commands.restoreBackup()),
+  restartApp: () => commands.restartApp(),
   listWorkflows: () => call("list_workflows", commands.listWorkflows()),
   setWorkflowEnabled: async (id, enabled) => {
     await call("set_workflow_enabled", commands.setWorkflowEnabled(id, enabled));
@@ -527,6 +546,10 @@ export const ipc: IpcClient = {
   purgeItems: (ids) => current.purgeItems(ids),
   emptyTrash: () => current.emptyTrash(),
   exportDiagnostics: () => current.exportDiagnostics(),
+  createBackupFile: () => current.createBackupFile(),
+  exportData: (format) => current.exportData(format),
+  restoreBackup: () => current.restoreBackup(),
+  restartApp: () => current.restartApp(),
   listWorkflows: () => current.listWorkflows(),
   setWorkflowEnabled: (id, enabled) => current.setWorkflowEnabled(id, enabled),
   setWorkflowPriority: (id, priority) => current.setWorkflowPriority(id, priority),

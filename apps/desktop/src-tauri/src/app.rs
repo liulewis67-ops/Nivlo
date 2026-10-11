@@ -9,6 +9,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use nivlo_application::calendar::CalendarService;
 use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
+use nivlo_application::export::ExportService;
 use nivlo_application::inbox::InboxService;
 use nivlo_application::item::ItemService;
 use nivlo_application::organize::{ProjectService, TagService};
@@ -47,6 +48,8 @@ pub struct ApplicationServices {
     pub calendar: CalendarService,
     /// Workflow 管理（列表 / 编辑 / 试运行 / 运行记录）。
     pub workflows: WorkflowService,
+    /// 数据导出（JSON / Markdown）。
+    pub export: ExportService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

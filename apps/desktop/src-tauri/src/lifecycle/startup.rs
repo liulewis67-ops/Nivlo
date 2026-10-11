@@ -6,6 +6,7 @@ use std::sync::Arc;
 use nivlo_application::calendar::CalendarService;
 use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
+use nivlo_application::export::ExportService;
 use nivlo_application::inbox::InboxService;
 use nivlo_application::item::ItemService;
 use nivlo_application::organize::{ProjectService, TagService};
@@ -143,6 +144,7 @@ pub fn build_app_state(
         Arc::new(FsAttachmentFiles::new(attachments_dir.clone())),
     );
     let calendar = CalendarService::new(Arc::new(database.clone()), clock.clone());
+    let export = ExportService::new(Arc::new(database.clone()), clock.clone());
     let runtime = RuntimeHandles::new(event_bus, database, clock, log_guard);
     runtime.set_enrichment_queue(enrichment_rx);
     AppState {
@@ -157,6 +159,7 @@ pub fn build_app_state(
             trash,
             calendar,
             workflows,
+            export,
         },
         runtime,
     }

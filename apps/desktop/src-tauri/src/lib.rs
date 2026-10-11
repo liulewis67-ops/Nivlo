@@ -12,6 +12,7 @@
 
 pub mod app;
 pub mod autostart;
+pub mod backup;
 pub mod clipboard;
 pub mod commands;
 pub mod diagnostics;
@@ -69,6 +70,10 @@ macro_rules! bindings_builder {
                 $crate::commands::trash::list_trash,
                 $crate::commands::trash::purge_items,
                 $crate::commands::diagnostics::export_diagnostics,
+                $crate::commands::data::create_backup_file,
+                $crate::commands::data::export_data,
+                $crate::commands::data::restore_backup::<$runtime>,
+                $crate::commands::data::restart_app::<$runtime>,
                 $crate::commands::workflow::list_workflows,
                 $crate::commands::workflow::set_workflow_enabled,
                 $crate::commands::workflow::set_workflow_priority,
@@ -164,6 +169,17 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
             // 阶段 1：路径与日志。失败时还没有日志，直接向上返回。
             let environment = startup::init_environment()?;
+
+            // 阶段 1.5：如果上次选择了从备份恢复，趁数据库还没打开把数据换上
+            // （当前数据整体挪到 replaced-<时间>/，不删除）。
+            let stamp = chrono::Utc::now().format("%Y%m%d-%H%M%S").to_string();
+            match backup::apply_pending_restore(&environment.paths, &stamp) {
+                Ok(true) => tracing::info!(event = "restore_applied", "已从备份恢复数据"),
+                Ok(false) => {}
+                Err(error) => {
+                    tracing::error!(event = "restore_failed", %error, "应用备份恢复失败，继续使用现有数据");
+                }
+            }
 
             // 阶段 2：打开数据库并迁移。失败时进入恢复流程，不启动业务 Runtime。
             let database = match tauri::async_runtime::block_on(startup::open_database(&environment.paths))

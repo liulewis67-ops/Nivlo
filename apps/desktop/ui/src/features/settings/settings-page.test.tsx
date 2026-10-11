@@ -112,8 +112,53 @@ describe("设置页：数据与诊断", () => {
   it("导出诊断信息后提示文件位置", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<SettingsPage />, ipc);
-    await userEvent.click(await screen.findByRole("button", { name: "导出" }));
+    await userEvent.click(await screen.findByRole("button", { name: "导出诊断信息" }));
     await waitFor(() => expect(ipc.calls).toContain("exportDiagnostics"));
     expect(await screen.findByText(/诊断包已导出/)).toBeInTheDocument();
+  });
+});
+
+describe("设置页：导出、备份与恢复", () => {
+  it("按所选格式导出，并提示条数与位置", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    await userEvent.selectOptions(await screen.findByLabelText("导出格式"), "markdown");
+    await userEvent.click(screen.getByRole("button", { name: "导出笔记和待办" }));
+    await waitFor(() => expect(ipc.calls).toContain("exportData:markdown"));
+    expect(await screen.findByText(/已导出 0 条/)).toBeInTheDocument();
+  });
+
+  it("创建备份后提示位置", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "创建备份" }));
+    expect(await screen.findByText(/备份已创建/)).toBeInTheDocument();
+    expect(ipc.calls).toContain("createBackupFile");
+  });
+
+  it("选了备份后显示已先备份当前数据，点「立即重启」才重启；取消选择什么都不发生", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    ipc.chooseRestoreFile(false);
+    await userEvent.click(await screen.findByRole("button", { name: "选择备份…" }));
+    await waitFor(() => expect(ipc.calls).toContain("restoreBackup"));
+    expect(screen.queryByText("备份已准备好")).not.toBeInTheDocument();
+
+    ipc.chooseRestoreFile(true);
+    await userEvent.click(screen.getByRole("button", { name: "选择备份…" }));
+    expect(await screen.findByText("备份已准备好")).toBeInTheDocument();
+    expect(screen.getByText(/nivlo-before-restore-test\.zip/)).toBeInTheDocument();
+    expect(ipc.calls).not.toContain("restartApp");
+    await userEvent.click(screen.getByRole("button", { name: "立即重启" }));
+    await waitFor(() => expect(ipc.calls).toContain("restartApp"));
+  });
+
+  it("恢复失败时提示导出失败的原因，不显示「已准备好」", async () => {
+    const ipc = createMemoryIpc();
+    ipc.restoreBackup = () => Promise.reject(new AppError("EXPORT_FAILED", "bad"));
+    renderWithProviders(<SettingsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "选择备份…" }));
+    expect(await screen.findByText(/导出失败/)).toBeInTheDocument();
+    expect(screen.queryByText("备份已准备好")).not.toBeInTheDocument();
   });
 });

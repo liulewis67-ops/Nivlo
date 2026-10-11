@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
 import { ShortcutSetting } from "@/features/shortcut";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
-import type { AppSettingsDto, LaterRuleDto, WeekStartDto } from "@/lib/ipc";
+import type { AppSettingsDto, LaterRuleDto, RestoreStagedDto, WeekStartDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
@@ -17,6 +18,9 @@ const LATER_RULES: LaterRuleDto[] = ["nextMonday", "inThreeDays", "inOneWeek"];
 
 /** 一周起始日选项，按展示顺序。 */
 const WEEK_STARTS: WeekStartDto[] = ["monday", "sunday"];
+
+/** 导出格式选项，按展示顺序。 */
+const EXPORT_FORMATS = ["json", "markdown", "markdownFiles"] as const;
 
 /** 主题偏好选项，按展示顺序。 */
 const THEMES: ThemePreference[] = ["system", "light", "dark"];
@@ -93,6 +97,9 @@ export function SettingsPage() {
     queryFn: () => ipc.getAppSettings(),
     staleTime: Infinity,
   });
+  const [exportFormat, setExportFormat] = useState<(typeof EXPORT_FORMATS)[number]>("json");
+  /** 已暂存、等待重启生效的恢复。 */
+  const [staged, setStaged] = useState<RestoreStagedDto | null>(null);
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
 
@@ -301,6 +308,7 @@ export function SettingsPage() {
             <Button
               size="sm"
               variant="secondary"
+              aria-label={t("settings.diagnostics.label")}
               onClick={() => {
                 ipc
                   .exportDiagnostics()
@@ -315,6 +323,90 @@ export function SettingsPage() {
               {t("settings.diagnostics.action")}
             </Button>
           </Row>
+          <Row label={t("settings.exportData.label")} hint={t("settings.exportData.hint")}>
+            <div className="flex items-center gap-2">
+              <select
+                aria-label={t("settings.exportData.format")}
+                value={exportFormat}
+                onChange={(event) => {
+                  const next = EXPORT_FORMATS.find((f) => f === event.target.value);
+                  if (next !== undefined) setExportFormat(next);
+                }}
+                className="h-8 rounded-md border border-border bg-surface px-2 text-sm text-text"
+              >
+                {EXPORT_FORMATS.map((format) => (
+                  <option key={format} value={format}>
+                    {t(`settings.exportData.${format}`)}
+                  </option>
+                ))}
+              </select>
+              <Button
+                size="sm"
+                variant="secondary"
+                aria-label={t("settings.exportData.label")}
+                onClick={() => {
+                  ipc
+                    .exportData(exportFormat)
+                    .then((result) =>
+                      useToastStore.getState().push(
+                        "success",
+                        t("settings.exportData.done", {
+                          count: result.itemCount,
+                          path: result.path,
+                        }),
+                      ),
+                    )
+                    .catch(reportError);
+                }}
+              >
+                {t("settings.exportData.action")}
+              </Button>
+            </div>
+          </Row>
+          <Row label={t("settings.backup.label")} hint={t("settings.backup.hint")}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                ipc
+                  .createBackupFile()
+                  .then((path) =>
+                    useToastStore.getState().push("success", t("settings.backup.done", { path })),
+                  )
+                  .catch(reportError);
+              }}
+            >
+              {t("settings.backup.action")}
+            </Button>
+          </Row>
+          <Row label={t("settings.restore.label")} hint={t("settings.restore.hint")}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                ipc.restoreBackup().then(setStaged).catch(reportError);
+              }}
+            >
+              {t("settings.restore.action")}
+            </Button>
+          </Row>
+          {staged !== null && (
+            <div role="status" className="flex items-center justify-between gap-4 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text">{t("settings.restore.readyTitle")}</p>
+                <p className="mt-0.5 break-all text-xs text-muted">
+                  {t("settings.restore.readyBody", {
+                    created: staged.createdAt,
+                    version: staged.appVersion,
+                    safety: staged.safetyBackup,
+                  })}
+                </p>
+              </div>
+              <Button size="sm" onClick={() => void ipc.restartApp().catch(reportError)}>
+                {t("settings.restore.restart")}
+              </Button>
+            </div>
+          )}
         </Section>
       </div>
     </div>

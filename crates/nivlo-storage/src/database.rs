@@ -57,6 +57,12 @@ impl Database {
         Ok(Self { pool })
     }
 
+    /// 当前程序认识的最新 Schema 版本：恢复备份时拒绝比它更新的数据库（来自更新版本的应用）。
+    #[must_use]
+    pub fn latest_schema_version() -> i64 {
+        MIGRATOR.iter().map(|m| m.version).max().unwrap_or(0)
+    }
+
     /// 运行全部尚未应用的 Migration；重复调用是幂等的。
     ///
     /// # Errors
@@ -93,6 +99,52 @@ impl Database {
             .fetch_one(&self.pool)
             .await
             .map_err(map_sqlx)
+    }
+
+    /// 把当前数据写成一份**事务一致**的快照文件（`VACUUM INTO`）：应用照常运行也可以备份，
+    /// 快照里没有 WAL 残留，是一个独立、紧凑的 SQLite 文件。目标文件必须不存在。
+    ///
+    /// # Errors
+    ///
+    /// 目标已存在、磁盘已满或数据库不可用时返回 [`StorageError::Unavailable`]。
+    pub async fn snapshot_to(&self, dest: &Path) -> Result<(), StorageError> {
+        let dest = dest
+            .to_str()
+            .ok_or_else(|| StorageError::Unavailable("路径不是合法的 UTF-8".to_owned()))?;
+        sqlx::query("VACUUM INTO ?1")
+            .bind(dest)
+            .execute(&self.pool)
+            .await
+            .map_err(map_sqlx)?;
+        Ok(())
+    }
+
+    /// 校验一个数据库文件（备份 / 恢复前用）：只读打开，`PRAGMA integrity_check` 必须为 ok，
+    /// 返回它的 Schema 版本。不会修改文件。
+    ///
+    /// # Errors
+    ///
+    /// 文件打不开、不是 SQLite 或完整性检查失败时返回 [`StorageError::Corrupt`] / [`StorageError::Unavailable`]。
+    pub async fn verify_file(path: &Path) -> Result<Option<i64>, StorageError> {
+        let options = SqliteConnectOptions::new().filename(path).read_only(true);
+        let pool = SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect_with(options)
+            .await
+            .map_err(map_sqlx)?;
+        let outcome = async {
+            let verdict: String = sqlx::query_scalar("PRAGMA integrity_check")
+                .fetch_one(&pool)
+                .await
+                .map_err(|e| StorageError::Corrupt(e.to_string()))?;
+            if verdict != "ok" {
+                return Err(StorageError::Corrupt(verdict));
+            }
+            Self { pool: pool.clone() }.schema_version().await
+        }
+        .await;
+        pool.close().await;
+        outcome
     }
 
     /// 关闭连接池，等待所有连接归还并刷写 WAL。

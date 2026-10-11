@@ -48,6 +48,8 @@ export const EMPTY_TODAY: TodayViewDto = {
 
 /** 内存版 IPC 额外暴露的、仅供测试使用的能力。 */
 export interface MemoryIpc extends IpcClient, WorkflowMock {
+  /** 设置 `restoreBackup` 时用户是选了文件（`true`）还是取消了（`false`）。 */
+  chooseRestoreFile(chosen: boolean): void;
   /** 当前保存的全部 Item（按创建顺序）。 */
   readonly items: readonly ItemDto[];
   /** `openMain` 被调用的次数。 */
@@ -223,6 +225,8 @@ export type MemoryIpcOptions = {
  */
 export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const workflowMock = createWorkflowMock();
+  /** `restoreBackup` 里用户是否选了文件（测试用 `chooseRestoreFile` 控制）。 */
+  let restoreChoice: string | null = "picked";
   const items: ItemDto[] = [];
   const listeners = new Set<() => void>();
   const pointerLeftListeners = new Set<() => void>();
@@ -1161,6 +1165,36 @@ ${(item.content ?? "").toLowerCase()}`;
     exportDiagnostics: () => {
       calls.push("exportDiagnostics");
       return Promise.resolve("C:\\Nivlo\\exports\\nivlo-diagnostics-test.zip");
+    },
+    createBackupFile: () => {
+      calls.push("createBackupFile");
+      return Promise.resolve("C:\\Nivlo\\exports\\nivlo-backup-test.zip");
+    },
+    exportData: (format) => {
+      calls.push(`exportData:${format}`);
+      return Promise.resolve({
+        path: `C:\\Nivlo\\exports\\nivlo-export-test.${format === "json" ? "json" : format === "markdown" ? "md" : "zip"}`,
+        itemCount: items.length,
+      });
+    },
+    restoreBackup: () => {
+      calls.push("restoreBackup");
+      return Promise.resolve(
+        restoreChoice === null
+          ? null
+          : {
+              createdAt: "2026-10-10T08:00:00Z",
+              appVersion: "0.1.0",
+              safetyBackup: "C:\\Nivlo\\exports\\nivlo-before-restore-test.zip",
+            },
+      );
+    },
+    restartApp: () => {
+      calls.push("restartApp");
+      return Promise.resolve();
+    },
+    chooseRestoreFile: (chosen: boolean) => {
+      restoreChoice = chosen ? "picked" : null;
     },
     listWorkflows: workflowMock.listWorkflows,
     setWorkflowEnabled: workflowMock.setWorkflowEnabled,
