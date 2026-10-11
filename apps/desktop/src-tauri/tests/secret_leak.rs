@@ -14,7 +14,7 @@ use std::path::Path;
 
 use nivlo_common::paths::AppPaths;
 use nivlo_desktop_lib::lifecycle::startup::{build_app_state, open_database};
-use nivlo_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials, Secret};
+use nivlo_platform::credential::{CredentialKey, CredentialPort, Secret};
 
 /// 带特征的测试 Token：足够独特，不会和普通数据碰撞。
 const CANARY: &str = "nivlo-canary-token-7f3a9c1e5b2d4086";
@@ -27,7 +27,7 @@ fn credential_store() -> Box<dyn CredentialPort> {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        Box::new(MemoryCredentials::new())
+        Box::new(nivlo_platform::credential::MemoryCredentials::new())
     }
 }
 
