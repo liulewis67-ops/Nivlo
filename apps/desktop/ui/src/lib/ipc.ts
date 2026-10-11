@@ -13,8 +13,11 @@ import type {
   OrganizeActionDto,
   OrganizeResultDto,
   PreviousStateDto,
+  ProjectDto,
   RescheduleTargetDto,
   ShortcutStatusDto,
+  TagDto,
+  TagSummaryDto,
   TodayViewDto,
   UpdateItemRequest,
 } from "@/bindings";
@@ -41,10 +44,13 @@ export type {
   PatchDto,
   PreviousStateDto,
   PriorityDto,
+  ProjectDto,
   RescheduleTargetDto,
   ScheduleTargetDto,
   ShortcutStatusDto,
   SourceDto,
+  TagDto,
+  TagSummaryDto,
   TodayItemDto,
   TodayViewDto,
   UpdateItemRequest,
@@ -122,6 +128,24 @@ export interface IpcClient {
   organizeItems(itemIds: string[], action: OrganizeActionDto): Promise<OrganizeResultDto>;
   /** 精确撤销一次整理：恢复到 [`PreviousStateDto`] 记录的状态。 */
   restoreItems(previous: PreviousStateDto[]): Promise<ItemDto[]>;
+  /** 列出项目（创建时间从早到晚）与各自未完成的 Item 数量；默认不含已归档的。 */
+  listProjects(includeArchived: boolean): Promise<ProjectDto[]>;
+  /** 创建项目。名称为空抛出 `NAME_EMPTY`，过长抛出 `NAME_TOO_LONG`。 */
+  createProject(name: string): Promise<ProjectDto>;
+  /** 重命名项目。 */
+  renameProject(id: string, name: string): Promise<ProjectDto>;
+  /** 归档项目：它从侧栏消失，里面的 Item 不受影响。 */
+  archiveProject(id: string): Promise<ProjectDto>;
+  /** 取消归档项目（归档的撤销）。 */
+  unarchiveProject(id: string): Promise<ProjectDto>;
+  /** 全部标签与各自的 Item 数量（按名称排序），标签管理与自动补全共用。 */
+  listTags(): Promise<TagSummaryDto[]>;
+  /** 重命名标签，所有关联的 Item 同步更新。与另一个标签重名抛出 `TAG_NAME_TAKEN`。 */
+  renameTag(id: string, name: string): Promise<TagDto>;
+  /** 把标签 `from` 合并进 `into`，返回留下的标签。 */
+  mergeTags(from: string, into: string): Promise<TagDto>;
+  /** 用 `names` 整体替换某个 Item 的标签（不存在的自动创建），返回替换后的标签。 */
+  setItemTags(id: string, names: string[]): Promise<TagDto[]>;
   /** 打开（必要时创建）并聚焦主窗口。 */
   openMain(): Promise<void>;
   /** 读取 Quick Create 全局快捷键的绑定与注册状态；被其他程序占用时 `conflict` 为 `true`。 */
@@ -257,6 +281,15 @@ const tauriIpc: IpcClient = {
     await call("open_item_source", commands.openItemSource(id));
   },
   listItems: (request) => call("list_items", commands.listItems(request)),
+  listProjects: (includeArchived) => call("list_projects", commands.listProjects(includeArchived)),
+  createProject: (name) => call("create_project", commands.createProject(name)),
+  renameProject: (id, name) => call("rename_project", commands.renameProject(id, name)),
+  archiveProject: (id) => call("archive_project", commands.archiveProject(id)),
+  unarchiveProject: (id) => call("unarchive_project", commands.unarchiveProject(id)),
+  listTags: () => call("list_tags", commands.listTags()),
+  renameTag: (id, name) => call("rename_tag", commands.renameTag(id, name)),
+  mergeTags: (from, into) => call("merge_tags", commands.mergeTags(from, into)),
+  setItemTags: (id, names) => call("set_item_tags", commands.setItemTags(id, names)),
   quickCreate: (itemType, title) => call("quick_create", commands.quickCreate({ itemType, title })),
   rescheduleItem: (id, target) => call("reschedule_item", commands.rescheduleItem(id, target)),
   reorderToday: async (orderedIds) => {
@@ -344,6 +377,15 @@ export const ipc: IpcClient = {
   updateItem: (id, request) => current.updateItem(id, request),
   openItemSource: (id) => current.openItemSource(id),
   listItems: (request) => current.listItems(request),
+  listProjects: (includeArchived) => current.listProjects(includeArchived),
+  createProject: (name) => current.createProject(name),
+  renameProject: (id, name) => current.renameProject(id, name),
+  archiveProject: (id) => current.archiveProject(id),
+  unarchiveProject: (id) => current.unarchiveProject(id),
+  listTags: () => current.listTags(),
+  renameTag: (id, name) => current.renameTag(id, name),
+  mergeTags: (from, into) => current.mergeTags(from, into),
+  setItemTags: (id, names) => current.setItemTags(id, names),
   quickCreate: (itemType, title) => current.quickCreate(itemType, title),
   rescheduleItem: (id, target) => current.rescheduleItem(id, target),
   reorderToday: (orderedIds) => current.reorderToday(orderedIds),

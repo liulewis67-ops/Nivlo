@@ -16,6 +16,7 @@ use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::{DatePoint, Item, ItemType};
 use nivlo_domain::source::Source;
+use nivlo_domain::tag::Tag;
 
 use crate::error::AppError;
 use crate::event::EventPublisher;
@@ -31,6 +32,8 @@ pub struct InboxEntry {
     pub sources: Vec<Source>,
     /// 附件（文件引用 / 保存的图片），按添加时间升序。
     pub attachments: Vec<Attachment>,
+    /// 标签，按名称排序。
+    pub tags: Vec<Tag>,
 }
 
 /// 安排日期的目标。
@@ -135,10 +138,12 @@ impl InboxService {
         for item in items {
             let sources = tx.sources().list_for_item(item.id()).await?;
             let attachments = tx.attachments().list_for_item(item.id()).await?;
+            let tags = tx.tags().for_item(item.id()).await?;
             entries.push(InboxEntry {
                 item,
                 sources,
                 attachments,
+                tags,
             });
         }
         Ok(entries)

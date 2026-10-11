@@ -7,6 +7,7 @@ use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
 use nivlo_application::inbox::InboxService;
 use nivlo_application::item::ItemService;
+use nivlo_application::organize::{ProjectService, TagService};
 use nivlo_application::ports::StorageError;
 use nivlo_application::settings::SettingsService;
 use nivlo_application::today::TodayService;
@@ -106,6 +107,12 @@ pub fn build_app_state(
         clock.clone(),
         Arc::new(event_bus.clone()),
     );
+    let projects = ProjectService::new(Arc::new(database.clone()), clock.clone());
+    let tags = TagService::new(
+        Arc::new(database.clone()),
+        clock.clone(),
+        Arc::new(event_bus.clone()),
+    );
     AppState {
         services: ApplicationServices {
             items,
@@ -113,6 +120,8 @@ pub fn build_app_state(
             today,
             capture,
             inbox,
+            projects,
+            tags,
         },
         runtime: RuntimeHandles::new(event_bus, database, clock, log_guard),
     }

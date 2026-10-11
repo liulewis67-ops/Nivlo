@@ -8,7 +8,10 @@ import type {
   InboxEntryDto,
   OrganizeActionDto,
   PreviousStateDto,
+  ProjectDto,
   SourceDto,
+  TagDto,
+  TagSummaryDto,
   CreateItemRequest,
   ItemDto,
   IpcClient,
@@ -77,6 +80,12 @@ export interface MemoryIpc extends IpcClient {
   readonly updates: readonly { id: string; request: UpdateItemRequest }[];
   /** 让下一次 `updateItem` 抛出的错误（模拟保存失败）；触发后自动清除。 */
   failNextUpdateWith(error: AppError): void;
+  /** 当前保存的全部项目（含已归档，按创建顺序）。 */
+  readonly projects: readonly ProjectDto[];
+  /** 当前保存的全部标签。 */
+  readonly tags: readonly TagDto[];
+  /** 直接放入一个项目（不经过校验），返回它；用于准备测试数据。 */
+  seedProject(name: string): ProjectDto;
   /** 按顺序记录的 `openItemSource` 请求的 ID。 */
   readonly openedSources: readonly string[];
   /** 让下一次 `openItemSource` 抛出的错误（如 `SOURCE_FILE_MISSING`）；触发后自动清除。 */
@@ -201,6 +210,11 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const quickAddListeners = new Set<() => void>();
   const mainViewListeners = new Set<(view: string) => void>();
   const takenShortcuts = new Set<string>();
+  const projects: ProjectDto[] = [];
+  const tagRegistry: TagDto[] = [];
+  /** Item ID → 标签 ID。 */
+  const itemTags = new Map<string, string[]>();
+  let nextOrganizeId = 1;
   const updates: { id: string; request: UpdateItemRequest }[] = [];
   const openedSources: string[] = [];
   let updateFailure: AppError | undefined;
@@ -234,6 +248,34 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   /** 捕获时记录的来源与附件，供 `listInbox` 返回。 */
   const provenance = new Map<string, { sources: SourceDto[]; attachments: AttachmentDto[] }>();
   let lastExpand: { width: number; height: number } | null = null;
+
+  /** 某个 Item 的标签，按名称排序。 */
+  function tagsOf(itemId: string): TagDto[] {
+    const ids = itemTags.get(itemId) ?? [];
+    return tagRegistry
+      .filter((tag) => ids.includes(tag.id))
+      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  }
+
+  /** 校验名称：去空白、非空、不超过上限（与后端一致）。 */
+  function validName(raw: string, max: number): string {
+    const name = raw.trim();
+    if (name === "") throw new AppError("NAME_EMPTY", "名称为空");
+    if ([...name].length > max) throw new AppError("NAME_TOO_LONG", "名称过长");
+    return name;
+  }
+
+  /** 项目当前未完成的 Item 数量。 */
+  function openCount(projectId: string): number {
+    return items.filter(
+      (item) => item.projectId === projectId && item.archivedAt === null && item.status !== "done",
+    ).length;
+  }
+
+  /** 通知订阅者数据变了。 */
+  function notifyChange(): void {
+    for (const notify of listeners) notify();
+  }
 
   /**
    * 与后端一致：今天创建的 Todo 追加到 Today 末尾，Tip 进入提示；Note 不进 Today。
@@ -370,6 +412,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
           item,
           sources: provenance.get(item.id)?.sources ?? [],
           attachments: provenance.get(item.id)?.attachments ?? [],
+          tags: tagsOf(item.id),
         }));
       return Promise.resolve(entries);
     },
@@ -671,6 +714,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         item,
         sources: provenance.get(id)?.sources ?? [],
         attachments: provenance.get(id)?.attachments ?? [],
+        tags: tagsOf(id),
       });
     },
     updateItem: (id: string, request: UpdateItemRequest) => {
@@ -705,6 +749,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         content: applyPatch(request.content, current.content),
         scheduled: applyPatch(request.scheduled, current.scheduled),
         due: applyPatch(request.due, current.due),
+        projectId: applyPatch(request.projectId, current.projectId),
         updatedAt: new Date().toISOString(),
       };
       items[at] = next;
@@ -799,12 +844,186 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         ? Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`))
         : Promise.resolve(found);
     },
+    get projects() {
+      return projects;
+    },
+    get tags() {
+      return tagRegistry;
+    },
+    seedProject: (name: string) => {
+      const project: ProjectDto = {
+        id: `00000000-0000-7000-8000-${String(nextOrganizeId++).padStart(12, "0")}`,
+        name,
+        createdAt: new Date().toISOString(),
+        archivedAt: null,
+        openCount: 0,
+      };
+      projects.push(project);
+      return project;
+    },
+    listProjects: (includeArchived: boolean) => {
+      calls.push("listProjects");
+      return Promise.resolve(
+        projects
+          .filter((project) => includeArchived || project.archivedAt === null)
+          .map((project) => ({ ...project, openCount: openCount(project.id) })),
+      );
+    },
+    createProject: (name: string) => {
+      calls.push("createProject");
+      try {
+        const project: ProjectDto = {
+          id: `00000000-0000-7000-8000-${String(nextOrganizeId++).padStart(12, "0")}`,
+          name: validName(name, 100),
+          createdAt: new Date().toISOString(),
+          archivedAt: null,
+          openCount: 0,
+        };
+        projects.push(project);
+        return Promise.resolve(project);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    renameProject: (id: string, name: string) => {
+      calls.push("renameProject");
+      const at = projects.findIndex((project) => project.id === id);
+      const current = projects[at];
+      if (current === undefined) {
+        return Promise.reject(new AppError("PROJECT_NOT_FOUND", `项目 ${id} 不存在`));
+      }
+      try {
+        projects[at] = { ...current, name: validName(name, 100) };
+        return Promise.resolve(projects[at] as ProjectDto);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    archiveProject: (id: string) => {
+      calls.push("archiveProject");
+      const at = projects.findIndex((project) => project.id === id);
+      const current = projects[at];
+      if (current === undefined) {
+        return Promise.reject(new AppError("PROJECT_NOT_FOUND", `项目 ${id} 不存在`));
+      }
+      if (current.archivedAt !== null) {
+        return Promise.reject(new AppError("ITEM_ALREADY_ARCHIVED", "已经归档"));
+      }
+      projects[at] = { ...current, archivedAt: new Date().toISOString() };
+      return Promise.resolve(projects[at] as ProjectDto);
+    },
+    unarchiveProject: (id: string) => {
+      calls.push("unarchiveProject");
+      const at = projects.findIndex((project) => project.id === id);
+      const current = projects[at];
+      if (current === undefined) {
+        return Promise.reject(new AppError("PROJECT_NOT_FOUND", `项目 ${id} 不存在`));
+      }
+      if (current.archivedAt === null) {
+        return Promise.reject(new AppError("ITEM_NOT_ARCHIVED", "尚未归档"));
+      }
+      projects[at] = { ...current, archivedAt: null };
+      return Promise.resolve(projects[at] as ProjectDto);
+    },
+    listTags: () => {
+      calls.push("listTags");
+      const summaries: TagSummaryDto[] = tagRegistry
+        .map((tag) => ({
+          tag,
+          itemCount: items.filter(
+            (item) => item.archivedAt === null && (itemTags.get(item.id) ?? []).includes(tag.id),
+          ).length,
+        }))
+        .sort((a, b) => a.tag.name.toLowerCase().localeCompare(b.tag.name.toLowerCase()));
+      return Promise.resolve(summaries);
+    },
+    renameTag: (id: string, name: string) => {
+      calls.push("renameTag");
+      const at = tagRegistry.findIndex((tag) => tag.id === id);
+      const current = tagRegistry[at];
+      if (current === undefined) {
+        return Promise.reject(new AppError("TAG_NOT_FOUND", `标签 ${id} 不存在`));
+      }
+      try {
+        const next = validName(name, 50);
+        if (
+          tagRegistry.some((tag) => tag.id !== id && tag.name.toLowerCase() === next.toLowerCase())
+        ) {
+          return Promise.reject(new AppError("TAG_NAME_TAKEN", `已经有一个叫「${next}」的标签`));
+        }
+        tagRegistry[at] = { ...current, name: next };
+        notifyChange();
+        return Promise.resolve(tagRegistry[at] as TagDto);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    mergeTags: (from: string, into: string) => {
+      calls.push("mergeTags");
+      if (from === into) {
+        return Promise.reject(new AppError("INVALID_INPUT", "不能把标签合并到它自己"));
+      }
+      const target = tagRegistry.find((tag) => tag.id === into);
+      const source = tagRegistry.find((tag) => tag.id === from);
+      if (target === undefined || source === undefined) {
+        return Promise.reject(new AppError("TAG_NOT_FOUND", "标签不存在"));
+      }
+      for (const [itemId, ids] of itemTags) {
+        if (!ids.includes(from)) continue;
+        const merged = ids.filter((tagId) => tagId !== from);
+        if (!merged.includes(into)) merged.push(into);
+        itemTags.set(itemId, merged);
+      }
+      tagRegistry.splice(tagRegistry.indexOf(source), 1);
+      notifyChange();
+      return Promise.resolve(target);
+    },
+    setItemTags: (id: string, names: string[]) => {
+      calls.push("setItemTags");
+      if (!items.some((item) => item.id === id)) {
+        return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
+      }
+      try {
+        const valid = names.map((name) => validName(name, 50));
+        const ids: string[] = [];
+        for (const name of valid) {
+          let tag = tagRegistry.find((t) => t.name.toLowerCase() === name.toLowerCase());
+          if (tag === undefined) {
+            tag = {
+              id: `00000000-0000-7000-9000-${String(nextOrganizeId++).padStart(12, "0")}`,
+              name,
+            };
+            tagRegistry.push(tag);
+          }
+          if (!ids.includes(tag.id)) ids.push(tag.id);
+        }
+        itemTags.set(id, ids);
+        notifyChange();
+        return Promise.resolve(tagsOf(id));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
     listItems: (request: ListItemsRequest) => {
       calls.push("listItems");
       const visible = items
         .filter((item) => request.includeArchived || item.archivedAt === null)
         .filter((item) => request.itemType === null || item.itemType === request.itemType)
+        .filter((item) => request.projectId == null || item.projectId === request.projectId)
+        .filter(
+          (item) => request.tagId == null || (itemTags.get(item.id) ?? []).includes(request.tagId),
+        )
         .reverse();
+      if (request.orderBy === "project") {
+        const rank = { high: 0, medium: 1, low: 2, none: 3 } as const;
+        visible.sort(
+          (a, b) =>
+            Number(a.status === "done") - Number(b.status === "done") ||
+            rank[a.priority] - rank[b.priority] ||
+            Number(a.scheduled === null) - Number(b.scheduled === null) ||
+            (a.scheduled?.date ?? "").localeCompare(b.scheduled?.date ?? ""),
+        );
+      }
       if (request.orderBy === "updated") {
         visible.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
       }

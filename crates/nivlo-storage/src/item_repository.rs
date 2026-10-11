@@ -6,8 +6,9 @@
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_application::ports::{
-    AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, SettingsRepository,
-    SourceRepository, StorageError, TodayOrderRepository, Transaction,
+    AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
+    SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
+    Transaction,
 };
 use nivlo_domain::attachment::{Attachment, AttachmentKind};
 use nivlo_domain::id::{AttachmentId, ItemId, ProjectId, SourceId};
@@ -107,7 +108,7 @@ fn row_to_item(row: ItemRow) -> Result<Item, StorageError> {
 /// 与同一个事务。未调用 `commit` 就被丢弃时，sqlx 会回滚。
 pub(crate) struct SqliteTransaction {
     /// 进行中的 sqlx 事务。
-    tx: sqlx::Transaction<'static, Sqlite>,
+    pub(crate) tx: sqlx::Transaction<'static, Sqlite>,
 }
 
 impl SqliteTransaction {
@@ -141,6 +142,16 @@ impl Transaction for SqliteTransaction {
 
     /// 返回附件 Repository 视图（即本事务自身）。
     fn attachments(&mut self) -> &mut dyn AttachmentRepository {
+        self
+    }
+
+    /// 返回项目 Repository 视图（即本事务自身）。
+    fn projects(&mut self) -> &mut dyn ProjectRepository {
+        self
+    }
+
+    /// 返回标签 Repository 视图（即本事务自身）。
+    fn tags(&mut self) -> &mut dyn TagRepository {
         self
     }
 
@@ -363,7 +374,13 @@ impl ItemRepository for SqliteTransaction {
         let item_type = filter.item_type.map(|t| t.as_str());
         let include_archived = i64::from(filter.include_archived);
         let in_inbox_only = i64::from(filter.in_inbox_only);
-        let by_updated = i64::from(matches!(filter.order, ItemOrder::UpdatedDesc));
+        let order_mode = match filter.order {
+            ItemOrder::CreatedDesc => 0_i64,
+            ItemOrder::UpdatedDesc => 1,
+            ItemOrder::ProjectView => 2,
+        };
+        let project_id = filter.project_id.map(|id| id.to_string());
+        let tag_id = filter.tag_id.map(|id| id.to_string());
         // SQLite 中 LIMIT -1 表示不限制。
         let limit = filter.limit.map_or(-1_i64, i64::from);
         // created_at 为固定宽度文本，排序即时间序；id（UUIDv7）作为同一毫秒内的稳定次序。
@@ -376,13 +393,26 @@ impl ItemRepository for SqliteTransaction {
              WHERE (?1 IS NULL OR type = ?1)
                AND (?2 = 1 OR archived_at IS NULL)
                AND (?3 = 0 OR in_inbox = 1)
-             ORDER BY CASE WHEN ?4 = 1 THEN updated_at ELSE created_at END DESC, id DESC
+               AND (?6 IS NULL OR project_id = ?6)
+               AND (?7 IS NULL OR EXISTS (
+                    SELECT 1 FROM item_tags WHERE item_tags.item_id = items.id AND item_tags.tag_id = ?7))
+             ORDER BY
+               CASE WHEN ?4 = 2 THEN status = 'done' ELSE 0 END ASC,
+               CASE WHEN ?4 = 2 THEN CASE priority
+                    WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END
+                    ELSE 0 END ASC,
+               CASE WHEN ?4 = 2 THEN scheduled_date IS NULL ELSE 0 END ASC,
+               CASE WHEN ?4 = 2 THEN scheduled_date END ASC,
+               CASE WHEN ?4 = 1 THEN updated_at ELSE created_at END DESC,
+               id DESC
              LIMIT ?5",
             item_type,
             include_archived,
             in_inbox_only,
-            by_updated,
-            limit
+            order_mode,
+            limit,
+            project_id,
+            tag_id
         )
         .fetch_all(&mut *self.tx)
         .await

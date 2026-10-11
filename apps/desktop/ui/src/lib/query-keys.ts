@@ -9,6 +9,14 @@ export const queryKeys = {
   itemList: (filter: { includeArchived: boolean }) => ["items", "list", filter] as const,
   /** Notes 列表（最近更新的在前，未归档）；属于 `items` 前缀，Item 变化时会一起失效。 */
   notes: () => ["items", "notes"] as const,
+  /** 项目列表（侧栏，含未完成数量）；项目内的 Item 列表见 `projectItems`。 */
+  projects: () => ["projects"] as const,
+  /** 某个项目的 Item 列表（项目视图排序）；属于 `items` 前缀，Item 变化时会一起失效。 */
+  projectItems: (projectId: string) => ["items", "project", projectId] as const,
+  /** 全部标签与数量（标签管理、自动补全）。 */
+  tags: () => ["tags"] as const,
+  /** 某个标签的 Item 列表；属于 `items` 前缀。 */
+  tagItems: (tagId: string) => ["items", "tag", tagId] as const,
   /** Today 视图（待办 / 提示 / 今日已完成）。 */
   today: () => ["today"] as const,
   /** Inbox 列表（等待整理的 Item，含来源与附件）。 */

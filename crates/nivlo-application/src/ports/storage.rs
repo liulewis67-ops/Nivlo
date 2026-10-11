@@ -14,9 +14,11 @@
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_domain::attachment::Attachment;
-use nivlo_domain::id::ItemId;
+use nivlo_domain::id::{ItemId, ProjectId, TagId};
 use nivlo_domain::item::{Item, ItemType};
+use nivlo_domain::project::Project;
 use nivlo_domain::source::Source;
+use nivlo_domain::tag::{Tag, TagName};
 
 /// 存储 Adapter 返回的错误。
 ///
@@ -76,6 +78,12 @@ pub trait Transaction: Send {
     /// 附件（Attachment）的 Repository 视图，与本事务共享同一个连接。
     fn attachments(&mut self) -> &mut dyn AttachmentRepository;
 
+    /// 项目（Project）的 Repository 视图，与本事务共享同一个连接。
+    fn projects(&mut self) -> &mut dyn ProjectRepository;
+
+    /// 标签（Tag）及 Item-标签关联的 Repository 视图，与本事务共享同一个连接。
+    fn tags(&mut self) -> &mut dyn TagRepository;
+
     /// 提交事务。
     ///
     /// # Errors
@@ -99,6 +107,8 @@ pub enum ItemOrder {
     CreatedDesc,
     /// 最近更新的在前（Notes 列表）。
     UpdatedDesc,
+    /// 项目视图（D-05）：未完成的在前 → 优先级从高到低 → 计划日期从早到晚（没有计划的在后）→ 创建时间从新到旧。
+    ProjectView,
 }
 
 /// [`ItemRepository::list`] 的过滤条件。
@@ -110,6 +120,10 @@ pub struct ItemFilter {
     pub include_archived: bool,
     /// 只返回仍在 Inbox 中等待整理的 Item（`in_inbox`，D-02）。
     pub in_inbox_only: bool,
+    /// 只返回属于该项目的 Item。
+    pub project_id: Option<ProjectId>,
+    /// 只返回带有该标签的 Item。
+    pub tag_id: Option<TagId>,
     /// 排序方式。
     pub order: ItemOrder,
     /// 最多返回的条数；`None` 表示不限制。
@@ -282,4 +296,104 @@ pub trait AttachmentRepository: Send {
     ///
     /// 数据库不可用或记录损坏时返回对应的 [`StorageError`]。
     async fn list_for_item(&mut self, item_id: ItemId) -> Result<Vec<Attachment>, StorageError>;
+}
+
+/// 项目的持久化（`projects` 表）。项目被删除时 Item 保留，只是不再属于任何项目。
+#[async_trait]
+pub trait ProjectRepository: Send {
+    /// 插入一个新项目。
+    ///
+    /// # Errors
+    ///
+    /// ID 重复或数据库不可用时返回对应的 [`StorageError`]。
+    async fn insert(&mut self, project: &Project) -> Result<(), StorageError>;
+
+    /// 用 `project` 的当前状态覆盖已存在的记录。
+    ///
+    /// # Errors
+    ///
+    /// 记录不存在时返回 [`StorageError::NotFound`]（`entity` 为 `"project"`）。
+    async fn update(&mut self, project: &Project) -> Result<(), StorageError>;
+
+    /// 按 ID 读取项目；不存在时返回 `Ok(None)`。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn get(&mut self, id: ProjectId) -> Result<Option<Project>, StorageError>;
+
+    /// 列出项目，按创建时间从早到晚；`include_archived` 为 `false` 时不含已归档的。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn list(&mut self, include_archived: bool) -> Result<Vec<Project>, StorageError>;
+
+    /// 每个项目里「未归档且未完成」的 Item 数量；没有这样的 Item 的项目不出现。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回对应的 [`StorageError`]。
+    async fn open_item_counts(&mut self) -> Result<Vec<(ProjectId, u32)>, StorageError>;
+}
+
+/// 标签及 Item-标签关联的持久化（`tags` / `item_tags` 表）。标签名按小写比较键大小写不敏感地唯一。
+#[async_trait]
+pub trait TagRepository: Send {
+    /// 插入一个新标签。
+    ///
+    /// # Errors
+    ///
+    /// 同名（忽略大小写）标签已存在时返回 [`StorageError::Constraint`]。
+    async fn insert(&mut self, tag: &Tag) -> Result<(), StorageError>;
+
+    /// 按 ID 读取标签；不存在时返回 `Ok(None)`。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn get(&mut self, id: TagId) -> Result<Option<Tag>, StorageError>;
+
+    /// 按名称（忽略大小写）查找标签。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn find_by_name(&mut self, name: &TagName) -> Result<Option<Tag>, StorageError>;
+
+    /// 全部标签及各自关联的未归档 Item 数量，按名称排序。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn list_with_counts(&mut self) -> Result<Vec<(Tag, u32)>, StorageError>;
+
+    /// 重命名标签。
+    ///
+    /// # Errors
+    ///
+    /// * [`StorageError::NotFound`]（`entity` 为 `"tag"`）- 标签不存在。
+    /// * [`StorageError::Constraint`] - 新名称与另一个标签重名。
+    async fn rename(&mut self, id: TagId, name: &TagName) -> Result<(), StorageError>;
+
+    /// 把 `from` 的全部关联并入 `into`（已同时带有两者的 Item 只保留一条），然后删除 `from`。
+    ///
+    /// # Errors
+    ///
+    /// 任一标签不存在时返回 [`StorageError::NotFound`]。
+    async fn merge(&mut self, from: TagId, into: TagId) -> Result<(), StorageError>;
+
+    /// 某个 Item 的标签，按名称排序。
+    ///
+    /// # Errors
+    ///
+    /// 记录损坏时返回 [`StorageError::Corrupt`]。
+    async fn for_item(&mut self, item_id: ItemId) -> Result<Vec<Tag>, StorageError>;
+
+    /// 用 `tags` 整体替换某个 Item 的标签。
+    ///
+    /// # Errors
+    ///
+    /// Item 或标签不存在（外键）时返回 [`StorageError::Constraint`]。
+    async fn set_for_item(&mut self, item_id: ItemId, tags: &[TagId]) -> Result<(), StorageError>;
 }

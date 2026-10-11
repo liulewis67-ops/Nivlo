@@ -690,3 +690,125 @@ async fn open_item_source_reports_missing_files_and_items_without_a_source() {
     .unwrap_err();
     assert_eq!(error["code"], "SOURCE_FILE_MISSING");
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn projects_and_tags_organize_items_and_survive_a_restart() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+    paths.ensure_dirs().unwrap();
+
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let project = invoke(&webview, "create_project", json!({ "name": "  支付重构 " })).unwrap();
+    assert_eq!(project["name"], "支付重构");
+    let project_id = project["id"].as_str().unwrap().to_owned();
+    assert_eq!(
+        invoke(&webview, "create_project", json!({ "name": " " })).unwrap_err()["code"],
+        "NAME_EMPTY"
+    );
+
+    let low = invoke(&webview, "create_item", todo_request("低优先")).unwrap();
+    let low_id = low["id"].as_str().unwrap().to_owned();
+    let update = json!({ "id": low_id, "request": {
+        "priority": "low", "projectId": { "kind": "set", "value": project_id }
+    }});
+    invoke(&webview, "update_item", update).unwrap();
+    let high = invoke(&webview, "create_item", todo_request("高优先")).unwrap();
+    let high_id = high["id"].as_str().unwrap().to_owned();
+    invoke(
+        &webview,
+        "update_item",
+        json!({ "id": high_id, "request": { "projectId": { "kind": "set", "value": project_id } }}),
+    )
+    .unwrap();
+
+    // 不存在的项目被拒绝，Item 不变。
+    let missing = "00000000-0000-7000-8000-0000000000aa";
+    let rejected = invoke(
+        &webview,
+        "update_item",
+        json!({ "id": high_id, "request": { "projectId": { "kind": "set", "value": missing } }}),
+    )
+    .unwrap_err();
+    assert_eq!(rejected["code"], "PROJECT_NOT_FOUND");
+
+    // 项目视图：优先级高的在前；项目数量只算未完成的。
+    let listed = invoke(
+        &webview,
+        "list_items",
+        json!({ "request": {
+            "itemType": null, "includeArchived": false, "projectId": project_id,
+            "orderBy": "project", "limit": null
+        }}),
+    )
+    .unwrap();
+    let titles: Vec<&str> = listed
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|i| i["title"].as_str().unwrap())
+        .collect();
+    assert_eq!(titles, ["高优先", "低优先"]);
+    let projects = invoke(
+        &webview,
+        "list_projects",
+        json!({ "includeArchived": false }),
+    )
+    .unwrap();
+    assert_eq!(projects[0]["openCount"], 2);
+
+    // 标签：自动创建、忽略大小写去重、按标签过滤、重命名与重名保护。
+    let tags = invoke(
+        &webview,
+        "set_item_tags",
+        json!({ "id": high_id, "names": ["Jira", "jira", "工作"] }),
+    )
+    .unwrap();
+    assert_eq!(tags.as_array().unwrap().len(), 2);
+    let jira_id = tags
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["name"] == "Jira")
+        .unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    invoke(
+        &webview,
+        "set_item_tags",
+        json!({ "id": low_id, "names": ["工作"] }),
+    )
+    .unwrap();
+    let clash = invoke(
+        &webview,
+        "rename_tag",
+        json!({ "id": jira_id, "name": "工作" }),
+    )
+    .unwrap_err();
+    assert_eq!(clash["code"], "TAG_NAME_TAKEN");
+    invoke(
+        &webview,
+        "rename_tag",
+        json!({ "id": jira_id, "name": "JIRA" }),
+    )
+    .unwrap();
+    drop(webview);
+    drop(app);
+
+    // 重启后项目、标签与关联都还在，详情里带着标签。
+    let app = app_on(&paths).await;
+    let webview = main_webview(&app);
+    let detail = invoke(&webview, "get_item_detail", json!({ "id": high_id })).unwrap();
+    let names: Vec<&str> = detail["tags"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|t| t["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(names, ["JIRA", "工作"]);
+    assert_eq!(detail["item"]["projectId"], project_id);
+    let summary = invoke(&webview, "list_tags", json!({})).unwrap();
+    assert_eq!(summary[1]["tag"]["name"], "工作");
+    assert_eq!(summary[1]["itemCount"], 2);
+}

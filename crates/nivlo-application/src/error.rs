@@ -36,6 +36,12 @@ pub enum ErrorCode {
     ItemArchived,
     /// 字段不适用于该类型的 Item。
     ItemFieldNotApplicable,
+    /// 项目不存在。
+    ProjectNotFound,
+    /// 标签不存在。
+    TagNotFound,
+    /// 标签名已被另一个标签占用（忽略大小写）。
+    TagNameTaken,
     /// 名称为空（项目、标签等）。
     NameEmpty,
     /// 名称过长（项目、标签等）。
@@ -81,6 +87,9 @@ impl ErrorCode {
         Self::ItemNotArchived,
         Self::ItemArchived,
         Self::ItemFieldNotApplicable,
+        Self::ProjectNotFound,
+        Self::TagNotFound,
+        Self::TagNameTaken,
         Self::NameEmpty,
         Self::NameTooLong,
         Self::DataInconsistent,
@@ -112,6 +121,9 @@ impl ErrorCode {
             Self::ItemNotArchived => "ITEM_NOT_ARCHIVED",
             Self::ItemArchived => "ITEM_ARCHIVED",
             Self::ItemFieldNotApplicable => "ITEM_FIELD_NOT_APPLICABLE",
+            Self::ProjectNotFound => "PROJECT_NOT_FOUND",
+            Self::TagNotFound => "TAG_NOT_FOUND",
+            Self::TagNameTaken => "TAG_NAME_TAKEN",
             Self::NameEmpty => "NAME_EMPTY",
             Self::NameTooLong => "NAME_TOO_LONG",
             Self::DataInconsistent => "DATA_INCONSISTENT",
@@ -201,6 +213,10 @@ impl From<StorageError> for AppError {
     fn from(error: StorageError) -> Self {
         let (code, action) = match &error {
             StorageError::NotFound { entity: "item", .. } => (ErrorCode::ItemNotFound, None),
+            StorageError::NotFound {
+                entity: "project", ..
+            } => (ErrorCode::ProjectNotFound, None),
+            StorageError::NotFound { entity: "tag", .. } => (ErrorCode::TagNotFound, None),
             StorageError::NotFound { .. } => (ErrorCode::InvalidInput, None),
             StorageError::Constraint(_) => (ErrorCode::StorageConstraint, None),
             StorageError::Unavailable(_) => (

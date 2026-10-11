@@ -15,13 +15,16 @@ use nivlo_application::inbox::{
     InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
 };
 use nivlo_application::item::{Patch, RescheduleTarget, UpdateItemInput};
+use nivlo_application::organize::{ProjectSummary, TagSummary};
 use nivlo_application::ports::{ItemFilter, ItemOrder};
 use nivlo_application::today::{TodayEntry, TodayView};
 use nivlo_domain::attachment::Attachment;
 use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
-use nivlo_domain::id::{ItemId, ProjectId};
+use nivlo_domain::id::{ItemId, ProjectId, TagId};
 use nivlo_domain::item::{ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority};
+use nivlo_domain::project::Project;
 use nivlo_domain::source::Source;
+use nivlo_domain::tag::Tag;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
@@ -236,6 +239,26 @@ fn format_utc(value: DateTime<Utc>) -> String {
 pub fn parse_item_id(text: &str) -> Result<ItemId, AppError> {
     text.parse()
         .map_err(|_| invalid(format!("无效的 Item ID：{text}")))
+}
+
+/// 解析项目 ID 文本。
+///
+/// # Errors
+///
+/// 不是合法 UUID 时返回 `INVALID_INPUT`。
+pub fn parse_project_id(text: &str) -> Result<ProjectId, AppError> {
+    text.parse()
+        .map_err(|_| invalid(format!("无效的项目 ID：{text}")))
+}
+
+/// 解析标签 ID 文本。
+///
+/// # Errors
+///
+/// 不是合法 UUID 时返回 `INVALID_INPUT`。
+pub fn parse_tag_id(text: &str) -> Result<TagId, AppError> {
+    text.parse()
+        .map_err(|_| invalid(format!("无效的标签 ID：{text}")))
 }
 
 /// Item 的 IPC 表示。
@@ -523,6 +546,8 @@ pub enum ItemOrderDto {
     Created,
     /// 最近更新的在前。
     Updated,
+    /// 项目视图：未完成 → 优先级 → 计划日期 → 创建时间。
+    Project,
 }
 
 /// 列出 Item 的请求。
@@ -533,6 +558,12 @@ pub struct ListItemsRequest {
     pub item_type: Option<ItemTypeDto>,
     /// 是否包含已归档的 Item。
     pub include_archived: bool,
+    /// 只返回属于该项目的 Item。
+    #[serde(default)]
+    pub project_id: Option<String>,
+    /// 只返回带有该标签的 Item。
+    #[serde(default)]
+    pub tag_id: Option<String>,
     /// 排序方式；缺省为创建时间从新到旧。
     #[serde(default)]
     pub order_by: ItemOrderDto,
@@ -540,19 +571,28 @@ pub struct ListItemsRequest {
     pub limit: Option<u32>,
 }
 
-impl From<ListItemsRequest> for ItemFilter {
-    /// DTO → Application 过滤条件。
-    fn from(request: ListItemsRequest) -> Self {
-        Self {
+impl TryFrom<ListItemsRequest> for ItemFilter {
+    type Error = AppError;
+
+    /// DTO → Application；项目 / 标签 ID 格式不对时返回 `INVALID_INPUT`。
+    fn try_from(request: ListItemsRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
             item_type: request.item_type.map(Into::into),
             include_archived: request.include_archived,
             in_inbox_only: false,
+            project_id: request
+                .project_id
+                .as_deref()
+                .map(parse_project_id)
+                .transpose()?,
+            tag_id: request.tag_id.as_deref().map(parse_tag_id).transpose()?,
             order: match request.order_by {
                 ItemOrderDto::Created => ItemOrder::CreatedDesc,
                 ItemOrderDto::Updated => ItemOrder::UpdatedDesc,
+                ItemOrderDto::Project => ItemOrder::ProjectView,
             },
             limit: request.limit,
-        }
+        })
     }
 }
 
@@ -594,6 +634,8 @@ pub struct UpdateItemRequest {
     pub due: PatchDto<DatePointDto>,
     /// 提醒时间点（RFC 3339）的修改。
     pub reminder_at: PatchDto<String>,
+    /// 所属项目（ID 文本）的修改。
+    pub project_id: PatchDto<String>,
 }
 
 /// 把 IPC 三态修改转换成 Application 的 [`Patch`]。
@@ -622,8 +664,7 @@ impl TryFrom<UpdateItemRequest> for UpdateItemInput {
             scheduled: patch(request.scheduled, DatePoint::try_from)?,
             due: patch(request.due, DatePoint::try_from)?,
             reminder_at: patch(request.reminder_at, |text| parse_utc(&text))?,
-            // 项目在 3.3 之后才有界面与管理；详情面板暂不修改。
-            project_id: Patch::Keep,
+            project_id: patch(request.project_id, |text| parse_project_id(&text))?,
         })
     }
 }
@@ -733,6 +774,8 @@ pub struct InboxEntryDto {
     pub sources: Vec<SourceDto>,
     /// 附件。
     pub attachments: Vec<AttachmentDto>,
+    /// 标签，按名称排序。
+    pub tags: Vec<TagDto>,
 }
 
 impl From<&InboxEntry> for InboxEntryDto {
@@ -746,6 +789,7 @@ impl From<&InboxEntry> for InboxEntryDto {
                 .iter()
                 .map(AttachmentDto::from_attachment)
                 .collect(),
+            tags: value.tags.iter().map(TagDto::from).collect(),
         }
     }
 }
@@ -869,6 +913,82 @@ impl From<&OrganizeOutcome> for OrganizeResultDto {
         Self {
             items: value.items.iter().map(ItemDto::from).collect(),
             previous: value.previous.iter().map(PreviousStateDto::from).collect(),
+        }
+    }
+}
+
+/// 项目（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectDto {
+    /// 项目 ID。
+    pub id: String,
+    /// 名称。
+    pub name: String,
+    /// 创建时间（RFC 3339，UTC）。
+    pub created_at: String,
+    /// 归档时间；未归档为 `null`。
+    pub archived_at: Option<String>,
+    /// 未归档且未完成的 Item 数量。
+    pub open_count: u32,
+}
+
+impl From<&ProjectSummary> for ProjectDto {
+    /// Application → DTO。
+    fn from(value: &ProjectSummary) -> Self {
+        Self::from_project(&value.project, value.open_count)
+    }
+}
+
+impl ProjectDto {
+    /// 由项目与数量构造。
+    pub fn from_project(project: &Project, open_count: u32) -> Self {
+        Self {
+            id: project.id.to_string(),
+            name: project.name.as_str().to_owned(),
+            created_at: format_utc(project.created_at),
+            archived_at: project.archived_at.map(format_utc),
+            open_count,
+        }
+    }
+}
+
+/// 标签（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TagDto {
+    /// 标签 ID。
+    pub id: String,
+    /// 名称。
+    pub name: String,
+}
+
+impl From<&Tag> for TagDto {
+    /// Domain → DTO。
+    fn from(value: &Tag) -> Self {
+        Self {
+            id: value.id.to_string(),
+            name: value.name.as_str().to_owned(),
+        }
+    }
+}
+
+/// 标签与带有它的 Item 数量（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct TagSummaryDto {
+    /// 标签。
+    pub tag: TagDto,
+    /// 带有该标签的未归档 Item 数量。
+    pub item_count: u32,
+}
+
+impl From<&TagSummary> for TagSummaryDto {
+    /// Application → DTO。
+    fn from(value: &TagSummary) -> Self {
+        Self {
+            tag: TagDto::from(&value.tag),
+            item_count: value.item_count,
         }
     }
 }

@@ -25,6 +25,9 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 | `ITEM_NOT_ARCHIVED` | Item 尚未归档 | Domain | |
 | `ITEM_ARCHIVED` | Item 已归档，需先取消归档 | Domain | |
 | `ITEM_FIELD_NOT_APPLICABLE` | 字段不适用于该类型（如 Note 的截止日期） | Domain | |
+| `PROJECT_NOT_FOUND` | 项目不存在 | Application | |
+| `TAG_NOT_FOUND` | 标签不存在 | Application | |
+| `TAG_NAME_TAKEN` | 标签名与另一个标签重名（忽略大小写），想合并请用合并 | Application | |
 | `NAME_EMPTY` | 项目 / 标签名称为空 | Domain | |
 | `NAME_TOO_LONG` | 项目 / 标签名称过长 | Domain | |
 | `DATA_INCONSISTENT` | 持久化数据自相矛盾 | Domain | 附带 `OPEN_DIAGNOSTICS` 动作的场景见 `STORAGE_CORRUPT` |

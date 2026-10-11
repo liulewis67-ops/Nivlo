@@ -169,7 +169,13 @@ impl ItemService {
             record(item.set_reminder(input.reminder_at.apply(item.reminder_at()), now)?);
         }
         if input.project_id.is_change() {
-            record(item.set_project(input.project_id.apply(item.project_id()), now));
+            let project_id = input.project_id.apply(item.project_id());
+            if let Some(project_id) = project_id
+                && tx.projects().get(project_id).await?.is_none()
+            {
+                return Err(crate::organize::project_not_found(project_id));
+            }
+            record(item.set_project(project_id, now));
         }
 
         tx.items().update(&item).await?;
@@ -306,10 +312,12 @@ impl ItemService {
             .ok_or_else(|| AppError::item_not_found(id))?;
         let sources = tx.sources().list_for_item(id).await?;
         let attachments = tx.attachments().list_for_item(id).await?;
+        let tags = tx.tags().for_item(id).await?;
         Ok(InboxEntry {
             item,
             sources,
             attachments,
+            tags,
         })
     }
 

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM item_tags WHERE item_id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "75ac33702918e2d94c2bec8c8284dc59e2c1e838110254e96d0b81a986e37b04"
+}

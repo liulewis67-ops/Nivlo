@@ -63,6 +63,78 @@ export const commands = {
 	 */
 	openItemSource: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_item_source", { id })),
 	/**
+	 *  列出项目（创建时间从早到晚）与各自未完成的 Item 数量。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	listProjects: (includeArchived: boolean) => typedError<ProjectDto[], IpcError>(__TAURI_INVOKE("list_projects", { includeArchived })),
+	/**
+	 *  创建项目。
+	 * 
+	 *  # Errors
+	 * 
+	 *  名称为空返回 `NAME_EMPTY`，过长返回 `NAME_TOO_LONG`。
+	 */
+	createProject: (name: string) => typedError<ProjectDto, IpcError>(__TAURI_INVOKE("create_project", { name })),
+	/**
+	 *  重命名项目。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `PROJECT_NOT_FOUND`，名称不合法返回对应错误码。
+	 */
+	renameProject: (id: string, name: string) => typedError<ProjectDto, IpcError>(__TAURI_INVOKE("rename_project", { id, name })),
+	/**
+	 *  归档项目。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `PROJECT_NOT_FOUND`，已归档返回 `ITEM_ALREADY_ARCHIVED`。
+	 */
+	archiveProject: (id: string) => typedError<ProjectDto, IpcError>(__TAURI_INVOKE("archive_project", { id })),
+	/**
+	 *  取消归档项目（归档的撤销）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `PROJECT_NOT_FOUND`，尚未归档返回 `ITEM_NOT_ARCHIVED`。
+	 */
+	unarchiveProject: (id: string) => typedError<ProjectDto, IpcError>(__TAURI_INVOKE("unarchive_project", { id })),
+	/**
+	 *  全部标签与各自的 Item 数量（按名称排序）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	listTags: () => typedError<TagSummaryDto[], IpcError>(__TAURI_INVOKE("list_tags")),
+	/**
+	 *  重命名标签；所有关联的 Item 同步显示新名称。
+	 * 
+	 *  # Errors
+	 * 
+	 *  `TAG_NOT_FOUND`；与另一个标签重名返回 `TAG_NAME_TAKEN`；名称不合法返回对应错误码。
+	 */
+	renameTag: (id: string, name: string) => typedError<TagDto, IpcError>(__TAURI_INVOKE("rename_tag", { id, name })),
+	/**
+	 *  把标签 `from` 合并进 `into`，返回合并后留下的标签。
+	 * 
+	 *  # Errors
+	 * 
+	 *  `TAG_NOT_FOUND`；两者相同返回 `INVALID_INPUT`。
+	 */
+	mergeTags: (from: string, into: string) => typedError<TagDto, IpcError>(__TAURI_INVOKE("merge_tags", { from, into })),
+	/**
+	 *  用 `names` 整体替换某个 Item 的标签（不存在的标签自动创建），返回替换后的标签。
+	 * 
+	 *  # Errors
+	 * 
+	 *  `ITEM_NOT_FOUND`；名称不合法返回 `NAME_EMPTY` / `NAME_TOO_LONG`，此时没有任何改动。
+	 */
+	setItemTags: (id: string, names: string[]) => typedError<TagDto[], IpcError>(__TAURI_INVOKE("set_item_tags", { id, names })),
+	/**
 	 *  捕获一次输入（文本 / URL / 文件 / 图片），创建 Item + Source + Attachment 并放进 Inbox。
 	 * 
 	 *  整个过程是一个事务；失败时不留下任何记录。返回创建的 Item 与撤销句柄。
@@ -443,6 +515,8 @@ export type InboxEntryDto = {
 	sources: SourceDto[],
 	/**  附件。 */
 	attachments: AttachmentDto[],
+	/**  标签，按名称排序。 */
+	tags: TagDto[],
 };
 
 /**  IPC 统一的错误结构 `{ code, message, action }`（架构文档 §43）。 */
@@ -502,7 +576,9 @@ export type ItemOrderDto =
 /**  创建时间从新到旧（默认）。 */
 "created" | 
 /**  最近更新的在前。 */
-"updated";
+"updated" | 
+/**  项目视图：未完成 → 优先级 → 计划日期 → 创建时间。 */
+"project";
 
 /**  Item 状态。 */
 export type ItemStatusDto = 
@@ -532,6 +608,10 @@ export type ListItemsRequest = {
 	itemType: ItemTypeDto | null,
 	/**  是否包含已归档的 Item。 */
 	includeArchived: boolean,
+	/**  只返回属于该项目的 Item。 */
+	projectId?: string | null,
+	/**  只返回带有该标签的 Item。 */
+	tagId?: string | null,
 	/**  排序方式；缺省为创建时间从新到旧。 */
 	orderBy?: ItemOrderDto,
 	/**  最多返回的条数。 */
@@ -607,6 +687,20 @@ export type PriorityDto =
 /**  高。 */
 "high";
 
+/**  项目（IPC 表示）。 */
+export type ProjectDto = {
+	/**  项目 ID。 */
+	id: string,
+	/**  名称。 */
+	name: string,
+	/**  创建时间（RFC 3339，UTC）。 */
+	createdAt: string,
+	/**  归档时间；未归档为 `null`。 */
+	archivedAt: string | null,
+	/**  未归档且未完成的 Item 数量。 */
+	openCount: number,
+};
+
 /**  托盘「快速添加」被点击：悬浮窗应展开并进入快速创建。 */
 export type QuickAddRequestedEvent = Record<string, never>;
 
@@ -672,6 +766,22 @@ export type SourceDto = {
 	capturedAt: string,
 };
 
+/**  标签（IPC 表示）。 */
+export type TagDto = {
+	/**  标签 ID。 */
+	id: string,
+	/**  名称。 */
+	name: string,
+};
+
+/**  标签与带有它的 Item 数量（IPC 表示）。 */
+export type TagSummaryDto = {
+	/**  标签。 */
+	tag: TagDto,
+	/**  带有该标签的未归档 Item 数量。 */
+	itemCount: number,
+};
+
 /**  Today 中的一个条目（只含展示所需的字段，不含正文，保持载荷精简）。 */
 export type TodayItemDto = {
 	/**  Item ID。 */
@@ -727,6 +837,8 @@ export type UpdateItemRequest = {
 	due?: PatchDto<DatePointDto>,
 	/**  提醒时间点（RFC 3339）的修改。 */
 	reminderAt?: PatchDto<string>,
+	/**  所属项目（ID 文本）的修改。 */
+	projectId?: PatchDto<string>,
 };
 
 /**  展开后面板相对徽标的垂直方向。 */

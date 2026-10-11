@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT tags.id AS \"id!\", tags.name AS \"name!\",\n                    COUNT(items.id) AS \"count!: i64\"\n             FROM tags\n             LEFT JOIN item_tags ON item_tags.tag_id = tags.id\n             LEFT JOIN items ON items.id = item_tags.item_id AND items.archived_at IS NULL\n             GROUP BY tags.id\n             ORDER BY tags.name_key ASC, tags.id ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name!",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "count!: i64",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "adae2ee09e083fb0e7ce457c771d4701f08514bc7ffdc307dd1d3c911cb1f5d8"
+}

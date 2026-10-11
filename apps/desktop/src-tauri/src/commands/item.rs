@@ -73,7 +73,7 @@ pub async fn list_items(
     state: State<'_, AppState>,
     request: ListItemsRequest,
 ) -> Result<Vec<ItemDto>, IpcError> {
-    let items = state.services.items.list_items(request.into()).await?;
+    let items = state.services.items.list_items(request.try_into()?).await?;
     Ok(items.iter().map(ItemDto::from).collect())
 }
 

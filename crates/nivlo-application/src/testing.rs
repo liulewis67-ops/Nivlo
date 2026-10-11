@@ -4,21 +4,24 @@
 //! 行为与真实 Adapter 对齐：事务内的写入只有在 `commit` 之后才对外可见，
 //! 事务被丢弃时自动回滚；列表与查询的过滤、排序规则与 `ItemRepository` 文档约定一致。
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_domain::attachment::Attachment;
 use nivlo_domain::event::DomainEvent;
-use nivlo_domain::id::ItemId;
+use nivlo_domain::id::{ItemId, ProjectId, TagId};
 use nivlo_domain::item::{Item, ItemStatus, ItemType};
+use nivlo_domain::project::Project;
 use nivlo_domain::source::Source;
+use nivlo_domain::tag::{Tag, TagName};
 
 use crate::event::EventPublisher;
 use crate::ports::{
-    AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, SettingsRepository,
-    SourceRepository, StorageError, TodayOrderRepository, Transaction, UnitOfWork,
+    AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,
+    SettingsRepository, SourceRepository, StorageError, TagRepository, TodayOrderRepository,
+    Transaction, UnitOfWork,
 };
 
 /// 内存数据库中的全部数据。事务开始时整体克隆为工作副本，提交时整体替换。
@@ -34,6 +37,12 @@ struct FakeData {
     sources: Vec<Source>,
     /// 附件记录。
     attachments: Vec<Attachment>,
+    /// 项目。
+    projects: BTreeMap<ProjectId, Project>,
+    /// 标签。
+    tags: BTreeMap<TagId, Tag>,
+    /// Item-标签关联。
+    item_tags: BTreeSet<(ItemId, TagId)>,
 }
 
 /// 内存数据库的共享状态。
@@ -156,6 +165,16 @@ impl Transaction for FakeTransaction {
         self
     }
 
+    /// 返回项目 Repository 视图。
+    fn projects(&mut self) -> &mut dyn ProjectRepository {
+        self
+    }
+
+    /// 返回标签 Repository 视图。
+    fn tags(&mut self) -> &mut dyn TagRepository {
+        self
+    }
+
     /// 提交：把工作副本写回共享状态。
     async fn commit(self: Box<Self>) -> Result<(), StorageError> {
         let mut state = self.shared.lock();
@@ -274,14 +293,34 @@ impl ItemRepository for FakeTransaction {
             .filter(|i| filter.item_type.is_none_or(|t| i.item_type() == t))
             .filter(|i| filter.include_archived || !i.is_archived())
             .filter(|i| !filter.in_inbox_only || i.in_inbox())
+            .filter(|i| filter.project_id.is_none_or(|p| i.project_id() == Some(p)))
+            .filter(|i| {
+                filter
+                    .tag_id
+                    .is_none_or(|t| self.working.item_tags.contains(&(i.id(), t)))
+            })
             .cloned()
             .collect();
         items.sort_by(|a, b| {
             let (left, right) = match filter.order {
-                ItemOrder::CreatedDesc => (b.created_at(), a.created_at()),
+                ItemOrder::CreatedDesc | ItemOrder::ProjectView => (b.created_at(), a.created_at()),
                 ItemOrder::UpdatedDesc => (b.updated_at(), a.updated_at()),
             };
-            left.cmp(&right).then(b.id().cmp(&a.id()))
+            let primary = if filter.order == ItemOrder::ProjectView {
+                // 未完成在前 → 优先级从高到低 → 计划日期从早到晚（没有计划的在后）。
+                let key = |i: &Item| {
+                    (
+                        i.is_done(),
+                        std::cmp::Reverse(i.priority()),
+                        i.scheduled().is_none(),
+                        i.scheduled().map(|d| d.date()),
+                    )
+                };
+                key(a).cmp(&key(b))
+            } else {
+                std::cmp::Ordering::Equal
+            };
+            primary.then(left.cmp(&right)).then(b.id().cmp(&a.id()))
         });
         if let Some(limit) = filter.limit {
             items.truncate(limit as usize);
@@ -507,5 +546,200 @@ impl crate::ports::AttachmentFiles for FakeAttachmentFiles {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .remove(relative_path);
+    }
+}
+
+#[async_trait]
+impl ProjectRepository for FakeTransaction {
+    /// 插入。
+    async fn insert(&mut self, project: &Project) -> Result<(), StorageError> {
+        if self.working.projects.contains_key(&project.id) {
+            return Err(StorageError::Constraint("项目 ID 重复".to_owned()));
+        }
+        self.working.projects.insert(project.id, project.clone());
+        Ok(())
+    }
+
+    /// 覆盖。
+    async fn update(&mut self, project: &Project) -> Result<(), StorageError> {
+        match self.working.projects.get_mut(&project.id) {
+            Some(slot) => {
+                *slot = project.clone();
+                Ok(())
+            }
+            None => Err(StorageError::NotFound {
+                entity: "project",
+                id: project.id.to_string(),
+            }),
+        }
+    }
+
+    /// 读取。
+    async fn get(&mut self, id: ProjectId) -> Result<Option<Project>, StorageError> {
+        Ok(self.working.projects.get(&id).cloned())
+    }
+
+    /// 列表：创建时间从早到晚。
+    async fn list(&mut self, include_archived: bool) -> Result<Vec<Project>, StorageError> {
+        let mut projects: Vec<Project> = self
+            .working
+            .projects
+            .values()
+            .filter(|p| include_archived || p.archived_at.is_none())
+            .cloned()
+            .collect();
+        projects.sort_by_key(|p| (p.created_at, p.id));
+        Ok(projects)
+    }
+
+    /// 每个项目里未归档且未完成的 Item 数量。
+    async fn open_item_counts(&mut self) -> Result<Vec<(ProjectId, u32)>, StorageError> {
+        let mut counts: BTreeMap<ProjectId, u32> = BTreeMap::new();
+        for item in self.working.items.values() {
+            if let Some(project) = item.project_id()
+                && !item.is_archived()
+                && !item.is_done()
+            {
+                *counts.entry(project).or_default() += 1;
+            }
+        }
+        Ok(counts.into_iter().collect())
+    }
+}
+
+#[async_trait]
+impl TagRepository for FakeTransaction {
+    /// 插入；名称按小写键唯一。
+    async fn insert(&mut self, tag: &Tag) -> Result<(), StorageError> {
+        let key = tag.name.key();
+        if self.working.tags.values().any(|t| t.name.key() == key) {
+            return Err(StorageError::Constraint("标签名重复".to_owned()));
+        }
+        self.working.tags.insert(tag.id, tag.clone());
+        Ok(())
+    }
+
+    /// 读取。
+    async fn get(&mut self, id: TagId) -> Result<Option<Tag>, StorageError> {
+        Ok(self.working.tags.get(&id).cloned())
+    }
+
+    /// 按名称（忽略大小写）查找。
+    async fn find_by_name(&mut self, name: &TagName) -> Result<Option<Tag>, StorageError> {
+        let key = name.key();
+        Ok(self
+            .working
+            .tags
+            .values()
+            .find(|t| t.name.key() == key)
+            .cloned())
+    }
+
+    /// 全部标签与未归档 Item 数量，按名称排序。
+    async fn list_with_counts(&mut self) -> Result<Vec<(Tag, u32)>, StorageError> {
+        let mut tags: Vec<(Tag, u32)> = self
+            .working
+            .tags
+            .values()
+            .map(|tag| {
+                let count = self
+                    .working
+                    .item_tags
+                    .iter()
+                    .filter(|(item, t)| {
+                        *t == tag.id
+                            && self
+                                .working
+                                .items
+                                .get(item)
+                                .is_some_and(|i| !i.is_archived())
+                    })
+                    .count();
+                (tag.clone(), u32::try_from(count).unwrap_or(u32::MAX))
+            })
+            .collect();
+        tags.sort_by(|a, b| {
+            a.0.name
+                .key()
+                .cmp(&b.0.name.key())
+                .then(a.0.id.cmp(&b.0.id))
+        });
+        Ok(tags)
+    }
+
+    /// 重命名。
+    async fn rename(&mut self, id: TagId, name: &TagName) -> Result<(), StorageError> {
+        let key = name.key();
+        if self
+            .working
+            .tags
+            .values()
+            .any(|t| t.id != id && t.name.key() == key)
+        {
+            return Err(StorageError::Constraint("标签名重复".to_owned()));
+        }
+        match self.working.tags.get_mut(&id) {
+            Some(tag) => {
+                tag.name = name.clone();
+                Ok(())
+            }
+            None => Err(StorageError::NotFound {
+                entity: "tag",
+                id: id.to_string(),
+            }),
+        }
+    }
+
+    /// 合并。
+    async fn merge(&mut self, from: TagId, into: TagId) -> Result<(), StorageError> {
+        for id in [from, into] {
+            if !self.working.tags.contains_key(&id) {
+                return Err(StorageError::NotFound {
+                    entity: "tag",
+                    id: id.to_string(),
+                });
+            }
+        }
+        let moved: Vec<ItemId> = self
+            .working
+            .item_tags
+            .iter()
+            .filter(|(_, t)| *t == from)
+            .map(|(i, _)| *i)
+            .collect();
+        for item in moved {
+            self.working.item_tags.remove(&(item, from));
+            self.working.item_tags.insert((item, into));
+        }
+        self.working.tags.remove(&from);
+        Ok(())
+    }
+
+    /// 某个 Item 的标签。
+    async fn for_item(&mut self, item_id: ItemId) -> Result<Vec<Tag>, StorageError> {
+        let mut tags: Vec<Tag> = self
+            .working
+            .item_tags
+            .iter()
+            .filter(|(i, _)| *i == item_id)
+            .filter_map(|(_, t)| self.working.tags.get(t).cloned())
+            .collect();
+        tags.sort_by(|a, b| a.name.key().cmp(&b.name.key()).then(a.id.cmp(&b.id)));
+        Ok(tags)
+    }
+
+    /// 整体替换某个 Item 的标签。
+    async fn set_for_item(&mut self, item_id: ItemId, tags: &[TagId]) -> Result<(), StorageError> {
+        if !self.working.items.contains_key(&item_id) {
+            return Err(StorageError::Constraint("Item 不存在".to_owned()));
+        }
+        if let Some(missing) = tags.iter().find(|t| !self.working.tags.contains_key(t)) {
+            return Err(StorageError::Constraint(format!("标签 {missing} 不存在")));
+        }
+        self.working.item_tags.retain(|(i, _)| *i != item_id);
+        self.working
+            .item_tags
+            .extend(tags.iter().map(|t| (item_id, *t)));
+        Ok(())
     }
 }

@@ -10,6 +10,7 @@ use nivlo_application::capture::CaptureService;
 use nivlo_application::event::EventBus;
 use nivlo_application::inbox::InboxService;
 use nivlo_application::item::ItemService;
+use nivlo_application::organize::{ProjectService, TagService};
 use nivlo_application::settings::SettingsService;
 use nivlo_application::today::TodayService;
 use nivlo_common::clock::Clock;
@@ -33,6 +34,10 @@ pub struct ApplicationServices {
     pub capture: CaptureService,
     /// Inbox（列表与批量整理）。
     pub inbox: InboxService,
+    /// 项目（创建 / 重命名 / 归档 / 列表）。
+    pub projects: ProjectService,
+    /// 标签（列表 / 重命名 / 合并 / 设置到 Item 上）。
+    pub tags: TagService,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

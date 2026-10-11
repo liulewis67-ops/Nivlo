@@ -16,6 +16,7 @@ mod codec;
 mod database;
 mod error;
 mod item_repository;
+mod organize_repository;
 
 pub use attachment_files::FsAttachmentFiles;
 pub use database::Database;

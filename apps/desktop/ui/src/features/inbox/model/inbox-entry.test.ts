@@ -22,7 +22,7 @@ function entry(partial: Partial<InboxEntryDto>): InboxEntryDto {
     completedAt: null,
     archivedAt: null,
   };
-  return { item, sources: [], attachments: [], ...partial };
+  return { item, sources: [], attachments: [], tags: [], ...partial };
 }
 
 /** 构造来源。 */
