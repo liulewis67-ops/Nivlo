@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "example.requirements-docs",
+  "name": "需求文档 → 笔记",
+  "description": "文件名形如 REQ-123 xxx.docx 的文件：提取需求编号放进内容，加上 requirements 标签。",
+  "priority": 10,
+  "matcher": { "field": "file.name", "op": "glob", "value": "REQ-*.docx" },
+  "steps": [
+    { "type": "extract", "from": "file.stem", "pattern": "^(REQ-\\d+)", "into": "id", "optional": true },
+    {
+      "type": "createItem",
+      "itemType": "note",
+      "title": "{{ file.stem | truncate(80) }}",
+      "content": "需求编号：{{ vars.id | default(\"未识别\") }}",
+      "forEach": "files",
+      "tags": ["requirements"]
+    }
+  ]
+}

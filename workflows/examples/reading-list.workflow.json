@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "example.reading-list",
+  "name": "网页 → 稍后读",
+  "description": "复制内置网页 Workflow 后的典型改法：所有网址变成带 read 标签的待办。",
+  "priority": 5,
+  "matcher": { "field": "input.type", "op": "equals", "value": "url" },
+  "steps": [
+    { "type": "createItem", "itemType": "todo", "title": "读：{{ input.title }}", "content": "{{ input.url }}", "tags": ["read"] }
+  ]
+}

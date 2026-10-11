@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.generic-image",
+  "name": "图片",
+  "description": "收集到的图片（如粘贴的截图）变成笔记，图片保存为附件。",
+  "version": 1,
+  "priority": 0,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": { "field": "input.type", "op": "equals", "value": "image" },
+  "steps": [
+    {
+      "type": "createItem",
+      "itemType": "note",
+      "title": "{{ input.title }}",
+      "inInbox": true
+    }
+  ]
+}

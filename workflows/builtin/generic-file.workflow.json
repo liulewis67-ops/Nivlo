@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.generic-file",
+  "name": "文件",
+  "description": "收集到的文件（可以多个）每个变成一条笔记，只保存文件的引用，不复制文件。",
+  "version": 1,
+  "priority": 0,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": {
+    "any": [
+      { "field": "input.type", "op": "equals", "value": "file" },
+      { "field": "input.type", "op": "equals", "value": "files" }
+    ]
+  },
+  "steps": [
+    {
+      "type": "createItem",
+      "itemType": "note",
+      "title": "{{ file.name }}",
+      "inInbox": true,
+      "forEach": "files"
+    }
+  ]
+}
