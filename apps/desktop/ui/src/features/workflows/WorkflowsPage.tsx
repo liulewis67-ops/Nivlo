@@ -4,10 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
-import type { WorkflowDto } from "@/lib/ipc";
+import type { WorkflowDto, WorkflowImportPreviewDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
+import { toAppError } from "@/lib/errors";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
+import { ImportPreviewPanel } from "./ImportPreviewPanel";
 import { WorkflowEditor } from "./WorkflowEditor";
 import { RunInspector } from "./RunInspector";
 import { blankDefinition, freshId, stringify } from "./model/definition";
@@ -102,6 +104,8 @@ export function WorkflowsPage() {
   const [tab, setTab] = useState<Tab>("rules");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<WorkflowDto | null>(null);
+  /** 正在确认的导入预览；非空时右侧显示预览面板。 */
+  const [importPreview, setImportPreview] = useState<WorkflowImportPreviewDto | null>(null);
   /** 每次保存 / 复制后递增，让编辑区用最新的定义重新开始。 */
   const [generation, setGeneration] = useState(0);
   const workflows = useQuery({
@@ -140,6 +144,25 @@ export function WorkflowsPage() {
       .setWorkflowPriority(workflow.id, workflow.priority + delta)
       .then(refresh)
       .catch(reportError);
+  }
+
+  /** 选一个 Workflow 文件，校验后显示导入预览；取消选择什么都不发生。 */
+  function startImport(): void {
+    ipc
+      .pickWorkflowImport()
+      .then((preview) => {
+        if (preview === null) return;
+        setDraft(null);
+        setSelectedId(null);
+        setImportPreview(preview);
+        setTab("rules");
+      })
+      .catch((failure: unknown) => {
+        // 定义不合法（含「需要升级拾序」）时，把后端说明原样告诉用户；其他错误走通用提示。
+        const app = toAppError(failure);
+        if (app.code === "WORKFLOW_INVALID") useToastStore.getState().push("error", app.message);
+        else reportError(failure);
+      });
   }
 
   /** 新建一个草稿（保存之前不会写入）。 */
@@ -204,9 +227,14 @@ export function WorkflowsPage() {
             ))}
           </div>
         </div>
-        <Button size="sm" onClick={create}>
-          {t("workflows.new")}
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" onClick={startImport}>
+            {t("workflows.import.button")}
+          </Button>
+          <Button size="sm" onClick={create}>
+            {t("workflows.new")}
+          </Button>
+        </div>
       </header>
       {tab === "runs" ? (
         <RunInspector />
@@ -245,7 +273,16 @@ export function WorkflowsPage() {
             ))}
           </div>
           <div className="min-h-0 min-w-0">
-            {selected === null ? (
+            {importPreview !== null ? (
+              <ImportPreviewPanel
+                preview={importPreview}
+                onCancel={() => setImportPreview(null)}
+                onImported={(imported) => {
+                  setImportPreview(null);
+                  opened(imported, t("workflows.import.done", { name: imported.name }));
+                }}
+              />
+            ) : selected === null ? (
               <div className="flex h-full flex-col items-center justify-center gap-1 px-8 text-center">
                 <p className="text-base font-medium text-text">{t("workflows.pickTitle")}</p>
                 <p className="max-w-sm text-sm text-muted">{t("workflows.pickHint")}</p>

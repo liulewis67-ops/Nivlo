@@ -51,6 +51,8 @@ export const EMPTY_TODAY: TodayViewDto = {
 export interface MemoryIpc extends IpcClient, WorkflowMock {
   /** 设置 `restoreBackup` 时用户是选了文件（`true`）还是取消了（`false`）。 */
   chooseRestoreFile(chosen: boolean): void;
+  /** 模拟用户在导入文件选择框里选中的内容；`null` 表示取消。 */
+  offerWorkflowFile(json: string | null): void;
   /** 让 `rerunWorkflow` 失败（来源不支持）。 */
   failRerun(fails: boolean): void;
   /** 当前保存的全部 Item（按创建顺序）。 */
@@ -1225,6 +1227,19 @@ ${(item.content ?? "").toLowerCase()}`;
     setWorkflowEnabled: workflowMock.setWorkflowEnabled,
     setWorkflowPriority: workflowMock.setWorkflowPriority,
     duplicateWorkflow: workflowMock.duplicateWorkflow,
+    exportWorkflowFile: (id: string) => {
+      calls.push(`exportWorkflowFile:${id}`);
+      return workflowMock.exportWorkflowFile(id);
+    },
+    pickWorkflowImport: () => {
+      calls.push("pickWorkflowImport");
+      return workflowMock.pickWorkflowImport();
+    },
+    importWorkflow: (json: string) => {
+      calls.push("importWorkflow");
+      return workflowMock.importWorkflow(json);
+    },
+    offerWorkflowFile: workflowMock.offerWorkflowFile,
     confirmScriptPermissions: (id: string) => {
       calls.push("confirmScriptPermissions");
       return workflowMock.confirmScriptPermissions(id);

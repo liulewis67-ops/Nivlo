@@ -237,6 +237,55 @@ export const commands = {
 	 */
 	confirmScriptPermissions: (id: string) => typedError<WorkflowDto, IpcError>(__TAURI_INVOKE("confirm_script_permissions", { id })),
 	/**
+	 *  把一个 Workflow 导出成 `<id>.workflow.json`，写在导出目录并在文件管理器中显示，返回路径。
+	 * 
+	 *  文件只含定义本身（含脚本源码）。Workflow 里不存在凭据，导出也不会带上授权记录或设置。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `WORKFLOW_NOT_FOUND`，写入失败返回 `EXPORT_FAILED`。
+	 */
+	exportWorkflowFile: (id: string) => typedError<string, IpcError>(__TAURI_INVOKE("export_workflow_file", { id })),
+	/**
+	 *  弹出文件选择框选一个 `*.workflow.json`，校验后返回导入预览（不写任何数据）。用户取消时返回 `null`。
+	 * 
+	 *  # Errors
+	 * 
+	 *  文件读不了或过大返回 `EXPORT_FAILED`；定义不合法 / 格式版本高于当前支持返回 `WORKFLOW_INVALID`。
+	 */
+	pickWorkflowImport: () => typedError<{
+	/**  导入后的 ID（与现有 Workflow 冲突时已改名）。 */
+	id: string,
+	/**  原来的 ID；没有改名时为 `None`。 */
+	renamedFrom: string | null,
+	/**  名称。 */
+	name: string,
+	/**  说明。 */
+	description: string,
+	/**  发布者（定义里写的，不经验证）。 */
+	publisher: string | null,
+	/**  是否要求网络权限。 */
+	network: boolean,
+	/**  声明可访问的主机。 */
+	hosts: string[],
+	/**  是否包含脚本。 */
+	hasScript: boolean,
+	/**  脚本要访问的主机。 */
+	scriptHosts: string[],
+	/**  用到的 Step 种类（按出现顺序，去重）。 */
+	stepKinds: string[],
+	/**  校验并规范化后的定义（确认导入时原样传回 `import_workflow`）。 */
+	definitionJson: string,
+} | null, IpcError>(__TAURI_INVOKE("pick_workflow_import")),
+	/**
+	 *  确认导入：保存预览里的定义（来源 Imported、默认禁用，不覆盖已有的 Workflow）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  定义不合法返回 `WORKFLOW_INVALID`；存储失败返回存储错误。
+	 */
+	importWorkflow: (definitionJson: string) => typedError<WorkflowDto, IpcError>(__TAURI_INVOKE("import_workflow", { definitionJson })),
+	/**
 	 *  清空回收站。返回删除的数量。
 	 * 
 	 *  # Errors
@@ -1327,6 +1376,32 @@ export type WorkflowDto = {
 	scriptStatus: string,
 	/**  脚本声明要访问的主机（去重、排序）。 */
 	scriptHosts: string[],
+};
+
+/**  导入前的预览：让用户在确认之前看清这份定义是什么、会请求什么权限。 */
+export type WorkflowImportPreviewDto = {
+	/**  导入后的 ID（与现有 Workflow 冲突时已改名）。 */
+	id: string,
+	/**  原来的 ID；没有改名时为 `None`。 */
+	renamedFrom: string | null,
+	/**  名称。 */
+	name: string,
+	/**  说明。 */
+	description: string,
+	/**  发布者（定义里写的，不经验证）。 */
+	publisher: string | null,
+	/**  是否要求网络权限。 */
+	network: boolean,
+	/**  声明可访问的主机。 */
+	hosts: string[],
+	/**  是否包含脚本。 */
+	hasScript: boolean,
+	/**  脚本要访问的主机。 */
+	scriptHosts: string[],
+	/**  用到的 Step 种类（按出现顺序，去重）。 */
+	stepKinds: string[],
+	/**  校验并规范化后的定义（确认导入时原样传回 `import_workflow`）。 */
+	definitionJson: string,
 };
 
 /**  一条运行记录（IPC 表示）。 */

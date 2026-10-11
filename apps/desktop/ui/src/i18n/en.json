@@ -785,6 +785,31 @@
       "remove": "Remove script",
       "removeConfirm": "Remove for good?",
       "hostsPlaceholder": "api.example.com"
+    },
+    "export": "Export",
+    "exported": "Exported to {{path}}",
+    "import": {
+      "button": "Import",
+      "title": "Import automation",
+      "intro": "Review what this file does and what it asks for before importing it.",
+      "name": "Name",
+      "publisher": "Publisher",
+      "noPublisher": "Not stated (unverified)",
+      "description": "Description",
+      "steps": "Steps",
+      "network": "Network",
+      "networkYes": "Needs network access to: {{hosts}}",
+      "networkNo": "No network access",
+      "noHosts": "no hosts",
+      "script": "Script",
+      "scriptYes": "Contains a script that may call: {{hosts}}",
+      "scriptNo": "No script",
+      "renamed": "The id {{from}} is already taken, so it will be imported as {{to}}. Nothing existing is overwritten.",
+      "disabledNotice": "Imported automations start disabled. Enable them after you have looked them over; scripts that use the network also ask for confirmation before they run.",
+      "agree": "I have reviewed these permissions and want to import this automation",
+      "confirm": "Import",
+      "cancel": "Cancel",
+      "done": "Imported “{{name}}” (disabled)"
     }
   },
   "dateFormat": {

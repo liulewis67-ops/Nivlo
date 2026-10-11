@@ -1424,15 +1424,15 @@ Phase 12 Backlog                        → 未排期
 
 ### 8.5 Workflow 导入 / 导出
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：8.3
 - **任务**：
   - 导出 `*.workflow.json`（含 Script，不含任何 Secret）。
   - 导入时检查 `schema_version` 兼容性、展示请求的权限并要求用户确认、记录 `publisher`；导入的 Workflow 来源为 `Imported`，默认禁用。
 - **验收标准**：
-  - [ ] 导出 → 导入往返后行为一致。
-  - [ ] 导入时用户可看到并确认全部权限；不兼容版本给出明确错误。
-- **完成记录**：—
+  - [x] 导出 → 导入往返后行为一致（`export_then_import_round_trips_behavior_and_carries_no_secrets`：步骤、权限、发布者不变，同一输入的产出相同）。
+  - [x] 导入时用户可看到并确认全部权限（预览面板列出发布者、Step、网络与主机、脚本主机，勾选确认后才能导入）；不兼容版本给出明确错误（「使用了更新的格式（版本 N），当前只支持到 1，请升级拾序后再导入」，应用层与界面测试覆盖）。
+- **完成记录**：2026-10-12：`Workflow.publisher`（JSON Schema 同步）；`WorkflowService::preview_import` / `import`——来源 `Imported`、默认禁用、ID 冲突时改名（`-imported`、`-imported-2`……）而不覆盖已有或内置的 Workflow、先单独检查格式版本以便给出升级提示；命令 `export_workflow_file`（写 `<id>.workflow.json` 到导出目录并显示）、`pick_workflow_import`（原生文件选择 + 1 MiB 上限 + 预览，不写数据）、`import_workflow`（均仅主窗口）；界面：Workflow 页「导入」按钮 → 权限预览面板（需勾选确认）、编辑区「导出」。导出文件只含定义（含脚本源码），不含授权记录或设置——Workflow 本身没有凭据字段；含联网脚本的导入项仍需按指纹确认才能运行。**未验证**：Tauri 真机里的文件选择框与「在文件管理器中显示」。导入时的 `publisher` 只是定义里自称的文字，没有签名校验。
 
 ---
 

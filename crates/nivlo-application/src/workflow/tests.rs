@@ -442,3 +442,59 @@ fn input_summaries_never_contain_the_full_text_query_strings_or_directories() {
     });
     assert_eq!(file, "报告.pdf");
 }
+
+#[tokio::test]
+async fn imports_are_disabled_keep_the_publisher_and_never_overwrite() {
+    let f = fixture();
+    // 已有一个同 ID 的用户 Workflow 和一个内置的。
+    f.service
+        .save(workflow("user.same", "我的", "user", 0, 1))
+        .await
+        .unwrap();
+    f.service
+        .sync_builtin(vec![workflow("builtin.b", "B", "builtin", 0, 1)])
+        .await
+        .unwrap();
+
+    let mut incoming = workflow("user.same", "别人的", "user", 0, 1);
+    incoming.publisher = Some("Alice".to_owned());
+    let json = serde_json::to_string(&incoming).unwrap();
+
+    let preview = f.service.preview_import(&json).await.unwrap();
+    assert_eq!(preview.workflow.id.as_str(), "user.same-imported");
+    assert_eq!(preview.renamed_from.as_ref().unwrap().as_str(), "user.same");
+    assert!(!preview.workflow.enabled);
+    assert_eq!(preview.workflow.publisher.as_deref(), Some("Alice"));
+    // 预览不写任何数据。
+    assert_eq!(f.service.list().await.unwrap().len(), 2);
+
+    let imported = f.service.import(&json).await.unwrap();
+    assert_eq!(imported.id.as_str(), "user.same-imported");
+    assert!(!imported.enabled);
+    assert_eq!(imported.source, WorkflowSource::Imported);
+    // 原来的 Workflow 没被覆盖。
+    let mine = f.service.get(&id("user.same")).await.unwrap();
+    assert_eq!(mine.workflow.name, "我的");
+    // 再导入一次：继续换新的 ID。
+    let again = f.service.import(&json).await.unwrap();
+    assert_eq!(again.id.as_str(), "user.same-imported-2");
+
+    // 与内置同 ID 也不覆盖。
+    let builtin_json = serde_json::to_string(&workflow("builtin.b", "冒充", "user", 0, 1)).unwrap();
+    let renamed = f.service.import(&builtin_json).await.unwrap();
+    assert_eq!(renamed.id.as_str(), "builtin.b-imported");
+    assert_eq!(
+        f.service.get(&id("builtin.b")).await.unwrap().workflow.name,
+        "B"
+    );
+}
+
+#[tokio::test]
+async fn a_newer_format_version_gets_a_clear_upgrade_message() {
+    let f = fixture();
+    let json = r#"{ "schemaVersion": 2, "id": "user.future", "name": "未来" }"#;
+    let error = f.service.preview_import(json).await.unwrap_err();
+    assert_eq!(error.code, ErrorCode::WorkflowInvalid);
+    assert!(error.message.contains("升级拾序"), "{}", error.message);
+    assert!(error.message.contains("版本 2"), "{}", error.message);
+}

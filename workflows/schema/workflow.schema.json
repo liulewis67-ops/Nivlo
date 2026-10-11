@@ -11,6 +11,7 @@
     "id": { "type": "string", "pattern": "^[a-z0-9._-]{1,64}$" },
     "name": { "type": "string", "minLength": 1, "maxLength": 100 },
     "description": { "type": "string" },
+    "publisher": { "type": "string", "maxLength": 80 },
     "version": { "type": "integer", "minimum": 1 },
     "priority": { "type": "integer" },
     "enabled": { "type": "boolean" },

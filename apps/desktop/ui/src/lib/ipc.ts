@@ -32,6 +32,7 @@ import type {
   ExportResultDto,
   RestoreStagedDto,
   WorkflowDto,
+  WorkflowImportPreviewDto,
   WorkflowRunDto,
 } from "@/bindings";
 import { toAppError } from "./errors";
@@ -86,6 +87,7 @@ export type {
   PlannedItemDto,
   StepReportDto,
   WorkflowDto,
+  WorkflowImportPreviewDto,
   WorkflowRunDto,
 } from "@/bindings";
 
@@ -241,6 +243,12 @@ export interface IpcClient {
   dryRunWorkflow(definitionJson: string, input: DryRunInputDto): Promise<DryRunResultDto>;
   /** 重新运行 Workflow：按条目的来源重新匹配并完整运行，更新标题与内容；返回是否有变化。 */
   rerunWorkflow(id: string): Promise<boolean>;
+  /** 把一个 Workflow 导出成 `<id>.workflow.json`，返回写出的路径。 */
+  exportWorkflowFile(id: string): Promise<string>;
+  /** 选一个 Workflow 文件并返回导入预览（不写数据）；用户取消时为 `null`。 */
+  pickWorkflowImport(): Promise<WorkflowImportPreviewDto | null>;
+  /** 确认导入预览里的定义（来源 Imported、默认禁用）。 */
+  importWorkflow(definitionJson: string): Promise<WorkflowDto>;
   /** 确认 Workflow 里脚本的权限（脚本或权限被修改后需要再次确认才会运行）。 */
   confirmScriptPermissions(id: string): Promise<WorkflowDto>;
   /** 最近的运行记录（新的在前）。 */
@@ -451,6 +459,10 @@ const tauriIpc: IpcClient = {
   rerunWorkflow: (id) => call("rerun_workflow", commands.rerunWorkflow(id)),
   confirmScriptPermissions: (id) =>
     call("confirm_script_permissions", commands.confirmScriptPermissions(id)),
+  exportWorkflowFile: (id) => call("export_workflow_file", commands.exportWorkflowFile(id)),
+  pickWorkflowImport: () => call("pick_workflow_import", commands.pickWorkflowImport()),
+  importWorkflow: (definitionJson) =>
+    call("import_workflow", commands.importWorkflow(definitionJson)),
   listWorkflowRuns: (limit) => call("list_workflow_runs", commands.listWorkflowRuns(limit ?? null)),
   searchItems: (query) => call("search_items", commands.searchItems(query)),
   listProjects: (includeArchived) => call("list_projects", commands.listProjects(includeArchived)),
@@ -579,6 +591,9 @@ export const ipc: IpcClient = {
   dryRunWorkflow: (definitionJson, input) => current.dryRunWorkflow(definitionJson, input),
   rerunWorkflow: (id) => current.rerunWorkflow(id),
   confirmScriptPermissions: (id) => current.confirmScriptPermissions(id),
+  exportWorkflowFile: (id) => current.exportWorkflowFile(id),
+  pickWorkflowImport: () => current.pickWorkflowImport(),
+  importWorkflow: (definitionJson) => current.importWorkflow(definitionJson),
   listWorkflowRuns: (limit) => current.listWorkflowRuns(limit),
   searchItems: (query) => current.searchItems(query),
   listProjects: (includeArchived) => current.listProjects(includeArchived),

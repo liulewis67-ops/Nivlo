@@ -204,3 +204,41 @@ async fn script_errors_report_the_line_number() {
     assert!(failure.message.contains("第 3 行"), "{}", failure.message);
     assert!(failure.message.contains("boom"));
 }
+
+#[tokio::test]
+async fn export_then_import_round_trips_behavior_and_carries_no_secrets() {
+    let worker = ScriptWorker::spawn();
+    let adapter = engine(Arc::new(Grants::default()), &worker);
+    let source = "export default function transform(input) { return { title: input.text + '!', content: 'c', tags: ['t'] }; }";
+    let mut original = adapter.parse(&definition(source, "", "")).unwrap();
+    original.publisher = Some("Alice".to_owned());
+
+    // 导出：就是定义本身的 JSON（含脚本，不含授权记录或设置）。
+    let exported = serde_json::to_string_pretty(&original).unwrap();
+    assert!(exported.contains("transform(input)"));
+    assert!(exported.contains("\"publisher\": \"Alice\""));
+    for forbidden in ["secret", "token", "password", "grant"] {
+        assert!(!exported.to_lowercase().contains(forbidden), "{forbidden}");
+    }
+
+    // 导入：解析回来，来源与启用状态由导入流程改写，行为不变。
+    let mut imported = adapter.parse(&exported).unwrap();
+    imported.source = nivlo_domain::workflow::WorkflowSource::Imported;
+    imported.enabled = false;
+    assert_eq!(imported.steps, original.steps);
+    assert_eq!(imported.permissions, original.permissions);
+    assert_eq!(imported.publisher.as_deref(), Some("Alice"));
+
+    let input = normalize_text("你好").unwrap();
+    let before = adapter
+        .run(&original, &input, None, today(), RunMode::Full)
+        .await
+        .result
+        .unwrap();
+    let after = adapter
+        .run(&imported, &input, None, today(), RunMode::Full)
+        .await
+        .result
+        .unwrap();
+    assert_eq!(before, after);
+}

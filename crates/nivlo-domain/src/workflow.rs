@@ -532,6 +532,9 @@ pub struct Workflow {
     /// 声明的权限。
     #[serde(default)]
     pub permissions: Permissions,
+    /// 发布者（导入的 Workflow 记录它来自谁；自己写的可以留空）。
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub publisher: Option<String>,
 }
 
 /// 版本号的缺省值。

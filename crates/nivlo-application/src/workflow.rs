@@ -12,7 +12,7 @@ use nivlo_common::clock::Clock;
 use nivlo_common::id::new_uuid_v7;
 use nivlo_domain::capture::{CaptureInput, FileRef};
 use nivlo_domain::item::{ItemType, Priority};
-use nivlo_domain::workflow::{Workflow, WorkflowId, WorkflowSource};
+use nivlo_domain::workflow::{MAX_WORKFLOW_ID_CHARS, Workflow, WorkflowId, WorkflowSource};
 
 use crate::error::{AppError, ErrorCode};
 use crate::ports::UnitOfWork;
@@ -340,6 +340,15 @@ fn invalid(issues: &[WorkflowIssue]) -> AppError {
     AppError::new(ErrorCode::WorkflowInvalid, text)
 }
 
+/// 导入预览：导入后的 Workflow 与它是否被改过 ID。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImportPreview {
+    /// 导入后会保存的 Workflow（来源 Imported、禁用）。
+    pub workflow: Workflow,
+    /// ID 与现有 Workflow 冲突而被改名时，原来的 ID。
+    pub renamed_from: Option<WorkflowId>,
+}
+
 /// 「Workflow 不存在」错误。
 fn not_found(id: &WorkflowId) -> AppError {
     AppError::new(ErrorCode::WorkflowNotFound, format!("Workflow {id} 不存在"))
@@ -530,15 +539,71 @@ impl WorkflowService {
         Ok(workflow)
     }
 
-    /// 从 JSON 文本导入一份定义并保存（来源标为 Imported）。
+    /// 解析一份要导入的定义，返回导入后会成为的样子（来源 Imported、默认禁用、必要时改名），
+    /// 供界面在确认之前展示权限。不写任何数据。
     ///
     /// # Errors
     ///
-    /// `WORKFLOW_INVALID`、`WORKFLOW_READ_ONLY`；存储错误。
-    pub async fn import(&self, json: &str) -> Result<Workflow, AppError> {
+    /// `WORKFLOW_INVALID`：不是合法的 JSON / 不符合定义格式 / 格式版本高于当前支持的版本（消息里说明需要升级）。
+    pub async fn preview_import(&self, json: &str) -> Result<ImportPreview, AppError> {
+        // 先单独检查格式版本：JSON Schema 对更新的版本只会给出笼统的「超过最大值」。
+        if let Ok(value) = serde_json::from_str::<serde_json::Value>(json)
+            && let Some(found) = value
+                .get("schemaVersion")
+                .and_then(serde_json::Value::as_u64)
+            && found > u64::from(nivlo_domain::workflow::WORKFLOW_SCHEMA_VERSION)
+        {
+            return Err(AppError::new(
+                ErrorCode::WorkflowInvalid,
+                format!(
+                    "这份定义使用了更新的格式（版本 {found}），当前拾序只支持到 {}，请升级拾序后再导入",
+                    nivlo_domain::workflow::WORKFLOW_SCHEMA_VERSION
+                ),
+            ));
+        }
         let mut workflow = self.engine.parse(json).map_err(|issues| invalid(&issues))?;
         workflow.source = WorkflowSource::Imported;
-        self.save(workflow).await
+        // 导入的 Workflow 默认禁用：用户看过之后自己启用。
+        workflow.enabled = false;
+        let original = workflow.id.clone();
+        let mut tx = self.uow.begin().await?;
+        // ID 已被占用（内置或已有的）就换一个，不覆盖任何现有 Workflow。
+        let mut candidate = original.clone();
+        let mut n = 1_u32;
+        while tx.workflows().get(&candidate).await?.is_some() {
+            n += 1;
+            let suffix = if n == 2 {
+                "-imported".to_owned()
+            } else {
+                format!("-imported-{}", n - 1)
+            };
+            let base: String = original
+                .as_str()
+                .chars()
+                .take(MAX_WORKFLOW_ID_CHARS.saturating_sub(suffix.len()))
+                .collect();
+            candidate = WorkflowId::new(&format!("{base}{suffix}"))
+                .map_err(|e| AppError::new(ErrorCode::WorkflowInvalid, e.to_string()))?;
+        }
+        let renamed_from = (candidate != original).then_some(original);
+        workflow.id = candidate;
+        Ok(ImportPreview {
+            workflow,
+            renamed_from,
+        })
+    }
+
+    /// 导入一份定义并保存：来源 Imported、默认禁用，不覆盖已有的 Workflow（见 [`Self::preview_import`]）。
+    ///
+    /// 界面应当先展示 [`Self::preview_import`] 的权限并让用户确认；脚本权限另有指纹确认，
+    /// 所以即使绕过界面，含联网脚本的导入项也不会在未确认时运行。
+    ///
+    /// # Errors
+    ///
+    /// `WORKFLOW_INVALID`；存储错误。
+    pub async fn import(&self, json: &str) -> Result<Workflow, AppError> {
+        let preview = self.preview_import(json).await?;
+        self.save(preview.workflow).await
     }
 
     /// 保存编辑器提交的 JSON 定义（新建或覆盖用户 Workflow）。

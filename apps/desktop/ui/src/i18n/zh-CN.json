@@ -781,6 +781,31 @@
       "remove": "移除脚本",
       "removeConfirm": "确定移除？",
       "hostsPlaceholder": "api.example.com"
+    },
+    "export": "导出",
+    "exported": "已导出到 {{path}}",
+    "import": {
+      "button": "导入",
+      "title": "导入自动化",
+      "intro": "导入之前，先看看这个文件会做什么、要求哪些权限。",
+      "name": "名称",
+      "publisher": "发布者",
+      "noPublisher": "未注明（未经验证）",
+      "description": "说明",
+      "steps": "步骤",
+      "network": "网络",
+      "networkYes": "需要联网访问：{{hosts}}",
+      "networkNo": "不联网",
+      "noHosts": "没有主机",
+      "script": "脚本",
+      "scriptYes": "包含脚本，可能访问：{{hosts}}",
+      "scriptNo": "没有脚本",
+      "renamed": "ID {{from}} 已被占用，将以 {{to}} 导入，不会覆盖任何已有的自动化。",
+      "disabledNotice": "导入的自动化默认是禁用的。看过之后再自己启用；联网的脚本在运行前还会再确认一次。",
+      "agree": "我已查看以上权限，确认导入这个自动化",
+      "confirm": "导入",
+      "cancel": "取消",
+      "done": "已导入“{{name}}”（未启用）"
     }
   },
   "dateFormat": {

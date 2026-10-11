@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, ConfirmButton, Input, Switch, Textarea } from "@/components";
+import { useToastStore } from "@/stores/toast-store";
 import { ScriptPermissionNotice } from "./ScriptPermissionNotice";
 import { ScriptTab } from "./ScriptTab";
 import { cx } from "@/lib/cx";
@@ -135,6 +136,16 @@ export function WorkflowEditor({
       .finally(() => setBusy(false));
   }
 
+  /** 导出成 Workflow 文件（写在导出目录并在文件管理器里显示）。 */
+  function exportFile(): void {
+    setBusy(true);
+    ipc
+      .exportWorkflowFile(workflow.id)
+      .then((path) => useToastStore.getState().push("success", t("workflows.exported", { path })))
+      .catch((cause: unknown) => setError(t(`error.${toAppError(cause).code}`)))
+      .finally(() => setBusy(false));
+  }
+
   /** 删除。 */
   function remove(): void {
     ipc
@@ -181,9 +192,12 @@ export function WorkflowEditor({
             {error}
           </p>
         )}
-        <div>
+        <div className="flex gap-2">
           <Button disabled={busy} onClick={duplicate}>
             {t("workflows.duplicate")}
+          </Button>
+          <Button variant="secondary" disabled={busy} onClick={exportFile}>
+            {t("workflows.export")}
           </Button>
         </div>
         <DryRunPanel definitionJson={workflow.definitionJson} />
@@ -393,6 +407,11 @@ export function WorkflowEditor({
         {!isNew && (
           <Button variant="secondary" disabled={busy} onClick={duplicate}>
             {t("workflows.duplicate")}
+          </Button>
+        )}
+        {!isNew && (
+          <Button variant="secondary" disabled={busy || dirty} onClick={exportFile}>
+            {t("workflows.export")}
           </Button>
         )}
         {!isNew && (

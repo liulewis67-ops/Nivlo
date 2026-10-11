@@ -120,6 +120,9 @@ export type WorkflowMock = Pick<
   | "setWorkflowPriority"
   | "duplicateWorkflow"
   | "confirmScriptPermissions"
+  | "exportWorkflowFile"
+  | "pickWorkflowImport"
+  | "importWorkflow"
   | "saveWorkflow"
   | "deleteWorkflow"
   | "dryRunWorkflow"
@@ -129,6 +132,8 @@ export type WorkflowMock = Pick<
   seedWorkflowRun(run: WorkflowRunDto): void;
   /** 当前的 Workflow（含用户保存的）。 */
   readonly workflows: readonly WorkflowDto[];
+  /** 模拟用户在文件选择框里选中的 Workflow 文件内容；`null` 表示取消选择。 */
+  offerWorkflowFile(json: string | null): void;
 };
 
 /** 已确认过脚本权限的 Workflow ID（测试内存里的授权记录）。 */
@@ -290,7 +295,94 @@ export function createWorkflowMock(): WorkflowMock {
     return definition;
   }
 
+  /** 内存版的「文件选择框」：下一次 `pickWorkflowImport` 读到的内容。 */
+  let offered: string | null = null;
+
+  /**
+   * 模拟后端的导入预览：版本检查、改名避免覆盖、默认禁用、来源 imported。
+   *
+   * @param json 文件内容。
+   * @returns 导入后的定义与改名前的 ID。
+   */
+  function previewImport(json: string): {
+    definition: Record<string, unknown>;
+    renamedFrom: string | null;
+  } {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(json);
+    } catch {
+      throw new AppError("WORKFLOW_INVALID", "JSON 格式不正确");
+    }
+    const version = (raw as Record<string, unknown> | null)?.schemaVersion;
+    if (typeof version === "number" && version > 1) {
+      throw new AppError(
+        "WORKFLOW_INVALID",
+        `这份定义使用了更新的格式（版本 ${version}），当前拾序只支持到 1，请升级拾序后再导入`,
+      );
+    }
+    const definition: Record<string, unknown> = {
+      ...parse(json),
+      source: "imported",
+      enabled: false,
+    };
+    const original = String(definition.id);
+    let candidate = original;
+    for (let n = 1; workflows.some((w) => w.id === candidate); n += 1) {
+      candidate = n === 1 ? `${original}-imported` : `${original}-imported-${n}`;
+    }
+    definition.id = candidate;
+    return { definition, renamedFrom: candidate === original ? null : original };
+  }
+
   return {
+    offerWorkflowFile: (json) => {
+      offered = json;
+    },
+    exportWorkflowFile: (id) => {
+      try {
+        return Promise.resolve(`C:/exports/${String(find(id).id)}.workflow.json`);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    pickWorkflowImport: () => {
+      if (offered === null) return Promise.resolve(null);
+      try {
+        const { definition, renamedFrom } = previewImport(offered);
+        const steps = (definition.steps as Record<string, unknown>[]).map((s) => String(s.type));
+        const permissions = (definition.permissions ?? {}) as Record<string, unknown>;
+        const scripts = (definition.steps as Record<string, unknown>[]).filter(
+          (s) => s.type === "script",
+        );
+        return Promise.resolve({
+          id: String(definition.id),
+          renamedFrom,
+          name: String(definition.name),
+          description: typeof definition.description === "string" ? definition.description : "",
+          publisher: typeof definition.publisher === "string" ? definition.publisher : null,
+          network: permissions.network === true,
+          hosts: Array.isArray(permissions.hosts) ? (permissions.hosts as string[]) : [],
+          hasScript: scripts.length > 0,
+          scriptHosts: scripts.flatMap((s) =>
+            Array.isArray(s.hosts) ? (s.hosts as string[]) : [],
+          ),
+          stepKinds: [...new Set(steps)],
+          definitionJson: JSON.stringify(definition, null, 2),
+        });
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    importWorkflow: (json) => {
+      try {
+        const { definition } = previewImport(json);
+        workflows.push(definition);
+        return Promise.resolve(toDto(definition));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
     seedWorkflowRun: (run) => {
       runs.unshift(run);
     },

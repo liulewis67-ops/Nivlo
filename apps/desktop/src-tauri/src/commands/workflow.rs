@@ -11,7 +11,8 @@ use nivlo_domain::capture::CaptureInput;
 use nivlo_domain::workflow::{Workflow, WorkflowId, WorkflowSource};
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use tauri::State;
+use tauri::{AppHandle, Runtime, State};
+use tauri_plugin_dialog::DialogExt;
 
 use crate::app::AppState;
 use crate::dto::{IpcError, ItemTypeDto, PriorityDto, format_utc};
@@ -455,5 +456,156 @@ pub async fn confirm_script_permissions(
     SettingsScriptGrants::new(state.services.settings.clone())
         .grant_workflow(&stored.workflow)
         .await?;
+    Ok(dto_of(&state, &stored).await?)
+}
+
+/// 导入前的预览：让用户在确认之前看清这份定义是什么、会请求什么权限。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkflowImportPreviewDto {
+    /// 导入后的 ID（与现有 Workflow 冲突时已改名）。
+    pub id: String,
+    /// 原来的 ID；没有改名时为 `None`。
+    pub renamed_from: Option<String>,
+    /// 名称。
+    pub name: String,
+    /// 说明。
+    pub description: String,
+    /// 发布者（定义里写的，不经验证）。
+    pub publisher: Option<String>,
+    /// 是否要求网络权限。
+    pub network: bool,
+    /// 声明可访问的主机。
+    pub hosts: Vec<String>,
+    /// 是否包含脚本。
+    pub has_script: bool,
+    /// 脚本要访问的主机。
+    pub script_hosts: Vec<String>,
+    /// 用到的 Step 种类（按出现顺序，去重）。
+    pub step_kinds: Vec<String>,
+    /// 校验并规范化后的定义（确认导入时原样传回 `import_workflow`）。
+    pub definition_json: String,
+}
+
+/// 预览（不写数据）。
+fn import_preview_dto(
+    preview: &nivlo_application::workflow::ImportPreview,
+) -> Result<WorkflowImportPreviewDto, AppError> {
+    let workflow = &preview.workflow;
+    let definition_json = serde_json::to_string_pretty(workflow).map_err(|e| {
+        AppError::new(
+            ErrorCode::DataInconsistent,
+            format!("无法序列化 Workflow：{e}"),
+        )
+    })?;
+    let mut step_kinds: Vec<String> = Vec::new();
+    for step in &workflow.steps {
+        let kind = nivlo_workflow::executor::step_kind(step).to_owned();
+        if !step_kinds.contains(&kind) {
+            step_kinds.push(kind);
+        }
+    }
+    Ok(WorkflowImportPreviewDto {
+        id: workflow.id.to_string(),
+        renamed_from: preview.renamed_from.as_ref().map(ToString::to_string),
+        name: workflow.name.clone(),
+        description: workflow.description.clone(),
+        publisher: workflow.publisher.clone(),
+        network: workflow.permissions.network,
+        hosts: workflow.permissions.hosts.clone(),
+        has_script: workflow
+            .steps
+            .iter()
+            .any(|step| matches!(step, nivlo_domain::workflow::Step::Script { .. })),
+        script_hosts: script_hosts(workflow),
+        step_kinds,
+        definition_json,
+    })
+}
+
+/// 导出 / 导入文件的失败：记日志，返回 `EXPORT_FAILED`。
+fn file_failed(error: &dyn std::fmt::Display) -> IpcError {
+    tracing::error!(event = "workflow_file_failed", %error, "Workflow 文件读写失败");
+    IpcError::from(AppError::new(ErrorCode::ExportFailed, error.to_string()))
+}
+
+/// Workflow 文件允许的最大字节数（定义最多 64 KiB 脚本外加少量结构，1 MiB 绰绰有余）。
+const MAX_WORKFLOW_FILE_BYTES: u64 = 1024 * 1024;
+
+/// 把一个 Workflow 导出成 `<id>.workflow.json`，写在导出目录并在文件管理器中显示，返回路径。
+///
+/// 文件只含定义本身（含脚本源码）。Workflow 里不存在凭据，导出也不会带上授权记录或设置。
+///
+/// # Errors
+///
+/// ID 不合法返回 `INVALID_INPUT`，不存在返回 `WORKFLOW_NOT_FOUND`，写入失败返回 `EXPORT_FAILED`。
+#[tauri::command]
+#[specta::specta]
+pub async fn export_workflow_file(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<String, IpcError> {
+    let stored = state.services.workflows.get(&parse_id(&id)?).await?;
+    let paths = state
+        .runtime
+        .paths()
+        .cloned()
+        .ok_or_else(|| file_failed(&"应用目录尚未就绪"))?;
+    let json = serde_json::to_string_pretty(&stored.workflow).map_err(|e| file_failed(&e))?;
+    let dir = paths.exports_dir();
+    std::fs::create_dir_all(&dir).map_err(|e| file_failed(&e))?;
+    let path = dir.join(format!("{}.workflow.json", stored.workflow.id));
+    std::fs::write(&path, json).map_err(|e| file_failed(&e))?;
+    if let Err(error) = tauri_plugin_opener::reveal_item_in_dir(&path) {
+        tracing::warn!(event = "reveal_export_failed", %error, "无法在文件管理器中显示导出的文件");
+    }
+    Ok(path.to_string_lossy().into_owned())
+}
+
+/// 弹出文件选择框选一个 `*.workflow.json`，校验后返回导入预览（不写任何数据）。用户取消时返回 `null`。
+///
+/// # Errors
+///
+/// 文件读不了或过大返回 `EXPORT_FAILED`；定义不合法 / 格式版本高于当前支持返回 `WORKFLOW_INVALID`。
+#[tauri::command]
+#[specta::specta]
+pub async fn pick_workflow_import<R: Runtime>(
+    app: AppHandle<R>,
+    state: State<'_, AppState>,
+) -> Result<Option<WorkflowImportPreviewDto>, IpcError> {
+    let picked = tauri::async_runtime::spawn_blocking(move || {
+        app.dialog()
+            .file()
+            .add_filter("拾序 Workflow", &["json"])
+            .blocking_pick_file()
+    })
+    .await
+    .map_err(|e| file_failed(&e))?;
+    let Some(picked) = picked else {
+        return Ok(None);
+    };
+    let path = picked.into_path().map_err(|e| file_failed(&e))?;
+    let size = std::fs::metadata(&path).map_err(|e| file_failed(&e))?.len();
+    if size > MAX_WORKFLOW_FILE_BYTES {
+        return Err(file_failed(&"文件太大，不像是一份 Workflow 定义"));
+    }
+    let json = std::fs::read_to_string(&path).map_err(|e| file_failed(&e))?;
+    let preview = state.services.workflows.preview_import(&json).await?;
+    Ok(Some(import_preview_dto(&preview)?))
+}
+
+/// 确认导入：保存预览里的定义（来源 Imported、默认禁用，不覆盖已有的 Workflow）。
+///
+/// # Errors
+///
+/// 定义不合法返回 `WORKFLOW_INVALID`；存储失败返回存储错误。
+#[tauri::command]
+#[specta::specta]
+pub async fn import_workflow(
+    state: State<'_, AppState>,
+    definition_json: String,
+) -> Result<WorkflowDto, IpcError> {
+    let workflow = state.services.workflows.import(&definition_json).await?;
+    let stored = state.services.workflows.get(&workflow.id).await?;
     Ok(dto_of(&state, &stored).await?)
 }

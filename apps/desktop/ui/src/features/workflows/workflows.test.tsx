@@ -228,3 +228,77 @@ describe("脚本编辑器", () => {
     expect(screen.getByLabelText("脚本控制台输出")).toHaveTextContent("input: 你好");
   });
 });
+
+describe("导入与导出", () => {
+  const incoming = (extra: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      schemaVersion: 1,
+      id: "user.shared",
+      name: "朋友的规则",
+      publisher: "Alice",
+      matcher: { field: "input.type", op: "equals", value: "text" },
+      permissions: { network: true, hosts: ["api.example.com"] },
+      steps: [
+        {
+          type: "script",
+          source: "export default () => ({ title: 'x' })",
+          hosts: ["api.example.com"],
+        },
+      ],
+      ...extra,
+    });
+
+  it("先展示权限，勾选确认后才能导入；导入的默认禁用且来源是 imported", async () => {
+    const ipc = createMemoryIpc();
+    ipc.offerWorkflowFile(incoming());
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "导入" }));
+
+    const panel = await screen.findByRole("region", { name: "导入自动化" });
+    expect(within(panel).getByText("Alice")).toBeInTheDocument();
+    expect(within(panel).getByText(/需要联网访问：api.example.com/)).toBeInTheDocument();
+    expect(within(panel).getByText(/包含脚本，可能访问：api.example.com/)).toBeInTheDocument();
+    const confirm = within(panel).getByRole("button", { name: "导入" });
+    expect(confirm).toBeDisabled();
+    expect(ipc.calls).not.toContain("importWorkflow");
+
+    await userEvent.click(within(panel).getByRole("checkbox"));
+    await userEvent.click(confirm);
+    await waitFor(() => {
+      const saved = must(ipc.workflows.find((w) => w.id === "user.shared"));
+      expect(saved.source).toBe("imported");
+      expect(saved.enabled).toBe(false);
+      // 含联网脚本：导入后仍需确认脚本权限才会运行。
+      expect(saved.scriptStatus).toBe("needsConfirmation");
+    });
+  });
+
+  it("ID 冲突时改名而不覆盖；取消选择什么都不发生；新格式给出升级提示", async () => {
+    const ipc = createMemoryIpc();
+    await ipc.saveWorkflow(incoming({ name: "我自己的" }));
+    ipc.offerWorkflowFile(incoming());
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "导入" }));
+    expect(await screen.findByText(/已被占用，将以 user.shared-imported 导入/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "取消" }));
+    expect(ipc.calls).not.toContain("importWorkflow");
+
+    ipc.offerWorkflowFile(null);
+    await userEvent.click(screen.getByRole("button", { name: "导入" }));
+    expect(screen.queryByRole("region", { name: "导入自动化" })).not.toBeInTheDocument();
+
+    ipc.offerWorkflowFile(incoming({ schemaVersion: 2 }));
+    await userEvent.click(screen.getByRole("button", { name: "导入" }));
+    expect(await screen.findByText(/升级拾序后再导入/)).toBeInTheDocument();
+  });
+
+  it("导出调用后端并提示路径", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: /^网页链接/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "导出" }));
+    await waitFor(() =>
+      expect(ipc.calls.some((c) => c.startsWith("exportWorkflowFile:"))).toBe(true),
+    );
+  });
+});
