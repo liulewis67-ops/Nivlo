@@ -48,9 +48,13 @@ impl WorkflowEngine for FakeEngine {
         input: &CaptureInput,
         source_application: Option<&str>,
         today: NaiveDate,
+        _mode: crate::workflow::RunMode,
     ) -> Option<WorkflowRunResult> {
         let first = workflows.first()?;
-        Some(self.run(first, input, source_application, today).await)
+        Some(
+            self.run(first, input, source_application, today, _mode)
+                .await,
+        )
     }
 
     async fn run(
@@ -59,6 +63,7 @@ impl WorkflowEngine for FakeEngine {
         _input: &CaptureInput,
         _source_application: Option<&str>,
         _today: NaiveDate,
+        _mode: crate::workflow::RunMode,
     ) -> WorkflowRunResult {
         WorkflowRunResult {
             workflow_id: workflow.id.clone(),

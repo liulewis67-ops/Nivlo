@@ -17,7 +17,7 @@ nivlo-common.workspace = true
 nivlo-domain.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-tokio = { workspace = true, features = ["macros"] }
+tokio = { workspace = true, features = ["macros", "sync"] }
 
 [features]
 # 暴露内存 Fake（FakeUnitOfWork、RecordingPublisher 等），供其他 crate 的测试使用。

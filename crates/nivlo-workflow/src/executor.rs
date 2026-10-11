@@ -108,6 +108,8 @@ pub struct RunContext<'a> {
     pub regexes: &'a RegexCache,
     /// Workflow 声明的权限（`http` Step 据此限制可访问的主机）。
     pub permissions: &'a Permissions,
+    /// 是否允许联网；`false`（即时运行）时 `http` Step 直接跳过。
+    pub network: bool,
     /// 条件不满足后置为 `true`：后续 Step 被跳过。
     pub stopped: bool,
 }
@@ -169,6 +171,7 @@ pub fn step_kind(step: &Step) -> &'static str {
         Step::CreateItem { .. } => "createItem",
         Step::AddTag { .. } => "addTag",
         Step::Http { .. } => "http",
+        Step::HtmlMeta { .. } => "htmlMeta",
     }
 }
 
@@ -208,6 +211,7 @@ impl ExecutorRegistry {
         registry.register(Arc::new(ConditionExecutor));
         registry.register(Arc::new(CreateItemExecutor));
         registry.register(Arc::new(AddTagExecutor));
+        registry.register(Arc::new(HtmlMetaExecutor));
         registry
     }
 }
@@ -437,7 +441,7 @@ impl CreateItemExecutor {
         let content = match content {
             Some(template) => {
                 let text = render_in(scope, template)?;
-                (!text.trim().is_empty()).then_some(text)
+                (!text.trim().is_empty()).then(|| text.trim_end().to_owned())
             }
             None => None,
         };
@@ -562,6 +566,50 @@ impl StepExecutor for AddTagExecutor {
         };
         if let Some(tag) = clean_tag(&ctx.render(tag)?) {
             push_tag(&mut ctx.tags, tag);
+        }
+        Ok(())
+    }
+}
+
+/// `htmlMeta`：从 HTML 变量里提取页面元数据。
+struct HtmlMetaExecutor;
+
+#[async_trait]
+impl StepExecutor for HtmlMetaExecutor {
+    /// 种类。
+    fn kind(&self) -> &'static str {
+        "htmlMeta"
+    }
+
+    /// 提取；来源缺失且 `optional` 时，所有字段都是空串（配合 `default` 过滤器使用）。
+    async fn execute(&self, step: &Step, ctx: &mut RunContext<'_>) -> Result<(), StepError> {
+        let Step::HtmlMeta {
+            from,
+            into,
+            base,
+            optional,
+        } = step
+        else {
+            return Err(wrong_step(step_kind(step)));
+        };
+        let html = match ctx.resolve(from) {
+            Ok(html) => html,
+            Err(_) if *optional => String::new(),
+            Err(error) => return Err(error),
+        };
+        let base = match base {
+            Some(template) => Some(ctx.render(template)?),
+            None => ctx.scope.get(&format!("{from}_url")).cloned(),
+        };
+        let meta = crate::html_meta::extract(&html, base.as_deref());
+        for (suffix, value) in [
+            ("title", meta.title),
+            ("description", meta.description),
+            ("site", meta.site),
+            ("image", meta.image),
+            ("icon", meta.icon),
+        ] {
+            ctx.scope.insert(format!("vars.{into}_{suffix}"), value);
         }
         Ok(())
     }

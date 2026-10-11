@@ -51,6 +51,30 @@ const BUILTINS: Record<string, unknown>[] = [
   },
   {
     schemaVersion: 1,
+    id: "builtin.web-page",
+    name: "网页（补全标题和摘要）",
+    description:
+      "网址先立刻变成笔记，随后在后台读取网页的标题和摘要补全进去。读取失败或没有网络时，笔记保持「域名/路径」标题，不受影响。",
+    version: 1,
+    priority: 1,
+    enabled: true,
+    source: "builtin",
+    matcher: { field: "input.type", op: "equals", value: "url" },
+    permissions: { network: true, hosts: ["*"] },
+    steps: [
+      { type: "http", url: "{{ input.url }}", into: "page", optional: true },
+      { type: "htmlMeta", from: "vars.page", into: "meta", optional: true },
+      {
+        type: "createItem",
+        itemType: "note",
+        title: "{{ vars.meta_title | default(input.title) | truncate(120) }}",
+        content: "{{ input.url }}",
+        inInbox: true,
+      },
+    ],
+  },
+  {
+    schemaVersion: 1,
     id: "builtin.generic-file",
     name: "文件",
     description: "收集到的文件（可以多个）每个变成一条笔记，只保存文件的引用，不复制文件。",

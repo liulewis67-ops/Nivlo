@@ -30,6 +30,7 @@ fn options() -> RunOptions {
     RunOptions {
         cancel: CancellationToken::new(),
         today: NaiveDate::from_ymd_opt(2026, 10, 14).unwrap(),
+        network: true,
     }
 }
 

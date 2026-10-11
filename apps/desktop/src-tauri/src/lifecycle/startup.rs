@@ -108,13 +108,16 @@ pub fn build_app_state(
             Arc::new(WorkflowEngineAdapter::standard())
         }
     };
+    // 网页标题等联网的补全在后台队列里做，捕获本身不等网络。
+    let (enrichment_tx, enrichment_rx) = tokio::sync::mpsc::unbounded_channel();
     let capture = CaptureService::new(
         Arc::new(database.clone()),
         clock.clone(),
         Arc::new(event_bus.clone()),
         Arc::new(FsAttachmentFiles::new(attachments_dir.clone())),
     )
-    .with_workflows(engine.clone());
+    .with_workflows(engine.clone())
+    .with_enrichment(enrichment_tx);
     let workflows = WorkflowService::new(Arc::new(database.clone()), clock.clone(), engine);
     let inbox = InboxService::new(
         Arc::new(database.clone()),
@@ -134,6 +137,8 @@ pub fn build_app_state(
         Arc::new(FsAttachmentFiles::new(attachments_dir.clone())),
     );
     let calendar = CalendarService::new(Arc::new(database.clone()), clock.clone());
+    let runtime = RuntimeHandles::new(event_bus, database, clock, log_guard);
+    runtime.set_enrichment_queue(enrichment_rx);
     AppState {
         services: ApplicationServices {
             items,
@@ -147,7 +152,7 @@ pub fn build_app_state(
             calendar,
             workflows,
         },
-        runtime: RuntimeHandles::new(event_bus, database, clock, log_guard),
+        runtime,
     }
 }
 

@@ -75,6 +75,10 @@ impl StepExecutor for HttpExecutor {
                 step_kind(step)
             )));
         };
+        if !ctx.network {
+            // 即时运行：不联网，后续 Step 用 optional / default 兜底；联网的部分稍后在后台补全。
+            return Ok(());
+        }
         if !ctx.permissions.network {
             return Err(StepError {
                 kind: ErrorKind::PermissionDenied,

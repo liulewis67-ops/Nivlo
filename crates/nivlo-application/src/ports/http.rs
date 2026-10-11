@@ -220,8 +220,12 @@ impl HostPolicy {
     }
 }
 
-/// `*.example.com` 匹配子域名（不含 `example.com` 本身）；否则必须完全相同。
+/// `*` 匹配任何公网主机（内网地址仍然被拒绝）；`*.example.com` 匹配子域名（不含 `example.com` 本身）；
+/// 否则必须完全相同。
 fn host_matches(pattern: &str, host: &str) -> bool {
+    if pattern == "*" {
+        return true;
+    }
     match pattern.strip_prefix("*.") {
         Some(suffix) => host.len() > suffix.len() + 1 && host.ends_with(&format!(".{suffix}")),
         None => pattern == host,
@@ -312,6 +316,14 @@ mod tests {
             HostPolicy::default().check("https://github.com/"),
             Err(HttpError::PermissionDenied { .. })
         ));
+    }
+
+    #[test]
+    fn a_bare_star_allows_any_public_host_but_never_the_private_network() {
+        let p = HostPolicy::new(["*"]);
+        assert!(p.check("https://anything.example.org/x").is_ok());
+        assert!(p.check("http://192.168.0.1/").is_err());
+        assert!(p.check("http://localhost:3000/").is_err());
     }
 
     #[test]

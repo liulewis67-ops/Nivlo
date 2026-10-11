@@ -173,6 +173,18 @@ impl std::fmt::Display for WorkflowIssue {
     }
 }
 
+/// 一次运行是否允许联网。
+///
+/// 捕获先用 [`RunMode::Instant`] 立刻创建 Item（`http` Step 被跳过，不阻塞拖放），
+/// 联网的部分稍后在后台用 [`RunMode::Full`] 补全（实施计划 6.3）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RunMode {
+    /// 完整运行，`http` Step 真的联网。
+    Full,
+    /// 即时运行：`http` Step 直接跳过，只做本地计算。
+    Instant,
+}
+
 /// Workflow 引擎 Port，由 `nivlo-workflow` 实现。
 #[async_trait]
 pub trait WorkflowEngine: Send + Sync {
@@ -197,6 +209,7 @@ pub trait WorkflowEngine: Send + Sync {
         input: &CaptureInput,
         source_application: Option<&str>,
         today: NaiveDate,
+        mode: RunMode,
     ) -> Option<WorkflowRunResult>;
 
     /// 运行指定的 Workflow（试运行：不要求它匹配、也不检查是否启用）。
@@ -206,6 +219,7 @@ pub trait WorkflowEngine: Send + Sync {
         input: &CaptureInput,
         source_application: Option<&str>,
         today: NaiveDate,
+        mode: RunMode,
     ) -> WorkflowRunResult;
 }
 
@@ -580,7 +594,10 @@ impl WorkflowService {
             .validate(workflow)
             .map_err(|issues| invalid(&issues))?;
         let today = self.clock.today_local();
-        Ok(self.engine.run(workflow, input, None, today).await)
+        Ok(self
+            .engine
+            .run(workflow, input, None, today, RunMode::Full)
+            .await)
     }
 
     /// 最近的运行记录（新的在前）。

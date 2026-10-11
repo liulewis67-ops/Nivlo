@@ -74,6 +74,10 @@ pub struct RuntimeHandles {
     scheduler_control: Arc<nivlo_scheduler::Control>,
     /// 全局快捷键控制器；窗口创建之后才能构造（回调要用 `AppHandle`），因此用 `OnceLock`。
     shortcut: OnceLock<Arc<ShortcutController>>,
+    /// 后台补全队列的接收端：由启动流程取走并交给后台任务（只能取一次）。
+    enrichment_queue: Mutex<
+        Option<tokio::sync::mpsc::UnboundedReceiver<nivlo_application::capture::EnrichmentJob>>,
+    >,
 }
 
 impl RuntimeHandles {
@@ -97,8 +101,31 @@ impl RuntimeHandles {
             floating: OnceLock::new(),
             pending_main_view: Mutex::new(None),
             shortcut: OnceLock::new(),
+            enrichment_queue: Mutex::new(None),
             scheduler_control: Arc::new(nivlo_scheduler::Control::new()),
         }
+    }
+
+    /// 登记后台补全队列的接收端。
+    pub fn set_enrichment_queue(
+        &self,
+        queue: tokio::sync::mpsc::UnboundedReceiver<nivlo_application::capture::EnrichmentJob>,
+    ) {
+        *self
+            .enrichment_queue
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(queue);
+    }
+
+    /// 取走后台补全队列的接收端（只能取一次）。
+    pub fn take_enrichment_queue(
+        &self,
+    ) -> Option<tokio::sync::mpsc::UnboundedReceiver<nivlo_application::capture::EnrichmentJob>>
+    {
+        self.enrichment_queue
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .take()
     }
 
     /// Scheduler 的外部控制句柄。

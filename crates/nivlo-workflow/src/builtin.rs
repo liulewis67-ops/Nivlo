@@ -17,6 +17,10 @@ const DEFINITIONS: &[(&str, &str)] = &[
         include_str!("../../../workflows/builtin/generic-url.workflow.json"),
     ),
     (
+        "web-page",
+        include_str!("../../../workflows/builtin/web-page.workflow.json"),
+    ),
+    (
         "generic-file",
         include_str!("../../../workflows/builtin/generic-file.workflow.json"),
     ),

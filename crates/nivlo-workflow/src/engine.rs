@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use chrono::NaiveDate;
-use nivlo_domain::workflow::Workflow;
+use nivlo_domain::workflow::{Step, Workflow};
 use tokio_util::sync::CancellationToken;
 
 use crate::executor::{
@@ -78,6 +78,8 @@ pub struct RunOptions {
     pub cancel: CancellationToken,
     /// 「今天」（用户本地日期，`now.date` 变量）。
     pub today: NaiveDate,
+    /// 是否允许联网；`false` 时 `http` Step 直接跳过。
+    pub network: bool,
 }
 
 /// Workflow 引擎。
@@ -180,11 +182,13 @@ impl Engine {
             files: files_of(facts.input).into_iter().cloned().collect(),
             regexes: &self.regexes,
             permissions: &workflow.permissions,
+            network: options.network,
             stopped: false,
         };
         for (index, step) in workflow.steps.iter().enumerate() {
             let kind = step_kind(step);
-            if ctx.stopped {
+            // 即时运行（不联网）：`http` Step 直接跳过，不需要注册执行器；后续 Step 用 optional / default 兜底。
+            if ctx.stopped || (!ctx.network && matches!(step, Step::Http { .. })) {
                 steps.push(StepRecord {
                     index,
                     kind,

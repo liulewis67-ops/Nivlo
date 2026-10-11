@@ -7,6 +7,8 @@
 //! \{{ 不是变量 }}                         反斜杠转义，输出 {{ 不是变量 }}
 //! ```
 //!
+//! `default(input.title)`（不带引号）回退到另一个变量。
+//!
 //! 过滤器：`trim`、`lower`、`upper`、`default("x")`（变量缺失或为空时用 x）、`truncate(n)`
 //! （超过 n 个字符截断并加 `…`）、`replace("a", "b")`。没有循环、条件、表达式、函数调用——
 //! 这些需要的话应该用 Step（Condition / Transform）或将来的 Script。
@@ -41,6 +43,8 @@ enum Filter {
     Upper,
     /// 缺失或为空时用这个值。
     Default(String),
+    /// 缺失或为空时用另一个变量的值（`default(input.title)`，不带引号）。
+    DefaultVar(String),
     /// 超过 n 个字符截断。
     Truncate(usize),
     /// 把 a 替换成 b。
@@ -121,6 +125,16 @@ fn parse_arg(raw: &str) -> Option<String> {
 /// 解析一个过滤器（`name` 或 `name(args)`）。
 fn parse_filter(raw: &str) -> Result<Filter, TemplateError> {
     let raw = raw.trim();
+    // `default(input.title)`：不带引号的变量路径，回退到另一个变量。
+    if let Some(inner) = raw
+        .strip_prefix("default(")
+        .and_then(|r| r.strip_suffix(')'))
+    {
+        let inner = inner.trim();
+        if valid_path(inner) {
+            return Ok(Filter::DefaultVar(inner.to_owned()));
+        }
+    }
     let (name, args) = match raw.split_once('(') {
         Some((name, rest)) => {
             let inner = rest
@@ -246,6 +260,10 @@ impl Expr {
                     Some(v) if !v.is_empty() => v,
                     _ => fallback.clone(),
                 }),
+                Filter::DefaultVar(other) => match value {
+                    Some(v) if !v.is_empty() => Some(v),
+                    _ => Some(lookup(other).ok_or_else(|| TemplateError::Missing(other.clone()))?),
+                },
                 other => {
                     let current = value.ok_or_else(|| TemplateError::Missing(self.path.clone()))?;
                     Some(match other {
@@ -254,7 +272,7 @@ impl Expr {
                         Filter::Upper => current.to_uppercase(),
                         Filter::Truncate(n) => truncate(&current, *n),
                         Filter::Replace(from, to) => current.replace(from.as_str(), to),
-                        Filter::Default(_) => current,
+                        Filter::Default(_) | Filter::DefaultVar(_) => current,
                     })
                 }
             };
@@ -311,6 +329,32 @@ mod tests {
         );
         assert_eq!(render_with("没有变量", &vars).unwrap(), "没有变量");
         assert_eq!(render_with("", &vars).unwrap(), "");
+    }
+
+    #[test]
+    fn default_can_fall_back_to_another_variable() {
+        let vars = [
+            ("input.title", "example.com/a"),
+            ("vars.t", ""),
+            ("vars.real", "Real"),
+        ];
+        assert_eq!(
+            render_with("{{ vars.t | default(input.title) }}", &vars).unwrap(),
+            "example.com/a"
+        );
+        assert_eq!(
+            render_with("{{ vars.nope | default(input.title) }}", &vars).unwrap(),
+            "example.com/a"
+        );
+        assert_eq!(
+            render_with("{{ vars.real | default(input.title) }}", &vars).unwrap(),
+            "Real"
+        );
+        assert!(render_with("{{ vars.t | default(vars.zzz) }}", &vars).is_err());
+        assert_eq!(
+            render_with("{{ vars.t | default(input.title) | upper }}", &vars).unwrap(),
+            "EXAMPLE.COM/A"
+        );
     }
 
     #[test]

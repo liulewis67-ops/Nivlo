@@ -64,7 +64,7 @@ describe("Workflow 管理页", () => {
     renderWithProviders(<WorkflowsPage />, ipc);
 
     const builtin = await screen.findByRole("list", { name: "内置" });
-    expect(within(builtin).getAllByRole("listitem")).toHaveLength(4);
+    expect(within(builtin).getAllByRole("listitem")).toHaveLength(5);
 
     await userEvent.click(screen.getByRole("switch", { name: "启用 网页链接" }));
     await waitFor(() =>

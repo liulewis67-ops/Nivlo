@@ -111,6 +111,18 @@
         },
         {
           "type": "object",
+          "required": ["type", "from", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "htmlMeta" },
+            "from": { "type": "string", "minLength": 1 },
+            "into": { "$ref": "#/$defs/variable" },
+            "base": { "type": "string" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "url", "into"],
           "additionalProperties": false,
           "properties": {

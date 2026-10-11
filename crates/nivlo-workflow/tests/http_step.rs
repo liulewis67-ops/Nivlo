@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use chrono::NaiveDate;
 use nivlo_application::ports::http::{HostPolicy, HttpError, HttpPort, HttpRequest, HttpResponse};
-use nivlo_application::workflow::{FailureKind, WorkflowEngine};
+use nivlo_application::workflow::{FailureKind, RunMode, WorkflowEngine};
 use nivlo_capture::normalize_text;
 use nivlo_workflow::WorkflowEngineAdapter;
 
@@ -77,7 +77,9 @@ async fn run(
     let engine = WorkflowEngineAdapter::with_http(port);
     let workflow = engine.parse(definition).unwrap();
     let input = normalize_text(text).unwrap();
-    engine.run(&workflow, &input, None, today()).await
+    engine
+        .run(&workflow, &input, None, today(), RunMode::Full)
+        .await
 }
 
 #[tokio::test]
@@ -170,6 +172,8 @@ async fn the_standard_engine_without_a_network_port_refuses_http_steps() {
     let engine = WorkflowEngineAdapter::standard();
     let workflow = engine.parse(&workflow(ALLOWED, false)).unwrap();
     let input = normalize_text("https://example.com/a").unwrap();
-    let result = engine.run(&workflow, &input, None, today()).await;
+    let result = engine
+        .run(&workflow, &input, None, today(), RunMode::Full)
+        .await;
     assert!(result.result.is_err());
 }

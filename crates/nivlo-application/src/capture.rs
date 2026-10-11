@@ -36,8 +36,10 @@ use nivlo_domain::tag::{Tag, TagName};
 use crate::error::AppError;
 use crate::event::EventPublisher;
 use crate::ports::{AttachmentFiles, UnitOfWork};
+use tokio::sync::mpsc::UnboundedSender;
+
 use crate::workflow::{
-    PlannedItem, RunRecord, RunStatus, WorkflowEngine, WorkflowRunResult, new_run_id,
+    PlannedItem, RunMode, RunRecord, RunStatus, WorkflowEngine, WorkflowRunResult, new_run_id,
     summarize_input,
 };
 
@@ -289,6 +291,18 @@ pub struct CaptureService {
     files: Arc<dyn AttachmentFiles>,
     /// Workflow 引擎；`None` 时只用默认规则。
     workflows: Option<Arc<dyn WorkflowEngine>>,
+    /// 后台补全队列；`None` 时联网的 Workflow 只做即时版本。
+    enrichment: Option<UnboundedSender<EnrichmentJob>>,
+}
+
+/// `plan_for` 的结果。
+struct Planning {
+    /// 要创建的记录。
+    plans: Vec<Planned>,
+    /// Workflow 的这次运行（用于提交之后记录）。
+    run: Option<(WorkflowRunResult, RunStatus)>,
+    /// 选中的 Workflow 带 `http` Step 时，要在后台补全的 Workflow。
+    enrich_with: Option<nivlo_domain::workflow::WorkflowId>,
 }
 
 impl CaptureService {
@@ -305,6 +319,7 @@ impl CaptureService {
             events,
             files,
             workflows: None,
+            enrichment: None,
         }
     }
 
@@ -315,27 +330,36 @@ impl CaptureService {
         self
     }
 
+    /// 接入后台补全队列：联网的 Workflow 先即时创建，之后由队列的消费者调用 [`Self::enrich`]。
+    #[must_use]
+    pub fn with_enrichment(mut self, queue: UnboundedSender<EnrichmentJob>) -> Self {
+        self.enrichment = Some(queue);
+        self
+    }
+
     /// 规划这次捕获要创建什么：优先走 Workflow，任何一步不行都退回默认规则（捕获永不丢失）。
     ///
     /// 返回要创建的记录，以及（如果有 Workflow 参与）这次运行，用于提交成功之后记录。
-    async fn plan_for(
-        &self,
-        request: &CaptureRequest,
-    ) -> (Vec<Planned>, Option<(WorkflowRunResult, RunStatus)>) {
+    async fn plan_for(&self, request: &CaptureRequest) -> Planning {
+        let fallback = |plans: Vec<Planned>| Planning {
+            plans,
+            run: None,
+            enrich_with: None,
+        };
         let Some(engine) = &self.workflows else {
-            return (plan(&request.input), None);
+            return fallback(plan(&request.input));
         };
         let workflows = match self.uow.begin().await {
             Ok(mut tx) => match tx.workflows().list().await {
                 Ok(stored) => stored.into_iter().map(|s| s.workflow).collect::<Vec<_>>(),
                 Err(error) => {
                     tracing::warn!(event = "workflow_load_failed", %error, "读取 Workflow 失败，使用默认规则");
-                    return (plan(&request.input), None);
+                    return fallback(plan(&request.input));
                 }
             },
             Err(error) => {
                 tracing::warn!(event = "workflow_load_failed", %error, "读取 Workflow 失败，使用默认规则");
-                return (plan(&request.input), None);
+                return fallback(plan(&request.input));
             }
         };
         let today = self.clock.today_local();
@@ -345,25 +369,42 @@ impl CaptureService {
                 &request.input,
                 request.source_application.as_deref(),
                 today,
+                RunMode::Instant,
             )
             .await
         else {
-            return (plan(&request.input), None);
+            return fallback(plan(&request.input));
         };
+        let networked = workflows
+            .iter()
+            .find(|w| w.id == run.workflow_id)
+            .is_some_and(nivlo_domain::workflow::Workflow::uses_network);
         match &run.result {
             Ok(items) if !items.is_empty() => {
                 let plans = from_planned(&request.input, items);
-                (plans, Some((run, RunStatus::Succeeded)))
+                Planning {
+                    plans,
+                    enrich_with: networked.then(|| run.workflow_id.clone()),
+                    run: Some((run, RunStatus::Succeeded)),
+                }
             }
             // 没有产出（比如条件不满足而提前停止）：走默认规则，不让这次捕获凭空消失。
-            Ok(_) => (plan(&request.input), Some((run, RunStatus::Skipped))),
+            Ok(_) => Planning {
+                plans: plan(&request.input),
+                run: Some((run, RunStatus::Skipped)),
+                enrich_with: None,
+            },
             Err(_) => {
                 let metadata = failure_metadata(&run);
                 let mut plans = plan(&request.input);
                 for planned in &mut plans {
                     planned.source.metadata_json.clone_from(&metadata);
                 }
-                (plans, Some((run, RunStatus::Failed)))
+                Planning {
+                    plans,
+                    run: Some((run, RunStatus::Failed)),
+                    enrich_with: None,
+                }
             }
         }
     }
@@ -416,7 +457,11 @@ impl CaptureService {
     pub async fn capture(&self, request: CaptureRequest) -> Result<CaptureResult, AppError> {
         let started = Instant::now();
         let now = self.clock.now_utc();
-        let (plans, workflow_run) = self.plan_for(&request).await;
+        let Planning {
+            plans,
+            run: workflow_run,
+            enrich_with,
+        } = self.plan_for(&request).await;
         let mut stored: Vec<StoredAttachment> = Vec::new();
 
         let outcome = self.write_all(&request, plans, now, &mut stored).await;
@@ -438,6 +483,18 @@ impl CaptureService {
         for item in &items {
             self.events
                 .publish(DomainEvent::ItemCreated { item_id: item.id() });
+        }
+        if let (Some(workflow_id), Some(queue)) = (enrich_with, &self.enrichment) {
+            let job = EnrichmentJob {
+                workflow_id,
+                request: request.clone(),
+                items: items
+                    .iter()
+                    .map(|item| (item.id(), item.title().as_str().to_owned()))
+                    .collect(),
+            };
+            // 队列关闭（应用正在退出）时丢弃：补全只是锦上添花。
+            let _ = queue.send(job);
         }
         tracing::info!(
             event = "capture_completed",
@@ -580,6 +637,9 @@ impl CaptureService {
         Ok(())
     }
 }
+
+mod enrich;
+pub use enrich::EnrichmentJob;
 
 #[cfg(test)]
 mod tests;

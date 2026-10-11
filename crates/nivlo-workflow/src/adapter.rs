@@ -5,7 +5,7 @@ use std::time::Duration;
 use async_trait::async_trait;
 use chrono::NaiveDate;
 use nivlo_application::workflow::{
-    FailureKind, PlannedItem, StepOutcome, StepReport, WorkflowEngine, WorkflowFailure,
+    FailureKind, PlannedItem, RunMode, StepOutcome, StepReport, WorkflowEngine, WorkflowFailure,
     WorkflowIssue, WorkflowRunResult,
 };
 use nivlo_domain::capture::CaptureInput;
@@ -153,13 +153,17 @@ impl WorkflowEngine for WorkflowEngineAdapter {
         input: &CaptureInput,
         source_application: Option<&str>,
         today: NaiveDate,
+        mode: RunMode,
     ) -> Option<WorkflowRunResult> {
         let facts = InputFacts {
             input,
             source_application,
         };
         let chosen = resolve(workflows, &facts, self.engine.regexes())?;
-        Some(self.run(chosen, input, source_application, today).await)
+        Some(
+            self.run(chosen, input, source_application, today, mode)
+                .await,
+        )
     }
 
     /// 运行指定的 Workflow。
@@ -169,6 +173,7 @@ impl WorkflowEngine for WorkflowEngineAdapter {
         input: &CaptureInput,
         source_application: Option<&str>,
         today: NaiveDate,
+        mode: RunMode,
     ) -> WorkflowRunResult {
         let facts = InputFacts {
             input,
@@ -177,6 +182,7 @@ impl WorkflowEngine for WorkflowEngineAdapter {
         let options = RunOptions {
             cancel: CancellationToken::new(),
             today,
+            network: mode == RunMode::Full,
         };
         let started = std::time::Instant::now();
         let outcome = self.engine.run(workflow, &facts, &options).await;

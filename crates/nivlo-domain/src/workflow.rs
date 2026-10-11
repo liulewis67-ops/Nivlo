@@ -390,6 +390,22 @@ pub enum Step {
         #[serde(default)]
         optional: bool,
     },
+    /// 从 HTML 里提取页面元数据，存进 `vars.<into>_title`、`_description`、`_site`、`_image`、`_icon`
+    /// （没有的是空串，配合 `default` 过滤器使用）。
+    ///
+    /// `optional` 为真时，来源变量不存在（比如网络被跳过）不算错误，全部字段为空。
+    HtmlMeta {
+        /// 来源：存着 HTML 的变量名或模板。
+        from: String,
+        /// 结果变量前缀。
+        into: String,
+        /// 解析相对地址用的基准（缺省取 `vars.<from>_url`，没有就留空不解析）。
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        base: Option<String>,
+        /// 来源缺失时是否继续。
+        #[serde(default)]
+        optional: bool,
+    },
     /// 创建一条 Item。
     CreateItem {
         /// 类型。
@@ -519,6 +535,14 @@ impl Matcher {
 }
 
 impl Workflow {
+    /// 是否有 `http` Step——有的话捕获时先做不联网的即时版本，联网的部分在后台补全。
+    #[must_use]
+    pub fn uses_network(&self) -> bool {
+        self.steps
+            .iter()
+            .any(|step| matches!(step, Step::Http { .. }))
+    }
+
     /// 结构性校验（正则语法、模板变量由 `nivlo-workflow` 检查）。
     ///
     /// # Errors
@@ -567,6 +591,11 @@ impl Workflow {
                             field: var.clone(),
                             op: op.name().to_owned(),
                         });
+                    }
+                }
+                Step::HtmlMeta { into, .. } => {
+                    if !valid_variable(into) {
+                        return Err(WorkflowError::InvalidVariable(into.clone()));
                     }
                 }
                 Step::Http { into, .. } => {

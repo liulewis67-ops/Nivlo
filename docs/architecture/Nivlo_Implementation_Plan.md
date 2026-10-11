@@ -142,7 +142,7 @@ Phase 12 Backlog                        → 未排期
 | | 5.7 | Workflow 管理 UI | ✅ |
 | **P6** | 6.1 | HttpPort 与网络权限 | ✅ |
 | | 6.2 | 内置 Workflow 打包与同步 | ✅ |
-| | 6.3 | Generic Web Page（页面元数据） | ⬜ |
+| | 6.3 | Generic Web Page（页面元数据） | ✅ |
 | | 6.4 | Jira Issue（无 API 降级路径） | ⬜ |
 | | 6.5 | GitHub Issue / PR | ⬜ |
 | | 6.6 | 文件类 Workflow | ⬜ |
@@ -1113,7 +1113,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 6.3 Generic Web Page（页面元数据）
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：6.1、6.2
 - **目标**：URL → Note，自动补全标题与摘要。
 - **任务**：
@@ -1121,9 +1121,9 @@ Phase 12 Backlog                        → 未排期
   - 先以 URL 立即创建 Item，元数据获取完成后更新（不阻塞捕获）。
   - 获取失败时保留 URL 与浏览器提供的标题（如有）。
 - **验收标准**：
-  - [ ] 基于保存的 HTML fixtures 的提取测试（含中文编码页面）。
-  - [ ] 断网时仍创建带 URL 的 Note。
-- **完成记录**：—
+  - [x] 基于保存的 HTML fixtures 的提取测试（含中文编码页面）。
+  - [x] 断网时仍创建带 URL 的 Note。
+- **完成记录**：2026-10-11 完成。两阶段捕获：`RunMode::Instant` 先不联网地创建（`http` Step 被引擎直接跳过，拖放不等网络），联网的 Workflow 经后台队列由 `CaptureService::enrich` 用 `RunMode::Full` 补全；只更新标题仍是即时标题、且创建后没被动过的 Item（不覆盖用户的修改），联网结果与即时版本相同则不写；失败只记运行记录。新增 `htmlMeta` Step 与 `html_meta` 提取（og:title > title、og:description > description、site、image、favicon；实体解码、相对地址补全、只扫前 256KiB）、模板 `default(input.title)` 回退到另一个变量、内置 `builtin.web-page`（priority 1，`hosts: ["*"]` 只放行公网）。测试：`html_meta` 单元测试（含属性乱序 / 引号风格 / 不安全 scheme）、`http.rs` GBK 解码、`tests/web_page.rs`（即时→补全、离线保持、用户已改不覆盖、文本不入队、GBK 页面标题）。偏差：Item 的「补全中」状态没有单独的 UI 标记；favicon 与预览图只提取为变量，尚未存储。
 
 ### 6.4 Jira Issue（无 API 降级路径）
 

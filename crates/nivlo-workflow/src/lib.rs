@@ -18,6 +18,7 @@ pub mod engine;
 pub mod executor;
 pub mod facts;
 pub mod glob;
+pub mod html_meta;
 pub mod http_step;
 pub mod jsonpath;
 pub mod matcher;
