@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-confirm-script-permissions"
+description = "Enables the confirm_script_permissions command without any pre-configured scope."
+commands.allow = ["confirm_script_permissions"]
+
+[[permission]]
+identifier = "deny-confirm-script-permissions"
+description = "Denies the confirm_script_permissions command without any pre-configured scope."
+commands.deny = ["confirm_script_permissions"]

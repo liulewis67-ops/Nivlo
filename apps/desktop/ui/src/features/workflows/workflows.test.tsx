@@ -155,3 +155,42 @@ describe("Workflow 管理页", () => {
     expect(screen.getByText("createItem")).toBeInTheDocument();
   });
 });
+
+describe("脚本权限确认", () => {
+  const scriptWorkflow = JSON.stringify({
+    schemaVersion: 1,
+    id: "user.scripted",
+    name: "脚本规则",
+    matcher: { field: "input.type", op: "equals", value: "text" },
+    permissions: { network: true, hosts: ["api.example.com"] },
+    steps: [
+      {
+        type: "script",
+        source: "export default () => ({ title: 'x' })",
+        hosts: ["api.example.com"],
+      },
+    ],
+  });
+
+  it("含脚本的规则先显示需要确认，确认后变为已确认", async () => {
+    const ipc = createMemoryIpc();
+    await ipc.saveWorkflow(scriptWorkflow);
+    renderWithProviders(<WorkflowsPage />, ipc);
+
+    await userEvent.click(await screen.findByRole("button", { name: /^脚本规则/ }));
+    expect(
+      await screen.findByText(/确认它能访问的内容后才会运行：api.example.com/),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "确认权限" }));
+    expect(await screen.findByText(/脚本权限已确认/)).toBeInTheDocument();
+    expect(ipc.calls).toContain("confirmScriptPermissions");
+  });
+
+  it("没有脚本的规则不显示权限提示", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: /^网页链接/ }));
+    await screen.findByText(/内置规则不能直接修改/);
+    expect(screen.queryByRole("button", { name: "确认权限" })).not.toBeInTheDocument();
+  });
+});

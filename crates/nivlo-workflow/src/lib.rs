@@ -26,6 +26,7 @@ pub mod jsonpath;
 pub mod matcher;
 pub mod pattern;
 pub mod resolver;
+pub mod script_step;
 pub mod template;
 pub mod validate;
 

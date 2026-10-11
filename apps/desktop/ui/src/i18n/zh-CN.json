@@ -761,6 +761,14 @@
       },
       "fellBack": "规则失败，已按默认方式保存：{{reason}}",
       "summary": "创建 {{count}} 条 · {{ms}} ms"
+    },
+    "script": {
+      "needsConfirmation": "这个自动化包含脚本，确认它能访问的内容后才会运行：{{hosts}}。",
+      "noNetwork": "不访问网络",
+      "confirm": "确认权限",
+      "confirmed": "脚本权限已确认。可访问的网络：{{hosts}}。",
+      "saveFirst": "请先保存修改。",
+      "confirmFailed": "确认脚本权限失败。"
     }
   },
   "dateFormat": {

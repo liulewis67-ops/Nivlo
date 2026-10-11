@@ -15,6 +15,7 @@ use tauri::State;
 
 use crate::app::AppState;
 use crate::dto::{IpcError, ItemTypeDto, PriorityDto, format_utc};
+use crate::script_grants::SettingsScriptGrants;
 
 /// 一个 Workflow（IPC 表示）。
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -40,10 +41,14 @@ pub struct WorkflowDto {
     pub definition_json: String,
     /// 最近修改时间（RFC 3339，UTC）。
     pub updated_at: String,
+    /// 脚本权限状态：`none`（没有脚本）/ `confirmed`（已确认）/ `needsConfirmation`（需要确认才会运行）。
+    pub script_status: String,
+    /// 脚本声明要访问的主机（去重、排序）。
+    pub script_hosts: Vec<String>,
 }
 
 /// 存储的 Workflow → DTO。
-fn to_dto(stored: &StoredWorkflow) -> Result<WorkflowDto, AppError> {
+fn to_dto(stored: &StoredWorkflow, script_status: &str) -> Result<WorkflowDto, AppError> {
     let workflow: &Workflow = &stored.workflow;
     let definition_json = serde_json::to_string_pretty(workflow).map_err(|e| {
         AppError::new(
@@ -62,7 +67,44 @@ fn to_dto(stored: &StoredWorkflow) -> Result<WorkflowDto, AppError> {
         read_only: workflow.source == WorkflowSource::Builtin,
         definition_json,
         updated_at: format_utc(stored.updated_at),
+        script_status: script_status.to_owned(),
+        script_hosts: script_hosts(workflow),
     })
+}
+
+/// 脚本声明的主机（去重、排序）。
+fn script_hosts(workflow: &Workflow) -> Vec<String> {
+    let mut hosts: Vec<String> = workflow
+        .steps
+        .iter()
+        .filter_map(|step| match step {
+            nivlo_domain::workflow::Step::Script { hosts, .. } => Some(hosts.clone()),
+            _ => None,
+        })
+        .flatten()
+        .map(|host| host.to_ascii_lowercase())
+        .collect();
+    hosts.sort();
+    hosts.dedup();
+    hosts
+}
+
+/// 脚本权限状态：没有脚本、已确认、需要确认。
+async fn script_status(state: &AppState, workflow: &Workflow) -> &'static str {
+    let grants = SettingsScriptGrants::new(state.services.settings.clone());
+    if crate::script_grants::workflow_fingerprints(workflow).is_empty() {
+        "none"
+    } else if grants.is_workflow_granted(workflow).await {
+        "confirmed"
+    } else {
+        "needsConfirmation"
+    }
+}
+
+/// 存储的 Workflow → DTO（含脚本权限状态）。
+async fn dto_of(state: &AppState, stored: &StoredWorkflow) -> Result<WorkflowDto, AppError> {
+    let status = script_status(state, &stored.workflow).await;
+    to_dto(stored, status)
 }
 
 /// 来源的稳定文本。
@@ -240,7 +282,11 @@ impl From<&RunRecord> for WorkflowRunDto {
 #[specta::specta]
 pub async fn list_workflows(state: State<'_, AppState>) -> Result<Vec<WorkflowDto>, IpcError> {
     let all = state.services.workflows.list().await?;
-    Ok(all.iter().map(to_dto).collect::<Result<_, _>>()?)
+    let mut dtos = Vec::with_capacity(all.len());
+    for stored in &all {
+        dtos.push(dto_of(&state, stored).await?);
+    }
+    Ok(dtos)
 }
 
 /// 启用或禁用一个 Workflow（内置的也可以禁用）。
@@ -296,7 +342,7 @@ pub async fn duplicate_workflow(
 ) -> Result<WorkflowDto, IpcError> {
     let copy = state.services.workflows.duplicate(&parse_id(&id)?).await?;
     let stored = state.services.workflows.get(&copy.id).await?;
-    Ok(to_dto(&stored)?)
+    Ok(dto_of(&state, &stored).await?)
 }
 
 /// 保存（新建或覆盖）一个用户 Workflow。定义要通过完整校验。
@@ -313,7 +359,7 @@ pub async fn save_workflow(
 ) -> Result<WorkflowDto, IpcError> {
     let workflow = state.services.workflows.save_json(&definition_json).await?;
     let stored = state.services.workflows.get(&workflow.id).await?;
-    Ok(to_dto(&stored)?)
+    Ok(dto_of(&state, &stored).await?)
 }
 
 /// 删除一个用户 Workflow；内置的不能删除。
@@ -387,4 +433,24 @@ pub async fn list_workflow_runs(
 pub async fn rerun_workflow(state: State<'_, AppState>, id: String) -> Result<bool, IpcError> {
     let item_id = crate::dto::parse_item_id(&id)?;
     Ok(state.services.capture.rerun(item_id).await?)
+}
+
+/// 确认一个 Workflow 里脚本的权限（脚本源码、声明的主机和网络权限的当前组合）。
+///
+/// 之后修改脚本或权限会让指纹变化，需要再次确认才会运行。内置 Workflow 也可以确认。
+///
+/// # Errors
+///
+/// ID 不合法返回 `INVALID_INPUT`，不存在返回 `WORKFLOW_NOT_FOUND`；存储失败返回存储错误。
+#[tauri::command]
+#[specta::specta]
+pub async fn confirm_script_permissions(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<WorkflowDto, IpcError> {
+    let stored = state.services.workflows.get(&parse_id(&id)?).await?;
+    SettingsScriptGrants::new(state.services.settings.clone())
+        .grant_workflow(&stored.workflow)
+        .await?;
+    Ok(dto_of(&state, &stored).await?)
 }

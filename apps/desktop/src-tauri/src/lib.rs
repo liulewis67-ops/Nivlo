@@ -22,6 +22,7 @@ pub mod lifecycle;
 pub mod native_i18n;
 pub mod open;
 pub mod scheduling;
+pub mod script_grants;
 pub mod shortcut;
 pub mod tray;
 pub mod windows;
@@ -84,6 +85,7 @@ macro_rules! bindings_builder {
                 $crate::commands::workflow::dry_run_workflow,
                 $crate::commands::workflow::list_workflow_runs,
                 $crate::commands::workflow::rerun_workflow,
+                $crate::commands::workflow::confirm_script_permissions,
                 $crate::commands::trash::empty_trash,
                 $crate::commands::settings::get_app_settings::<$runtime>,
                 $crate::commands::settings::get_ui_pref,

@@ -29,6 +29,7 @@ const COMMANDS: &[&str] = &[
     "dry_run_workflow",
     "list_workflow_runs",
     "rerun_workflow",
+    "confirm_script_permissions",
     "get_app_settings",
     "get_ui_pref",
     "set_ui_pref",

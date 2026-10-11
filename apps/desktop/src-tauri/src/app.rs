@@ -79,6 +79,8 @@ pub struct RuntimeHandles {
     shortcut: OnceLock<Arc<ShortcutController>>,
     /// 应用目录布局；启动时登记，导出诊断包 / 备份时使用。
     paths: OnceLock<nivlo_common::paths::AppPaths>,
+    /// Script Worker（QuickJS 沙箱线程）；退出时停止并等待线程结束。
+    script_worker: OnceLock<nivlo_script::ScriptWorker>,
     /// 后台补全队列的接收端：由启动流程取走并交给后台任务（只能取一次）。
     enrichment_queue: Mutex<
         Option<tokio::sync::mpsc::UnboundedReceiver<nivlo_application::capture::EnrichmentJob>>,
@@ -108,8 +110,19 @@ impl RuntimeHandles {
             shortcut: OnceLock::new(),
             enrichment_queue: Mutex::new(None),
             paths: OnceLock::new(),
+            script_worker: OnceLock::new(),
             scheduler_control: Arc::new(nivlo_scheduler::Control::new()),
         }
+    }
+
+    /// 登记 Script Worker（只能登记一次），返回给 Executor 用的句柄。
+    pub fn set_script_worker(
+        &self,
+        worker: nivlo_script::ScriptWorker,
+    ) -> nivlo_script::ScriptHandle {
+        let handle = worker.handle();
+        let _ = self.script_worker.set(worker);
+        handle
     }
 
     /// 登记应用目录布局（只能登记一次）。
@@ -247,6 +260,9 @@ impl RuntimeHandles {
             tracing::info!(event = "shutdown_window_state_saved", "窗口状态已保存");
         }
         // TODO(P4.4): 停止 Scheduler Actor。
+        if let Some(worker) = self.script_worker.get() {
+            worker.shutdown();
+        }
 
         self.database.close().await;
         tracing::info!(event = "shutdown_database_closed", "数据库已关闭");

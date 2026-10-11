@@ -2782,6 +2782,7 @@ dependencies = [
 name = "nivlo-desktop"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "base64 0.22.1",
  "chrono",
  "nivlo-application",
@@ -2928,9 +2929,11 @@ dependencies = [
  "nivlo-capture",
  "nivlo-common",
  "nivlo-domain",
+ "nivlo-script",
  "regex",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror 2.0.21",
  "tokio",
  "tokio-util",

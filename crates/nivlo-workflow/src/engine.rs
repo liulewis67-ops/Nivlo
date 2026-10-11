@@ -129,6 +129,21 @@ impl Engine {
         Self::new(registry, Arc::new(RegexCache::new()), DEFAULT_TIMEOUT)
     }
 
+    /// 在已有配置上追加 `script` Step（经给定的 Script Worker、网络 Port 与授权记录）。
+    #[must_use]
+    pub fn with_script(
+        mut self,
+        worker: nivlo_script::ScriptHandle,
+        http: Option<Arc<dyn nivlo_application::ports::http::HttpPort>>,
+        grants: Arc<dyn crate::script_step::ScriptGrants>,
+    ) -> Self {
+        self.registry
+            .register(Arc::new(crate::script_step::ScriptExecutor::new(
+                worker, http, grants,
+            )));
+        self
+    }
+
     /// 标准配置，外加 `http` Step（经给定的网络 Port）。
     #[must_use]
     pub fn with_http(port: Arc<dyn nivlo_application::ports::http::HttpPort>) -> Self {

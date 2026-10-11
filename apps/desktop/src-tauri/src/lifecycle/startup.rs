@@ -111,10 +111,21 @@ pub fn build_app_state(
                 None
             }
         };
-    let engine: Arc<dyn WorkflowEngine> = Arc::new(WorkflowEngineAdapter::with_ports(
-        http,
-        Some(Arc::new(nivlo_capture::FsFileInspector)),
-    ));
+    // 脚本只在独立的 Worker 线程里运行；授权记录存在 settings 表（指纹变化需重新确认）。
+    let script_worker = nivlo_script::ScriptWorker::spawn();
+    let engine: Arc<dyn WorkflowEngine> = Arc::new(
+        WorkflowEngineAdapter::with_ports(
+            http.clone(),
+            Some(Arc::new(nivlo_capture::FsFileInspector)),
+        )
+        .with_script(
+            script_worker.handle(),
+            http,
+            Arc::new(crate::script_grants::SettingsScriptGrants::new(
+                settings.clone(),
+            )),
+        ),
+    );
     // 网页标题等联网的补全在后台队列里做，捕获本身不等网络。
     let (enrichment_tx, enrichment_rx) = tokio::sync::mpsc::unbounded_channel();
     let capture = CaptureService::new(
@@ -147,6 +158,7 @@ pub fn build_app_state(
     let export = ExportService::new(Arc::new(database.clone()), clock.clone());
     let runtime = RuntimeHandles::new(event_bus, database, clock, log_guard);
     runtime.set_enrichment_queue(enrichment_rx);
+    let _ = runtime.set_script_worker(script_worker);
     AppState {
         services: ApplicationServices {
             items,

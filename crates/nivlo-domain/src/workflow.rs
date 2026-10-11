@@ -40,6 +40,12 @@ pub enum WorkflowError {
     /// Step 数量超过上限。
     #[error("Workflow 最多 {MAX_WORKFLOW_STEPS} 个 Step，实际 {0} 个")]
     TooManySteps(usize),
+    /// script Step 的源码为空。
+    #[error("script Step 的源码不能为空")]
+    EmptyScript,
+    /// script Step 要访问的主机超出了 Workflow 声明的权限。
+    #[error("script Step 要访问 {0}，但 Workflow 的 permissions 没有声明它")]
+    ScriptExceedsPermissions(String),
     /// 用了 `http` Step，却没有声明 `permissions.network` 与允许访问的主机。
     #[error("http Step 需要在 permissions 里声明 network: true 和允许访问的 hosts")]
     NetworkNotDeclared,
@@ -454,6 +460,17 @@ pub enum Step {
         #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
         metadata: BTreeMap<String, String>,
     },
+    /// 运行一段 JavaScript（QuickJS 沙箱），返回值按标准 Item 结构直接产出一条 Item 草稿。
+    ///
+    /// 脚本看到的 `ctx.input` 是输入字段、`ctx.vars` 是已有变量；除此之外只能使用 `hosts` 声明的网络主机，
+    /// 且 `hosts` 必须是 `permissions.hosts` 的子集。权限（含脚本本身）变化后需要用户重新确认才会运行。
+    Script {
+        /// 脚本源码：`export default async function (ctx) { ... }` 或 `function transform(input) { ... }`。
+        source: String,
+        /// 脚本要访问的主机（`ctx.http`），必须是 Workflow `permissions.hosts` 的子集。
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        hosts: Vec<String>,
+    },
     /// 给本次运行创建的全部 Item 加一个标签。
     AddTag {
         /// 标签模板。
@@ -558,9 +575,11 @@ impl Workflow {
     /// 是否有 `http` Step——有的话捕获时先做不联网的即时版本，联网的部分在后台补全。
     #[must_use]
     pub fn uses_network(&self) -> bool {
-        self.steps
-            .iter()
-            .any(|step| matches!(step, Step::Http { .. }))
+        self.steps.iter().any(|step| match step {
+            Step::Http { .. } => true,
+            Step::Script { hosts, .. } => !hosts.is_empty(),
+            _ => false,
+        })
     }
 
     /// 结构性校验（正则语法、模板变量由 `nivlo-workflow` 检查）。
@@ -586,7 +605,7 @@ impl Workflow {
         if !self
             .steps
             .iter()
-            .any(|step| matches!(step, Step::CreateItem { .. }))
+            .any(|step| matches!(step, Step::CreateItem { .. } | Step::Script { .. }))
         {
             return Err(WorkflowError::NoCreateItem);
         }
@@ -624,6 +643,22 @@ impl Workflow {
                     }
                     if !self.permissions.network || self.permissions.hosts.is_empty() {
                         return Err(WorkflowError::NetworkNotDeclared);
+                    }
+                }
+                Step::Script { source, hosts } => {
+                    if source.trim().is_empty() {
+                        return Err(WorkflowError::EmptyScript);
+                    }
+                    for host in hosts {
+                        let declared = self.permissions.network
+                            && self
+                                .permissions
+                                .hosts
+                                .iter()
+                                .any(|allowed| allowed.eq_ignore_ascii_case(host));
+                        if !declared {
+                            return Err(WorkflowError::ScriptExceedsPermissions(host.clone()));
+                        }
                     }
                 }
                 Step::CreateItem { .. } | Step::AddTag { .. } => {}

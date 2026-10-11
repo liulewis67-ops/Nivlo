@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, ConfirmButton, Input, Switch, Textarea } from "@/components";
+import { ScriptPermissionNotice } from "./ScriptPermissionNotice";
 import { cx } from "@/lib/cx";
 import { toAppError } from "@/lib/errors";
 import { ipc } from "@/lib/ipc";
@@ -32,6 +33,8 @@ export type WorkflowEditorProps = {
   onSaved: (saved: WorkflowDto) => void;
   /** 复制了一份（带回副本）。 */
   onDuplicated: (copy: WorkflowDto) => void;
+  /** 脚本权限确认成功（带回最新状态）。 */
+  onConfirmed: (next: WorkflowDto) => void;
   /** 删除成功。 */
   onDeleted: () => void;
   /** 关闭编辑区。 */
@@ -64,6 +67,7 @@ export function WorkflowEditor({
   isNew,
   onSaved,
   onDuplicated,
+  onConfirmed,
   onDeleted,
   onClose,
 }: WorkflowEditorProps) {
@@ -155,6 +159,7 @@ export function WorkflowEditor({
     return (
       <div className="flex h-full flex-col gap-4 overflow-y-auto p-5">
         {header}
+        <ScriptPermissionNotice workflow={workflow} unsaved={false} onConfirmed={onConfirmed} />
         <p className="text-sm text-muted">{workflow.description}</p>
         <p className="rounded-md bg-surface-hover px-3 py-2 text-sm text-text">
           {t("workflows.readOnlyNotice")}
@@ -188,6 +193,11 @@ export function WorkflowEditor({
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-5">
       {header}
+      <ScriptPermissionNotice
+        workflow={workflow}
+        unsaved={isNew || dirty}
+        onConfirmed={onConfirmed}
+      />
       <div role="tablist" aria-label={t("workflows.editMode")} className="flex gap-1">
         {(["form", "json"] as const).map((item) => (
           <button

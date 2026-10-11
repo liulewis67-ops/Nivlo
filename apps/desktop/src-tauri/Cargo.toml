@@ -39,6 +39,7 @@ nivlo-storage.workspace = true
 nivlo-capture.workspace = true
 nivlo-workflow.workspace = true
 nivlo-script.workspace = true
+async-trait.workspace = true
 nivlo-scheduler.workspace = true
 nivlo-integrations.workspace = true
 nivlo-platform.workspace = true

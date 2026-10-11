@@ -119,6 +119,7 @@ export type WorkflowMock = Pick<
   | "setWorkflowEnabled"
   | "setWorkflowPriority"
   | "duplicateWorkflow"
+  | "confirmScriptPermissions"
   | "saveWorkflow"
   | "deleteWorkflow"
   | "dryRunWorkflow"
@@ -129,6 +130,33 @@ export type WorkflowMock = Pick<
   /** 当前的 Workflow（含用户保存的）。 */
   readonly workflows: readonly WorkflowDto[];
 };
+
+/** 已确认过脚本权限的 Workflow ID（测试内存里的授权记录）。 */
+const confirmedScripts = new Set<string>();
+
+/**
+ * 脚本权限状态与声明的主机。
+ *
+ * @param definition 定义。
+ * @returns DTO 里的两个脚本字段。
+ */
+function scriptInfo(definition: Record<string, unknown>): {
+  scriptStatus: string;
+  scriptHosts: string[];
+} {
+  const steps = Array.isArray(definition.steps)
+    ? (definition.steps as Record<string, unknown>[])
+    : [];
+  const scripts = steps.filter((step) => step.type === "script");
+  if (scripts.length === 0) return { scriptStatus: "none", scriptHosts: [] };
+  const hosts = scripts.flatMap((step) =>
+    Array.isArray(step.hosts) ? (step.hosts as string[]) : [],
+  );
+  return {
+    scriptStatus: confirmedScripts.has(String(definition.id)) ? "confirmed" : "needsConfirmation",
+    scriptHosts: [...new Set(hosts.map((h) => h.toLowerCase()))].sort(),
+  };
+}
 
 /**
  * 由定义对象构造 DTO。
@@ -149,6 +177,7 @@ function toDto(definition: Record<string, unknown>): WorkflowDto {
     readOnly: source === "builtin",
     definitionJson: JSON.stringify(definition, null, 2),
     updatedAt: "2026-10-10T08:00:00Z",
+    ...scriptInfo(definition),
   };
 }
 
@@ -240,7 +269,12 @@ export function createWorkflowMock(): WorkflowMock {
       throw new AppError("WORKFLOW_INVALID", "/name：名称不能为空");
     }
     const steps = Array.isArray(definition.steps) ? definition.steps : [];
-    if (!steps.some((s) => (s as Record<string, unknown>).type === "createItem")) {
+    if (
+      !steps.some((s) => {
+        const type = (s as Record<string, unknown>).type;
+        return type === "createItem" || type === "script";
+      })
+    ) {
       throw new AppError("WORKFLOW_INVALID", "/steps：Workflow 至少需要一个 createItem Step");
     }
     for (const [at, step] of steps.entries()) {
@@ -285,6 +319,15 @@ export function createWorkflowMock(): WorkflowMock {
       try {
         find(id).priority = priority;
         return Promise.resolve();
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    confirmScriptPermissions: (id) => {
+      try {
+        const original = find(id);
+        confirmedScripts.add(String(original.id));
+        return Promise.resolve(toDto(original));
       } catch (error) {
         return Promise.reject(error);
       }

@@ -52,6 +52,19 @@ impl WorkflowEngineAdapter {
         }
     }
 
+    /// 在已有配置上启用 `script` Step。
+    #[must_use]
+    pub fn with_script(
+        self,
+        worker: nivlo_script::ScriptHandle,
+        http: Option<std::sync::Arc<dyn nivlo_application::ports::http::HttpPort>>,
+        grants: std::sync::Arc<dyn crate::script_step::ScriptGrants>,
+    ) -> Self {
+        Self {
+            engine: self.engine.with_script(worker, http, grants),
+        }
+    }
+
     /// 用指定的引擎创建适配器（测试注入假 Executor）。
     #[must_use]
     pub fn new(engine: Engine) -> Self {

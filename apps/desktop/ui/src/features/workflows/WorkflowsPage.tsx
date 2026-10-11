@@ -157,6 +157,8 @@ export function WorkflowsPage() {
       readOnly: false,
       definitionJson: stringify(definition),
       updatedAt: "",
+      scriptStatus: "none",
+      scriptHosts: [],
     });
     setSelectedId(null);
     setTab("rules");
@@ -254,6 +256,10 @@ export function WorkflowsPage() {
                 workflow={selected}
                 isNew={draft !== null}
                 onSaved={(saved) => opened(saved, t("workflows.saved", { name: saved.name }))}
+                onConfirmed={() => {
+                  setGeneration((n) => n + 1);
+                  void refresh();
+                }}
                 onDuplicated={(copy) =>
                   opened(copy, t("workflows.duplicated", { name: copy.name }))
                 }

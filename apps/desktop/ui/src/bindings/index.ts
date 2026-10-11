@@ -227,6 +227,16 @@ export const commands = {
 	 */
 	rerunWorkflow: (id: string) => typedError<boolean, IpcError>(__TAURI_INVOKE("rerun_workflow", { id })),
 	/**
+	 *  确认一个 Workflow 里脚本的权限（脚本源码、声明的主机和网络权限的当前组合）。
+	 * 
+	 *  之后修改脚本或权限会让指纹变化，需要再次确认才会运行。内置 Workflow 也可以确认。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 不合法返回 `INVALID_INPUT`，不存在返回 `WORKFLOW_NOT_FOUND`；存储失败返回存储错误。
+	 */
+	confirmScriptPermissions: (id: string) => typedError<WorkflowDto, IpcError>(__TAURI_INVOKE("confirm_script_permissions", { id })),
+	/**
 	 *  清空回收站。返回删除的数量。
 	 * 
 	 *  # Errors
@@ -1311,6 +1321,10 @@ export type WorkflowDto = {
 	definitionJson: string,
 	/**  最近修改时间（RFC 3339，UTC）。 */
 	updatedAt: string,
+	/**  脚本权限状态：`none`（没有脚本）/ `confirmed`（已确认）/ `needsConfirmation`（需要确认才会运行）。 */
+	scriptStatus: string,
+	/**  脚本声明要访问的主机（去重、排序）。 */
+	scriptHosts: string[],
 };
 
 /**  一条运行记录（IPC 表示）。 */

@@ -31,6 +31,7 @@
     "allow-dry-run-workflow",
     "allow-list-workflow-runs",
     "allow-rerun-workflow",
+    "allow-confirm-script-permissions",
     "allow-get-app-settings",
     "allow-get-ui-pref",
     "allow-set-ui-pref",

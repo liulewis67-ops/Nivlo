@@ -765,6 +765,14 @@
       },
       "fellBack": "The rule failed and the capture was saved the default way: {{reason}}",
       "summary": "Created {{count}} · {{ms}} ms"
+    },
+    "script": {
+      "needsConfirmation": "This automation contains a script. It will only run after you confirm what it can access: {{hosts}}.",
+      "noNetwork": "no network access",
+      "confirm": "Confirm permissions",
+      "confirmed": "Script permissions confirmed. Network access: {{hosts}}.",
+      "saveFirst": "Save your changes first.",
+      "confirmFailed": "Couldn’t confirm the script permissions."
     }
   },
   "dateFormat": {

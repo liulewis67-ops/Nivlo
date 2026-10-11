@@ -177,6 +177,7 @@ pub fn step_kind(step: &Step) -> &'static str {
         Step::Http { .. } => "http",
         Step::HtmlMeta { .. } => "htmlMeta",
         Step::ReadFile { .. } => "readFile",
+        Step::Script { .. } => "script",
     }
 }
 

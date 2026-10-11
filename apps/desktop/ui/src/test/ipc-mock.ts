@@ -1225,6 +1225,10 @@ ${(item.content ?? "").toLowerCase()}`;
     setWorkflowEnabled: workflowMock.setWorkflowEnabled,
     setWorkflowPriority: workflowMock.setWorkflowPriority,
     duplicateWorkflow: workflowMock.duplicateWorkflow,
+    confirmScriptPermissions: (id: string) => {
+      calls.push("confirmScriptPermissions");
+      return workflowMock.confirmScriptPermissions(id);
+    },
     saveWorkflow: workflowMock.saveWorkflow,
     deleteWorkflow: workflowMock.deleteWorkflow,
     dryRunWorkflow: workflowMock.dryRunWorkflow,

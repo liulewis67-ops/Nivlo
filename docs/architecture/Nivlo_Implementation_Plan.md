@@ -1400,15 +1400,15 @@ Phase 12 Backlog                        → 未排期
 
 ### 8.3 Script Step 与 Workflow 权限
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：8.2
 - **任务**：
   - `Script` Step Executor；Script 权限必须是 Workflow Effective Permission 的子集。
   - Workflow 权限编辑 UI（网络 Host 白名单、文件读、剪贴板、通知），首次运行需用户确认授予。
 - **验收标准**：
-  - [ ] 测试：Script 声明超出 Workflow 的权限时被拒绝。
-  - [ ] 修改权限后需重新确认才能运行。
-- **完成记录**：—
+  - [x] 测试：Script 声明超出 Workflow 的权限时被拒绝（定义校验 `ScriptExceedsPermissions`、`tests/script_step.rs`；运行时再防御一次）。
+  - [x] 修改权限后需重新确认才能运行（授权按「源码 + 声明主机 + Workflow 网络权限」的 SHA-256 指纹保存，任一项变化即未授权；测试覆盖改源码与扩大主机两种情况）。
+- **完成记录**：2026-10-12（进行中）：领域新增 `Step::Script { source, hosts }`（JSON Schema、`Workflow::validate`、`uses_network`：带 hosts 的脚本在即时运行里跳过、后台补全时运行）；`nivlo-workflow` 新增 `ScriptExecutor`（`ScriptGrants` 授权检查 → Script Worker → `PortHost` 把 `ctx.http` 转给 `HttpPort` 并沿用 `HostPolicy` → 返回值转草稿）；桌面端启动 Script Worker、授权存 `settings`（`script.grant.<指纹>`，`script_grants.rs`）、`confirm_script_permissions` 命令（仅主窗口）、`WorkflowDto` 增加 `scriptStatus` / `scriptHosts`，Workflow 编辑区显示「需要确认 / 已确认」提示与「确认权限」按钮（含前端测试）。`nivlo-workflow` 6 个新集成测试，`clippy -D warnings`、全量 Rust / 前端测试通过。**未完成**：① 权限编辑 UI 目前只有确认——主机白名单仍通过 JSON 编辑，文件读 / 剪贴板 / 通知权限尚未建模（`ctx.file` / `ctx.clipboard` 保持不可用）；② 脚本编辑器与导入 / 导出属于 8.4 / 8.5。
 
 ### 8.4 脚本编辑器（CodeMirror）
 

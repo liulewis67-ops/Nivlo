@@ -241,6 +241,8 @@ export interface IpcClient {
   dryRunWorkflow(definitionJson: string, input: DryRunInputDto): Promise<DryRunResultDto>;
   /** 重新运行 Workflow：按条目的来源重新匹配并完整运行，更新标题与内容；返回是否有变化。 */
   rerunWorkflow(id: string): Promise<boolean>;
+  /** 确认 Workflow 里脚本的权限（脚本或权限被修改后需要再次确认才会运行）。 */
+  confirmScriptPermissions(id: string): Promise<WorkflowDto>;
   /** 最近的运行记录（新的在前）。 */
   listWorkflowRuns(limit?: number): Promise<WorkflowRunDto[]>;
   /** 列出项目（创建时间从早到晚）与各自未完成的 Item 数量；默认不含已归档的。 */
@@ -447,6 +449,8 @@ const tauriIpc: IpcClient = {
   dryRunWorkflow: (definitionJson, input) =>
     call("dry_run_workflow", commands.dryRunWorkflow(definitionJson, input)),
   rerunWorkflow: (id) => call("rerun_workflow", commands.rerunWorkflow(id)),
+  confirmScriptPermissions: (id) =>
+    call("confirm_script_permissions", commands.confirmScriptPermissions(id)),
   listWorkflowRuns: (limit) => call("list_workflow_runs", commands.listWorkflowRuns(limit ?? null)),
   searchItems: (query) => call("search_items", commands.searchItems(query)),
   listProjects: (includeArchived) => call("list_projects", commands.listProjects(includeArchived)),
@@ -574,6 +578,7 @@ export const ipc: IpcClient = {
   deleteWorkflow: (id) => current.deleteWorkflow(id),
   dryRunWorkflow: (definitionJson, input) => current.dryRunWorkflow(definitionJson, input),
   rerunWorkflow: (id) => current.rerunWorkflow(id),
+  confirmScriptPermissions: (id) => current.confirmScriptPermissions(id),
   listWorkflowRuns: (limit) => current.listWorkflowRuns(limit),
   searchItems: (query) => current.searchItems(query),
   listProjects: (includeArchived) => current.listProjects(includeArchived),

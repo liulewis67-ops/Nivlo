@@ -133,6 +133,16 @@
         },
         {
           "type": "object",
+          "required": ["type", "source"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "script" },
+            "source": { "type": "string", "minLength": 1, "maxLength": 65536 },
+            "hosts": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        {
+          "type": "object",
           "required": ["type", "url", "into"],
           "additionalProperties": false,
           "properties": {
