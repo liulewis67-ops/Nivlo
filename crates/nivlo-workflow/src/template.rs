@@ -260,9 +260,10 @@ impl Expr {
                     Some(v) if !v.is_empty() => v,
                     _ => fallback.clone(),
                 }),
+                // 另一个变量也缺失时不立刻报错，让后面的 default("…") 有机会兜底；最终仍为空才算缺失。
                 Filter::DefaultVar(other) => match value {
                     Some(v) if !v.is_empty() => Some(v),
-                    _ => Some(lookup(other).ok_or_else(|| TemplateError::Missing(other.clone()))?),
+                    _ => lookup(other),
                 },
                 other => {
                     let current = value.ok_or_else(|| TemplateError::Missing(self.path.clone()))?;
@@ -351,6 +352,10 @@ mod tests {
             "Real"
         );
         assert!(render_with("{{ vars.t | default(vars.zzz) }}", &vars).is_err());
+        assert_eq!(
+            render_with("{{ vars.t | default(vars.zzz) | default(\"无\") }}", &vars).unwrap(),
+            "无"
+        );
         assert_eq!(
             render_with("{{ vars.t | default(input.title) | upper }}", &vars).unwrap(),
             "EXAMPLE.COM/A"

@@ -144,7 +144,7 @@ Phase 12 Backlog                        → 未排期
 | | 6.2 | 内置 Workflow 打包与同步 | ✅ |
 | | 6.3 | Generic Web Page（页面元数据） | ✅ |
 | | 6.4 | Jira Issue（无 API 降级路径） | ✅ |
-| | 6.5 | GitHub Issue / PR | ⬜ |
+| | 6.5 | GitHub Issue / PR | ✅ |
 | | 6.6 | 文件类 Workflow | ⬜ |
 | | 6.7 | 自然语言日期解析 | ✅ |
 | **P7** | 7.1 | Desktop E2E 关键路径 | ⬜ |
@@ -1140,7 +1140,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 6.5 GitHub Issue / PR
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：6.3
 - **目标**：GitHub URL → Todo。
 - **任务**：
@@ -1148,9 +1148,9 @@ Phase 12 Backlog                        → 未排期
   - 尝试公开 API（未认证）获取标题与状态，失败或限流时退回页面元数据。
   - 标题示例：`Review PR #182: <title>`、`[repo#123] <title>`。
 - **验收标准**：
-  - [ ] fixtures 测试覆盖 Issue、PR、带锚点 / 子路径的 URL。
-  - [ ] 模拟 API 限流（403 / 429）时自动降级并成功创建。
-- **完成记录**：—
+  - [x] fixtures 测试覆盖 Issue、PR、带锚点 / 子路径的 URL。
+  - [x] 模拟 API 限流（403 / 429）时自动降级并成功创建。
+- **完成记录**：2026-10-11 完成。内置 `builtin.github-pr` 与 `builtin.github-issue`（priority 20；Workflow 没有分支，所以 PR 与 Issue 各一个）：从路径提取 owner / repo / number（深链接 `/files`、`/commits/…`、锚点、查询串都能识别，`/pulls`、非数字编号、其他主机不误判）；未认证的公开 API `api.github.com/repos/{owner}/{repo}/issues/{n}` 取标题与状态，403 / 429 / 超时 / 非 JSON 时退回页面标题（`… · Pull Request #182 · …`），都不行就只保留编号（「Review PR #182」/「[repo#123]」）。标题：`Review PR #182: <title>`、`[repo#123] <title>`；Source 写 `GitHub · owner/repo#N`，`metadata_json` 写 integration / kind / owner / repo / number / state。配套引擎改进：`extract` / `jsonPath` 的 `optional` 现在也覆盖「来源变量不存在 / 不是 JSON」，`default(var)` 在回退变量也缺失时交给后面的 `default("…")`。fixtures：`fixtures/github/cases.json`；测试 `tests/github.rs`（URL 解析、API 取标题、403/429/超时降级、全部失败）。
 
 ### 6.6 文件类 Workflow
 

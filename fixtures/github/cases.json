@@ -1,0 +1,23 @@
+{
+  "urls": [
+    { "url": "https://github.com/acme/web/pull/182", "workflow": "builtin.github-pr", "title": "Review PR #182" },
+    { "url": "https://github.com/acme/web/pull/182/files", "workflow": "builtin.github-pr", "title": "Review PR #182" },
+    { "url": "https://github.com/acme/web/pull/182#issuecomment-99", "workflow": "builtin.github-pr", "title": "Review PR #182" },
+    { "url": "https://github.com/acme/web/pull/182/commits/abc123?w=1", "workflow": "builtin.github-pr", "title": "Review PR #182" },
+    { "url": "https://github.com/acme/web/issues/123", "workflow": "builtin.github-issue", "title": "[web#123]" },
+    { "url": "https://github.com/acme/web/issues/9?q=is%3Aopen#top", "workflow": "builtin.github-issue", "title": "[web#9]" },
+    { "url": "https://github.com/acme/web/pulls", "workflow": null },
+    { "url": "https://github.com/acme/web/pull/abc", "workflow": null },
+    { "url": "https://github.com/acme", "workflow": null },
+    { "url": "https://gitlab.com/acme/web/pull/1", "workflow": null }
+  ],
+  "api": {
+    "pull": "{\"number\":182,\"title\":\"修复登录失败\",\"state\":\"open\",\"pull_request\":{}}",
+    "issue": "{\"number\":123,\"title\":\"Crash on startup\",\"state\":\"closed\"}"
+  },
+  "pages": {
+    "pull": "<html><head><title>修复登录失败 by octocat · Pull Request #182 · acme/web · GitHub</title></head></html>",
+    "issue": "<html><head><title>Crash on startup · Issue #123 · acme/web · GitHub</title></head></html>",
+    "login": "<html><head><title>Sign in to GitHub · GitHub</title></head></html>"
+  }
+}

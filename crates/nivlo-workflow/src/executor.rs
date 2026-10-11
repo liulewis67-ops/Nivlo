@@ -252,7 +252,12 @@ impl StepExecutor for ExtractExecutor {
         else {
             return Err(wrong_step(step_kind(step)));
         };
-        let source = ctx.resolve(from)?;
+        // optional：来源变量不存在（比如联网被跳过）也算「没提取到」。
+        let source = match ctx.resolve(from) {
+            Ok(source) => source,
+            Err(_) if *optional => return Ok(()),
+            Err(error) => return Err(error),
+        };
         let regex = ctx
             .regexes
             .get(pattern)
@@ -327,8 +332,18 @@ impl StepExecutor for JsonPathExecutor {
         else {
             return Err(wrong_step(step_kind(step)));
         };
-        let source = ctx.resolve(from)?;
-        match jsonpath::extract(&source, path).map_err(|e| StepError::invalid(e.to_string()))? {
+        // optional：来源变量不存在（比如联网被跳过）、不是合法 JSON，都算「没取到」。
+        let source = match ctx.resolve(from) {
+            Ok(source) => source,
+            Err(_) if *optional => return Ok(()),
+            Err(error) => return Err(error),
+        };
+        let found = match jsonpath::extract(&source, path) {
+            Ok(found) => found,
+            Err(_) if *optional => return Ok(()),
+            Err(error) => return Err(StepError::invalid(error.to_string())),
+        };
+        match found {
             Some(value) => {
                 ctx.scope.insert(var_key(into), value);
                 Ok(())

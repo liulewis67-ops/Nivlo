@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.github-issue",
+  "name": "GitHub Issue",
+  "description": "github.com 的 Issue 链接变成待办「[repo#123] 标题」。先立刻用编号创建，随后在后台通过 GitHub 公开 API 读取标题；API 被限流（403/429）或读不到时退回页面标题，都不行就只保留编号。",
+  "version": 1,
+  "priority": 20,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": {
+    "all": [
+      { "field": "input.type", "op": "equals", "value": "url" },
+      { "field": "url.host", "op": "equals", "value": "github.com" },
+      { "field": "url.path", "op": "regex", "value": "^/[^/]+/[^/]+/issues/\\d+(/|$)" }
+    ]
+  },
+  "permissions": { "network": true, "hosts": ["api.github.com", "github.com"] },
+  "steps": [
+    { "type": "extract", "from": "url.path", "pattern": "^/([^/]+)/[^/]+/issues/\\d+", "into": "owner" },
+    { "type": "extract", "from": "url.path", "pattern": "^/[^/]+/([^/]+)/issues/\\d+", "into": "repo" },
+    { "type": "extract", "from": "url.path", "pattern": "^/[^/]+/[^/]+/issues/(\\d+)", "into": "number" },
+    {
+      "type": "http",
+      "url": "https://api.github.com/repos/{{ vars.owner }}/{{ vars.repo }}/issues/{{ vars.number }}",
+      "into": "api",
+      "optional": true
+    },
+    { "type": "jsonPath", "from": "vars.api", "path": "$.title", "into": "api_title", "optional": true },
+    { "type": "jsonPath", "from": "vars.api", "path": "$.state", "into": "state", "optional": true },
+    { "type": "http", "url": "{{ input.url }}", "into": "page", "optional": true },
+    { "type": "htmlMeta", "from": "vars.page", "into": "meta", "optional": true },
+    {
+      "type": "extract",
+      "from": "vars.meta_title",
+      "pattern": "^(.+?)(?: by [^·]+)? · Issue #\\d+",
+      "into": "page_title",
+      "optional": true
+    },
+    {
+      "type": "createItem",
+      "itemType": "todo",
+      "title": "[{{ vars.repo }}#{{ vars.number }}] {{ vars.api_title | default(vars.page_title) | default(\"\") | truncate(120) }}",
+      "content": "{{ input.url }}",
+      "inInbox": true,
+      "sourceLabel": "GitHub · {{ vars.owner }}/{{ vars.repo }}#{{ vars.number }}",
+      "metadata": {
+        "integration": "github",
+        "kind": "issue",
+        "owner": "{{ vars.owner }}",
+        "repo": "{{ vars.repo }}",
+        "number": "{{ vars.number }}",
+        "state": "{{ vars.state | default(\"\") }}"
+      }
+    }
+  ]
+}
