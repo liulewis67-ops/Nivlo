@@ -170,6 +170,14 @@ export const commands = {
 	 */
 	setWeekStart: (weekStart: WeekStartDto) => typedError<null, IpcError>(__TAURI_INVOKE("set_week_start", { weekStart })),
 	/**
+	 *  记录首次运行引导看过了（`true`）或让它下次重新出现（`false`，设置页的「重新查看引导」）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  存储失败时返回 [`IpcError`]。
+	 */
+	setOnboardingCompleted: (completed: boolean) => typedError<null, IpcError>(__TAURI_INVOKE("set_onboarding_completed", { completed })),
+	/**
 	 *  暂停或恢复系统通知（与托盘的「暂停通知」同一个开关）。
 	 * 
 	 *  暂停期间到点的提醒不会丢：恢复后作为「错过的提醒」通知（多了就合并成一条汇总）。
@@ -505,6 +513,8 @@ export type AppSettingsDto = {
 	weekStart: WeekStartDto,
 	/**  是否暂停系统通知（托盘「暂停通知」）。 */
 	notificationsPaused: boolean,
+	/**  是否已经看过（或跳过）首次运行引导。 */
+	onboardingCompleted: boolean,
 };
 
 /**  附件（IPC 表示）。 */

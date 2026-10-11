@@ -166,6 +166,8 @@ export interface IpcClient {
    * 以及还没有安排日期的待办。范围由后端按「一周从哪天开始」的设置计算。
    */
   getCalendar(request: CalendarRequest): Promise<CalendarDto>;
+  /** 记录首次运行引导看过了（`true`），或让它下次重新出现（`false`）。 */
+  setOnboardingCompleted(completed: boolean): Promise<void>;
   /** 修改日历一周从哪天开始。 */
   setWeekStart(weekStart: WeekStartDto): Promise<void>;
   /**
@@ -351,6 +353,9 @@ const tauriIpc: IpcClient = {
     await call("set_later_rule", commands.setLaterRule(rule));
   },
   getCalendar: (request) => call("get_calendar", commands.getCalendar(request)),
+  setOnboardingCompleted: async (completed) => {
+    await call("set_onboarding_completed", commands.setOnboardingCompleted(completed));
+  },
   setNotificationsPaused: async (paused) => {
     await call("set_notifications_paused", commands.setNotificationsPaused(paused));
   },
@@ -471,6 +476,7 @@ export const ipc: IpcClient = {
   getCalendar: (request) => current.getCalendar(request),
   setWeekStart: (weekStart) => current.setWeekStart(weekStart),
   setNotificationsPaused: (paused) => current.setNotificationsPaused(paused),
+  setOnboardingCompleted: (completed) => current.setOnboardingCompleted(completed),
   deleteItems: (ids) => current.deleteItems(ids),
   restoreDeletedItems: (ids) => current.restoreDeletedItems(ids),
   listTrash: () => current.listTrash(),

@@ -1072,6 +1072,8 @@ pub struct AppSettingsDto {
     pub week_start: WeekStartDto,
     /// 是否暂停系统通知（托盘「暂停通知」）。
     pub notifications_paused: bool,
+    /// 是否已经看过（或跳过）首次运行引导。
+    pub onboarding_completed: bool,
 }
 
 /// 一周从哪天开始（IPC 表示）。

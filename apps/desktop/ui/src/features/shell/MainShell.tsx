@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
@@ -6,6 +7,7 @@ import { DevConsole } from "@/features/dev-console";
 import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { NotesPage } from "@/features/notes";
+import { OnboardingDialog } from "@/features/onboarding";
 import { ProjectsPage } from "@/features/projects";
 import { CommandPalette } from "@/features/search";
 import { SettingsPage } from "@/features/settings";
@@ -13,6 +15,8 @@ import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { TrashPage } from "@/features/trash";
 import { cx } from "@/lib/cx";
+import { queryKeys } from "@/lib/query-keys";
+import { reportError } from "@/lib/report-error";
 import { NavIcon } from "./NavIcons";
 import { parseMainView, useNavStore } from "./nav-store";
 import type { MainView } from "./nav-store";
@@ -91,6 +95,12 @@ export function MainShell() {
   const [openId, setOpenId] = useState<string | null>(null);
   /** 搜索面板（Ctrl+K）是否打开。 */
   const [searching, setSearching] = useState(false);
+  const queryClient = useQueryClient();
+  const settings = useQuery({
+    queryKey: queryKeys.appSettings(),
+    queryFn: () => ipc.getAppSettings(),
+    staleTime: Infinity,
+  });
 
   // Ctrl+K（macOS 上 ⌘K）打开 / 关闭搜索面板。
   useEffect(() => {
@@ -197,6 +207,18 @@ export function MainShell() {
           {view === "settings" && <SettingsPage />}
           {view === "calendar" && <CalendarPage />}
         </main>
+        {settings.data?.onboardingCompleted === false && (
+          <OnboardingDialog
+            onFinish={() => {
+              // 先在界面上收起，再保存；保存失败也不会再次弹出打扰（下次启动才会重试）。
+              queryClient.setQueryData(queryKeys.appSettings(), {
+                ...settings.data,
+                onboardingCompleted: true,
+              });
+              ipc.setOnboardingCompleted(true).catch(reportError);
+            }}
+          />
+        )}
         {searching && <CommandPalette onClose={() => setSearching(false)} onOpenItem={setOpenId} />}
         {openId !== null && (
           <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />

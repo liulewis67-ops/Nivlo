@@ -74,6 +74,7 @@ macro_rules! bindings_builder {
                 $crate::commands::settings::set_later_rule,
                 $crate::commands::calendar::get_calendar,
                 $crate::commands::settings::set_week_start,
+                $crate::commands::settings::set_onboarding_completed,
                 $crate::commands::settings::set_notifications_paused::<$runtime>,
                 $crate::commands::organize::list_projects,
                 $crate::commands::organize::create_project,

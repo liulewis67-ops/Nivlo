@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Switch } from "@/components";
+import { Button, Switch } from "@/components";
 import { ShortcutSetting } from "@/features/shortcut";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
@@ -213,6 +213,22 @@ export function SettingsPage() {
                 })
               }
             />
+          </Row>
+        </Section>
+        <Section title={t("settings.onboarding.label")}>
+          <Row label={t("settings.onboarding.label")} hint={t("settings.onboarding.hint")}>
+            <Button
+              size="sm"
+              disabled={current === undefined}
+              onClick={() =>
+                change.mutate({
+                  patch: { onboardingCompleted: false },
+                  apply: () => ipc.setOnboardingCompleted(false),
+                })
+              }
+            >
+              {t("settings.onboarding.replay")}
+            </Button>
           </Row>
         </Section>
         <Section title={t("settings.section.schedule")}>

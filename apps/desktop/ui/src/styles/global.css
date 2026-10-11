@@ -115,3 +115,34 @@ html[data-window="floating"] body {
 .nv-drop-zone {
   animation: nv-drop-in var(--nv-duration-fast, 120ms) var(--nv-ease-standard);
 }
+
+/* 首次运行引导里的小动效：徽标呼吸、输入光标闪烁；只在用户没有要求减少动态效果时播放。 */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes nv-onboarding-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes nv-onboarding-caret {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .nv-onboarding-pulse {
+    animation: nv-onboarding-pulse 2.4s var(--nv-ease-standard) infinite;
+  }
+
+  .nv-onboarding-caret {
+    animation: nv-onboarding-caret 1s steps(1) infinite;
+  }
+}

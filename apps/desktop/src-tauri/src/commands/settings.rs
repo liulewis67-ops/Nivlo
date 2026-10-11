@@ -46,12 +46,19 @@ pub async fn get_app_settings<R: Runtime>(
     let later_rule = state.services.settings.later_rule().await?;
     let week_start = state.services.settings.week_start().await?;
     let notifications_paused = state.runtime.scheduler_control().is_paused();
+    let onboarding_completed = state
+        .services
+        .settings
+        .get(keys::ONBOARDING_COMPLETED)
+        .await?
+        .is_some_and(|value| value == "true");
     Ok(AppSettingsDto {
         autostart,
         floating_always_on_top: always_on_top,
         later_rule: later_rule.into(),
         week_start: week_start.into(),
         notifications_paused,
+        onboarding_completed,
     })
 }
 
@@ -168,5 +175,27 @@ pub async fn set_notifications_paused<R: Runtime>(
     paused: bool,
 ) -> Result<(), IpcError> {
     crate::scheduling::set_paused(&app, &state, paused).await?;
+    Ok(())
+}
+
+/// 记录首次运行引导看过了（`true`）或让它下次重新出现（`false`，设置页的「重新查看引导」）。
+///
+/// # Errors
+///
+/// 存储失败时返回 [`IpcError`]。
+#[tauri::command]
+#[specta::specta]
+pub async fn set_onboarding_completed(
+    state: State<'_, AppState>,
+    completed: bool,
+) -> Result<(), IpcError> {
+    state
+        .services
+        .settings
+        .set(
+            keys::ONBOARDING_COMPLETED,
+            if completed { "true" } else { "false" },
+        )
+        .await?;
     Ok(())
 }

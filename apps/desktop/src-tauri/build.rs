@@ -21,6 +21,7 @@ const COMMANDS: &[&str] = &[
     "set_later_rule",
     "get_calendar",
     "set_week_start",
+    "set_onboarding_completed",
     "set_notifications_paused",
     "list_projects",
     "create_project",

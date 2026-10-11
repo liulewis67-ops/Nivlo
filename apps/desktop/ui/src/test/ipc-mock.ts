@@ -92,6 +92,8 @@ export interface MemoryIpc extends IpcClient {
   failNextUpdateWith(error: AppError): void;
   /** 设置页的当前设置。 */
   readonly appSettings: AppSettingsDto;
+  /** 让首次运行引导出现（模拟全新安装）。 */
+  showOnboarding(): void;
   /** 让下一次修改设置的调用抛出的错误（模拟系统拒绝）；触发后自动清除。 */
   failNextSettingWith(error: AppError): void;
   /** 当前保存的全部项目（含已归档，按创建顺序）。 */
@@ -235,6 +237,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     laterRule: "nextMonday" as LaterRuleDto,
     weekStart: "monday" as WeekStartDto,
     notificationsPaused: false,
+    // 测试默认「已经看过引导」，避免它盖住被测界面；需要时用 `showOnboarding()` 打开。
+    onboardingCompleted: true,
   };
   let settingFailure: AppError | undefined;
   /** 回收站：Item ID → 删除时间（ISO）。 */
@@ -931,6 +935,14 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     get appSettings() {
       return appSettings;
+    },
+    showOnboarding: () => {
+      appSettings = { ...appSettings, onboardingCompleted: false };
+    },
+    setOnboardingCompleted: (completed: boolean) => {
+      calls.push("setOnboardingCompleted");
+      appSettings = { ...appSettings, onboardingCompleted: completed };
+      return Promise.resolve();
     },
     setNotificationsPaused: (paused: boolean) => {
       calls.push("setNotificationsPaused");
