@@ -4,6 +4,7 @@ import { ipc } from "@/lib/ipc";
 import { DevConsole } from "@/features/dev-console";
 import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
+import { NotesPage } from "@/features/notes";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { cx } from "@/lib/cx";
@@ -129,15 +130,14 @@ export function MainShell() {
         </aside>
         <main className="min-h-0 min-w-0 overflow-hidden">
           {view === "inbox" && <InboxPage />}
+          {view === "notes" && <NotesPage />}
           {view === "today" && <TodayPage />}
           {view === "dev" && (
             <div className="h-full overflow-y-auto">
               <DevConsole />
             </div>
           )}
-          {(view === "calendar" || view === "notes" || view === "projects") && (
-            <ComingSoon view={view} />
-          )}
+          {(view === "calendar" || view === "projects") && <ComingSoon view={view} />}
         </main>
         {openId !== null && (
           <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />

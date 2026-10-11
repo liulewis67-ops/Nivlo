@@ -6,6 +6,6 @@ mod storage;
 pub use files::{AttachmentFiles, StoredFile};
 
 pub use storage::{
-    AttachmentRepository, ItemFilter, ItemRepository, SettingsRepository, SourceRepository,
-    StorageError, TodayOrderRepository, Transaction, UnitOfWork,
+    AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, SettingsRepository,
+    SourceRepository, StorageError, TodayOrderRepository, Transaction, UnitOfWork,
 };

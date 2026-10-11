@@ -32,6 +32,20 @@
     "kind": { "todo": "待办", "note": "笔记", "tip": "提示" },
     "input": { "label": "标题", "placeholder": "输入标题，回车创建，Tab 换类型" }
   },
+  "notes": {
+    "label": "笔记",
+    "listLabel": "笔记列表",
+    "editor": "笔记编辑区",
+    "new": "+ 新笔记",
+    "untitled": "未命名笔记",
+    "noContent": "没有内容",
+    "characters": "{{count}} 字",
+    "empty": {
+      "list": "还没有笔记。",
+      "title": "还没有笔记",
+      "hint": "随手记下的想法和长文都收在这里。点「新笔记」先写下来，以后再整理。"
+    }
+  },
   "detail": {
     "label": "条目详情",
     "title": "详情",
@@ -146,7 +160,6 @@
     },
     "comingSoon": {
       "calendar": "把待办拖到某一天，安排接下来的日子。",
-      "notes": "随手记下的想法和长文，都收在这里。",
       "projects": "把相关的待办与笔记归到一个项目里。"
     }
   },

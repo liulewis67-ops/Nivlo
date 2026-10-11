@@ -7,6 +7,8 @@ export const queryKeys = {
   items: () => ["items"] as const,
   /** 带过滤条件的 Item 列表。 */
   itemList: (filter: { includeArchived: boolean }) => ["items", "list", filter] as const,
+  /** Notes 列表（最近更新的在前，未归档）；属于 `items` 前缀，Item 变化时会一起失效。 */
+  notes: () => ["items", "notes"] as const,
   /** Today 视图（待办 / 提示 / 今日已完成）。 */
   today: () => ["today"] as const,
   /** Inbox 列表（等待整理的 Item，含来源与附件）。 */

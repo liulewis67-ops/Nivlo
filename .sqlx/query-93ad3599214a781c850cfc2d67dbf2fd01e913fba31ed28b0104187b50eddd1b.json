@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE (?1 IS NULL OR type = ?1)\n               AND (?2 = 1 OR archived_at IS NULL)\n               AND (?3 = 0 OR in_inbox = 1)\n             ORDER BY created_at DESC, id DESC\n             LIMIT ?4",
+  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE (?1 IS NULL OR type = ?1)\n               AND (?2 = 1 OR archived_at IS NULL)\n               AND (?3 = 0 OR in_inbox = 1)\n             ORDER BY CASE WHEN ?4 = 1 THEN updated_at ELSE created_at END DESC, id DESC\n             LIMIT ?5",
   "describe": {
     "columns": [
       {
@@ -95,7 +95,7 @@
       }
     ],
     "parameters": {
-      "Right": 4
+      "Right": 5
     },
     "nullable": [
       false,
@@ -118,5 +118,5 @@
       true
     ]
   },
-  "hash": "1e2d7edd67bd43d1214eb4bd10aa6a025bb65aa082c03fd07d429cb10ffeb04c"
+  "hash": "93ad3599214a781c850cfc2d67dbf2fd01e913fba31ed28b0104187b50eddd1b"
 }

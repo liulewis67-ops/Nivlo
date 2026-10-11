@@ -6,8 +6,8 @@
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_application::ports::{
-    AttachmentRepository, ItemFilter, ItemRepository, SettingsRepository, SourceRepository,
-    StorageError, TodayOrderRepository, Transaction,
+    AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, SettingsRepository,
+    SourceRepository, StorageError, TodayOrderRepository, Transaction,
 };
 use nivlo_domain::attachment::{Attachment, AttachmentKind};
 use nivlo_domain::id::{AttachmentId, ItemId, ProjectId, SourceId};
@@ -363,6 +363,7 @@ impl ItemRepository for SqliteTransaction {
         let item_type = filter.item_type.map(|t| t.as_str());
         let include_archived = i64::from(filter.include_archived);
         let in_inbox_only = i64::from(filter.in_inbox_only);
+        let by_updated = i64::from(matches!(filter.order, ItemOrder::UpdatedDesc));
         // SQLite 中 LIMIT -1 表示不限制。
         let limit = filter.limit.map_or(-1_i64, i64::from);
         // created_at 为固定宽度文本，排序即时间序；id（UUIDv7）作为同一毫秒内的稳定次序。
@@ -375,11 +376,12 @@ impl ItemRepository for SqliteTransaction {
              WHERE (?1 IS NULL OR type = ?1)
                AND (?2 = 1 OR archived_at IS NULL)
                AND (?3 = 0 OR in_inbox = 1)
-             ORDER BY created_at DESC, id DESC
-             LIMIT ?4",
+             ORDER BY CASE WHEN ?4 = 1 THEN updated_at ELSE created_at END DESC, id DESC
+             LIMIT ?5",
             item_type,
             include_archived,
             in_inbox_only,
+            by_updated,
             limit
         )
         .fetch_all(&mut *self.tx)

@@ -1,21 +1,16 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Textarea } from "@/components";
 import { cx } from "@/lib/cx";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
-import type { ContentFormatDto, InboxEntryDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
+import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
-import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
-import { buildPatch, dropSaved, toDraft } from "./model/item-draft";
-import type { ItemDraft } from "./model/item-draft";
 import { SourceSection } from "./SourceSection";
+import { useItemDraft } from "./use-item-draft";
 
-/** 停止输入多久之后自动保存（毫秒）。 */
-export const AUTOSAVE_DELAY_MS = 700;
+export { AUTOSAVE_DELAY_MS } from "./use-item-draft";
 
 /** 类型选项，按展示顺序。 */
 const TYPES: ItemTypeDto[] = ["todo", "note", "tip"];
@@ -25,9 +20,6 @@ const PRIORITIES: PriorityDto[] = ["none", "low", "medium", "high"];
 
 /** 内容格式选项。 */
 const FORMATS: ContentFormatDto[] = ["plain", "markdown"];
-
-/** 保存状态。 */
-type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 /** [`ItemDetailPanel`] 的 Props。 */
 export type ItemDetailPanelProps = {
@@ -129,82 +121,8 @@ function Field({ label, children }: FieldProps) {
  */
 export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const detailKey = queryKeys.itemDetail(id);
-  const query = useQuery({
-    queryKey: detailKey,
-    queryFn: () => ipc.getItemDetail(id),
-    staleTime: 0,
-  });
-  const item = query.data?.item;
-
-  /** 尚未保存的修改（覆盖在后端数据之上）。 */
-  const [edits, setEdits] = useState<Partial<ItemDraft>>({});
-  const [status, setStatus] = useState<SaveStatus>("idle");
-  const [problem, setProblem] = useState<string | null>(null);
-  const draft: ItemDraft | null = item === undefined ? null : { ...toDraft(item), ...edits };
-  const patch = item === undefined || draft === null ? null : buildPatch(item, draft);
-
-  /** 最新的 Item 与草稿，供异步保存与卸载时的保存读取（避免闭包里拿到过期值）。 */
-  const latestRef = useRef<{ item: typeof item; draft: ItemDraft | null }>({ item, draft });
-  const savingRef = useRef(false);
-  useEffect(() => {
-    latestRef.current = { item, draft };
-  });
-
-  /** 保存：发送相对后端数据的差异；成功后去掉已保存的字段，失败时保留一切并说明原因。 */
-  async function save(): Promise<void> {
-    const { item: current, draft: sent } = latestRef.current;
-    if (current === undefined || sent === null || savingRef.current) return;
-    const request = buildPatch(current, sent);
-    if (request === null) return;
-    savingRef.current = true;
-    setStatus("saving");
-    try {
-      const saved = await ipc.updateItem(id, request);
-      queryClient.setQueryData<InboxEntryDto>(detailKey, (old) =>
-        old === undefined ? old : { ...old, item: saved },
-      );
-      setEdits((previous) => dropSaved(previous, sent));
-      setStatus("saved");
-      setProblem(null);
-    } catch (error) {
-      setStatus("error");
-      setProblem(errorMessage(toAppError(error)));
-    } finally {
-      savingRef.current = false;
-    }
-  }
-  const saveRef = useRef(save);
-  useEffect(() => {
-    saveRef.current = save;
-  });
-
-  // 停止输入一会儿之后自动保存；每次差异变化都重新计时。
-  const patchKey = JSON.stringify(patch);
-  useEffect(() => {
-    if (patchKey === "null") return;
-    const timer = setTimeout(() => void saveRef.current(), AUTOSAVE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [patchKey]);
-
-  // 卸载（关闭面板 / 切换条目）时把还没保存的修改保存掉。
-  useEffect(
-    () => () => {
-      void saveRef.current();
-    },
-    [],
-  );
-
-  /**
-   * 修改一个字段。
-   *
-   * @param change 要覆盖的字段。
-   */
-  function edit(change: Partial<ItemDraft>): void {
-    setEdits((previous) => ({ ...previous, ...change }));
-    if (status === "saved" || status === "error") setStatus("idle");
-  }
+  const { query, detail, draft, status, problem, edit, save } = useItemDraft(id);
+  const item = detail?.item;
 
   /**
    * Esc 关闭面板（在输入框里也一样：自动保存会在卸载时完成）。

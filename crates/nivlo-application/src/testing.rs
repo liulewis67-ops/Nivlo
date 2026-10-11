@@ -17,8 +17,8 @@ use nivlo_domain::source::Source;
 
 use crate::event::EventPublisher;
 use crate::ports::{
-    AttachmentRepository, ItemFilter, ItemRepository, SettingsRepository, SourceRepository,
-    StorageError, TodayOrderRepository, Transaction, UnitOfWork,
+    AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, SettingsRepository,
+    SourceRepository, StorageError, TodayOrderRepository, Transaction, UnitOfWork,
 };
 
 /// 内存数据库中的全部数据。事务开始时整体克隆为工作副本，提交时整体替换。
@@ -277,9 +277,11 @@ impl ItemRepository for FakeTransaction {
             .cloned()
             .collect();
         items.sort_by(|a, b| {
-            b.created_at()
-                .cmp(&a.created_at())
-                .then(b.id().cmp(&a.id()))
+            let (left, right) = match filter.order {
+                ItemOrder::CreatedDesc => (b.created_at(), a.created_at()),
+                ItemOrder::UpdatedDesc => (b.updated_at(), a.updated_at()),
+            };
+            left.cmp(&right).then(b.id().cmp(&a.id()))
         });
         if let Some(limit) = filter.limit {
             items.truncate(limit as usize);

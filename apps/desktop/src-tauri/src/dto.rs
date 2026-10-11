@@ -15,7 +15,7 @@ use nivlo_application::inbox::{
     InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
 };
 use nivlo_application::item::{Patch, RescheduleTarget, UpdateItemInput};
-use nivlo_application::ports::ItemFilter;
+use nivlo_application::ports::{ItemFilter, ItemOrder};
 use nivlo_application::today::{TodayEntry, TodayView};
 use nivlo_domain::attachment::Attachment;
 use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
@@ -514,6 +514,17 @@ pub struct QuickCreateRequest {
     pub title: String,
 }
 
+/// 列表的排序方式（IPC 表示）。
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum ItemOrderDto {
+    /// 创建时间从新到旧（默认）。
+    #[default]
+    Created,
+    /// 最近更新的在前。
+    Updated,
+}
+
 /// 列出 Item 的请求。
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
@@ -522,6 +533,9 @@ pub struct ListItemsRequest {
     pub item_type: Option<ItemTypeDto>,
     /// 是否包含已归档的 Item。
     pub include_archived: bool,
+    /// 排序方式；缺省为创建时间从新到旧。
+    #[serde(default)]
+    pub order_by: ItemOrderDto,
     /// 最多返回的条数。
     pub limit: Option<u32>,
 }
@@ -533,6 +547,10 @@ impl From<ListItemsRequest> for ItemFilter {
             item_type: request.item_type.map(Into::into),
             include_archived: request.include_archived,
             in_inbox_only: false,
+            order: match request.order_by {
+                ItemOrderDto::Created => ItemOrder::CreatedDesc,
+                ItemOrderDto::Updated => ItemOrder::UpdatedDesc,
+            },
             limit: request.limit,
         }
     }

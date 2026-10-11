@@ -8,7 +8,7 @@
 )]
 
 use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
-use nivlo_application::ports::{ItemFilter, StorageError, UnitOfWork};
+use nivlo_application::ports::{ItemFilter, ItemOrder, StorageError, UnitOfWork};
 use nivlo_common::paths::AppPaths;
 use nivlo_domain::id::{ItemId, ProjectId};
 use nivlo_domain::item::{ContentFormat, DatePoint, Item, ItemType, NewItem, Priority};
@@ -751,4 +751,38 @@ async fn in_inbox_only_filter_returns_pending_items_and_ignores_archived() {
         .unwrap();
     let titles: Vec<String> = listed.iter().map(|i| i.title().to_string()).collect();
     assert_eq!(titles, ["待整理"]);
+}
+
+#[tokio::test]
+async fn list_can_order_by_last_update_for_notes() {
+    let (_dir, _path, db) = new_db().await;
+    let first = simple(1, ItemType::Note, "先写的", t(8, 0));
+    let second = simple(2, ItemType::Note, "后写的", t(9, 0));
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&first).await.unwrap();
+    tx.items().insert(&second).await.unwrap();
+    // 先写的那条之后被修改过：按更新时间排序时它排在最前，按创建时间排序时仍在后面。
+    let mut edited = first.clone();
+    edited.rename("先写的（改过）", t(12, 0)).unwrap();
+    tx.items().update(&edited).await.unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let titles = |items: Vec<Item>| {
+        items
+            .iter()
+            .map(|i| i.title().to_string())
+            .collect::<Vec<_>>()
+    };
+    let by_created = tx.items().list(&ItemFilter::default()).await.unwrap();
+    assert_eq!(titles(by_created), ["后写的", "先写的（改过）"]);
+    let by_updated = tx
+        .items()
+        .list(&ItemFilter {
+            order: ItemOrder::UpdatedDesc,
+            ..ItemFilter::default()
+        })
+        .await
+        .unwrap();
+    assert_eq!(titles(by_updated), ["先写的（改过）", "后写的"]);
 }

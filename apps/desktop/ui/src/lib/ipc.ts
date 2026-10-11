@@ -21,6 +21,7 @@ import type {
 import { toAppError } from "./errors";
 
 export type {
+  ItemOrderDto,
   AttachmentDto,
   CaptureInputDto,
   CaptureOriginDto,

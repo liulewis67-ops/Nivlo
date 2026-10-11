@@ -497,6 +497,13 @@ export type ItemDto = {
 	archivedAt: string | null,
 };
 
+/**  列表的排序方式（IPC 表示）。 */
+export type ItemOrderDto = 
+/**  创建时间从新到旧（默认）。 */
+"created" | 
+/**  最近更新的在前。 */
+"updated";
+
 /**  Item 状态。 */
 export type ItemStatusDto = 
 /**  未完成。 */
@@ -525,6 +532,8 @@ export type ListItemsRequest = {
 	itemType: ItemTypeDto | null,
 	/**  是否包含已归档的 Item。 */
 	includeArchived: boolean,
+	/**  排序方式；缺省为创建时间从新到旧。 */
+	orderBy?: ItemOrderDto,
 	/**  最多返回的条数。 */
 	limit: number | null,
 };

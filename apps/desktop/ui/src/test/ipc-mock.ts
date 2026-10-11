@@ -805,6 +805,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         .filter((item) => request.includeArchived || item.archivedAt === null)
         .filter((item) => request.itemType === null || item.itemType === request.itemType)
         .reverse();
+      if (request.orderBy === "updated") {
+        visible.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      }
       return Promise.resolve(request.limit === null ? visible : visible.slice(0, request.limit));
     },
     subscribeDataChanges: (onChange: () => void) => {

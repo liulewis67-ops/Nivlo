@@ -91,6 +91,16 @@ pub trait Transaction: Send {
     async fn rollback(self: Box<Self>) -> Result<(), StorageError>;
 }
 
+/// [`ItemRepository::list`] 的排序方式。
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum ItemOrder {
+    /// 创建时间从新到旧（默认）。
+    #[default]
+    CreatedDesc,
+    /// 最近更新的在前（Notes 列表）。
+    UpdatedDesc,
+}
+
 /// [`ItemRepository::list`] 的过滤条件。
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ItemFilter {
@@ -100,6 +110,8 @@ pub struct ItemFilter {
     pub include_archived: bool,
     /// 只返回仍在 Inbox 中等待整理的 Item（`in_inbox`，D-02）。
     pub in_inbox_only: bool,
+    /// 排序方式。
+    pub order: ItemOrder,
     /// 最多返回的条数；`None` 表示不限制。
     pub limit: Option<u32>,
 }
