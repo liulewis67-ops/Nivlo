@@ -35,10 +35,15 @@ fn vectors() -> Value {
 fn visible_ranges_match_the_shared_vectors() {
     let vectors = vectors();
     for case in vectors["cases"].as_array().unwrap() {
-        let view = match case["view"].as_str().unwrap() {
-            "month" => CalendarView::Month,
-            "week" => CalendarView::Week,
-            other => panic!("未知视图 {other}"),
+        let view_name = case["view"].as_str().unwrap();
+        assert!(
+            ["month", "week"].contains(&view_name),
+            "未知视图 {view_name}"
+        );
+        let view = if view_name == "month" {
+            CalendarView::Month
+        } else {
+            CalendarView::Week
         };
         let week_start = WeekStart::parse(case["weekStart"].as_str().unwrap()).unwrap();
         let (from, to) = visible_range(view, d(case["anchor"].as_str().unwrap()), week_start);
