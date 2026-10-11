@@ -8,7 +8,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { formatDate } from "@/lib/date-format";
 import type { CalendarEntryDto, WeekStartDto } from "@/lib/ipc";
 
 /** Calendar 的视图。 */
@@ -91,12 +91,12 @@ export function shiftAnchor(view: CalendarViewKind, anchor: string, direction: -
  * @returns 标题文字。
  */
 export function titleFor(view: CalendarViewKind, anchor: string, from: string, to: string): string {
-  if (view === "month") return format(parseISO(anchor), "yyyy年M月", { locale: zhCN });
+  if (view === "month") return formatDate(parseISO(anchor), "yearMonth");
   const start = parseISO(from);
   const end = parseISO(to);
   const sameYear = start.getFullYear() === end.getFullYear();
-  const startText = format(start, sameYear ? "M月d日" : "yyyy年M月d日", { locale: zhCN });
-  return `${startText} – ${format(end, sameYear ? "M月d日" : "yyyy年M月d日", { locale: zhCN })}`;
+  const startText = formatDate(start, sameYear ? "monthDay" : "yearMonthDay");
+  return `${startText} – ${formatDate(end, sameYear ? "monthDay" : "yearMonthDay")}`;
 }
 
 /**
@@ -132,7 +132,7 @@ export function visibleRange(
  */
 export function weekdayLabels(from: string): string[] {
   const start = parseISO(from);
-  return Array.from({ length: 7 }, (_, i) => format(addDays(start, i), "eee", { locale: zhCN }));
+  return Array.from({ length: 7 }, (_, i) => formatDate(addDays(start, i), "weekdayShort"));
 }
 
 /**
@@ -143,7 +143,5 @@ export function weekdayLabels(from: string): string[] {
  */
 export function dayLabel(date: string): string {
   const parsed = parseISO(date);
-  return parsed.getDate() === 1
-    ? format(parsed, "M月d日", { locale: zhCN })
-    : String(parsed.getDate());
+  return parsed.getDate() === 1 ? formatDate(parsed, "monthDay") : String(parsed.getDate());
 }

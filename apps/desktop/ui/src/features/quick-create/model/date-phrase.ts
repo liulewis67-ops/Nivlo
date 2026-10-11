@@ -1,5 +1,6 @@
 import { addDays, format, getDay, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import i18next from "i18next";
+import { formatDate } from "@/lib/date-format";
 
 /** 解析出的日期 + 可选时间（本地日历日期，不含时区）。 */
 export type ParsedSchedule = {
@@ -453,8 +454,10 @@ function tidy(raw: string): string {
  */
 function describe(date: Date, time: string | null, today: Date): string {
   const days = Math.round((date.getTime() - today.getTime()) / 86_400_000);
-  const relative = days === 0 ? "今天" : days === 1 ? "明天" : days === 2 ? "后天" : null;
-  const absolute = format(date, "M月d日 EEE", { locale: zhCN });
+  const relativeKey =
+    days === 0 ? "today" : days === 1 ? "tomorrow" : days === 2 ? "dayAfter" : null;
+  const relative = relativeKey === null ? null : i18next.t(`quickCreate.relative.${relativeKey}`);
+  const absolute = formatDate(date, "monthDayWeekdayShort");
   const day = relative === null ? absolute : `${relative} · ${absolute}`;
   return time === null ? day : `${day} ${time}`;
 }

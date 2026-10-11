@@ -1,0 +1,690 @@
+{
+  "app": {
+    "name": "Nivlo"
+  },
+  "common": {
+    "loading": "Loading…"
+  },
+  "toast": {
+    "dismiss": "Dismiss notification"
+  },
+  "theme": {
+    "label": "Theme",
+    "current": "Theme · {{preference}}",
+    "system": "Match system",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "dev": {
+    "title": "Developer console",
+    "quit": "Quit Nivlo",
+    "subtitle": "Phase 0 IPC demo: create and list items to verify the UI → IPC → SQLite path.",
+    "form": {
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter a to-do, note or tip",
+      "typeLabel": "Type",
+      "submit": "Create"
+    },
+    "type": {
+      "todo": "To-do",
+      "note": "Note",
+      "tip": "Tip"
+    },
+    "list": {
+      "heading": "Recent items",
+      "empty": "No items yet — create one first."
+    }
+  },
+  "quickCreate": {
+    "add": {
+      "todo": "+ To-do",
+      "note": "+ Note",
+      "tip": "+ Tip"
+    },
+    "kind": {
+      "todo": "To-do",
+      "note": "Note",
+      "tip": "Tip"
+    },
+    "input": {
+      "label": "Title",
+      "placeholder": "Type a title, Enter to create, Tab to change type"
+    },
+    "parsed": {
+      "label": "Scheduled: {{label}}",
+      "cancel": "Ignore detected date",
+      "hint": "Backspace cancels"
+    },
+    "relative": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "dayAfter": "In 2 days"
+    }
+  },
+  "notes": {
+    "label": "Notes",
+    "listLabel": "Note list",
+    "editor": "Note editor",
+    "new": "+ New note",
+    "untitled": "Untitled note",
+    "noContent": "No content",
+    "empty": {
+      "list": "No notes yet.",
+      "title": "No notes yet",
+      "hint": "Quick thoughts and long text live here. Click “New note” to write something down and organize it later."
+    },
+    "characters_one": "{{count}} character",
+    "characters_other": "{{count}} characters"
+  },
+  "detail": {
+    "label": "Item details",
+    "title": "Details",
+    "close": "Close details",
+    "loading": "Loading…",
+    "retry": "Retry",
+    "saveFailed": "Couldn't save: {{reason}} Your changes are still here and won't be lost.",
+    "status": {
+      "saving": "Saving…",
+      "saved": "Saved"
+    },
+    "contentPlaceholder": "Write something… (Markdown supported)",
+    "format": {
+      "plain": "Plain text",
+      "markdown": "Markdown"
+    },
+    "priority": {
+      "none": "None",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "field": {
+      "type": "Type",
+      "title": "Title",
+      "content": "Description",
+      "format": "Format",
+      "scheduled": "Scheduled",
+      "scheduledDate": "Scheduled (date)",
+      "scheduledTime": "Scheduled time",
+      "due": "Due",
+      "dueDate": "Due (date)",
+      "dueTime": "Due time",
+      "priority": "Priority",
+      "project": "Project",
+      "tags": "Tags",
+      "reminder": "Reminder"
+    },
+    "source": {
+      "label": "Source",
+      "open": "Open in browser",
+      "reveal": "Show in folder",
+      "type": {
+        "web": "Web link",
+        "file": "File",
+        "text": "Text",
+        "image": "Image",
+        "manual": "Created manually"
+      }
+    },
+    "project": {
+      "none": "No project",
+      "archived": "{{name}} (archived)",
+      "missing": "Project no longer exists"
+    },
+    "tags": {
+      "add": "Add a tag, Enter to confirm",
+      "addLabel": "Add tag",
+      "remove": "Remove tag “{{name}}”",
+      "suggestions": "Tag suggestions",
+      "empty": "No tags yet"
+    },
+    "reminder": {
+      "input": "Reminder time",
+      "clear": "Clear reminder",
+      "hint": "You'll get a system notification at that time.",
+      "needDate": "Set a date first to use this preset",
+      "needTime": "Set a specific time first to use this preset",
+      "preset": {
+        "minutes15": "15 minutes before",
+        "hour1": "1 hour before",
+        "sameDay9": "Same day, 9:00",
+        "dayBefore9": "Day before, 9:00"
+      }
+    }
+  },
+  "shortcut": {
+    "label": "Quick Create shortcut",
+    "button": "Quick Create: {{accelerator}}",
+    "conflict": "{{accelerator}} is used by another app, so Quick Create can't use it right now. Please pick another shortcut.",
+    "hint": "Press the new shortcut in the box below. It needs at least one modifier key (Ctrl / Alt / Shift / Win).",
+    "placeholder": "Press a new shortcut…",
+    "input": "New shortcut",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Quick Create shortcut changed to {{accelerator}}",
+    "unusable": {
+      "noModifier": "Needs at least one modifier key (Ctrl / Alt / Shift / Win).",
+      "unsupportedKey": "This key can't be used in a shortcut."
+    }
+  },
+  "inbox": {
+    "page": {
+      "label": "Inbox",
+      "allClear": "All sorted",
+      "pending": "{{count}} to sort"
+    },
+    "toolbar": {
+      "label": "Batch organize",
+      "selectAll": "Select all",
+      "selected": "{{count}} selected"
+    },
+    "select": "Select: {{title}}",
+    "undo": "Undo",
+    "missingFile": "File not found",
+    "action": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "later": "Next Monday",
+      "convert": "Make {{type}}",
+      "convertMenu": "Convert to…",
+      "leave": "Remove from Inbox",
+      "archive": "Archive",
+      "more": "More ways to organize",
+      "moreShort": "More"
+    },
+    "done": {
+      "today": "Scheduled for today ({{count}})",
+      "tomorrow": "Scheduled for tomorrow ({{count}})",
+      "later": "Scheduled for next Monday ({{count}})",
+      "todo": "Converted to to-do ({{count}})",
+      "note": "Converted to note ({{count}})",
+      "tip": "Converted to tip ({{count}})",
+      "leave": "Removed from Inbox ({{count}})",
+      "archive": "Archived ({{count}})"
+    },
+    "empty": {
+      "title": "Your Inbox is empty",
+      "hint": "Drop links, text or images on the floating badge. They land here first, so you can sort them when you have time."
+    }
+  },
+  "capture": {
+    "drop": {
+      "title": "Release to capture",
+      "hint": "Links, text and images go to the Inbox first"
+    },
+    "saving": "Capturing…",
+    "paste": "Paste",
+    "pasted": "Captured: {{title}}",
+    "pastedMany": "Captured {{count}} items",
+    "created": "Created: {{title}}",
+    "createdMany": "Created {{count}} items",
+    "undo": "Undo",
+    "edit": "Edit",
+    "dismiss": "Got it",
+    "failed": "Couldn't capture: {{message}}",
+    "unsupported": {
+      "files": "Dropping files directly isn't supported here yet. Copy the files in your file manager, then click “Paste”.",
+      "empty": "This can't be captured. Try dropping a link, text or an image."
+    }
+  },
+  "floating": {
+    "label": "Nivlo floating badge",
+    "open": "Open the Nivlo main window"
+  },
+  "shell": {
+    "nav": {
+      "label": "Main navigation",
+      "inbox": "Inbox",
+      "today": "Today",
+      "calendar": "Calendar",
+      "notes": "Notes",
+      "projects": "Projects",
+      "dev": "Developer console",
+      "trash": "Trash",
+      "settings": "Settings",
+      "workflows": "Automation"
+    }
+  },
+  "today": {
+    "badge": {
+      "label": "{{count}} to-dos left today"
+    },
+    "panel": {
+      "label": "Today panel",
+      "title": "Today",
+      "openMain": "Open main window",
+      "inbox": "Inbox {{count}}"
+    },
+    "section": {
+      "todos": "To-dos",
+      "tips": "Tips",
+      "completed": "Completed today"
+    },
+    "overdue": "Overdue",
+    "page": {
+      "label": "Today",
+      "progress": "Today's progress",
+      "nothingPlanned": "Nothing planned",
+      "allDone": "All of today's to-dos are done 🎉",
+      "remaining": "{{count}} left",
+      "addLabel": "Add a to-do",
+      "addPlaceholder": "Write something to do today, Enter to add",
+      "emptyHint": "Write your first task in the box above and press Enter."
+    },
+    "complete": "Complete “{{title}}”",
+    "reopen": "Reopen “{{title}}”",
+    "completedToast": "Completed “{{title}}”",
+    "undo": "Undo",
+    "postpone": {
+      "menu": {
+        "today": "Move to today",
+        "tomorrow": "Postpone to tomorrow",
+        "later": "Postpone to next Monday",
+        "inbox": "Put back in Inbox"
+      },
+      "toast": {
+        "today": "“{{title}}” moved to today",
+        "tomorrow": "“{{title}}” postponed to tomorrow",
+        "later": "“{{title}}” postponed to next Monday",
+        "inbox": "“{{title}}” put back in Inbox"
+      },
+      "zone": {
+        "tomorrow": "Tomorrow",
+        "later": "Next Monday",
+        "inbox": "Inbox"
+      },
+      "more": "More actions for “{{title}}”"
+    },
+    "reorder": {
+      "handle": "Drag to reorder “{{title}}”",
+      "instructions": "Press Space to pick up, use the arrow keys to move, press Space again to drop, Esc to cancel.",
+      "picked": "Picked up “{{title}}”.",
+      "moved": "“{{title}}” moved to position {{position}} of {{total}}.",
+      "dropped": "“{{title}}” dropped at position {{position}}.",
+      "cancelled": "Cancelled moving “{{title}}”."
+    },
+    "empty": {
+      "title": "Nothing planned for today",
+      "hint": "Press Ctrl+Shift+Space to add a to-do quickly."
+    },
+    "due": {
+      "overdue": "Past due",
+      "today": "Due today",
+      "tomorrow": "Due tomorrow"
+    }
+  },
+  "menu": {
+    "open": "Open menu"
+  },
+  "error": {
+    "UNKNOWN": "Something went wrong. Please try again later.",
+    "INVALID_INPUT": "That input isn't valid.",
+    "ITEM_NOT_FOUND": "That item couldn't be found — it may have been deleted.",
+    "ITEM_TITLE_EMPTY": "The title can't be empty.",
+    "ITEM_TITLE_TOO_LONG": "The title is too long.",
+    "ITEM_CONTENT_TOO_LONG": "The content is too long.",
+    "ITEM_NOT_COMPLETABLE": "Notes and tips can't be completed.",
+    "ITEM_ALREADY_COMPLETED": "This to-do is already completed.",
+    "ITEM_NOT_COMPLETED": "This to-do isn't completed yet.",
+    "ITEM_ALREADY_ARCHIVED": "This item is already archived.",
+    "ITEM_NOT_ARCHIVED": "This item isn't archived.",
+    "ITEM_ARCHIVED": "This item is archived. Unarchive it first.",
+    "ITEM_FIELD_NOT_APPLICABLE": "This field doesn't apply to this type of item.",
+    "NAME_EMPTY": "The name can't be empty.",
+    "NAME_TOO_LONG": "The name is too long.",
+    "DATA_INCONSISTENT": "Local data is inconsistent. Please export diagnostics and contact the developers.",
+    "STORAGE_CONSTRAINT": "Couldn't save: the data conflicts with existing content.",
+    "STORAGE_UNAVAILABLE": "The local database is temporarily unavailable.",
+    "STORAGE_CORRUPT": "Local data is damaged. Please export diagnostics.",
+    "STORAGE_MIGRATION_FAILED": "The database upgrade failed.",
+    "WINDOW_UNAVAILABLE": "Couldn't open the window. Please check the diagnostics.",
+    "SHORTCUT_INVALID": "That isn't a usable shortcut: it needs at least one modifier key (Ctrl / Alt / Shift / Win) plus a key.",
+    "SHORTCUT_CONFLICT": "That shortcut is used by another app. Try a different one.",
+    "SOURCE_FILE_MISSING": "The file is no longer where it was — it may have been moved or deleted.",
+    "SOURCE_OPEN_FAILED": "Couldn't open this source.",
+    "CLIPBOARD_UNAVAILABLE": "Couldn't read the clipboard — another app may be using it. Please try again.",
+    "CLIPBOARD_EMPTY": "There's nothing to capture on the clipboard. Copy something first.",
+    "PROJECT_NOT_FOUND": "That project no longer exists.",
+    "TAG_NOT_FOUND": "That tag no longer exists.",
+    "TAG_NAME_TAKEN": "A tag with that name already exists. To combine the two, use “Merge into…”.",
+    "WORKFLOW_NOT_FOUND": "That workflow no longer exists.",
+    "WORKFLOW_INVALID": "There's a problem with this workflow's definition. Fix it as indicated, then save again.",
+    "WORKFLOW_READ_ONLY": "Built-in workflows can't be edited directly. Duplicate it first, then edit the copy.",
+    "EXPORT_FAILED": "Export failed. Check the disk space and the folder's write permission, then try again.",
+    "SYSTEM_SETTING_FAILED": "The system didn't allow this change. Try again later, or adjust it in system settings."
+  },
+  "errorAction": {
+    "OPEN_DIAGNOSTICS": "Open diagnostics"
+  },
+  "projects": {
+    "label": "Projects and tags",
+    "sidebar": "Projects and tags navigation",
+    "projects": "Projects",
+    "tags": "Tags",
+    "new": "New project",
+    "newLabel": "New project name",
+    "newPlaceholder": "Project name, Enter to create",
+    "noProjects": "No projects yet",
+    "noTags": "Tags you add to items will show up here.",
+    "count": "{{count}} open",
+    "tagCount": "{{count}}",
+    "menu": "More actions for “{{name}}”",
+    "rename": "Rename",
+    "renameLabel": "New name",
+    "archive": "Archive",
+    "archived": "Project “{{name}}” archived",
+    "merge": "Merge into…",
+    "mergeTitle": "Merge tag “{{name}}” into",
+    "mergeTarget": "Merge target",
+    "mergeConfirm": "Merge",
+    "merged": "Merged “{{from}}” into “{{into}}”",
+    "cancel": "Cancel",
+    "save": "Save",
+    "items": "Item list",
+    "empty": {
+      "title": "This project is empty",
+      "hint": "Open any item and choose this project in its details — it will appear here.",
+      "none": "No projects yet",
+      "noneHint": "Projects keep related to-dos and notes together. Create one, then file items into it.",
+      "tag": "No items with this tag",
+      "pick": "Pick a project or tag"
+    },
+    "complete": "Complete “{{title}}”",
+    "reopen": "Reopen “{{title}}”",
+    "noDate": "Unscheduled"
+  },
+  "search": {
+    "label": "Search",
+    "input": "Search keywords",
+    "placeholder": "Search to-dos, notes and tips…",
+    "hint": "Type keywords to search titles, content and sources.",
+    "empty": "Nothing found for “{{query}}”",
+    "results": "Search results",
+    "keys": "↑↓ select   ↵ open   Esc close",
+    "open": "Search",
+    "group": {
+      "todo": "To-dos",
+      "note": "Notes",
+      "tip": "Tips"
+    },
+    "count_one": "{{count}} result",
+    "count_other": "{{count}} results"
+  },
+  "trash": {
+    "label": "Trash",
+    "list": "Items in the trash",
+    "count": "{{count}}",
+    "empty": "Empty trash",
+    "emptyConfirm": "Click again to empty permanently",
+    "emptyTitle": "The trash is empty",
+    "emptyHint": "Deleted items are kept here for 30 days and can be restored any time.",
+    "deletedAgo": "Deleted {{ago}}",
+    "restore": "Restore “{{title}}”",
+    "restoreShort": "Restore",
+    "purge": "Permanently delete “{{title}}”",
+    "purgeShort": "Delete forever",
+    "purgeConfirm": "Click again to confirm",
+    "restored": "Restored “{{title}}”",
+    "emptied": "Emptied the trash ({{count}})",
+    "delete": "Delete",
+    "deleted": "Deleted “{{title}}” — you can get it back from the trash",
+    "deletedMany": "Deleted {{count}} items — you can get them back from the trash",
+    "daysLeft_one": "{{count}} day until auto-removal",
+    "daysLeft_other": "{{count}} days until auto-removal"
+  },
+  "settings": {
+    "label": "Settings",
+    "title": "Settings",
+    "section": {
+      "general": "General",
+      "floating": "Floating badge",
+      "schedule": "Schedule",
+      "notifications": "Notifications",
+      "data": "Data and diagnostics"
+    },
+    "autostart": {
+      "label": "Launch at startup",
+      "hint": "Nivlo stays at the edge of your screen after startup, ready to catch ideas and to-dos."
+    },
+    "language": {
+      "label": "Language",
+      "hint": "Takes effect immediately.",
+      "zhCN": "简体中文",
+      "en": "English"
+    },
+    "theme": {
+      "label": "Theme",
+      "hint": "Match the system, or fix it to light / dark."
+    },
+    "alwaysOnTop": {
+      "label": "Keep badge on top",
+      "hint": "When on, the floating badge always stays above other windows."
+    },
+    "shortcut": {
+      "label": "Quick Create shortcut",
+      "hint": "Press it in any app to jot down a to-do right away."
+    },
+    "later": {
+      "label": "Which day is “Later”",
+      "hint": "The “Later” buttons on the badge and in the Inbox schedule items for this day.",
+      "nextMonday": "Next Monday",
+      "inThreeDays": "In 3 days",
+      "inOneWeek": "In 7 days"
+    },
+    "saved": "Saved",
+    "loadFailed": "Couldn't load settings.",
+    "weekStart": {
+      "label": "Week starts on",
+      "hint": "Affects the calendar's week and month views.",
+      "monday": "Monday",
+      "sunday": "Sunday"
+    },
+    "pauseNotifications": {
+      "label": "Pause notifications",
+      "hint": "No reminders pop up while paused; due reminders aren't lost — you'll get a summary when you resume. The tray menu has this switch too."
+    },
+    "onboarding": {
+      "label": "Getting started",
+      "hint": "See the basics of Nivlo again.",
+      "replay": "Replay"
+    },
+    "diagnostics": {
+      "label": "Export diagnostics",
+      "hint": "Bundles the runtime environment and recent logs (with content and tokens removed) into one archive to attach when reporting a problem. Your notes, to-dos, clipboard and files are not included.",
+      "action": "Export",
+      "done": "Diagnostics exported: {{path}}"
+    },
+    "exportData": {
+      "label": "Export notes and to-dos",
+      "hint": "Exports plain files any editor can open, including source information. Items in the trash are not exported.",
+      "json": "JSON (complete)",
+      "markdown": "Markdown (single file)",
+      "markdownFiles": "Markdown (one file per item)",
+      "action": "Export",
+      "done": "Exported {{count}} items: {{path}}",
+      "format": "Export format"
+    },
+    "backup": {
+      "label": "Backup",
+      "hint": "Bundles all your data (including workflows and settings) and pasted images into one archive. Your original files and any secrets are not included.",
+      "action": "Create backup",
+      "done": "Backup created: {{path}}"
+    },
+    "restore": {
+      "label": "Restore from backup",
+      "hint": "Choose a backup archive. Your current data is backed up automatically first; the restore takes effect after a restart, and the replaced data stays in the data folder.",
+      "action": "Choose backup…",
+      "readyTitle": "Backup is ready",
+      "readyBody": "Backup created {{created}} (Nivlo {{version}}). After restarting, this data replaces the current data; your current data was backed up to: {{safety}}",
+      "restart": "Restart now"
+    }
+  },
+  "calendar": {
+    "label": "Calendar",
+    "previous": "Previous",
+    "next": "Next",
+    "today": "Today",
+    "viewSwitch": "Switch view",
+    "view": {
+      "month": "Month",
+      "week": "Week"
+    },
+    "due": "Due",
+    "dueChip": "Due date of “{{title}}”",
+    "addOn": "Add a to-do on {{date}}",
+    "newTodo": "New to-do",
+    "newTodoPlaceholder": "Write something, Enter to add",
+    "unscheduled": "Unscheduled",
+    "unscheduledHint": "Drag a to-do onto a day to schedule it.",
+    "unscheduledEmpty": "Nothing unscheduled 🎉",
+    "scheduled": "“{{title}}” scheduled for {{date}}",
+    "more_one": "{{count}} more",
+    "more_other": "{{count}} more"
+  },
+  "onboarding": {
+    "label": "Welcome to Nivlo",
+    "steps": "Getting-started steps",
+    "goTo": "Step {{step}}",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "start": "Get started",
+    "step0": {
+      "title": "Welcome to Nivlo",
+      "body": "Nivlo is a task entry point that lives at the edge of your screen: catch whatever comes to mind now, organize it later. That round badge with a number is Nivlo."
+    },
+    "step1": {
+      "title": "Hover to see today, click to add",
+      "body": "Move the mouse onto the badge and today's tasks unfold. Click “+ To-do”, write one down and press Enter. Tick to complete, drag to reorder, or postpone to tomorrow in one click."
+    },
+    "step2": {
+      "title": "Capture on the go",
+      "body": "Drag web links, selected text or images onto the badge, or copy and click “Paste”. Everything lands in the Inbox first, so you can sort it when you have time."
+    },
+    "step3": {
+      "title": "Schedule in plain language",
+      "body": "Write “tomorrow 3pm review the plan” and Nivlo recognizes the date and time, letting you confirm before adding. In any app, press the shortcut to jot something down right away:"
+    }
+  },
+  "workflows": {
+    "label": "Automation",
+    "tabs": "Automation sections",
+    "tab": {
+      "rules": "Rules",
+      "runs": "Recent runs"
+    },
+    "new": "New rule",
+    "intro": "Captured content goes to the first matching rule: the higher priority number matches first, and the more specific rule wins a tie. Built-in rules are read-only — duplicate one to customize it.",
+    "group": {
+      "builtin": "Built-in",
+      "mine": "Mine"
+    },
+    "groupEmpty": "None yet. Pick a built-in rule and click “Duplicate” to start customizing.",
+    "enable": "Enable {{name}}",
+    "priority": "Priority",
+    "priorityOf": "Priority of {{name}}",
+    "priorityDown": "Lower the priority of {{name}}",
+    "priorityUp": "Raise the priority of {{name}}",
+    "pickTitle": "Pick a rule to view or edit",
+    "pickHint": "Or click “New rule” at the top right. A dry run shows what would be created without writing any data.",
+    "close": "Close",
+    "readOnlyNotice": "Built-in rules can't be edited directly. Click “Duplicate” to get a copy; the copy has a higher priority, so it takes effect before the original.",
+    "matches": "Matches",
+    "matchesComplex": "Complex condition (see the definition below)",
+    "duplicate": "Duplicate",
+    "duplicated": "Duplicated as “{{name}}” — you can edit it now",
+    "save": "Save",
+    "saved": "Saved “{{name}}”",
+    "delete": "Delete",
+    "deleteConfirm": "Click again to delete",
+    "deleted": "Deleted",
+    "editMode": "Edit mode",
+    "mode": {
+      "form": "Form",
+      "json": "JSON"
+    },
+    "formUnavailable": "This definition uses something the form can't represent yet. Please edit it as JSON.",
+    "when": "When this is captured…",
+    "then": "Create…",
+    "steps": "Steps",
+    "templateHint": "You can use these variables: {{vars}}",
+    "field": {
+      "name": "Name",
+      "description": "Description",
+      "itemType": "Create",
+      "title": "Title",
+      "content": "Content",
+      "tags": "Tags",
+      "tagsPlaceholder": "Comma-separated, e.g. read, github",
+      "inInbox": "Put in Inbox first",
+      "scheduledToday": "Schedule for today"
+    },
+    "fieldName": {
+      "input.type": "Input type",
+      "url.host": "URL host",
+      "url.path": "URL path",
+      "url.scheme": "URL scheme",
+      "file.extension": "File extension",
+      "file.name": "File name",
+      "text": "Text content",
+      "source.application": "Source app"
+    },
+    "op": {
+      "equals": "equals",
+      "contains": "contains",
+      "startsWith": "starts with",
+      "endsWith": "ends with",
+      "glob": "matches pattern",
+      "regex": "regex",
+      "exists": "exists"
+    },
+    "condition": {
+      "field": "Field of condition {{n}}",
+      "op": "Comparison of condition {{n}}",
+      "value": "Value of condition {{n}}",
+      "remove": "Remove condition {{n}}",
+      "add": "Add condition"
+    },
+    "dryRun": {
+      "label": "Dry run",
+      "title": "Dry run",
+      "hint": "Enter a sample to see what this rule would create. Nothing is created and no run record is kept.",
+      "kind": "Sample type",
+      "kindText": "Text / URL",
+      "kindFile": "File path",
+      "sample": "Sample",
+      "textPlaceholder": "e.g. https://github.com/a/b/pull/1",
+      "filePlaceholder": "e.g. D:\\Docs\\report.pdf",
+      "run": "Dry run",
+      "wouldCreate": "Would create {{count}}:",
+      "nothing": "This rule produced nothing (a real capture would be saved the default way).",
+      "failed": "Run failed: {{reason}} (a real capture would be saved the default way, nothing is lost)",
+      "inInbox": "Inbox"
+    },
+    "stepOutcome": {
+      "ok": "done",
+      "skipped": "skipped",
+      "failed": "failed"
+    },
+    "runs": {
+      "list": "Recent runs",
+      "emptyTitle": "No runs yet",
+      "emptyHint": "After you capture something that matches a rule, a record appears here (a summary only — never the full content).",
+      "status": {
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "skipped": "No output"
+      },
+      "fellBack": "The rule failed and the capture was saved the default way: {{reason}}",
+      "summary": "Created {{count}} · {{ms}} ms"
+    }
+  },
+  "dateFormat": {
+    "monthDay": "MMM d",
+    "monthDayWeekday": "EEEE, MMM d",
+    "monthDayWeekdayShort": "EEE, MMM d",
+    "yearMonth": "MMMM yyyy",
+    "yearMonthDay": "MMM d, yyyy",
+    "weekdayShort": "eee"
+  }
+}

@@ -1,5 +1,5 @@
-import { formatDistanceToNowStrict, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { parseISO } from "date-fns";
+import { distanceToNow } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
 import { Button, Menu } from "@/components";
 import { useOpenItem } from "@/features/detail";
@@ -105,7 +105,7 @@ export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: In
         dateTime={item.createdAt}
         className="shrink-0 text-xs text-muted tabular-nums group-hover:hidden group-focus-within:hidden"
       >
-        {formatDistanceToNowStrict(parseISO(item.createdAt), { locale: zhCN, addSuffix: true })}
+        {distanceToNow(parseISO(item.createdAt), true)}
       </time>
       <div className="hidden shrink-0 items-center gap-1 group-hover:flex group-focus-within:flex">
         <Button size="sm" variant="secondary" onClick={() => onOrganize("today")}>

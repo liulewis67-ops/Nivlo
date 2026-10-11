@@ -10,8 +10,8 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { parseISO } from "date-fns";
+import { formatDate } from "@/lib/date-format";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -141,7 +141,7 @@ function DayCell({
     <div
       ref={setNodeRef}
       role="gridcell"
-      aria-label={format(parsed, "M月d日 EEEE", { locale: zhCN })}
+      aria-label={formatDate(parsed, "monthDayWeekday")}
       aria-current={isToday ? "date" : undefined}
       className={cx(
         "group relative flex min-h-0 min-w-0 flex-col gap-1 border-r border-b border-border p-1.5",
@@ -166,7 +166,7 @@ function DayCell({
         </span>
         <button
           type="button"
-          aria-label={t("calendar.addOn", { date: format(parsed, "M月d日", { locale: zhCN }) })}
+          aria-label={t("calendar.addOn", { date: formatDate(parsed, "monthDay") })}
           onClick={() => onAdd(true)}
           className="flex size-5 items-center justify-center rounded text-muted opacity-0 transition-opacity duration-(--nv-duration-fast) hover:bg-surface-hover hover:text-text focus-visible:opacity-100 group-hover:opacity-100"
         >
@@ -351,7 +351,7 @@ export function CalendarPage() {
           "success",
           t("calendar.scheduled", {
             title: payload.item.title,
-            date: format(parseISO(date), "M月d日", { locale: zhCN }),
+            date: formatDate(parseISO(date), "monthDay"),
           }),
           UNDO_MS,
           {

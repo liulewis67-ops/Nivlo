@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { formatDistanceToNowStrict, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { parseISO } from "date-fns";
+import { distanceToNow } from "@/lib/date-format";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
@@ -92,7 +92,7 @@ export function NotesPage() {
                       dateTime={note.updatedAt}
                       className="shrink-0 text-xs text-muted tabular-nums"
                     >
-                      {formatDistanceToNowStrict(parseISO(note.updatedAt), { locale: zhCN })}
+                      {distanceToNow(parseISO(note.updatedAt))}
                     </time>
                   </span>
                   <span className="truncate text-xs text-muted">

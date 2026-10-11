@@ -1,6 +1,8 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { setLanguage } from "@/i18n";
+import { formatDate } from "@/lib/date-format";
 import { AppError } from "@/lib/errors";
 import { useThemeStore } from "@/stores/theme-store";
 import { useToastStore } from "@/stores/toast-store";
@@ -160,5 +162,23 @@ describe("设置页：导出、备份与恢复", () => {
     await userEvent.click(await screen.findByRole("button", { name: "选择备份…" }));
     expect(await screen.findByText(/导出失败/)).toBeInTheDocument();
     expect(screen.queryByText("备份已准备好")).not.toBeInTheDocument();
+  });
+});
+
+describe("设置页：语言", () => {
+  afterEach(async () => {
+    await setLanguage("zh-CN");
+  });
+
+  it("切换到 English 后界面文案和日期格式立即变化", async () => {
+    renderWithProviders(<SettingsPage />, createMemoryIpc());
+    await userEvent.selectOptions(await screen.findByLabelText("语言"), "en");
+    expect(
+      await screen.findByRole("heading", { name: "Data and diagnostics" }),
+    ).toBeInTheDocument();
+    expect(formatDate(new Date(2026, 9, 14), "monthDayWeekday")).toBe("Wednesday, Oct 14");
+    expect(window.localStorage.getItem("nivlo.language")).toBe("en");
+    await setLanguage("zh-CN");
+    expect(formatDate(new Date(2026, 9, 14), "monthDayWeekday")).toBe("10月14日 星期三");
   });
 });

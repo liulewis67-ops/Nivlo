@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
+import { isLanguage, setLanguage } from "@/i18n";
 import { ShortcutSetting } from "@/features/shortcut";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
@@ -89,7 +90,7 @@ function Row({ label, hint, children }: RowProps) {
  * @returns 设置页面。
  */
 export function SettingsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const key = queryKeys.appSettings();
   const settings = useQuery({
@@ -155,11 +156,15 @@ export function SettingsPage() {
           <Row label={t("settings.language.label")} hint={t("settings.language.hint")}>
             <select
               aria-label={t("settings.language.label")}
-              value="zh-CN"
-              onChange={() => undefined}
+              value={i18n.language}
+              onChange={(event) => {
+                const next = event.target.value;
+                if (isLanguage(next)) void setLanguage(next);
+              }}
               className="h-9 rounded-md border border-border bg-bg px-2 text-sm text-text"
             >
               <option value="zh-CN">{t("settings.language.zhCN")}</option>
+              <option value="en">{t("settings.language.en")}</option>
             </select>
           </Row>
           <Row label={t("settings.theme.label")} hint={t("settings.theme.hint")}>

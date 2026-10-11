@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNowStrict, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { parseISO } from "date-fns";
+import { distanceToNow } from "@/lib/date-format";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cx } from "@/lib/cx";
@@ -61,10 +61,7 @@ export function RunInspector() {
                 <span className="block truncate text-xs text-muted">{run.inputSummary}</span>
               </span>
               <span className="shrink-0 text-xs tabular-nums text-muted">
-                {formatDistanceToNowStrict(parseISO(run.startedAt), {
-                  locale: zhCN,
-                  addSuffix: true,
-                })}
+                {distanceToNow(parseISO(run.startedAt), true)}
               </span>
             </button>
             {open && (

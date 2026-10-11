@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { differenceInCalendarDays, formatDistanceToNowStrict, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { differenceInCalendarDays, parseISO } from "date-fns";
+import { distanceToNow } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
 import { Button, ConfirmButton } from "@/components";
 import { ipc } from "@/lib/ipc";
@@ -109,10 +109,7 @@ export function TrashPage() {
                     {t(`quickCreate.kind.${entry.item.itemType}`)}
                     {" · "}
                     {t("trash.deletedAgo", {
-                      ago: formatDistanceToNowStrict(parseISO(entry.deletedAt), {
-                        locale: zhCN,
-                        addSuffix: true,
-                      }),
+                      ago: distanceToNow(parseISO(entry.deletedAt), true),
                     })}
                     {" · "}
                     <span className={left <= 3 ? "text-danger" : undefined}>

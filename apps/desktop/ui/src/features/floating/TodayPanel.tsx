@@ -1,5 +1,5 @@
-import { format, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { parseISO } from "date-fns";
+import { formatDate } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { CaptureFeedbackBar } from "@/features/capture";
@@ -71,9 +71,7 @@ export function TodayPanel({
         <h2 className="text-sm font-semibold text-text">
           {t("today.panel.title")}
           <span className="ml-2 font-normal text-muted">
-            {format(view === undefined ? new Date() : parseISO(view.date), "M月d日 EEEE", {
-              locale: zhCN,
-            })}
+            {formatDate(view === undefined ? new Date() : parseISO(view.date), "monthDayWeekday")}
           </span>
         </h2>
         <div className="flex items-center gap-1">

@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { format, parseISO } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { parseISO } from "date-fns";
+import { formatDate } from "@/lib/date-format";
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -66,9 +66,7 @@ export function TodayPage() {
         <div className="flex items-baseline justify-between gap-4">
           <h1 className="text-2xl font-semibold text-text">{t("today.panel.title")}</h1>
           <span className="text-sm text-muted">
-            {format(view === undefined ? new Date() : parseISO(view.date), "M月d日 EEEE", {
-              locale: zhCN,
-            })}
+            {formatDate(view === undefined ? new Date() : parseISO(view.date), "monthDayWeekday")}
           </span>
         </div>
         <div className="flex items-center gap-3">

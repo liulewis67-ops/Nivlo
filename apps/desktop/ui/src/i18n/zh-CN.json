@@ -54,6 +54,11 @@
       "label": "识别到计划：{{label}}",
       "cancel": "取消日期识别",
       "hint": "退格键可取消"
+    },
+    "relative": {
+      "today": "今天",
+      "tomorrow": "明天",
+      "dayAfter": "后天"
     }
   },
   "notes": {
@@ -440,8 +445,9 @@
     },
     "language": {
       "label": "语言",
-      "hint": "更多语言会在后续版本提供。",
-      "zhCN": "简体中文"
+      "hint": "切换后立即生效。",
+      "zhCN": "简体中文",
+      "en": "English"
     },
     "theme": {
       "label": "主题",
@@ -644,7 +650,7 @@
       "kindFile": "文件路径",
       "sample": "样例",
       "textPlaceholder": "例如 https://github.com/a/b/pull/1",
-      "filePlaceholder": "例如 D:文档报告.pdf",
+      "filePlaceholder": "例如 D:\\文档\\报告.pdf",
       "run": "试运行",
       "wouldCreate": "会创建 {{count}} 条：",
       "nothing": "这条规则没有产出任何内容（实际收集时会按默认方式保存）。",
@@ -668,5 +674,13 @@
       "fellBack": "规则失败，已按默认方式保存：{{reason}}",
       "summary": "创建 {{count}} 条 · {{ms}} ms"
     }
+  },
+  "dateFormat": {
+    "monthDay": "M月d日",
+    "monthDayWeekday": "M月d日 EEEE",
+    "monthDayWeekdayShort": "M月d日 EEE",
+    "yearMonth": "yyyy年M月",
+    "yearMonthDay": "yyyy年M月d日",
+    "weekdayShort": "eee"
   }
 }
