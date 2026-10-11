@@ -140,7 +140,7 @@ export function MainShell() {
   return (
     <OpenItemContext.Provider value={setOpenId}>
       <div className="grid h-full grid-cols-[13.5rem_1fr_auto] bg-bg">
-        <aside className="flex min-h-0 flex-col gap-4 border-r border-border bg-surface px-3 py-4">
+        <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-border bg-surface px-3 py-4">
           <div className="flex items-center gap-2 px-2">
             <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
             <span className="text-lg font-semibold tracking-wide text-text">{t("app.name")}</span>

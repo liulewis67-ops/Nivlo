@@ -12,7 +12,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
@@ -40,6 +40,29 @@ const MONTH_CELL_LIMIT = 3;
 
 /** 拖动超过这个距离（px）才算开始拖拽，避免点击被误判成拖拽。 */
 const DRAG_ACTIVATION_DISTANCE_PX = 5;
+
+/** 容器至少这么宽（px）时默认显示「待安排」侧栏，更窄时默认收起，给日期格让出空间。 */
+const WIDE_LAYOUT_PX = 1000;
+
+/**
+ * 监听元素的宽度；没有 `ResizeObserver`（如测试环境）时返回 `null`。
+ *
+ * @param ref 要监听的元素。
+ * @returns 当前宽度（px），或 `null`。
+ */
+function useElementWidth(ref: React.RefObject<HTMLElement | null>): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const element = ref.current;
+    if (element === null || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry !== undefined) setWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
+}
 
 /** 撤销提示停留的时间（毫秒）。 */
 const UNDO_MS = 6000;
@@ -131,7 +154,7 @@ function DayCell({
       <div className="flex items-center justify-between">
         <span
           className={cx(
-            "flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs tabular-nums",
+            "flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs whitespace-nowrap tabular-nums",
             isToday
               ? "bg-primary font-semibold text-primary-contrast"
               : outside
@@ -246,6 +269,10 @@ export function CalendarPage() {
   const [anchor, setAnchor] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [dragging, setDragging] = useState<DragPayload | null>(null);
+  /** 用户手动展开 / 收起「待安排」；`null` 表示跟随宽度。 */
+  const [sideOpen, setSideOpen] = useState<boolean | null>(null);
+  const rootRef = useRef<HTMLElement>(null);
+  const width = useElementWidth(rootRef);
 
   // 第一次取数时用「今天」作为锚点：今天由后端按用户时区给出，前端不自己读系统时间。
   const initial = useQuery({
@@ -270,7 +297,7 @@ export function CalendarPage() {
   );
 
   if (data === undefined || effectiveAnchor === null) {
-    return <section aria-label={t("calendar.label")} className="h-full" />;
+    return <section ref={rootRef} aria-label={t("calendar.label")} className="h-full" />;
   }
   const weeks = buildWeeks(data.from, data.to);
   const groups = groupByDate(data.entries);
@@ -361,8 +388,9 @@ export function CalendarPage() {
   }
 
   const title = titleFor(view, effectiveAnchor, data.from, data.to);
+  const showSide = sideOpen ?? (width === null || width >= WIDE_LAYOUT_PX);
   return (
-    <section aria-label={t("calendar.label")} className="flex h-full min-w-0">
+    <section ref={rootRef} aria-label={t("calendar.label")} className="flex h-full min-w-0">
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
           <div className="flex items-center gap-2">
@@ -387,27 +415,38 @@ export function CalendarPage() {
               {"›"}
             </Button>
           </div>
-          <div
-            role="group"
-            aria-label={t("calendar.viewSwitch")}
-            className="flex rounded-md border border-border bg-bg p-0.5"
-          >
-            {(["month", "week"] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                aria-pressed={view === option}
-                onClick={() => switchView(option)}
-                className={cx(
-                  "h-7 rounded-sm px-3 text-xs transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
-                  view === option
-                    ? "bg-primary font-medium text-primary-contrast"
-                    : "text-muted hover:bg-surface-hover hover:text-text",
-                )}
-              >
-                {t(`calendar.view.${option}`)}
-              </button>
-            ))}
+          <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-pressed={showSide}
+              onClick={() => setSideOpen(!showSide)}
+            >
+              {t("calendar.unscheduled")}
+              <span className="ml-1 text-muted tabular-nums">{data.unscheduled.length}</span>
+            </Button>
+            <div
+              role="group"
+              aria-label={t("calendar.viewSwitch")}
+              className="flex rounded-md border border-border bg-bg p-0.5"
+            >
+              {(["month", "week"] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  aria-pressed={view === option}
+                  onClick={() => switchView(option)}
+                  className={cx(
+                    "h-7 rounded-sm px-3 text-xs transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
+                    view === option
+                      ? "bg-primary font-medium text-primary-contrast"
+                      : "text-muted hover:bg-surface-hover hover:text-text",
+                  )}
+                >
+                  {t(`calendar.view.${option}`)}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
         <DndContext
@@ -424,7 +463,7 @@ export function CalendarPage() {
                   <div
                     key={label}
                     role="columnheader"
-                    className="px-2 py-1.5 text-center text-xs font-medium text-muted"
+                    className="px-2 py-1.5 text-center text-xs font-medium whitespace-nowrap text-muted"
                   >
                     {label}
                   </div>
@@ -457,7 +496,7 @@ export function CalendarPage() {
                 ))}
               </div>
             </div>
-            <Unscheduled items={data.unscheduled} />
+            {showSide && <Unscheduled items={data.unscheduled} />}
           </div>
           <DragOverlay dropAnimation={null}>
             {dragging !== null && (
