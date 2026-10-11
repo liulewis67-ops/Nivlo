@@ -158,3 +158,27 @@ async fn a_failing_workflow_never_loses_the_capture() {
     let runs = f.workflows.recent_runs(1).await.unwrap();
     assert_eq!(runs[0].status, RunStatus::Failed);
 }
+
+#[tokio::test]
+async fn run_records_never_contain_the_full_text_or_url_secrets() {
+    let f = fixture().await;
+    f.capture
+        .capture(request(
+            normalize_text("https://example.com/path?token=SECRET123#frag").unwrap(),
+        ))
+        .await
+        .unwrap();
+    f.capture
+        .capture(request(
+            normalize_text("我的私密笔记内容 password=hunter2").unwrap(),
+        ))
+        .await
+        .unwrap();
+
+    let runs = f.workflows.recent_runs(10).await.unwrap();
+    assert_eq!(runs.len(), 2);
+    let dump = format!("{runs:?}");
+    for secret in ["SECRET123", "hunter2", "私密笔记内容", "frag"] {
+        assert!(!dump.contains(secret), "运行记录泄露了 {secret}");
+    }
+}

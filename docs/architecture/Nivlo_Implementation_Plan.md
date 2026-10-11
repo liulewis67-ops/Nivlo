@@ -138,7 +138,7 @@ Phase 12 Backlog                        → 未排期
 | | 5.3 | Engine、Context 与 Executor Registry | ✅ |
 | | 5.4 | 基础 Step Executor | ✅ |
 | | 5.5 | Capture 接入 Workflow | 🟨 |
-| | 5.6 | Workflow Run 记录与调试 | ⬜ |
+| | 5.6 | Workflow Run 记录与调试 | ✅ |
 | | 5.7 | Workflow 管理 UI | ⬜ |
 | **P6** | 6.1 | HttpPort 与网络权限 | ⬜ |
 | | 6.2 | 内置 Workflow 打包与同步 | ⬜ |
@@ -1044,7 +1044,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 5.6 Workflow Run 记录与调试
 
-- **状态**：⬜
+- **状态**：✅
 - **依赖**：5.5
 - **目标**：实现架构文档 §27 的轻量 Run 记录。
 - **任务**：
@@ -1052,9 +1052,9 @@ Phase 12 Backlog                        → 未排期
   - 输入 / 输出只存脱敏摘要（不存全文）。
   - 有界保留（如最近 500 条或 30 天，可配置），定期清理。
 - **验收标准**：
-  - [ ] 保留策略测试（FakeClock）。
-  - [ ] 测试断言 Run 记录中不包含全文内容与 Token。
-- **完成记录**：—
+  - [x] 保留策略测试（FakeClock）。
+  - [x] 测试断言 Run 记录中不包含全文内容与 Token。
+- **完成记录**：2026-10-11 完成。每次经由 Workflow 的捕获在提交后尽力写入 `workflow_runs` / `workflow_run_steps`（记录失败不影响捕获）；输入只存脱敏摘要（文字只记字数，网址去掉查询串与片段，文件只记文件名）。保留 500 条 / 30 天，启动时与之后每 6 小时清理一次。测试：`run_history_is_bounded_by_count_and_by_age`（FakeClock）、`input_summaries_never_contain_…`、`run_records_never_contain_the_full_text_or_url_secrets`，以及 SQLite 的 `workflow_runs_are_listed_newest_first_…`。偏差：Step 记录始终写入（体量很小），没有单独的 Debug 开关。
 
 ### 5.7 Workflow 管理 UI
 
