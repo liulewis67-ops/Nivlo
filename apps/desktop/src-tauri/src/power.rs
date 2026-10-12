@@ -18,21 +18,38 @@ pub fn on_system_event(control: &Control, kind: &str) {
 }
 
 /// 启动原生事件监听（仅 Windows）；失败只记日志，Scheduler 仍有偏差检测兜底。
-pub fn start(state: &AppState) {
+///
+/// * 休眠恢复 / 时间被改动 → 唤醒 Scheduler（实施计划 10.5）；
+/// * 显示器配置变化 → 悬浮窗重新定位到可见区域（实施计划 10.3）。
+pub fn start(app: &tauri::AppHandle<tauri::Wry>) {
     #[cfg(target_os = "windows")]
     {
         use nivlo_platform_windows::power::{PowerEvent, PowerEventListener};
+        use tauri::Manager;
 
-        let control = state.runtime.scheduler_control();
+        let handle = app.clone();
         let callback = std::sync::Arc::new(move |event: PowerEvent| {
+            let state = handle.state::<AppState>();
             let kind = match event {
                 PowerEvent::Resumed => "resumed",
                 PowerEvent::TimeChanged => "time_changed",
+                PowerEvent::DisplayChanged => {
+                    if let Some(floating) = state.runtime.floating() {
+                        let floating = floating.clone();
+                        tauri::async_runtime::spawn(async move {
+                            floating.on_display_changed().await;
+                        });
+                    }
+                    return;
+                }
             };
-            on_system_event(&control, kind);
+            on_system_event(&state.runtime.scheduler_control(), kind);
         });
         match PowerEventListener::start(callback) {
-            Ok(listener) => state.runtime.keep_alive(Box::new(listener)),
+            Ok(listener) => app
+                .state::<AppState>()
+                .runtime
+                .keep_alive(Box::new(listener)),
             Err(error) => {
                 tracing::warn!(event = "power_listener_failed", %error, "无法监听系统电源事件，改用偏差检测");
             }
@@ -40,6 +57,6 @@ pub fn start(state: &AppState) {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        let _ = state;
+        let _ = app;
     }
 }

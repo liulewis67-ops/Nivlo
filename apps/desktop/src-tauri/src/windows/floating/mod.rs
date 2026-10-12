@@ -71,6 +71,12 @@ pub trait FloatingHandle: Send + Sync {
     /// 窗口调用失败时返回 [`PlatformError`]。
     fn set_always_on_top(&self, enabled: bool) -> Result<(), PlatformError>;
 
+    /// 显示器配置变化（拔掉 / 接上显示器、分辨率或缩放比例改变）：把徽标放回保存位置所在的显示器；
+    /// 那块显示器已经不存在时回到主显示器可见区域。展开期间先收起再重新定位。
+    fn on_display_changed(
+        &self,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>>;
+
     /// 结束文本输入：悬浮窗恢复为不可聚焦，并把焦点还给用户之前的窗口。可以重复调用。
     ///
     /// # Errors
@@ -203,6 +209,25 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
         self.move_to(position)
     }
 
+    /// 显示器配置变化后重新定位（见 [`FloatingHandle::on_display_changed`]）。
+    pub async fn display_changed(&self) {
+        // 展开着的面板外框是按旧的显示器布局算的：先收起，再按保存的位置重新定位。
+        if lock(&self.collapsed).is_some()
+            && let Err(error) = FloatingHandle::collapse(self)
+        {
+            tracing::warn!(event = "floating_display_collapse_failed", %error, "显示器变化时收起悬浮窗失败");
+        }
+        match self.restore_position().await {
+            Ok(()) => tracing::info!(
+                event = "floating_display_changed",
+                "显示器配置变化，悬浮窗已重新定位"
+            ),
+            Err(error) => {
+                tracing::warn!(event = "floating_display_reposition_failed", %error, "显示器变化后重新定位悬浮窗失败");
+            }
+        }
+    }
+
     /// 移动窗口，并记住目标位置以便忽略由此产生的 `Moved` 事件。
     fn move_to(&self, position: Point) -> Result<(), PlatformError> {
         *lock(&self.expected) = Some(position);
@@ -308,6 +333,13 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
     /// 修改置顶：直接交给窗口 Port。
     fn set_always_on_top(&self, enabled: bool) -> Result<(), PlatformError> {
         self.port.set_always_on_top(enabled)
+    }
+
+    /// 显示器配置变化：重新定位。
+    fn on_display_changed(
+        &self,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>> {
+        Box::pin(self.display_changed())
     }
 
     /// 退出前保存位置：等价于立即「结算」一次；展开期间或位置没变时是空操作。

@@ -10,8 +10,8 @@ use std::sync::{Arc, Mutex};
 use nivlo_platform_windows::power::{PowerEvent, PowerEventListener};
 use windows::Win32::Foundation::{HWND, LPARAM, WPARAM};
 use windows::Win32::UI::WindowsAndMessaging::{
-    PBT_APMRESUMEAUTOMATIC, PBT_APMRESUMESUSPEND, PBT_APMSUSPEND, SendMessageW, WM_POWERBROADCAST,
-    WM_TIMECHANGE,
+    PBT_APMRESUMEAUTOMATIC, PBT_APMRESUMESUSPEND, PBT_APMSUSPEND, SendMessageW, WM_DISPLAYCHANGE,
+    WM_POWERBROADCAST, WM_TIMECHANGE,
 };
 
 /// 同步发送消息：`SendMessageW` 跨线程发送时会等窗口过程处理完才返回。
@@ -39,6 +39,7 @@ fn resume_and_time_change_messages_reach_the_callback_and_other_power_messages_d
     send(hwnd, WM_POWERBROADCAST, PBT_APMRESUMEAUTOMATIC as usize);
     send(hwnd, WM_POWERBROADCAST, PBT_APMRESUMESUSPEND as usize);
     send(hwnd, WM_TIMECHANGE, 0);
+    send(hwnd, WM_DISPLAYCHANGE, 32);
     // 进入睡眠的通知不是「恢复」，不应该触发。
     send(hwnd, WM_POWERBROADCAST, PBT_APMSUSPEND as usize);
 
@@ -47,7 +48,8 @@ fn resume_and_time_change_messages_reach_the_callback_and_other_power_messages_d
         [
             PowerEvent::Resumed,
             PowerEvent::Resumed,
-            PowerEvent::TimeChanged
+            PowerEvent::TimeChanged,
+            PowerEvent::DisplayChanged
         ]
     );
     // 释放时线程退出（Drop 会 join；挂住就会让测试超时）。

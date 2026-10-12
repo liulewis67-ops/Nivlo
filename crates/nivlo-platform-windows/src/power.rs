@@ -1,6 +1,8 @@
 //! Windows 的系统电源 / 时钟事件（实施计划 10.5）：休眠恢复（`WM_POWERBROADCAST`）与系统时间被改动
 //! （`WM_TIMECHANGE`）。
 //!
+//! 另外监听显示器配置变化（`WM_DISPLAYCHANGE`，实施计划 10.3）。
+//!
 //! 在一个专用线程里创建一个**隐藏的顶层窗口**并跑消息循环：这两类消息是广播给顶层窗口的，
 //! 消息专用窗口（`HWND_MESSAGE`）收不到。窗口从不显示、不进任务栏。事件回调只负责「通知」
 //! （例如唤醒 Scheduler 去 Reconcile），回调里不做重活。空闲时线程阻塞在 `GetMessageW`，没有任何轮询。
@@ -20,8 +22,8 @@ use windows::Win32::UI::WindowsAndMessaging::{
     CREATESTRUCTW, CreateWindowExW, DefWindowProcW, DestroyWindow, DispatchMessageW, GWLP_USERDATA,
     GetMessageW, GetWindowLongPtrW, MSG, PBT_APMRESUMEAUTOMATIC, PBT_APMRESUMESUSPEND,
     PostMessageW, PostQuitMessage, RegisterClassW, SetWindowLongPtrW, TranslateMessage,
-    WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE, WM_DESTROY, WM_NCCREATE, WM_NCDESTROY,
-    WM_POWERBROADCAST, WM_TIMECHANGE, WNDCLASSW, WS_EX_TOOLWINDOW, WS_OVERLAPPED,
+    WINDOW_EX_STYLE, WINDOW_STYLE, WM_CLOSE, WM_DESTROY, WM_DISPLAYCHANGE, WM_NCCREATE,
+    WM_NCDESTROY, WM_POWERBROADCAST, WM_TIMECHANGE, WNDCLASSW, WS_EX_TOOLWINDOW, WS_OVERLAPPED,
 };
 use windows::core::w;
 
@@ -32,6 +34,8 @@ pub enum PowerEvent {
     Resumed,
     /// 系统时间被用户或时间同步改动。
     TimeChanged,
+    /// 显示器配置变化（拔掉 / 接上显示器、分辨率或缩放比例改变，`WM_DISPLAYCHANGE`）。
+    DisplayChanged,
 }
 
 /// 事件回调（在监听线程上调用，必须很快返回）。
@@ -60,12 +64,13 @@ unsafe extern "system" fn window_proc(
             // SAFETY: 窗口刚创建，把回调指针存进它自己的用户数据槽。
             unsafe { SetWindowLongPtrW(hwnd, GWLP_USERDATA, create.lpCreateParams as isize) };
         }
-        WM_POWERBROADCAST | WM_TIMECHANGE => {
+        WM_POWERBROADCAST | WM_TIMECHANGE | WM_DISPLAYCHANGE => {
             // SAFETY: 用户数据槽里要么是 0（尚未设置 / 已清除），要么是上面存入的有效 `Box<Callback>` 指针。
             let pointer = unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) } as *const Callback;
             if !pointer.is_null() {
                 let event = match message {
                     WM_TIMECHANGE => Some(PowerEvent::TimeChanged),
+                    WM_DISPLAYCHANGE => Some(PowerEvent::DisplayChanged),
                     _ if wparam.0 == PBT_APMRESUMEAUTOMATIC as usize
                         || wparam.0 == PBT_APMRESUMESUSPEND as usize =>
                     {

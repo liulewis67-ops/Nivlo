@@ -623,3 +623,48 @@ async fn the_settings_page_can_change_always_on_top_while_running() {
     f.controller.set_always_on_top(true).unwrap();
     assert_eq!(lock(&f.port.state).always_on_top, Some(true));
 }
+
+#[tokio::test(start_paused = true)]
+async fn unplugging_the_monitor_that_holds_the_badge_moves_it_into_view_within_the_same_call() {
+    let monitors = vec![
+        monitor("DISPLAY1", 0, 1920, true),
+        monitor("DISPLAY2", 1920, 2560, false),
+    ];
+    let saved = serde_json::to_string(&Placement {
+        monitor_id: "DISPLAY2".into(),
+        edge: Some(Edge::Right),
+        x_ratio: 1.0,
+        y_ratio: 0.5,
+    })
+    .unwrap();
+    let f = fixture(monitors, (0, 0), &[(keys::FLOATING_PLACEMENT, &saved)]).await;
+    f.controller.restore().await;
+    assert!(f.port.position().x >= 1920, "徽标先在副显示器上");
+
+    // 拔掉副显示器。
+    lock(&f.port.state).monitors = single();
+    f.controller.display_changed().await;
+    let position = f.port.position();
+    assert!(position.x >= 0 && position.x + 88 <= 1920, "{position:?}");
+    assert!(position.y >= 0 && position.y + 40 <= 1040, "{position:?}");
+
+    // 再接回去：回到保存的副显示器位置。
+    lock(&f.port.state).monitors = vec![
+        monitor("DISPLAY1", 0, 1920, true),
+        monitor("DISPLAY2", 1920, 2560, false),
+    ];
+    f.controller.display_changed().await;
+    assert!(f.port.position().x >= 1920);
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_display_change_while_the_panel_is_expanded_collapses_it_first() {
+    let f = fixture(single(), (1800, 500), &[]).await;
+    f.controller.restore().await;
+    f.controller.expand((320.0, 420.0)).unwrap();
+    assert!(lock(&f.controller.collapsed).is_some());
+    f.controller.display_changed().await;
+    assert!(lock(&f.controller.collapsed).is_none());
+    let position = f.port.position();
+    assert!(position.x >= 0 && position.x + 88 <= 1920);
+}
