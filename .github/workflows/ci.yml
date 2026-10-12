@@ -34,6 +34,11 @@ jobs:
           pnpm test
       # 先构建前端，tauri::generate_context! 需要 frontendDist 存在。
       - run: pnpm build:ui
+      # 视觉回归（实施计划 11.1）：基线是在开发机上生成的，CI 机器的字体 / 渲染可能不同，
+      # 所以先不作为阻塞检查；确认稳定后去掉 continue-on-error，并在 CI 上重新生成基线。
+      - name: Visual regression (non-blocking)
+        continue-on-error: true
+        run: node scripts/visual/visual.mjs
       - name: Rust
         run: |
           cargo fmt --all --check

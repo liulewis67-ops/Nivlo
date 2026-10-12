@@ -16,6 +16,12 @@
     "format:check": "pnpm --filter @nivlo/desktop-ui format:check",
     "typecheck": "pnpm --filter @nivlo/desktop-ui typecheck",
     "test": "pnpm --filter @nivlo/desktop-ui test",
-    "gen:bindings": "cargo run -p nivlo-desktop --example gen_bindings"
+    "gen:bindings": "cargo run -p nivlo-desktop --example gen_bindings",
+    "visual": "node scripts/visual/visual.mjs",
+    "visual:update": "node scripts/visual/visual.mjs --update"
+  },
+  "devDependencies": {
+    "pixelmatch": "^8.0.0",
+    "pngjs": "^7.0.0"
   }
 }

@@ -170,7 +170,7 @@ Phase 12 Backlog                        → 未排期
 | | 10.4 | 来源应用识别 | ⬜ |
 | | 10.5 | 原生电源 / 时钟事件 | ⬜ |
 | | 10.6 | 原生通知激活（点击通知定位 Item） | ⬜ |
-| **P11** | 11.1 | 跨平台 CI 与视觉回归 | ⬜ |
+| **P11** | 11.1 | 跨平台 CI 与视觉回归 | 🟨 |
 | | 11.2 | macOS Adapter | ⬜ |
 | | 11.3 | Linux Adapter | ⬜ |
 
@@ -1592,14 +1592,14 @@ ivlo`（不需要管理员权限，卸载后已确认删除）。原生 Toast �
 
 ### 11.1 跨平台 CI 与视觉回归
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：Phase 7
 - **任务**：
   - macOS / Linux CI 改为阻塞；建立 Windows / macOS / Linux 视觉回归测试（关键页面截图对比）。
 - **验收标准**：
-  - [ ] 三个平台 CI 全部为必需检查且通过。
-  - [ ] 视觉回归覆盖悬浮窗（收起 / 展开）、Today、Inbox、Calendar。
-- **完成记录**：—
+  - [ ] 三个平台 CI 全部为必需检查且通过。**未做**：没有 macOS / Linux 机器或运行器，CI 也从未在 GitHub 上运行过；视觉回归已加进 Windows CI，但因基线来自开发机的字体 / 渲染，暂设为 `continue-on-error`（非阻塞），需要在 CI 上重新生成基线后再改成必需。
+  - [x] 视觉回归覆盖悬浮窗（收起 / 展开）、Today、Inbox、Calendar（另加深色 Today）：`pnpm visual`——真实 Chrome（无头，经 CDP）打开用内存 IPC 的浏览器预览，固定数据与时钟，关闭动效，逐像素对比 `tests/visual/baselines/<平台>/`（pixelmatch，阈值 0.2% 像素）；展开用真实的指针悬停触发。已在 Windows 上生成基线并确认两次运行差异为 0.000%，故意改一个颜色 Token 后 4 个场景失败（退出码 1）、还原后恢复通过。**范围说明**：这测的是前端界面（浏览器预览 + 模拟 IPC），不是 Tauri 窗口里的真实渲染；基线只有 Windows 一套，macOS / Linux 没有。
+- **完成记录**：2026-10-12（进行中）：见上两条验收的说明。脚本 `scripts/visual/visual.mjs`，`pnpm visual:update` 重新生成基线。
 
 ### 11.2 macOS Adapter
 

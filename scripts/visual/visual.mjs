@@ -1,0 +1,211 @@
+#!/usr/bin/env node
+// 视觉回归（实施计划 11.1）：用真实的 Chrome（无头）打开浏览器预览（内存版 IPC，数据固定），
+// 对关键页面截图，与 `tests/visual/baselines/<平台>/` 里的基线逐像素对比。
+//
+// 用法：
+//   node scripts/visual/visual.mjs            对比；有差异时退出码 1，并把差异图写到 tests/visual/diff/
+//   node scripts/visual/visual.mjs --update   重新生成基线
+//
+// 基线按平台分目录（字体与渲染随操作系统不同，不能跨平台共用）。需要 Chrome / Chromium：
+// 设置环境变量 CHROME 指定路径，否则按常见位置查找。预览服务器默认自己启动（pnpm dev:ui）。
+
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import pixelmatch from "pixelmatch";
+import { PNG } from "pngjs";
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+const PLATFORM = process.platform;
+const BASELINES = join(ROOT, "tests", "visual", "baselines", PLATFORM);
+const DIFFS = join(ROOT, "tests", "visual", "diff");
+const UPDATE = process.argv.includes("--update");
+const APP = "http://localhost:1420";
+/** 允许的像素差异比例（抗锯齿 / 亚像素差异）。 */
+const MAX_DIFF_RATIO = 0.002;
+
+/** 找 Chrome。 */
+function chromePath() {
+  const candidates = [
+    process.env.CHROME,
+    "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe",
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium",
+    "/usr/bin/chromium-browser",
+  ].filter(Boolean);
+  const found = candidates.find((p) => existsSync(p));
+  if (!found) throw new Error("找不到 Chrome / Chromium，请设置 CHROME 环境变量");
+  return found;
+}
+
+/** 等待 URL 可访问。 */
+async function waitFor(url, ms = 60000) {
+  const until = Date.now() + ms;
+  while (Date.now() < until) {
+    try {
+      if ((await fetch(url)).ok) return;
+    } catch {
+      /* 还没起来 */
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  throw new Error(`等待 ${url} 超时`);
+}
+
+/** 一个 CDP 会话。 */
+async function connect(wsUrl) {
+  const ws = new WebSocket(wsUrl);
+  await new Promise((r) => (ws.onopen = r));
+  let n = 0;
+  const pending = new Map();
+  ws.onmessage = (m) => {
+    const d = JSON.parse(m.data);
+    if (pending.has(d.id)) {
+      pending.get(d.id)(d);
+      pending.delete(d.id);
+    }
+  };
+  const send = (method, params = {}) =>
+    new Promise((res) => {
+      const id = ++n;
+      pending.set(id, res);
+      ws.send(JSON.stringify({ id, method, params }));
+    });
+  const evaluate = async (expression) => {
+    const r = await send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+    return r.result?.result?.value;
+  };
+  return { send, evaluate, close: () => ws.close() };
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** 点击页面上文本匹配的按钮。 */
+const clickText = (page, text) =>
+  page.evaluate(`(() => { const b=[...document.querySelectorAll('button,[role=button],a')].find(x=>x.textContent.trim()===${JSON.stringify(text)}); if(!b) return false; b.click(); return true; })()`);
+
+/** 场景：名称、视口、地址、截图前的步骤。 */
+const SCENARIOS = [
+  { name: "floating-collapsed", w: 220, h: 100, url: `${APP}/?window=floating`, steps: async () => sleep(800) },
+  {
+    name: "floating-expanded",
+    w: 380,
+    h: 520,
+    url: `${APP}/?window=floating`,
+    steps: async (page) => {
+      await sleep(600);
+      // 真实的指针悬停才会展开（悬浮窗状态机按 pointerenter + 延时判断）。
+      const box = await page.evaluate("(() => { const r = document.querySelector('button').getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()");
+      const [x, y] = box;
+      await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: x - 40, y: y - 40 });
+      await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+      await sleep(1500);
+    },
+  },
+  { name: "main-today", w: 1100, h: 720, url: APP, steps: async (page) => { await sleep(900); await clickText(page, "今天"); await sleep(600); } },
+  { name: "main-inbox", w: 1100, h: 720, url: APP, steps: async (page) => { await sleep(900); await clickText(page, "收集箱"); await sleep(600); } },
+  { name: "main-calendar", w: 1100, h: 720, url: APP, steps: async (page) => { await sleep(900); await clickText(page, "日历"); await sleep(900); } },
+  {
+    name: "main-today-dark",
+    w: 1100,
+    h: 720,
+    url: APP,
+    steps: async (page) => {
+      await page.evaluate("document.documentElement.dataset.theme='dark'");
+      await sleep(900);
+      await clickText(page, "今天");
+      await sleep(600);
+    },
+  },
+];
+
+/** 跳过引导对话框 / 动画：关闭动效，让截图稳定。 */
+const STABILIZE = `
+  const s = document.createElement('style');
+  s.textContent = '*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}';
+  document.head.appendChild(s);
+`;
+
+async function main() {
+  mkdirSync(BASELINES, { recursive: true });
+  let server = null;
+  try {
+    await waitFor(APP, 1500);
+  } catch {
+    server = spawn("pnpm", ["dev:ui"], { cwd: ROOT, shell: true, stdio: "ignore" });
+    await waitFor(APP);
+  }
+  const profile = mkdtempSync(join(tmpdir(), "nivlo-visual-"));
+  const chrome = spawn(chromePath(), [
+    "--headless=new",
+    "--remote-debugging-port=9333",
+    `--user-data-dir=${profile}`,
+    "--hide-scrollbars",
+    "--force-color-profile=srgb",
+    "--disable-gpu",
+    "--no-first-run",
+    "about:blank",
+  ], { stdio: "ignore" });
+  await waitFor("http://127.0.0.1:9333/json/version");
+
+  let failed = 0;
+  try {
+    for (const scenario of SCENARIOS) {
+      const created = await (await fetch(`http://127.0.0.1:9333/json/new?${encodeURIComponent("about:blank")}`, { method: "PUT" })).json();
+      const page = await connect(created.webSocketDebuggerUrl);
+      await page.send("Emulation.setDeviceMetricsOverride", { width: scenario.w, height: scenario.h, deviceScaleFactor: 1, mobile: false });
+      await page.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }, { name: "prefers-reduced-motion", value: "reduce" }] });
+      await page.send("Page.enable");
+      // 把引导对话框标记成已看过，避免它盖住页面。
+      await page.send("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('nivlo.onboarding','done')" });
+      await page.send("Page.navigate", { url: scenario.url });
+      await sleep(1200);
+      await page.evaluate(STABILIZE);
+      await scenario.steps(page);
+      const shot = await page.send("Page.captureScreenshot", { format: "png" });
+      const actual = Buffer.from(shot.result.data, "base64");
+      const file = join(BASELINES, `${scenario.name}.png`);
+      if (UPDATE || !existsSync(file)) {
+        writeFileSync(file, actual);
+        console.log(`${UPDATE ? "更新" : "新建"}基线：${scenario.name}`);
+      } else {
+        const a = PNG.sync.read(readFileSync(file));
+        const b = PNG.sync.read(actual);
+        if (a.width !== b.width || a.height !== b.height) {
+          console.error(`✗ ${scenario.name}：尺寸不同（基线 ${a.width}x${a.height}，当前 ${b.width}x${b.height}）`);
+          failed += 1;
+        } else {
+          const diff = new PNG({ width: a.width, height: a.height });
+          const count = pixelmatch(a.data, b.data, diff.data, a.width, a.height, { threshold: 0.1 });
+          const ratio = count / (a.width * a.height);
+          if (ratio > MAX_DIFF_RATIO) {
+            mkdirSync(DIFFS, { recursive: true });
+            writeFileSync(join(DIFFS, `${scenario.name}.diff.png`), PNG.sync.write(diff));
+            writeFileSync(join(DIFFS, `${scenario.name}.actual.png`), actual);
+            console.error(`✗ ${scenario.name}：${(ratio * 100).toFixed(2)}% 像素不同（见 tests/visual/diff/）`);
+            failed += 1;
+          } else {
+            console.log(`✓ ${scenario.name}（差异 ${(ratio * 100).toFixed(3)}%）`);
+          }
+        }
+      }
+      page.close();
+      await fetch(`http://127.0.0.1:9333/json/close/${created.id}`);
+    }
+  } finally {
+    chrome.kill();
+    if (server) server.kill();
+    await sleep(500);
+    rmSync(profile, { recursive: true, force: true });
+  }
+  process.exit(failed > 0 ? 1 : 0);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(2);
+});
