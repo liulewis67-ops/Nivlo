@@ -1264,14 +1264,14 @@ Phase 12 Backlog                        → 未排期
 
 ### 7.1 Desktop E2E 关键路径
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：Phase 1–6
 - **任务**：
   - 使用 tauri-driver（WebDriver）在 Windows CI 上运行 E2E。
   - 覆盖：应用启动、Hover 悬浮窗、Quick Add、完成 Todo、拖入文件（或通过测试钩子模拟 Drop）、排期。
 - **验收标准**：
   - [ ] 上述 6 条路径在 Windows CI 上稳定通过（连续 10 次无偶发失败）。
-- **完成记录**：—
+- **完成记录**：2026-10-13（进行中）：`tests/e2e/e2e.mjs`（`pnpm e2e`）启动真实的发布版程序（每次全新的临时数据目录），通过 WebView2 调试端口（CDP）驱动，覆盖应用启动、Hover 悬浮窗（真实指针移动展开 Today 面板）、Quick Add、完成 Todo、拖入文件（走原生 Drop 同一个捕获入口 `capture` kind=files，不是真实的资源管理器拖放）、排期，外加通过单实例机制打开主窗口。**本机连续 10 次全部通过。** 偏差：没有用计划里的 tauri-driver（需要另外下载 msedgedriver），改用已在真机验收里用过的 CDP；「在 Windows CI 上连续 10 次」尚未验证（没有 CI / 远端），所以验收项保持未勾选。
 
 ### 7.2 性能预算与长稳验收
 

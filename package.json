@@ -17,6 +17,7 @@
     "typecheck": "pnpm --filter @nivlo/desktop-ui typecheck",
     "test": "pnpm --filter @nivlo/desktop-ui test",
     "gen:bindings": "cargo run -p nivlo-desktop --example gen_bindings",
+    "e2e": "node tests/e2e/e2e.mjs",
     "visual": "node scripts/visual/visual.mjs",
     "visual:update": "node scripts/visual/visual.mjs --update"
   },
