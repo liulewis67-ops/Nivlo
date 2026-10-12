@@ -31,6 +31,8 @@ const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 pub struct Database {
     /// 底层连接池。
     pool: SqlitePool,
+    /// WAL 文件的路径（`<库文件>-wal`），用来查看它有多大。
+    wal_path: std::path::PathBuf,
 }
 
 impl Database {
@@ -59,7 +61,12 @@ impl Database {
             .connect_with(options)
             .await
             .map_err(map_sqlx)?;
-        Ok(Self { pool })
+        let mut wal = path.as_os_str().to_owned();
+        wal.push("-wal");
+        Ok(Self {
+            pool,
+            wal_path: std::path::PathBuf::from(wal),
+        })
     }
 
     /// 当前程序认识的最新 Schema 版本：恢复备份时拒绝比它更新的数据库（来自更新版本的应用）。
@@ -145,7 +152,12 @@ impl Database {
             if verdict != "ok" {
                 return Err(StorageError::Corrupt(verdict));
             }
-            Self { pool: pool.clone() }.schema_version().await
+            Self {
+                pool: pool.clone(),
+                wal_path: std::path::PathBuf::new(),
+            }
+            .schema_version()
+            .await
         }
         .await;
         pool.close().await;
@@ -166,6 +178,28 @@ impl Database {
             .await
             .map(|_| ())
             .map_err(map_sqlx)
+    }
+
+    /// WAL 文件现在有多大（字节）；文件不存在时为 0。
+    #[must_use]
+    pub fn wal_size(&self) -> u64 {
+        std::fs::metadata(&self.wal_path).map_or(0, |m| m.len())
+    }
+
+    /// WAL 超过 `limit` 字节时做一次 [`Database::checkpoint`]，返回是否做了。
+    ///
+    /// 由写入活动触发（见宿主），不需要额外的定时器：大量写入时 WAL 会在界面持续读取的情况下一直增长，
+    /// 超过阈值就立刻截断，而不是等定时检查点。
+    ///
+    /// # Errors
+    ///
+    /// 检查点失败时返回 [`StorageError`]。
+    pub async fn checkpoint_if_wal_exceeds(&self, limit: u64) -> Result<bool, StorageError> {
+        if self.wal_size() <= limit {
+            return Ok(false);
+        }
+        self.checkpoint().await?;
+        Ok(true)
     }
 
     /// 关闭连接池，等待所有连接归还并刷写 WAL。

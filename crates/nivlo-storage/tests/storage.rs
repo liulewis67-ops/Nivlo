@@ -980,3 +980,24 @@ async fn a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_wa
     let after = std::fs::metadata(&wal).map_or(0, |m| m.len());
     assert!(after < 64 * 1024, "检查点之后 WAL 应当被截断：{after}");
 }
+
+#[tokio::test]
+async fn the_wal_is_truncated_only_once_it_passes_the_limit() {
+    let (_dir, _path, db) = new_db().await;
+    let mut reader = db.begin().await.unwrap();
+    let _ = reader.items().list(&ItemFilter::default()).await.unwrap();
+    for n in 0..300_u128 {
+        let mut tx = db.begin().await.unwrap();
+        let item = simple(n + 1, ItemType::Note, "x".repeat(200).as_str(), t(8, 0));
+        tx.items().insert(&item).await.unwrap();
+        tx.commit().await.unwrap();
+    }
+    let size = db.wal_size();
+    assert!(size > 64 * 1024, "写入后 WAL 应当变大：{size}");
+    // 没超过阈值：不动。
+    assert!(!db.checkpoint_if_wal_exceeds(size + 1024 * 1024).await.unwrap());
+    drop(reader);
+    // 超过阈值：截断。
+    assert!(db.checkpoint_if_wal_exceeds(1024).await.unwrap());
+    assert!(db.wal_size() < 64 * 1024);
+}

@@ -299,6 +299,34 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 }
             });
             state.runtime.track_task(wal_maintainer);
+            // 写入活动触发的检查点：每 100 个领域事件看一次 WAL 大小，超过 16 MiB 立刻截断
+            // （大量捕获时界面持续在读，WAL 否则会一路涨到几百 MB）。事件驱动，没有定时器。
+            let database = state.runtime.database();
+            let shutdown = state.runtime.shutdown_token();
+            let mut events = state.runtime.event_bus.subscribe();
+            let wal_guard = tauri::async_runtime::spawn(async move {
+                let mut seen = 0_u32;
+                loop {
+                    tokio::select! {
+                        () = shutdown.cancelled() => return,
+                        received = events.recv() => {
+                            if matches!(received, Err(tokio::sync::broadcast::error::RecvError::Closed)) {
+                                return;
+                            }
+                            seen += 1;
+                            if seen >= 100 {
+                                seen = 0;
+                                match database.checkpoint_if_wal_exceeds(16 * 1024 * 1024).await {
+                                    Ok(true) => tracing::info!(event = "wal_truncated", "WAL 超过阈值，已截断"),
+                                    Ok(false) => {}
+                                    Err(error) => tracing::warn!(event = "wal_checkpoint_failed", %error, "WAL 检查点失败"),
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            state.runtime.track_task(wal_guard);
             // 联网的补全（网页标题与摘要）：一次只做一件，退出时随令牌结束。
             if let Some(mut queue) = state.runtime.take_enrichment_queue() {
                 let capture = state.services.capture.clone();
