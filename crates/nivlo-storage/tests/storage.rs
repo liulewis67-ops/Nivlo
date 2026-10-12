@@ -952,3 +952,31 @@ async fn verification_rejects_files_that_are_not_healthy_databases() {
             .is_err()
     );
 }
+
+#[tokio::test]
+async fn a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_way() {
+    let (_dir, path, db) = new_db().await;
+    let wal = path.with_extension("db-wal");
+    // 一个一直开着的读事务：自动检查点没法重置 WAL，文件只增不减（实测问题）。
+    let mut reader = db.begin().await.unwrap();
+    let _ = reader.items().list(&ItemFilter::default()).await.unwrap();
+    for batch in 0..40_u128 {
+        let mut tx = db.begin().await.unwrap();
+        for n in 0..100_u128 {
+            let item = simple(
+                batch * 100 + n + 1,
+                ItemType::Note,
+                "x".repeat(200).as_str(),
+                t(8, 0),
+            );
+            tx.items().insert(&item).await.unwrap();
+        }
+        tx.commit().await.unwrap();
+    }
+    let before = std::fs::metadata(&wal).map_or(0, |m| m.len());
+    assert!(before > 256 * 1024, "写入后 WAL 应当明显变大：{before}");
+    drop(reader);
+    db.checkpoint().await.unwrap();
+    let after = std::fs::metadata(&wal).map_or(0, |m| m.len());
+    assert!(after < 64 * 1024, "检查点之后 WAL 应当被截断：{after}");
+}

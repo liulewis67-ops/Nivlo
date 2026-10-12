@@ -20,6 +20,9 @@ static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
 /// Nivlo 是单用户桌面应用，不需要 Web Server 级别的连接池（架构文档 §29）。
 const MAX_CONNECTIONS: u32 = 4;
 
+/// 检查点之后 WAL 文件最多保留的字节数（32 MiB）。
+const WAL_SIZE_LIMIT_BYTES: &str = "33554432";
+
 /// 等待数据库锁的最长时间。
 const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -48,6 +51,8 @@ impl Database {
             // WAL 模式下 NORMAL 足以保证不损坏，且比默认的 FULL 少很多 fsync。
             .synchronous(SqliteSynchronous::Normal)
             .foreign_keys(true)
+            // WAL 文件在一次检查点之后最多保留这么大，超出的部分截断（默认不限制：大量写入后 WAL 会一直保持峰值大小）。
+            .pragma("journal_size_limit", WAL_SIZE_LIMIT_BYTES)
             .busy_timeout(BUSY_TIMEOUT);
         let pool = SqlitePoolOptions::new()
             .max_connections(MAX_CONNECTIONS)
@@ -145,6 +150,22 @@ impl Database {
         .await;
         pool.close().await;
         outcome
+    }
+
+    /// 执行一次 `wal_checkpoint(TRUNCATE)`：把 WAL 里的内容写回主文件并把 WAL 截断。
+    ///
+    /// 持续有读事务时自动检查点没有机会重置 WAL，大量写入之后 WAL 文件会一直保持峰值大小（实测 3000 次捕获后
+    /// 148 MB）；宿主定期调用它，让磁盘占用回落。有读事务占着时 SQLite 会等到 `busy_timeout` 再放弃。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回 [`StorageError`]。
+    pub async fn checkpoint(&self) -> Result<(), StorageError> {
+        sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
+            .execute(&self.pool)
+            .await
+            .map(|_| ())
+            .map_err(map_sqlx)
     }
 
     /// 关闭连接池，等待所有连接归还并刷写 WAL。

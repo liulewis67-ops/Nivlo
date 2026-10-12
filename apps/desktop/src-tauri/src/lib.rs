@@ -284,6 +284,21 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 }
             });
             state.runtime.track_task(workflow_maintainer);
+            // 定期检查点：大量写入后让 WAL 文件回落（见 `Database::checkpoint`）。
+            let database = state.runtime.database();
+            let shutdown = state.runtime.shutdown_token();
+            let wal_maintainer = tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::select! {
+                        () = shutdown.cancelled() => return,
+                        () = tokio::time::sleep(std::time::Duration::from_secs(20 * 60)) => {}
+                    }
+                    if let Err(error) = database.checkpoint().await {
+                        tracing::warn!(event = "wal_checkpoint_failed", %error, "WAL 检查点失败");
+                    }
+                }
+            });
+            state.runtime.track_task(wal_maintainer);
             // 联网的补全（网页标题与摘要）：一次只做一件，退出时随令牌结束。
             if let Some(mut queue) = state.runtime.take_enrichment_queue() {
                 let capture = state.services.capture.clone();
