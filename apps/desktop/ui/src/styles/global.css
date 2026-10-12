@@ -161,25 +161,24 @@ html[data-corners="soft"] {
 }
 
 html[data-accent="violet"] {
-  --nv-primary: #7c4dff;
-  --nv-primary-hover: #6a3be8;
-  --nv-focus-ring: #7c4dff;
+  --nv-primary: #6d3fef;
+  --nv-primary-hover: #5b2fd6;
+  --nv-focus-ring: #6d3fef;
 }
 html[data-accent="teal"] {
-  --nv-primary: #0d9488;
-  --nv-primary-hover: #0f766e;
-  --nv-focus-ring: #0d9488;
+  --nv-primary: #0f766e;
+  --nv-primary-hover: #115e59;
+  --nv-focus-ring: #0f766e;
 }
 html[data-accent="rose"] {
-  --nv-primary: #e11d48;
-  --nv-primary-hover: #be123c;
-  --nv-focus-ring: #e11d48;
+  --nv-primary: #be123c;
+  --nv-primary-hover: #9f1239;
+  --nv-focus-ring: #be123c;
 }
 html[data-accent="amber"] {
-  --nv-primary: #d97706;
-  --nv-primary-hover: #b45309;
-  --nv-primary-contrast: #1a1203;
-  --nv-focus-ring: #d97706;
+  --nv-primary: #b45309;
+  --nv-primary-hover: #92400e;
+  --nv-focus-ring: #b45309;
 }
 html[data-theme="dark"][data-accent="violet"] {
   --nv-primary: #a78bfa;
