@@ -1,0 +1,55 @@
+name: Release
+
+# 打 Tag（v*）即构建、签名并发布：安装包 + 更新清单 latest.json 都上传到该 Tag 的 GitHub Release。
+# 更新端点（tauri.conf.json）应指向：
+#   https://github.com/<owner>/<repo>/releases/latest/download/latest.json
+# 注意：这条流水线尚未在真实仓库上运行过。需要的 Secrets：
+#   TAURI_SIGNING_PRIVATE_KEY（updater 私钥内容）、TAURI_SIGNING_PRIVATE_KEY_PASSWORD（没有密码则留空）。
+# 代码签名证书（Authenticode）另需配置，见 docs/development/release.md。
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.95.0
+      - uses: Swatinem/rust-cache@v2
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 版本号必须与 Tag 一致
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          conf=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          [ "$version" = "$conf" ] || { echo "Tag $version 与 tauri.conf.json 的版本 $conf 不一致"; exit 1; }
+      - run: pnpm tauri build
+      - name: 生成更新清单
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          node scripts/release/make-latest-json.mjs --version "$version" \
+            --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}" \
+            --notes "Nivlo $version"
+      - name: 发布
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --title "Nivlo ${GITHUB_REF_NAME#v}" --generate-notes \
+            target/release/bundle/nsis/*-setup.exe target/release/bundle/nsis/*-setup.exe.sig latest.json

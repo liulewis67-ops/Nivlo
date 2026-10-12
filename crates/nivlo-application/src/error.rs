@@ -78,6 +78,8 @@ pub enum ErrorCode {
     SystemSettingFailed,
     /// 导出诊断包 / 备份 / 数据失败（磁盘已满、没有写权限……）。
     ExportFailed,
+    /// 检查或安装更新失败（更新服务器不可用、签名校验失败……），当前版本保持不变。
+    UpdateFailed,
     /// 来源指向的文件已经不在原处。
     SourceFileMissing,
     /// 无法打开来源（没有可打开的来源、网址不合法，或系统打开失败）。
@@ -120,6 +122,7 @@ impl ErrorCode {
         Self::WorkflowRunFailed,
         Self::SystemSettingFailed,
         Self::ExportFailed,
+        Self::UpdateFailed,
         Self::SourceFileMissing,
         Self::SourceOpenFailed,
     ];
@@ -160,6 +163,7 @@ impl ErrorCode {
             Self::WorkflowRunFailed => "WORKFLOW_RUN_FAILED",
             Self::SystemSettingFailed => "SYSTEM_SETTING_FAILED",
             Self::ExportFailed => "EXPORT_FAILED",
+            Self::UpdateFailed => "UPDATE_FAILED",
             Self::SourceFileMissing => "SOURCE_FILE_MISSING",
             Self::SourceOpenFailed => "SOURCE_OPEN_FAILED",
         }

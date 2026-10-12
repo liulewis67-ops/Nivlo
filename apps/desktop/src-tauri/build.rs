@@ -38,6 +38,8 @@ const COMMANDS: &[&str] = &[
     "connect_integration",
     "disconnect_integration",
     "test_integration",
+    "check_for_update",
+    "install_update",
     "get_ui_pref",
     "set_ui_pref",
     "set_autostart",

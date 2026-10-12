@@ -42,6 +42,7 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 | `WORKFLOW_READ_ONLY` | 试图修改或删除只读的内置 Workflow | Application | 先「复制」再修改 |
 | `WORKFLOW_RUN_FAILED` | 重新运行 Workflow 失败（来源不支持重新运行，或规则本身出错） | Application | 提示检查规则或来源 |
 | `EXPORT_FAILED` | 导出诊断包 / 备份 / 数据失败（磁盘已满、没有写权限等） | Host | 提示换个位置或检查磁盘空间 |
+| `UPDATE_FAILED` | 检查或安装更新失败（更新服务器不可用、签名校验失败……），当前版本保持不变 | Host | |
 | `SYSTEM_SETTING_FAILED` | 无法修改系统设置（如开机启动项） | Host | |
 | `SOURCE_FILE_MISSING` | 来源指向的文件已经不在原处（被移动或删除） | Host | UI 提示「文件不存在」 |
 | `SOURCE_OPEN_FAILED` | 无法打开来源：没有可打开的来源、网址不是 http(s)、或系统打开失败 | Host | |

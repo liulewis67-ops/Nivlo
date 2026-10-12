@@ -355,7 +355,8 @@
     "WORKFLOW_READ_ONLY": "Built-in workflows can't be edited directly. Duplicate it first, then edit the copy.",
     "EXPORT_FAILED": "Export failed. Check the disk space and the folder's write permission, then try again.",
     "SYSTEM_SETTING_FAILED": "The system didn't allow this change. Try again later, or adjust it in system settings.",
-    "WORKFLOW_RUN_FAILED": "Couldn't re-run: this item's source doesn't support it, or the rule itself failed."
+    "WORKFLOW_RUN_FAILED": "Couldn't re-run: this item's source doesn't support it, or the rule itself failed.",
+    "UPDATE_FAILED": "Couldn’t check for or install the update. Your current version is unchanged — try again later."
   },
   "errorAction": {
     "OPEN_DIAGNOSTICS": "Open diagnostics"
@@ -446,7 +447,8 @@
       "schedule": "Schedule",
       "notifications": "Notifications",
       "data": "Data and diagnostics",
-      "integrations": "Integrations"
+      "integrations": "Integrations",
+      "about": "About"
     },
     "autostart": {
       "label": "Launch at startup",
@@ -644,6 +646,17 @@
         "network": "Couldn’t reach the service: {{message}}",
         "failed": "The check failed: {{message}}"
       }
+    },
+    "update": {
+      "label": "Updates",
+      "hint": "Updates are signed. Your data is backed up automatically before an update is installed.",
+      "check": "Check for updates",
+      "checking": "Checking…",
+      "latest": "You’re up to date.",
+      "available": "Version {{version}} is available.",
+      "install": "Install and restart",
+      "installing": "Installing — Nivlo will restart…",
+      "error": "Couldn’t update. Your current version is unchanged."
     }
   },
   "calendar": {

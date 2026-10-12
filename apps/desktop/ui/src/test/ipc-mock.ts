@@ -1,4 +1,9 @@
-import type { IntegrationConnectionDto, IntegrationTestDto, UiPrefName } from "@/lib/ipc";
+import type {
+  IntegrationConnectionDto,
+  IntegrationTestDto,
+  UiPrefName,
+  UpdateInfoDto,
+} from "@/lib/ipc";
 import { visibleRange } from "@/features/calendar/model/calendar-grid";
 import { AppError } from "@/lib/errors";
 import { createWorkflowMock } from "./workflow-mock";
@@ -51,6 +56,8 @@ export const EMPTY_TODAY: TodayViewDto = {
 export interface MemoryIpc extends IpcClient, WorkflowMock {
   /** 设置 `restoreBackup` 时用户是选了文件（`true`）还是取消了（`false`）。 */
   chooseRestoreFile(chosen: boolean): void;
+  /** 让 `checkForUpdate` 返回指定的新版本（`null` 表示已是最新）。 */
+  offerUpdate(update: UpdateInfoDto | null): void;
   /** 让下一次 `testIntegration` 返回指定的状态（测试用）。 */
   scriptIntegrationTest(status: IntegrationTestDto["status"], message?: string): void;
   /** 模拟凭据库里目前保存的秘密（测试用，真实应用里前端读不到）。 */
@@ -252,6 +259,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const uiPrefs = new Map<string, string>();
   const integrationRecords: IntegrationConnectionDto[] = [];
   const integrationSecrets = new Map<string, string>();
+  let offeredUpdate: UpdateInfoDto | null = null;
   let nextTest: IntegrationTestDto = { status: "ok", message: "octocat" };
   let appSettings: AppSettingsDto = {
     autostart: false,
@@ -1237,6 +1245,17 @@ ${(item.content ?? "").toLowerCase()}`;
     integrationSecrets,
     scriptIntegrationTest: (status: IntegrationTestDto["status"], message = "") => {
       nextTest = { status, message };
+    },
+    checkForUpdate: () => {
+      calls.push("checkForUpdate");
+      return Promise.resolve(offeredUpdate);
+    },
+    installUpdate: () => {
+      calls.push("installUpdate");
+      return Promise.resolve();
+    },
+    offerUpdate: (update: UpdateInfoDto | null) => {
+      offeredUpdate = update;
     },
     listIntegrations: () => {
       calls.push("listIntegrations");

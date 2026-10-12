@@ -26,6 +26,7 @@ import {
 } from "@/stores/appearance-store";
 import { useDisplayStore } from "@/stores/display-store";
 import { IntegrationsSetting } from "./IntegrationsSetting";
+import { UpdateSetting } from "./UpdateSetting";
 
 /** 「稍后」规则选项，按展示顺序。 */
 const LATER_RULES: LaterRuleDto[] = ["nextMonday", "inThreeDays", "inOneWeek"];
@@ -538,6 +539,11 @@ export function SettingsPage() {
         </Section>
         <Section title={t("settings.section.integrations")}>
           <IntegrationsSetting />
+        </Section>
+        <Section title={t("settings.section.about")}>
+          <Row label={t("settings.update.label")} hint={t("settings.update.hint")}>
+            <UpdateSetting />
+          </Row>
         </Section>
         <Section title={t("settings.section.data")}>
           <Row label={t("settings.diagnostics.label")} hint={t("settings.diagnostics.hint")}>

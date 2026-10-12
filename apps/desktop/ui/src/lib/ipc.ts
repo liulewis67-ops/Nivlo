@@ -33,6 +33,7 @@ import type {
   RestoreStagedDto,
   WorkflowDto,
   WorkflowImportPreviewDto,
+  UpdateInfoDto,
   IntegrationConnectionDto,
   IntegrationTestDto,
   WorkflowRunDto,
@@ -90,6 +91,7 @@ export type {
   StepReportDto,
   WorkflowDto,
   WorkflowImportPreviewDto,
+  UpdateInfoDto,
   IntegrationConnectionDto,
   IntegrationTestDto,
   WorkflowRunDto,
@@ -253,6 +255,10 @@ export interface IpcClient {
   pickWorkflowImport(): Promise<WorkflowImportPreviewDto | null>;
   /** 确认导入预览里的定义（来源 Imported、默认禁用）。 */
   importWorkflow(definitionJson: string): Promise<WorkflowDto>;
+  /** 检查更新：有新版本时返回版本与说明，已是最新为 `null`。 */
+  checkForUpdate(): Promise<UpdateInfoDto | null>;
+  /** 安装更新并重启（先备份当前数据，签名校验失败会保持原版本）。 */
+  installUpdate(): Promise<void>;
   /** 已连接的集成账号（只含元数据，不含任何凭据）。 */
   listIntegrations(): Promise<IntegrationConnectionDto[]>;
   /** 连接 / 更新凭据：秘密只写入系统凭据库，之后读不回来。 */
@@ -475,6 +481,10 @@ const tauriIpc: IpcClient = {
   rerunWorkflow: (id) => call("rerun_workflow", commands.rerunWorkflow(id)),
   confirmScriptPermissions: (id) =>
     call("confirm_script_permissions", commands.confirmScriptPermissions(id)),
+  checkForUpdate: () => call("check_for_update", commands.checkForUpdate()),
+  installUpdate: async () => {
+    await call("install_update", commands.installUpdate());
+  },
   listIntegrations: () => call("list_integrations", commands.listIntegrations()),
   connectIntegration: (integration, account, secret) =>
     call("connect_integration", commands.connectIntegration(integration, account, secret)),
@@ -615,6 +625,8 @@ export const ipc: IpcClient = {
   dryRunWorkflow: (definitionJson, input) => current.dryRunWorkflow(definitionJson, input),
   rerunWorkflow: (id) => current.rerunWorkflow(id),
   confirmScriptPermissions: (id) => current.confirmScriptPermissions(id),
+  checkForUpdate: () => current.checkForUpdate(),
+  installUpdate: () => current.installUpdate(),
   listIntegrations: () => current.listIntegrations(),
   connectIntegration: (integration, account, secret) =>
     current.connectIntegration(integration, account, secret),

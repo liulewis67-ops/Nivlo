@@ -40,6 +40,8 @@
     "allow-connect-integration",
     "allow-disconnect-integration",
     "allow-test-integration",
+    "allow-check-for-update",
+    "allow-install-update",
     "allow-get-ui-pref",
     "allow-set-ui-pref",
     "allow-set-autostart",

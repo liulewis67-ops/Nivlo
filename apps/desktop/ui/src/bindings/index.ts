@@ -337,6 +337,29 @@ export const commands = {
 	 */
 	testIntegration: (integration: string, account: string) => typedError<IntegrationTestDto, IpcError>(__TAURI_INVOKE("test_integration", { integration, account })),
 	/**
+	 *  检查更新：有新版本时返回版本与说明，已经是最新返回 `null`。
+	 * 
+	 *  # Errors
+	 * 
+	 *  更新服务器连不上或清单不合法时返回 `UPDATE_FAILED`。
+	 */
+	checkForUpdate: () => typedError<{
+	/**  新版本号。 */
+	version: string,
+	/**  当前版本号。 */
+	currentVersion: string,
+	/**  更新说明（来自更新清单的 `notes`）。 */
+	notes: string | null,
+} | null, IpcError>(__TAURI_INVOKE("check_for_update")),
+	/**
+	 *  安装更新并重启：先为当前数据做一份备份，再下载、校验签名、安装，最后重启应用。
+	 * 
+	 *  # Errors
+	 * 
+	 *  备份失败（此时不安装）、下载或签名校验失败时返回 `UPDATE_FAILED`，当前版本保持不变。
+	 */
+	installUpdate: () => typedError<null, IpcError>(__TAURI_INVOKE("install_update")),
+	/**
 	 *  读取界面偏好（`appearance` / `skin` / `language` / `theme`）的 JSON 文本；没保存过返回 `None`。
 	 * 
 	 *  偏好存于 `settings` 表，因此随备份导出 / 恢复（实施计划 D-14）。
@@ -1371,6 +1394,16 @@ export type TrashEntryDto = {
 	deletedAt: string,
 	/**  到期（自动永久清除）的时间（RFC 3339，UTC）。 */
 	expiresAt: string,
+};
+
+/**  有新版本时的信息（IPC 表示）。 */
+export type UpdateInfoDto = {
+	/**  新版本号。 */
+	version: string,
+	/**  当前版本号。 */
+	currentVersion: string,
+	/**  更新说明（来自更新清单的 `notes`）。 */
+	notes: string | null,
 };
 
 /**  更新 Item 的请求：所有字段默认「不修改」。 */

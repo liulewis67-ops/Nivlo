@@ -8,6 +8,7 @@ import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { NotesPage } from "@/features/notes";
 import { OnboardingDialog } from "@/features/onboarding";
+import { useUpdateCheckOnStart } from "@/features/settings";
 import { ProjectsPage } from "@/features/projects";
 import { CommandPalette } from "@/features/search";
 import { SettingsPage } from "@/features/settings";
@@ -96,6 +97,7 @@ export function MainShell() {
   const [openId, setOpenId] = useState<string | null>(null);
   /** 搜索面板（Ctrl+K）是否打开。 */
   const [searching, setSearching] = useState(false);
+  useUpdateCheckOnStart();
   const queryClient = useQueryClient();
   const settings = useQuery({
     queryKey: queryKeys.appSettings(),

@@ -1328,7 +1328,7 @@ Phase 12 Backlog                        → 未排期
 
 ### 7.6 安装包、签名、Updater 与发布流水线
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：7.1
 - **任务**：
   - Windows 安装包（NSIS 或 MSI），代码签名。
@@ -1337,10 +1337,10 @@ Phase 12 Backlog                        → 未排期
   - 版本号规范与 CHANGELOG。
   - 安装包注册应用标识（AppUserModelID）与开始菜单快捷方式，使 Windows 通知显示正确的应用名与图标（4.6 遗留），并为 10.6 的通知激活提供前提。
 - **验收标准**：
-  - [ ] 从 v0.1.0-rc 自动更新到 v0.1.0 成功，用户数据保留。
-  - [ ] 安装包签名有效；安装 / 卸载干净（卸载不删除用户数据，除非用户选择）。
-  - [ ] 打 Tag 即可自动产出 Release。
-- **完成记录**：—
+  - [x] 自动更新成功且用户数据保留（2026-10-12 本机实测，用 0.1.0 → 0.1.1 代替 rc → 正式版）：安装 0.1.0，建一条标记待办，经本地更新服务器检查到 0.1.1、先自动备份（`nivlo-before-update-*.zip`）、下载、签名校验、passive 安装、自动重启；重启后注册表版本为 0.1.1、`check_for_update` 返回空、标记待办仍在、迁移正常。篡改安装包（追加 1 字节）→ `UPDATE_FAILED: The signature verification failed`，版本不变、应用继续运行。
+  - [ ] 安装包签名有效；安装 / 卸载干净（卸载不删除用户数据，除非用户选择）。**部分完成**：安装 / 卸载干净已实测（静默安装到 `%LOCALAPPDATA%Nivlo`、开始菜单快捷方式与卸载项齐全；卸载后程序目录、卸载项、快捷方式、开机自启项都已删除，`%APPDATA%Nivlo` 数据保留；「用户选择删除数据」的选项没有做）。**安装包没有 Authenticode 代码签名**（没有证书），SmartScreen 会警告。
+  - [ ] 打 Tag 即可自动产出 Release。已写 `.github/workflows/release.yml`（版本与 Tag 一致性检查、构建、生成 `latest.json`、`gh release create`），**从未运行过**：仓库没有配置远端。
+- **完成记录**：2026-10-12（进行中）：`tauri.conf.json` 改为只打 NSIS（当前用户安装、中 / 英文）、开启更新包签名产物；`tauri-plugin-updater` 接入，命令 `check_for_update` / `install_update`（仅主窗口；安装前先备份，备份失败不升级；错误码 `UPDATE_FAILED`）；启动 8 秒后静默检查并弹出「安装并重启」，设置页新增「关于 → 检查更新」；`scripts/release/make-latest-json.mjs` 生成更新清单；`CHANGELOG.md`、`docs/development/release.md`。更新签名密钥对由 `tauri signer generate` 生成，私钥在本机 `%USERPROFILE%.nivlo-keys`（**正式发布前应重新生成并妥善保管**）。**未完成 / 未验证**：① 更新端点 `endpoints` 仍是占位 `REPLACE-WITH-YOUR-UPDATE-HOST`（本机实测用 `tauri.test-update.conf.json` 覆盖到 `http://127.0.0.1:8765`）；② Authenticode 代码签名；③ AppUserModelID / 通知应用名：安装版的快捷方式已建立，但没有核对通知中心里显示的名称与图标；④ 自动发布流水线；⑤ 没有做 rc → 正式版的真实版本序列。
 
 ### 7.7 悬浮窗外观与自定义皮肤
 

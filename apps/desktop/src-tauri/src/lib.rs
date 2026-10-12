@@ -29,6 +29,7 @@ pub mod script_grants;
 pub mod shortcut;
 pub mod source_app;
 pub mod tray;
+pub mod updates;
 pub mod windows;
 
 use std::error::Error;
@@ -99,6 +100,8 @@ macro_rules! bindings_builder {
                 $crate::commands::integration::connect_integration,
                 $crate::commands::integration::disconnect_integration,
                 $crate::commands::integration::test_integration,
+                $crate::commands::update::check_for_update::<$runtime>,
+                $crate::commands::update::install_update::<$runtime>,
                 $crate::commands::settings::get_ui_pref,
                 $crate::commands::settings::set_ui_pref::<$runtime>,
                 $crate::commands::settings::set_autostart::<$runtime>,
@@ -179,6 +182,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(builder.invoke_handler())
         .on_window_event(windows::on_window_event)
         .setup(move |app| {
