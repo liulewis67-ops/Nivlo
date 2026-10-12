@@ -1284,7 +1284,8 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [ ] 架构文档 §46 各项预算达标，结果写入 `perf-baseline.md` 并与 1.11 对比。
   - [ ] 24 小时内存增长 < 15%，无崩溃。
-- **完成记录**：—
+- **完成记录**：2026-10-12（进行中）：已在真机上测了 10 分钟基线并写入 `docs/development/perf-baseline.md`（冷启动 378 ms、空闲 CPU 0.05%、Rust 进程内存平、WebView2 进程有一次台阶）。**8 小时长稳测量已在本机后台启动**（`%USERPROFILE%
+ivlo-soak`，结束后 `soak-result.txt` / `soak.csv`），结果尚未取得；24 小时（含休眠唤醒、跨午夜、批量捕获）与「Workflow Run / 日志 / 缓存有界」的检查都还没做。
 
 ### 7.3 Diagnostics 导出
 
