@@ -86,3 +86,38 @@ describe("toBase64", () => {
     expect(decoded).toEqual(bytes);
   });
 });
+
+describe("拖入文件的磁盘路径（实施计划 10.1）", () => {
+  it("宿主给出路径时，非图片文件变成文件引用", async () => {
+    const file = new File(["x"], "报告.pdf", { type: "application/pdf" });
+    const resolve = async (files: readonly File[]): Promise<string[] | null> =>
+      files.map((f) => `D:/下载/${f.name}`);
+    expect(await extractCapture(snap({ files: [file] }), resolve)).toEqual({
+      kind: "input",
+      input: { kind: "files", paths: ["D:/下载/报告.pdf"] },
+    });
+  });
+
+  it("宿主没有给出路径（不在 WebView2 里、超时）时仍明确提示不支持", async () => {
+    const file = new File(["x"], "a.zip");
+    const none = async (): Promise<string[] | null> => null;
+    expect(await extractCapture(snap({ files: [file] }), none)).toEqual({
+      kind: "unsupported",
+      reason: "files",
+    });
+  });
+
+  it("图片与链接不需要向宿主要路径", async () => {
+    let asked = false;
+    const spy = async (): Promise<string[] | null> => {
+      asked = true;
+      return null;
+    };
+    await extractCapture(snap({ uriList: "https://example.com/" }), spy);
+    await extractCapture(
+      snap({ files: [new File([new Uint8Array([1])], "p.png", { type: "image/png" })] }),
+      spy,
+    );
+    expect(asked).toBe(false);
+  });
+});

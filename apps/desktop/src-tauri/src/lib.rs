@@ -21,6 +21,7 @@ pub mod dto;
 pub mod events;
 pub mod integration_service;
 pub mod lifecycle;
+pub mod native_drop;
 pub mod native_i18n;
 pub mod open;
 pub mod power;
@@ -303,6 +304,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             app.manage(state);
 
             let floating = windows::create_floating_window(app)?;
+            // 拖入文件的磁盘路径：WebView2 把 File 对象的路径交给宿主（实施计划 10.1）。
+            #[cfg(target_os = "windows")]
+            native_drop::install(app.handle(), &floating);
             let foreground = windows::foreground_port(&floating);
             let controller = FloatingController::new(
                 Arc::new(TauriFloatingWindow::new(floating)),

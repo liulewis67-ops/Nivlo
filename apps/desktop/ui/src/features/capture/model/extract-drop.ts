@@ -1,4 +1,5 @@
 import type { CaptureInputDto } from "@/lib/ipc";
+import { requestFilePaths } from "./native-paths";
 
 /** 一次拖放的原始材料快照；必须在 `drop` 事件回调里同步取得（事件结束后 DataTransfer 就失效）。 */
 export type DropSnapshot = {
@@ -82,14 +83,18 @@ export function toBase64(bytes: Uint8Array): string {
  * 把拖放快照变成可捕获的输入。
  *
  * 优先级：图片文件（作为图片附件）→ 链接 → 普通文本。
- * 非图片文件在 WebView2 的 HTML5 drop 里**拿不到磁盘路径**，无法作为文件引用——返回
- * `unsupported`，由调用方明确告诉用户（该项记录在 `docs/development/drop-matrix.md`，
- * 由实施计划 10.1 的原生 Drop 解决），而不是悄悄丢掉或伪造一个路径。
+ * 非图片文件在 HTML5 drop 里没有磁盘路径：向宿主索要（WebView2 把 `File` 对象交给宿主，宿主取出路径，
+ * 见 `native-paths.ts`，实施计划 10.1）；拿不到（不在 WebView2 里、超时）时返回 `unsupported`，
+ * 由调用方明确告诉用户，而不是悄悄丢掉或伪造一个路径。
  *
  * @param snapshot 拖放快照。
+ * @param resolvePaths 取文件磁盘路径的函数（测试注入）。
  * @returns 提取结果。
  */
-export async function extractCapture(snapshot: DropSnapshot): Promise<DropExtraction> {
+export async function extractCapture(
+  snapshot: DropSnapshot,
+  resolvePaths: (files: readonly File[]) => Promise<string[] | null> = requestFilePaths,
+): Promise<DropExtraction> {
   const image = snapshot.files.find((file) => file.type.startsWith("image/"));
   if (image !== undefined) {
     const bytes = new Uint8Array(await image.arrayBuffer());
@@ -97,7 +102,11 @@ export async function extractCapture(snapshot: DropSnapshot): Promise<DropExtrac
   }
   const url = firstUrl(snapshot);
   if (url !== null) return { kind: "input", input: { kind: "text", text: url } };
-  if (snapshot.files.length > 0) return { kind: "unsupported", reason: "files" };
+  if (snapshot.files.length > 0) {
+    const paths = await resolvePaths(snapshot.files);
+    if (paths !== null) return { kind: "input", input: { kind: "files", paths } };
+    return { kind: "unsupported", reason: "files" };
+  }
   if (snapshot.text.trim().length > 0) {
     return { kind: "input", input: { kind: "text", text: snapshot.text } };
   }

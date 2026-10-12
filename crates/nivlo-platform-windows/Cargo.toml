@@ -11,6 +11,7 @@ nivlo-platform.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows.workspace = true
+webview2-com = "0.39"
 
 [dev-dependencies]
 tempfile.workspace = true

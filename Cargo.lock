@@ -2908,6 +2908,7 @@ version = "0.1.0"
 dependencies = [
  "nivlo-platform",
  "tempfile",
+ "webview2-com",
  "windows",
 ]
 

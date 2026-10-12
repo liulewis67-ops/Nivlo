@@ -1515,7 +1515,7 @@ ivlo-soak`，结束后 `soak-result.txt` / `soak.csv`），结果尚未取得；
 
 ### 10.1 Windows Native Drop Adapter
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：2.4
 - **任务**：
   - 基于 windows-rs 实现 `IDropTarget` / `IDataObject`，解析 `CF_HDROP`、`CF_UNICODETEXT`、`CFSTR_INETURL`，以及 Outlook 附件等 `FileGroupDescriptor` 场景（按矩阵需要）。
@@ -1523,7 +1523,7 @@ ivlo-soak`，结束后 `soak-result.txt` / `soak.csv`），结果尚未取得；
   - 范围拆分（D-15）：`CF_HDROP`（单 / 多文件、文件夹）为 MVP 部分，建议在 M4 发布前完成；`FileGroupDescriptor` 等其余格式按矩阵结果留在 Phase 10。
 - **验收标准**：
   - [ ] 2.4 兼容矩阵中所有失败项重新测试并更新结果，核心项全部通过。
-- **完成记录**：2026-10-11 盘点：2.4 的单元测试已确认资源管理器文件（单 / 多 / 文件夹）在 HTML5 Drop 下拿不到磁盘路径，满足 Phase 10 引言「核心来源失败时提前」的条件；是否列入 M4 待 D-15 定稿。
+- **完成记录**：2026-10-12：**没有自定义 `IDropTarget`**——真机用 Win32 探测发现 WebView2 的拖放目标在浏览器进程（`Chrome_WidgetWin_1`，pid 不是本进程）的窗口上，本进程无法接管。改用 WebView2 正式接口 `postMessageWithAdditionalObjects`：`nivlo-platform-windows::webview_files::watch_file_drops` 在悬浮窗 WebView 上监听 `WebMessageReceived`，从 `ICoreWebView2File.Path` 取磁盘路径；桌面端 `native_drop` 用 Tauri 事件回传；前端 `native-paths.ts` + `extractCapture` 把非图片文件变成 `files` 捕获（取不到路径时仍提示不支持）。真机验证（调试端口 + 真实磁盘文件）：宿主拿到完整路径（含中文与空格），整条链路创建出 Item（`capture_completed kind=file origin=drop`）。**未验证**：真实的资源管理器拖动（单 / 多文件、文件夹）、Outlook 附件等 `FileGroupDescriptor` 场景（未实现）；验收「兼容矩阵所有失败项重新测试」未完成。（2026-10-11 盘点：2.4 的单元测试已确认资源管理器文件（单 / 多 / 文件夹）在 HTML5 Drop 下拿不到磁盘路径，满足 Phase 10 引言「核心来源失败时提前」的条件；是否列入 M4 待 D-15 定稿。
 
 ### 10.2 高级悬浮窗行为
 
