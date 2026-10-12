@@ -676,7 +676,7 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [ ] 空闲 10 分钟平均 CPU < 0.5%（参考机器）。
   - [ ] 冷启动到悬浮窗可见体感 < 1s（记录实测值）。
-  - [ ] 8 小时运行后内存增长 < 10%。
+  - [x] 8 小时运行后内存增长 < 10%（2026-10-13 实测 −0.9%，见 `docs/development/perf-baseline.md`；仅空闲，不含休眠唤醒与批量捕获）。
   - [ ] 代码中无高频轮询、无持续 `requestAnimationFrame`、无无意义后台 Timer（代码审查）。
   - [ ] 测量结果写入 `docs/development/perf-baseline.md`。
 - **完成记录**：—
@@ -1284,8 +1284,7 @@ Phase 12 Backlog                        → 未排期
 - **验收标准**：
   - [ ] 架构文档 §46 各项预算达标，结果写入 `perf-baseline.md` 并与 1.11 对比。
   - [ ] 24 小时内存增长 < 15%，无崩溃。
-- **完成记录**：2026-10-12（进行中）：已在真机上测了 10 分钟基线并写入 `docs/development/perf-baseline.md`（冷启动 378 ms、空闲 CPU 0.05%、Rust 进程内存平、WebView2 进程有一次台阶）。**8 小时长稳测量已在本机后台启动**（`%USERPROFILE%
-ivlo-soak`，结束后 `soak-result.txt` / `soak.csv`），结果尚未取得；24 小时（含休眠唤醒、跨午夜、批量捕获）与「Workflow Run / 日志 / 缓存有界」的检查都还没做。
+- **完成记录**：2026-10-12（进行中）：已在真机上测了 10 分钟基线并写入 `docs/development/perf-baseline.md`（冷启动 378 ms、空闲 CPU 0.05%、Rust 进程内存平、WebView2 进程有一次台阶）。**8 小时长稳已完成**（2026-10-13）：空闲 CPU 平均 0.001%，内存 391.5 → 387.8 MB（−0.9%，全程 387–394 MB），无崩溃，跨午夜 `day_changed` 正常（详见 `perf-baseline.md`），满足 1.11 的「8 小时增长 < 10%」。**未做**：24 小时（含休眠唤醒、批量捕获）与「Workflow Run / 日志 / 缓存有界」的检查；因此 7.2 的验收（§46 全部预算、24 小时增长 < 15%）仍未完成。
 
 ### 7.3 Diagnostics 导出
 
