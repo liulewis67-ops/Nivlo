@@ -107,6 +107,20 @@ fn store_failed(what: &str, error: &dyn std::fmt::Display) -> AppError {
     AppError::new(ErrorCode::SystemSettingFailed, format!("{what}失败"))
 }
 
+/// 凭据库里的账号标识：Jira 把连接协议编进去（见 `nivlo_integrations::jira_credential_account`），其他集成就是账号本身。
+fn credential_key(
+    integration: &str,
+    scheme: &str,
+    account: &str,
+) -> Result<CredentialKey, AppError> {
+    let stored = if integration == "jira" {
+        nivlo_integrations::jira_credential_account(scheme, account)
+    } else {
+        account.to_owned()
+    };
+    CredentialKey::new(integration, &stored).map_err(|_| invalid("账号不合法"))
+}
+
 /// 校验失败。
 fn invalid(message: &str) -> AppError {
     AppError::new(ErrorCode::InvalidInput, message)
@@ -224,7 +238,14 @@ impl IntegrationService {
             }
             _ => ("https".to_owned(), "github.com".to_owned()),
         };
-        let key = CredentialKey::new(integration, &account).map_err(|_| invalid("账号不合法"))?;
+        let key = credential_key(integration, &scheme, &account)?;
+        // 同一个主机换了协议重新连接：旧协议的凭据要删掉，免得留下一份可能被用来降级的明文通道。
+        if integration == "jira" {
+            let other = if scheme == "http" { "https" } else { "http" };
+            let _ = self
+                .credentials
+                .delete(&credential_key(integration, other, &account)?);
+        }
         self.credentials
             .set(&key, &Secret::new(secret))
             .map_err(|e| store_failed("保存凭据", &e))?;
@@ -256,11 +277,21 @@ impl IntegrationService {
     ///
     /// 凭据库不可用返回 `SYSTEM_SETTING_FAILED`（此时记录保留，避免出现「界面显示已断开、凭据还在」）。
     pub async fn disconnect(&self, integration: &str, account: &str) -> Result<(), AppError> {
-        let key = CredentialKey::new(integration, account).map_err(|_| invalid("账号不合法"))?;
-        self.credentials
-            .delete(&key)
-            .map_err(|e| store_failed("删除凭据", &e))?;
         let mut all = self.list().await?;
+        // 按记录里的协议找到凭据；没有记录时两种协议的凭据都尝试删除。
+        let schemes: Vec<String> = match all
+            .iter()
+            .find(|c| c.integration == integration && c.account == account)
+        {
+            Some(c) => vec![c.scheme.clone()],
+            None => vec!["https".to_owned(), "http".to_owned()],
+        };
+        for scheme in schemes {
+            let key = credential_key(integration, &scheme, account)?;
+            self.credentials
+                .delete(&key)
+                .map_err(|e| store_failed("删除凭据", &e))?;
+        }
         all.retain(|c| !(c.integration == integration && c.account == account));
         self.save(&all).await?;
         tracing::info!(

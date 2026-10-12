@@ -392,3 +392,65 @@ async fn testing_the_connection_tells_network_auth_and_permission_problems_apart
     .await;
     assert_eq!(missing.unwrap_err(), IntegrationError::NotConnected);
 }
+
+#[tokio::test]
+async fn the_link_cannot_downgrade_the_connection_to_plain_http() {
+    // 用户用 https 连接了 Cloud；一条 http:// 的链接带着 scheme=http 也只会走 https。
+    let http = FakeHttp::json(200, CLOUD);
+    let policy = HostPolicy::new(["*"]);
+    let call = IntegrationCall {
+        operation: "issue".into(),
+        params: [
+            ("key", "AI-128"),
+            ("host", "acme.atlassian.net"),
+            ("scheme", "http"),
+        ]
+        .into_iter()
+        .map(|(k, v)| (k.to_owned(), v.to_owned()))
+        .collect(),
+    };
+    JiraIntegration::new(credentials("acme.atlassian.net", "me@acme.com:t"))
+        .call(
+            &call,
+            &IntegrationContext {
+                http: http.as_ref(),
+                policy: &policy,
+            },
+        )
+        .await
+        .unwrap();
+    let url = http.seen.lock().unwrap()[0].0.clone();
+    assert!(url.starts_with("https://acme.atlassian.net/"), "{url}");
+}
+
+#[tokio::test]
+async fn http_is_used_only_when_the_user_connected_over_http() {
+    let store = Arc::new(MemoryCredentials::new());
+    store
+        .set(
+            &CredentialKey::new(
+                "jira",
+                &super::credential_account("http", "jira.corp.local"),
+            )
+            .unwrap(),
+            &Secret::new("pat"),
+        )
+        .unwrap();
+    let http = FakeHttp::json(200, SERVER);
+    let policy = HostPolicy::new(["*"]);
+    // 链接即使写的是 https，也按连接时选择的 http 访问（用户的内网 Jira 只有 http）。
+    let out = fetch(store.clone(), &http, "jira.corp.local", "OPS-77", &policy)
+        .await
+        .unwrap();
+    assert_eq!(out["url"], "http://jira.corp.local/browse/OPS-77");
+    assert!(
+        http.seen.lock().unwrap()[0]
+            .0
+            .starts_with("http://jira.corp.local/")
+    );
+    // 另一个没连接过的主机：不会拿这份凭据去访问。
+    let other = fetch(store, &http, "other.corp.local", "OPS-1", &policy)
+        .await
+        .unwrap_err();
+    assert_eq!(other, IntegrationError::NotConnected);
+}

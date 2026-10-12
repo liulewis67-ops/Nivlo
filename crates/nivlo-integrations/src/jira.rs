@@ -66,6 +66,19 @@ fn valid_host(host: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | ':'))
 }
 
+/// 凭据库里保存 Jira 凭据用的账号标识：协议是连接时就定下来的，**跟着凭据一起保存**。
+///
+/// https 连接的账号标识就是主机；http 连接是 `http://主机`。这样请求用什么协议只取决于用户当初怎么连接，
+/// 而不取决于 Workflow 或被捕获的链接——否则一条 `http://` 的链接就能让令牌以明文发出去（降级攻击）。
+#[must_use]
+pub fn credential_account(scheme: &str, host: &str) -> String {
+    if scheme == "http" {
+        format!("http://{host}")
+    } else {
+        host.to_owned()
+    }
+}
+
 /// 去掉端口，得到主机名（给私网豁免用）。
 fn hostname(host: &str) -> &str {
     host.split(':').next().unwrap_or(host)
@@ -172,7 +185,7 @@ impl Integration for JiraIntegration {
             return Err(IntegrationError::InvalidInput("Jira 主机不合法".to_owned()));
         }
         let scheme = if scheme == "http" { "http" } else { "https" };
-        let key = CredentialKey::new("jira", &host)
+        let key = CredentialKey::new("jira", &credential_account(scheme, &host))
             .map_err(|_| IntegrationError::InvalidInput("Jira 主机不合法".to_owned()))?;
         let secret = match self.credentials.get(&key) {
             Ok(Some(secret)) => secret,
@@ -228,7 +241,7 @@ impl Integration for JiraIntegration {
         })
     }
 
-    /// 支持的操作：`issue`（参数 `key`、`host`，可选 `scheme`）。
+    /// 支持的操作：`issue`（参数 `key`、`host`；协议由连接时的选择决定，不接受调用方指定）。
     async fn call(
         &self,
         call: &IntegrationCall,
@@ -253,21 +266,27 @@ impl Integration for JiraIntegration {
                 "缺少合法的 Jira 主机".to_owned(),
             ));
         }
-        let scheme = match param("scheme").as_deref() {
-            Some("http") => "http",
-            _ => "https",
-        };
-
+        // 协议只取决于用户连接时的选择（见 `credential_account`）：先找 https 的凭据，再找 http 的；
+        // 完全忽略调用参数里的 `scheme`——它来自被捕获的链接，不可信。
         // 没有为这个主机保存过凭据 = 用户没有连接过它：不发任何请求。
-        let credential_key = CredentialKey::new("jira", &host)
-            .map_err(|_| IntegrationError::InvalidInput("Jira 主机不合法".to_owned()))?;
-        let secret = match self.credentials.get(&credential_key) {
-            Ok(Some(secret)) => secret,
-            Ok(None) => return Err(IntegrationError::NotConnected),
-            Err(error) => {
-                tracing::warn!(event = "jira_credential_read_failed", %error, "读取 Jira 凭据失败");
-                return Err(IntegrationError::Fatal("无法读取系统凭据库".to_owned()));
+        let mut found = None;
+        for scheme in ["https", "http"] {
+            let credential_key = CredentialKey::new("jira", &credential_account(scheme, &host))
+                .map_err(|_| IntegrationError::InvalidInput("Jira 主机不合法".to_owned()))?;
+            match self.credentials.get(&credential_key) {
+                Ok(Some(secret)) => {
+                    found = Some((scheme, secret));
+                    break;
+                }
+                Ok(None) => {}
+                Err(error) => {
+                    tracing::warn!(event = "jira_credential_read_failed", %error, "读取 Jira 凭据失败");
+                    return Err(IntegrationError::Fatal("无法读取系统凭据库".to_owned()));
+                }
             }
+        }
+        let Some((scheme, secret)) = found else {
+            return Err(IntegrationError::NotConnected);
         };
 
         let url = format!(

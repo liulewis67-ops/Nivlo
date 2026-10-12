@@ -267,3 +267,34 @@ async fn testing_tells_the_failure_kinds_apart_and_records_the_last_error() {
         ErrorCode::InvalidInput
     );
 }
+
+#[tokio::test]
+async fn http_jira_credentials_carry_the_scheme_and_switching_removes_the_old_one() {
+    let f = fixture();
+    f.service
+        .connect("jira", "http://jira.corp.local:8080", "pat-http")
+        .await
+        .unwrap();
+    let http_key = key("jira", "http://jira.corp.local:8080");
+    let https_key = key("jira", "jira.corp.local:8080");
+    assert!(f.credentials.get(&http_key).unwrap().is_some());
+    assert!(f.credentials.get(&https_key).unwrap().is_none());
+
+    // 改成 https 重新连接：http 的凭据被删除，不会留下明文通道。
+    f.service
+        .connect("jira", "https://jira.corp.local:8080", "pat-https")
+        .await
+        .unwrap();
+    assert!(f.credentials.get(&http_key).unwrap().is_none());
+    assert_eq!(
+        f.credentials.get(&https_key).unwrap().unwrap().expose(),
+        "pat-https"
+    );
+
+    // 断开：按记录里的协议删除。
+    f.service
+        .disconnect("jira", "jira.corp.local:8080")
+        .await
+        .unwrap();
+    assert!(f.credentials.get(&https_key).unwrap().is_none());
+}

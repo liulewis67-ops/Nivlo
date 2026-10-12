@@ -8,4 +8,4 @@ pub mod jira;
 
 pub use github::GithubIntegration;
 pub use http::ReqwestHttp;
-pub use jira::JiraIntegration;
+pub use jira::{JiraIntegration, credential_account as jira_credential_account};
