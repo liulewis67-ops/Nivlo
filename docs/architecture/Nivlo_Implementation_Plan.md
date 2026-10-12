@@ -677,7 +677,7 @@ Phase 12 Backlog                        → 未排期
   - [x] 空闲 10 分钟平均 CPU < 0.5%（参考机器）：实测 0.050%（10 分钟）、0.001%（8 小时），2026-10-12 / 13，本机 16 核 Windows 11。
   - [x] 冷启动到悬浮窗可见体感 < 1s（记录实测值）：378 ms、447 ms、289 ms（三次，均为已安装的 Release 构建）。
   - [x] 8 小时运行后内存增长 < 10%（2026-10-13 实测 −0.9%，见 `docs/development/perf-baseline.md`；仅空闲，不含休眠唤醒与批量捕获）。
-  - [ ] 代码中无高频轮询、无持续 `requestAnimationFrame`、无无意义后台 Timer（代码审查）。
+  - [x] 代码中无高频轮询、无持续 `requestAnimationFrame`、无无意义后台 Timer（代码审查，2026-10-13）：前端没有 `requestAnimationFrame`，也没有 `refetchInterval`；唯一的 `setInterval` 是皮肤逐帧播放（`SkinSprite`），仅在用户选了循环类播放且页面可见、未开启「减少动态效果」时运行，默认「仅悬停」时没有计时器（有测试）。Rust 侧全是事件驱动或长周期：Scheduler 睡到最近的触发点（上限 15 分钟）并可被唤醒，日期切换睡到下一个午夜，回收站清理 / 运行记录清理每 6 小时一次，悬浮窗看门狗只在展开期间运行、吸附是防抖一次性任务；电源 / 显示器事件监听阻塞在 `GetMessageW`，没有轮询。8 小时实测空闲 CPU 0.001% 与此一致。
   - [x] 测量结果写入 `docs/development/perf-baseline.md`。
 - **完成记录**：—
 
@@ -1280,7 +1280,7 @@ Phase 12 Backlog                        → 未排期
 - **任务**：
   - 复跑 1.11 的测量，覆盖 Workflow、Scheduler、Calendar 引入后的状态。
   - 24 小时长稳：包含休眠唤醒、跨午夜、批量捕获。
-  - 检查 Workflow Run、日志、缓存是否有界。
+  - 检查 Workflow Run、日志、缓存是否有界。（2026-10-13 代码审查通过：运行记录只留最近 500 条且不超过 30 天；日志按天滚动保留 14 天；回收站 30 天；Scheduler 触发记录 30 天；正则编译缓存有上限，满了清空；React Query 用 `staleTime: Infinity` 无轮询。未做的是用长时间运行 + 大量捕获去实测这些上限。）
 - **验收标准**：
   - [ ] 架构文档 §46 各项预算达标，结果写入 `perf-baseline.md` 并与 1.11 对比。
   - [ ] 24 小时内存增长 < 15%，无崩溃。
