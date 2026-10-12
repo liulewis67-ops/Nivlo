@@ -1571,15 +1571,16 @@ ivlo-soak`，结束后 `soak-result.txt` / `soak.csv`），结果尚未取得；
 
 ### 10.6 原生通知激活
 
-- **状态**：⬜
+- **状态**：🟨
 - **依赖**：4.6、7.6
 - **任务**：
   - Windows Toast 激活：通知携带 Item ID，点击后由原生激活回调（安装包注册的 AppUserModelID + COM Activator，或等效方案）唤起主窗口并定位到对应 Item；应用未运行时点击通知能冷启动并定位。
   - 作为 `NotificationPort` 的扩展能力；不可用时（开发模式、未安装）退化为只显示通知。
 - **验收标准**：
-  - [ ] 点击通知打开主窗口并定位到对应 Item（关闭 4.6 的遗留验收项）。
-  - [ ] 应用未运行时点击通知，启动后定位到对应 Item。
-- **完成记录**：—（2026-10-11 由 4.6 的遗留项拆出：`tauri-plugin-notification` 在桌面端没有点击回调。）
+  - [x] 点击通知打开主窗口并定位到对应 Item（关闭 4.6 的遗留验收项）：真机验证——Scheduler 真实发出的 Toast 已进入 Windows 通知历史，XML 带 `activationType="protocol" launch="nivlo://item/<ID>"`；用同一个 `nivlo://item/<ID>` 地址启动（效果等同点击通知）后，运行中的实例打开主窗口并显示该 Item 的详情。**没有用鼠标真的点击通知气泡**。
+  - [x] 应用未运行时点击通知，启动后定位到对应 Item：真机验证——应用没在运行时打开 `nivlo://item/<ID>`，应用冷启动并在主窗口里打开该 Item 的详情（同样没有真的点击气泡）。
+- **完成记录**：2026-10-12：没有用 COM 激活器，改用**协议激活**：Windows 原生 Toast（`nivlo-platform-windows::toast::WindowsToast`，WinRT，用安装包登记的 AppUserModelID 发送，XML 转义有测试）带 `launch="nivlo://item/<ID>"`，点击时系统按注册的协议再启动 `nivlo-desktop.exe "<地址>"`，单实例插件把参数转给运行中的实例（冷启动则在启动时读取参数）；`nivlo_platform::notification::parse_activation` 严格校验（只接受 `nivlo://item/<UUID>`），主窗口按「`item:<ID>`」打开详情。协议由 NSIS 钩子写入 / 删除 `HKCUSoftwareClasses
+ivlo`（不需要管理员权限，卸载后已确认删除）。原生 Toast 失败时退回 Tauri 通知插件（只能显示）。**限制**：开发模式（未安装、没有协议注册和 AppUserModelID）点击通知不会打开 Item，且 WinRT Toast 可能不显示；通知气泡的外观（名称 / 图标）没有目视核对。（2026-10-11 由 4.6 的遗留项拆出：`tauri-plugin-notification` 在桌面端没有点击回调。）
 
 ---
 

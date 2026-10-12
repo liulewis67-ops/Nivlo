@@ -15,4 +15,5 @@ pub mod foreground;
 pub mod power;
 pub mod shortcut;
 pub mod source_app;
+pub mod toast;
 pub mod webview_files;

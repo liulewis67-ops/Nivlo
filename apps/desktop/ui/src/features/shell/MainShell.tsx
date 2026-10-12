@@ -24,6 +24,9 @@ import { parseMainView, useNavStore } from "./nav-store";
 import type { MainView } from "./nav-store";
 import { ThemeMenu } from "./ThemeMenu";
 
+/** 后端请求打开某个 Item 时的名字前缀：`item:<ID>`（点击通知，实施计划 10.6）。 */
+const ITEM_REQUEST_PREFIX = "item:";
+
 /** 侧栏导航项，按展示顺序排列（产品文档 §23）。 */
 const NAV_VIEWS: MainView[] = ["inbox", "today", "calendar", "notes", "projects"];
 
@@ -125,13 +128,20 @@ export function MainShell() {
   // 悬浮窗请求打开某个视图：窗口刚创建时从后端取走待处理的请求，已经在运行时由事件通知。
   useEffect(() => {
     let cancelled = false;
-    void ipc.takePendingMainView().then((name) => {
-      const requested = name === null ? null : parseMainView(name);
-      if (!cancelled && requested !== null) setView(requested);
-    });
-    const unsubscribe = ipc.subscribeMainViewRequested((name) => {
+    /** 处理后端请求：普通视图名切换视图，`item:<ID>`（点击通知）打开对应的 Item 详情。 */
+    const apply = (name: string): void => {
+      if (name.startsWith(ITEM_REQUEST_PREFIX)) {
+        setOpenId(name.slice(ITEM_REQUEST_PREFIX.length));
+        return;
+      }
       const requested = parseMainView(name);
       if (requested !== null) setView(requested);
+    };
+    void ipc.takePendingMainView().then((name) => {
+      if (!cancelled && name !== null) apply(name);
+    });
+    const unsubscribe = ipc.subscribeMainViewRequested((name) => {
+      apply(name);
       void ipc.takePendingMainView();
     });
     return () => {

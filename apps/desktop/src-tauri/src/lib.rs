@@ -171,7 +171,11 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
     let app = tauri::Builder::default()
         // 单实例插件必须最先注册：第二次启动只唤起已有进程的主窗口，然后立即退出。
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // 点击通知会以 `nivlo://item/<ID>` 参数再启动一次程序：转给这里，打开对应的 Item。
+            if windows::handle_activation(app, &args) {
+                return;
+            }
             if let Err(error) = windows::show_main_window(app) {
                 tracing::warn!(event = "single_instance_show_failed", %error, "唤起主窗口失败");
             }
@@ -349,6 +353,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             scheduling::spawn(app.handle(), &app.state::<AppState>());
             // 系统休眠恢复 / 时间被改动：立刻唤醒 Scheduler 去 Reconcile（偏差检测仍作为兜底）。
             power::start(app.handle());
+            // 冷启动时就带着通知激活参数（应用没在运行时点击了通知）。
+            let launch_args: Vec<String> = std::env::args().skip(1).collect();
+            windows::handle_activation(app.handle(), &launch_args);
 
             // 托盘不是必需功能：创建失败只记录，应用继续以悬浮窗运行。
             let lang = tauri::async_runtime::block_on(native_i18n::current(

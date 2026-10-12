@@ -118,6 +118,37 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     Ok(())
 }
 
+/// 按命令行参数处理「通知被点击」的激活（`nivlo://item/<ID>`）：打开主窗口并定位到对应的 Item。
+///
+/// 参数来自任何能启动程序的来源，只接受严格校验过的地址（见 `nivlo_platform::notification::parse_activation`）。
+/// 返回是否识别并处理了激活参数；没有时由调用方照常显示主窗口。
+pub fn handle_activation<R: Runtime>(app: &AppHandle<R>, args: &[String]) -> bool {
+    let Some(item_id) = args
+        .iter()
+        .find_map(|arg| nivlo_platform::notification::parse_activation(arg))
+    else {
+        return false;
+    };
+    // 先记下要打开的 Item：主窗口可能刚创建、还没监听事件，启动时会取走它。
+    if let Some(state) = app.try_state::<AppState>() {
+        state
+            .runtime
+            .set_pending_main_view(format!("item:{item_id}"));
+    }
+    if let Err(error) = show_main_window(app) {
+        tracing::warn!(event = "activation_show_failed", %error, "通知激活时无法显示主窗口");
+        return true;
+    }
+    let event = crate::events::MainViewRequestedEvent {
+        view: format!("item:{item_id}"),
+    };
+    if let Err(error) = tauri_specta::Event::emit_to(&event, app, MAIN_WINDOW_LABEL) {
+        tracing::warn!(event = "activation_event_failed", %error, "通知激活时无法通知主窗口");
+    }
+    tracing::info!(event = "notification_activated", "已按通知打开对应的 Item");
+    true
+}
+
 /// 处理窗口事件。
 ///
 /// * 主窗口：关闭只是隐藏，应用与悬浮窗继续运行；只有显式"退出"（托盘菜单、`quit_app`）才结束应用。

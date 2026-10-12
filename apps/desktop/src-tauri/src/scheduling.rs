@@ -13,7 +13,8 @@ use tauri_plugin_notification::NotificationExt;
 
 use crate::app::AppState;
 
-/// Tauri 通知插件的适配器：通知带应用名与图标（由 Tauri 的应用标识提供）。
+/// 通知适配器：Windows 上优先用原生 Toast（点击通知可以打开对应的 Item，实施计划 10.6），失败时
+/// 退回 Tauri 通知插件（只能显示，点击没有回调）；其他平台直接用插件。通知的应用名与图标由应用标识提供。
 pub struct TauriNotifier {
     /// 应用句柄。
     app: AppHandle<Wry>,
@@ -29,6 +30,18 @@ impl TauriNotifier {
 impl NotificationPort for TauriNotifier {
     /// 发送一条系统通知。
     fn notify(&self, notification: &Notification) -> Result<(), PlatformError> {
+        #[cfg(target_os = "windows")]
+        {
+            let toast = nivlo_platform_windows::toast::WindowsToast::new(
+                self.app.config().identifier.clone(),
+            );
+            match toast.notify(notification) {
+                Ok(()) => return Ok(()),
+                Err(error) => {
+                    tracing::warn!(event = "native_toast_failed", %error, "原生 Toast 失败，改用通知插件");
+                }
+            }
+        }
         self.app
             .notification()
             .builder()
