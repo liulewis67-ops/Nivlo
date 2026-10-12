@@ -1609,7 +1609,25 @@ ivlo`（不需要管理员权限，卸载后已确认删除）。原生 Toast �
   - NSPanel 悬浮窗与窗口层级、AppKit 拖拽、Keychain、通知、Login Item。
 - **验收标准**：
   - [ ] M1 与 M2 的核心路径在 macOS 上通过；签名与公证（notarization）完成。
+- **完成记录**：2026-10-12：仍是桩（`nivlo-platform-macOS` 为空，桌面端在非 Windows 上用 `Unsupported` / 内存凭据库降级）。只做了一项检查：不含 GUI 与 QuickJS 的 crate（domain / application / scheduler / capture / platform / platform-linux / platform-macos / common）用 `cargo check --target ### 11.2 macOS Adapter
+
+- **状态**：⬜
+- **依赖**：11.1
+- **任务**：
+  - NSPanel 悬浮窗与窗口层级、AppKit 拖拽、Keychain、通知、Login Item。
+- **验收标准**：
+  - [ ] M1 与 M2 的核心路径在 macOS 上通过；签名与公证（notarization）完成。
 - **完成记录**：—
+` 在 `### 11.2 macOS Adapter
+
+- **状态**：⬜
+- **依赖**：11.1
+- **任务**：
+  - NSPanel 悬浮窗与窗口层级、AppKit 拖拽、Keychain、通知、Login Item。
+- **验收标准**：
+  - [ ] M1 与 M2 的核心路径在 macOS 上通过；签名与公证（notarization）完成。
+- **完成记录**：—
+` 上**能编译通过**（含 cfg 隔离没有破坏）；`rquickjs-sys` 与 Tauri 在本机没有对应的 C 工具链 / 系统库，没法交叉检查。没有任何 macOS 机器，所以验收没有开始。
 
 ### 11.3 Linux Adapter
 
@@ -1619,7 +1637,25 @@ ivlo`（不需要管理员权限，卸载后已确认删除）。原生 Toast �
   - X11 / Wayland 差异处理（Wayland 下置顶与定位能力受限时降级）、Secret Service、WebKitGTK 兼容性。
 - **验收标准**：
   - [ ] 在一个主流 X11 桌面与一个 Wayland 桌面上核心路径通过，并记录降级项。
+- **完成记录**：2026-10-12：仍是桩（`nivlo-platform-Linux` 为空，桌面端在非 Windows 上用 `Unsupported` / 内存凭据库降级）。只做了一项检查：不含 GUI 与 QuickJS 的 crate（domain / application / scheduler / capture / platform / platform-linux / platform-macos / common）用 `cargo check --target ### 11.3 Linux Adapter
+
+- **状态**：⬜
+- **依赖**：11.1
+- **任务**：
+  - X11 / Wayland 差异处理（Wayland 下置顶与定位能力受限时降级）、Secret Service、WebKitGTK 兼容性。
+- **验收标准**：
+  - [ ] 在一个主流 X11 桌面与一个 Wayland 桌面上核心路径通过，并记录降级项。
 - **完成记录**：—
+` 在 `### 11.3 Linux Adapter
+
+- **状态**：⬜
+- **依赖**：11.1
+- **任务**：
+  - X11 / Wayland 差异处理（Wayland 下置顶与定位能力受限时降级）、Secret Service、WebKitGTK 兼容性。
+- **验收标准**：
+  - [ ] 在一个主流 X11 桌面与一个 Wayland 桌面上核心路径通过，并记录降级项。
+- **完成记录**：—
+` 上**能编译通过**（含 cfg 隔离没有破坏）；`rquickjs-sys` 与 Tauri 在本机没有对应的 C 工具链 / 系统库，没法交叉检查。没有任何 Linux 机器，所以验收没有开始。
 
 ---
 
