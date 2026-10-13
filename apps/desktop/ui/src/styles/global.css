@@ -51,6 +51,16 @@ body {
 html[data-window="floating"],
 html[data-window="floating"] body {
   background: transparent;
+  /* 悬浮窗的页面本身不滚动：展开动画与阴影不应撑出页面级滚动条。 */
+  overflow: hidden;
+}
+
+/* 列表里的滚动条平时不显示，鼠标移到列表上才出现，避免悬浮窗一展开就闪出滚动条。 */
+.nv-scroll-hover {
+  scrollbar-color: transparent transparent;
+}
+.nv-scroll-hover:hover {
+  scrollbar-color: var(--nv-scrollbar-thumb) transparent;
 }
 
 /* 统一键盘焦点样式，各 WebView 默认的焦点环不一致。 */

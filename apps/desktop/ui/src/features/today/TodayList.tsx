@@ -52,7 +52,7 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
     return null;
   }
   return (
-    <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-3">
+    <div className="nv-scroll-hover flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
       {view.todos.length > 0 && (
         <SortableTodoList
           todos={view.todos}
