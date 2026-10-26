@@ -39,9 +39,14 @@ const FLOATING_ALLOWED: &[&str] = &[
     "end_floating_input",
 ];
 
-/// 全局搜索框允许使用的全部命令：只读搜索、把结果交给主窗口、隐藏自己。
-/// 它在任何应用之上弹出，不应拥有任何写入数据的命令。
-const SEARCH_ALLOWED: &[&str] = &["search_items", "open_item_in_main", "hide_search"];
+/// 全局搜索框允许使用的全部命令：只读搜索、列出最近的条目（空输入时显示）、把结果交给主窗口、
+/// 隐藏自己。它在任何应用之上弹出，不应拥有任何写入数据的命令。
+const SEARCH_ALLOWED: &[&str] = &[
+    "search_items",
+    "list_items",
+    "open_item_in_main",
+    "hide_search",
+];
 
 /// 解析一个 Capability 文件。
 fn parse(text: &str) -> Value {

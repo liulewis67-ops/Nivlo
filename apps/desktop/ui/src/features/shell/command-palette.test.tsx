@@ -50,7 +50,7 @@ describe("全局搜索（Ctrl+K）", () => {
     pressCtrlK();
     expect(await screen.findByRole("dialog", { name: "搜索" })).toBeInTheDocument();
     expect(screen.getByLabelText("搜索关键词")).toHaveFocus();
-    expect(screen.getByText("输入关键词，搜索标题、正文和来源。")).toBeInTheDocument();
+    expect(await screen.findByText("输入关键词，搜索标题、正文和来源。")).toBeInTheDocument();
 
     pressCtrlK();
     expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
@@ -150,7 +150,8 @@ describe("全局搜索（Ctrl+K）", () => {
     await screen.findByRole("dialog", { name: "搜索" });
 
     for (const text of ["登", "登录", "登录问"]) typeQuery(text);
-    await screen.findByRole("option", { name: /登录问题/ });
+    const results = await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(within(results).getByRole("option", { name: /登录问题/ })).toBeInTheDocument();
     expect(ipc.calls.filter((c) => c === "searchItems")).toHaveLength(1);
   });
 });

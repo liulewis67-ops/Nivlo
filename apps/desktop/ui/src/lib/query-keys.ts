@@ -21,6 +21,11 @@ export const queryKeys = {
   tagItems: (tagId: string) => ["items", "tag", tagId] as const,
   /** 全文搜索的结果；属于 `items` 前缀，Item 变化时会一起失效。 */
   search: (query: string) => ["items", "search", query] as const,
+  /**
+   * 搜索面板空输入时列出的最近条目；放在 `searchAll` 前缀下，全局搜索框每次出现时一起丢弃。
+   * 末尾是对象而不是字符串，不会与某个查询词的 Key 撞上。
+   */
+  searchRecent: () => ["items", "search", { recent: true }] as const,
   /** 全部搜索结果的前缀（全局搜索框每次出现时丢弃旧结果）。 */
   searchAll: () => ["items", "search"] as const,
   /** Calendar 的某一页；属于 `items` 前缀，Item 变化时会一起失效。 */

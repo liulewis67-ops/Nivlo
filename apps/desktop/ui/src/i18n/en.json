@@ -424,6 +424,7 @@
     },
     "count_one": "{{count}} result",
     "count_other": "{{count}} results",
+    "recent": "Recently updated",
     "windowHint": "Type keywords to search titles, content and sources. Enter opens it in the main window.",
     "globalTip": "Search from any app"
   },

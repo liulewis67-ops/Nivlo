@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,9 @@ import type { Segment } from "./model/highlight";
 
 /** 停止输入多久之后才发起搜索（毫秒）。 */
 export const SEARCH_DEBOUNCE_MS = 140;
+
+/** 输入为空时列出多少条最近更新的条目。 */
+export const RECENT_LIMIT = 8;
 
 /** 结果分组的顺序（产品文档 §23：待办、笔记、提示）。 */
 const GROUP_ORDER: ItemTypeDto[] = ["todo", "note", "tip"];
@@ -26,14 +29,17 @@ export type SearchPanelProps = {
    * （圆角与阴影由系统窗口提供），输入框更大。
    */
   variant?: "dialog" | "window";
-  /** 输入框为空时显示的提示，缺省为通用的搜索说明。 */
+  /** 输入框为空、也还没有任何条目可列出时显示的提示，缺省为通用的搜索说明。 */
   emptyHint?: ReactNode;
   /** 底部右侧的附加内容（结果数量之外，如全局快捷键提示）。 */
   footerExtra?: ReactNode;
 };
 
-/** 一个分组：类型与其中的结果（保持后端给出的相关度顺序）。 */
-type Group = { type: ItemTypeDto; items: ItemDto[] };
+/**
+ * 一个分组：类型与其中的结果（保持后端给出的相关度顺序）；输入为空时只有一组 `recent`，
+ * 即最近更新的条目。
+ */
+type Group = { key: ItemTypeDto | "recent"; items: ItemDto[] };
 
 /**
  * 把结果按类型分组；组内保持原有顺序，空组不出现。
@@ -43,7 +49,7 @@ type Group = { type: ItemTypeDto; items: ItemDto[] };
  */
 function groupByType(items: readonly ItemDto[]): Group[] {
   return GROUP_ORDER.map((type) => ({
-    type,
+    key: type,
     items: items.filter((item) => item.itemType === type),
   })).filter((group) => group.items.length > 0);
 }
@@ -119,6 +125,8 @@ function TypeGlyph({ type }: { type: ItemTypeDto }) {
  * * 全键盘：↑ / ↓ 选择（首尾循环），Home / End 跳到首尾，回车打开，Esc 关闭；
  *   鼠标移过也会选中，点击打开；
  * * 输入还没停顿就按回车时，等这次搜索出结果后再打开第一条，不会因为手快而落空；
+ * * 输入为空时列出最近更新的几条（[`RECENT_LIMIT`]），直接 ↑ / ↓ + 回车就能打开，
+ *   不必先想关键词；
  * * 挂载时输入框聚焦；重置（清空输入）由调用方用 `key` 重新挂载完成。
  *
  * @param props 关闭与打开回调、外观。
@@ -151,14 +159,42 @@ export function SearchPanel({
     queryFn: () => ipc.searchItems(debounced),
     enabled: debounced !== "",
     staleTime: Infinity,
+    // 继续输入时先保留上一次的结果，新结果到了再替换，列表不会闪一下空白。
+    placeholderData: keepPreviousData,
   });
-  const terms = searchTerms(debounced);
-  const groups = debounced === "" ? [] : groupByType(search.data ?? []);
+  const recent = useQuery({
+    queryKey: queryKeys.searchRecent(),
+    queryFn: () =>
+      ipc.listItems({
+        itemType: null,
+        includeArchived: false,
+        orderBy: "updated",
+        limit: RECENT_LIMIT,
+      }),
+  });
+  const query = text.trim();
+  /** 输入为空：浏览最近的条目。 */
+  const browsing = query === "";
+  // 刚开始输入、第一次搜索的结果还没到时继续显示最近条目，避免列表闪一下空白。
+  const showRecent = browsing || debounced === "" || search.data === undefined;
+  const recentItems = recent.data ?? [];
+  const terms = showRecent ? [] : searchTerms(debounced);
+  const groups: Group[] = showRecent
+    ? recentItems.length > 0
+      ? [{ key: "recent", items: recentItems }]
+      : []
+    : groupByType(search.data ?? []);
   // 展示顺序（分组后）的扁平列表，键盘选择按它走。
   const flat = groups.flatMap((group) => group.items);
   const activeIndex = flat.length === 0 ? -1 : Math.min(active, flat.length - 1);
   const activeItem = activeIndex >= 0 ? flat[activeIndex] : undefined;
-  const settled = debounced !== "" && search.data !== undefined && debounced === text.trim();
+  /** 列表与输入一致，可以直接打开选中项。 */
+  const settled = browsing
+    ? recent.data !== undefined
+    : debounced !== "" &&
+      search.data !== undefined &&
+      !search.isPlaceholderData &&
+      debounced === query;
 
   // 选中项滚进可见区域。
   useEffect(() => {
@@ -206,7 +242,7 @@ export function SearchPanel({
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (settled && activeItem !== undefined) onOpenItem(activeItem.id);
-      else if (!settled && text.trim() !== "") openWhenReady.current = true;
+      else if (!settled && !browsing) openWhenReady.current = true;
     }
   }
 
@@ -271,27 +307,32 @@ export function SearchPanel({
         </kbd>
       </div>
       <div className="nv-scroll-hover min-h-0 flex-1 overflow-y-auto">
-        {debounced === "" && (
+        {showRecent && recentItems.length === 0 && !recent.isLoading && (
           <p className="px-6 py-8 text-center text-sm text-muted">
             {emptyHint ?? t("search.hint")}
           </p>
         )}
-        {settled && flat.length === 0 && (
+        {!browsing && settled && flat.length === 0 && (
           <p role="status" className="px-6 py-8 text-center text-sm text-muted">
             {t("search.empty", { query: debounced })}
           </p>
         )}
         {flat.length > 0 && (
-          <ul id={listId} role="listbox" aria-label={t("search.results")} className="p-2">
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={showRecent ? t("search.recent") : t("search.results")}
+            className="p-2"
+          >
             {groups.map((group) => (
-              <li key={group.type} role="presentation">
+              <li key={group.key} role="presentation">
                 <p
-                  id={`${listId}-group-${group.type}`}
+                  id={`${listId}-group-${group.key}`}
                   className="px-2 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted"
                 >
-                  {t(`search.group.${group.type}`)}
+                  {group.key === "recent" ? t("search.recent") : t(`search.group.${group.key}`)}
                 </p>
-                <ul role="group" aria-labelledby={`${listId}-group-${group.type}`}>
+                <ul role="group" aria-labelledby={`${listId}-group-${group.key}`}>
                   {group.items.map((item) => {
                     const selected = item.id === activeItem?.id;
                     const snippet = snippetAround(item.content, terms);
@@ -344,7 +385,7 @@ export function SearchPanel({
       <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-xs text-muted">
         <span>{t("search.keys")}</span>
         <span className="flex items-center gap-3">
-          {settled && flat.length > 0 && (
+          {!showRecent && settled && flat.length > 0 && (
             <span className="tabular-nums">{t("search.count", { count: flat.length })}</span>
           )}
           {footerExtra}
