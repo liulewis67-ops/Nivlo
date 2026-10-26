@@ -53,7 +53,10 @@ export function matchCommands(
   );
 }
 
-/** 输入为空时列出多少条最近更新的条目。 */
+/** 「已复制」提示显示多久（毫秒）。 */
+const COPIED_NOTICE_MS = 1500;
+
+/** 输入为空时列出多少条最近使用（打开或更新）的条目。 */
 export const RECENT_LIMIT = 8;
 
 /** 结果分组的顺序（产品文档 §23：待办、笔记、提示）。 */
@@ -111,7 +114,7 @@ function draftFrom(query: string): Draft {
 
 /**
  * 一个分组：类型与其中的结果（保持后端给出的相关度顺序）；输入为空时只有一组 `recent`，
- * 即最近更新的条目。
+ * 即最近使用（打开或更新）的条目。
  */
 type Group = { key: ItemTypeDto | "recent"; items: ItemDto[] };
 
@@ -199,11 +202,12 @@ function TypeGlyph({ type }: { type: ItemTypeDto }) {
  * * 全键盘：↑ / ↓ 选择（首尾循环），Home / End 跳到首尾，回车打开，Esc 关闭；
  *   鼠标移过也会选中，点击打开；
  * * 输入还没停顿就按回车时，等这次搜索出结果后再打开第一条，不会因为手快而落空；
- * * 输入为空时列出最近更新的几条（[`RECENT_LIMIT`]），直接 ↑ / ↓ + 回车就能打开，
+ * * 输入为空时列出最近使用（打开或更新）的几条（[`RECENT_LIMIT`]），直接 ↑ / ↓ + 回车就能打开，
  *   不必先想关键词；
  * * 提供 `onCreated` 时，Ctrl+Enter 把搜索词直接建成待办（没有结果时还会给出按钮），
  *   找不到就顺手记下，不必换到别的入口；
  * * 提供 `commands` 时，以 `>` 开头的输入只列出匹配的命令，回车执行；
+ * * Shift+Enter 复制选中条目的标题（贴到聊天、提交信息里），底部短暂提示「已复制」；
  * * 挂载时输入框聚焦；重置（清空输入）由调用方用 `key` 重新挂载完成。
  *
  * @param props 关闭与打开回调、外观。
@@ -226,6 +230,14 @@ export function SearchPanel({
   /** 用户在结果出来之前按了回车：结果一到就打开选中的那一条。 */
   const openWhenReady = useRef(false);
   const activeRef = useRef<HTMLLIElement | null>(null);
+  /** 刚刚复制了标题：底部短暂提示。 */
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), COPIED_NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   /** 命令模式：只列出命令，不搜索条目。 */
   const commandMode = commands !== undefined && text.trimStart().startsWith(COMMAND_PREFIX);
@@ -259,7 +271,7 @@ export function SearchPanel({
       ipc.listItems({
         itemType: null,
         includeArchived: false,
-        orderBy: "updated",
+        orderBy: "recent",
         limit: RECENT_LIMIT,
       }),
   });
@@ -350,6 +362,13 @@ export function SearchPanel({
     } else if (event.key === "Enter" && commandMode) {
       event.preventDefault();
       activeCommand?.run();
+    } else if (event.key === "Enter" && event.shiftKey) {
+      event.preventDefault();
+      if (activeItem === undefined) return;
+      navigator.clipboard
+        .writeText(activeItem.title)
+        .then(() => setCopied(true))
+        .catch(reportError);
     } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
       openWhenReady.current = false;
@@ -554,9 +573,11 @@ export function SearchPanel({
         <span className="flex items-center gap-3">
           {/* 结果数量兼作读屏播报：元素一直存在、只更新文字（新插入的 live 区域常常不会被播报）。 */}
           <span role="status" className="tabular-nums empty:hidden">
-            {!showRecent && settled && flat.length > 0
-              ? t("search.count", { count: flat.length })
-              : ""}
+            {copied
+              ? t("search.copied")
+              : !showRecent && settled && flat.length > 0
+                ? t("search.count", { count: flat.length })
+                : ""}
           </span>
           {draft !== null && flat.length > 0 && <span>{t("search.createHint")}</span>}
           {browsing && commands !== undefined && <span>{t("search.commandHint")}</span>}

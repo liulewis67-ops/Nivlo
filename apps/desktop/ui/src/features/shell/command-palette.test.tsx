@@ -169,6 +169,24 @@ describe("全局搜索（Ctrl+K）", () => {
     expect(screen.getByText("没有匹配的命令")).toBeInTheDocument();
   });
 
+  it("打开过的条目排到「最近使用」的最前面", async () => {
+    const ipc = createMemoryIpc();
+    await seed(ipc, "note", "很久以前的笔记");
+    await seed(ipc, "todo", "刚建的待办");
+    renderWithProviders(<MainShell />, ipc);
+
+    pressCtrlK();
+    typeQuery("很久以前");
+    fireEvent.click(await screen.findByRole("option", { name: /很久以前的笔记/ }));
+    await waitFor(() => expect(ipc.calls).toContain("markItemOpened"));
+
+    pressCtrlK();
+    const recent = await screen.findByRole("listbox", { name: "最近使用" });
+    await waitFor(() =>
+      expect(within(recent).getAllByRole("option")[0]).toHaveTextContent("很久以前的笔记"),
+    );
+  });
+
   it("点击结果打开详情；点击遮罩关闭", async () => {
     const ipc = createMemoryIpc();
     await seed(ipc, "note", "读书笔记");

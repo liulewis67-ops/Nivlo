@@ -49,6 +49,8 @@ struct FakeData {
     item_tags: BTreeSet<(ItemId, TagId)>,
     /// 回收站：Item ID → 删除时间。
     deleted: BTreeMap<ItemId, DateTime<Utc>>,
+    /// 最近一次打开的时间（只影响「最近使用」排序）。
+    opened: BTreeMap<ItemId, DateTime<Utc>>,
     /// Workflow 定义。
     workflows: BTreeMap<WorkflowId, StoredWorkflow>,
     /// Workflow 运行记录（按写入顺序）。
@@ -222,9 +224,17 @@ impl Transaction for FakeTransaction {
 #[async_trait]
 impl ItemRepository for FakeTransaction {
     /// 永久删除：级联删除来源与附件、顺序记录。
+    async fn mark_opened(&mut self, id: ItemId, at: DateTime<Utc>) -> Result<(), StorageError> {
+        if self.working.items.contains_key(&id) && !self.working.deleted.contains_key(&id) {
+            self.working.opened.insert(id, at);
+        }
+        Ok(())
+    }
+
     async fn delete(&mut self, id: ItemId) -> Result<(), StorageError> {
         self.working.items.remove(&id);
         self.working.deleted.remove(&id);
+        self.working.opened.remove(&id);
         self.working.fired.retain(|key, _| key.item_id != id);
         self.working.item_tags.retain(|(item, _)| *item != id);
         self.working.sources.retain(|s| s.item_id != id);
@@ -335,10 +345,17 @@ impl ItemRepository for FakeTransaction {
             })
             .cloned()
             .collect();
+        let opened = &self.working.opened;
+        let recent = |i: &Item| {
+            opened
+                .get(&i.id())
+                .map_or(i.updated_at(), |at| (*at).max(i.updated_at()))
+        };
         items.sort_by(|a, b| {
             let (left, right) = match filter.order {
                 ItemOrder::CreatedDesc | ItemOrder::ProjectView => (b.created_at(), a.created_at()),
                 ItemOrder::UpdatedDesc => (b.updated_at(), a.updated_at()),
+                ItemOrder::RecentDesc => (recent(b), recent(a)),
             };
             let primary = if filter.order == ItemOrder::ProjectView {
                 // 未完成在前 → 优先级从高到低 → 计划日期从早到晚（没有计划的在后）。

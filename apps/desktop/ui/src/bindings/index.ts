@@ -41,6 +41,15 @@ export const commands = {
 	 */
 	searchItems: (query: string) => typedError<ItemDto[], IpcError>(__TAURI_INVOKE("search_items", { query })),
 	/**
+	 *  记录用户在详情面板里打开了这个 Item：只影响「最近使用」排序（搜索框空输入时的列表），
+	 *  不改内容、不发事件。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不合法返回 `INVALID_INPUT`；存储失败时返回 [`IpcError`]。Item 不存在不算错误。
+	 */
+	markItemOpened: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("mark_item_opened", { id })),
+	/**
 	 *  读取一个 Item 的详情：Item 本身加上它的来源与附件（含被引用文件是否还在）。
 	 * 
 	 *  # Errors
@@ -1101,7 +1110,9 @@ export type ItemOrderDto =
 /**  最近更新的在前。 */
 "updated" | 
 /**  项目视图：未完成 → 优先级 → 计划日期 → 创建时间。 */
-"project";
+"project" | 
+/**  最近使用的在前：最近打开与最近更新中较晚的那个（搜索框空输入时的列表）。 */
+"recent";
 
 /**  Item 状态。 */
 export type ItemStatusDto = 

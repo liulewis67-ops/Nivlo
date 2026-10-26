@@ -355,3 +355,51 @@ async fn searching_ten_thousand_items_is_fast() {
         );
     }
 }
+
+#[tokio::test]
+async fn recently_opened_items_lead_the_recent_order() {
+    use nivlo_application::ports::{ItemFilter, ItemOrder};
+
+    let (_dir, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    for (n, title, minute) in [(1, "很早建的", 0), (2, "中间", 1), (3, "最新", 2)] {
+        tx.items()
+            .insert(&item(n, ItemType::Note, title, None, minute))
+            .await
+            .unwrap();
+    }
+    // 打开最早的那条：它排到最前；打开不存在的 ID 是空操作。
+    tx.items().mark_opened(id(1), t(10)).await.unwrap();
+    tx.items().mark_opened(id(99), t(11)).await.unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let filter = ItemFilter {
+        order: ItemOrder::RecentDesc,
+        limit: Some(10),
+        ..ItemFilter::default()
+    };
+    let recent: Vec<String> = tx
+        .items()
+        .list(&filter)
+        .await
+        .unwrap()
+        .iter()
+        .map(|i| i.title().as_str().to_owned())
+        .collect();
+    assert_eq!(recent, ["很早建的", "最新", "中间"]);
+    // 打开不改「最近更新」的顺序。
+    let filter = ItemFilter {
+        order: ItemOrder::UpdatedDesc,
+        ..filter
+    };
+    let updated: Vec<String> = tx
+        .items()
+        .list(&filter)
+        .await
+        .unwrap()
+        .iter()
+        .map(|i| i.title().as_str().to_owned())
+        .collect();
+    assert_eq!(updated, ["最新", "中间", "很早建的"]);
+}

@@ -180,6 +180,8 @@ export interface IpcClient {
    * 空白查询返回空列表。
    */
   searchItems(query: string): Promise<ItemDto[]>;
+  /** 记录条目在详情面板里被打开过：只影响「最近使用」排序，不改内容、不发事件。 */
+  markItemOpened(id: string): Promise<void>;
   /** 读取设置页的全部设置：开机自启（以系统启动项为准）、悬浮窗置顶、「稍后」的规则。 */
   getAppSettings(): Promise<AppSettingsDto>;
   /** 开启 / 关闭开机自启，返回之后的实际状态；系统拒绝时抛出 `SYSTEM_SETTING_FAILED`。 */
@@ -513,6 +515,9 @@ const tauriIpc: IpcClient = {
     call("import_workflow", commands.importWorkflow(definitionJson)),
   listWorkflowRuns: (limit) => call("list_workflow_runs", commands.listWorkflowRuns(limit ?? null)),
   searchItems: (query) => call("search_items", commands.searchItems(query)),
+  markItemOpened: async (id) => {
+    await call("mark_item_opened", commands.markItemOpened(id));
+  },
   listProjects: (includeArchived) => call("list_projects", commands.listProjects(includeArchived)),
   createProject: (name) => call("create_project", commands.createProject(name)),
   renameProject: (id, name) => call("rename_project", commands.renameProject(id, name)),
@@ -658,6 +663,7 @@ export const ipc: IpcClient = {
   importWorkflow: (definitionJson) => current.importWorkflow(definitionJson),
   listWorkflowRuns: (limit) => current.listWorkflowRuns(limit),
   searchItems: (query) => current.searchItems(query),
+  markItemOpened: (id) => current.markItemOpened(id),
   listProjects: (includeArchived) => current.listProjects(includeArchived),
   createProject: (name) => current.createProject(name),
   renameProject: (id, name) => current.renameProject(id, name),

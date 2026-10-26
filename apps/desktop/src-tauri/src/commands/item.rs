@@ -203,3 +203,20 @@ pub async fn search_items(
     let items = state.services.items.search_items(&query).await?;
     Ok(items.iter().map(ItemDto::from).collect())
 }
+
+/// 记录用户在详情面板里打开了这个 Item：只影响「最近使用」排序（搜索框空输入时的列表），
+/// 不改内容、不发事件。
+///
+/// # Errors
+///
+/// ID 格式不合法返回 `INVALID_INPUT`；存储失败时返回 [`IpcError`]。Item 不存在不算错误。
+#[tauri::command]
+#[specta::specta]
+pub async fn mark_item_opened(state: State<'_, AppState>, id: String) -> Result<(), IpcError> {
+    state
+        .services
+        .items
+        .mark_opened(parse_item_id(&id)?)
+        .await?;
+    Ok(())
+}

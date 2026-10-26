@@ -1,6 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { addDays, format } from "date-fns";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { SearchApp } from "./SearchApp";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
@@ -68,13 +68,13 @@ describe("全局搜索窗口", () => {
     expect(ipc.openedItems).toEqual([]);
   });
 
-  it("空输入时列出最近更新的条目，↓ + 回车直接打开", async () => {
+  it("空输入时列出最近使用的条目，↓ + 回车直接打开", async () => {
     const ipc = createMemoryIpc();
     await seedTodo(ipc, "较早的待办");
     const latest = await seedTodo(ipc, "刚刚改过的待办");
     renderWithProviders(<SearchApp />, ipc);
 
-    const recent = await screen.findByRole("listbox", { name: "最近更新" });
+    const recent = await screen.findByRole("listbox", { name: "最近使用" });
     const options = within(recent).getAllByRole("option");
     expect(options.map((option) => option.textContent)).toEqual([
       expect.stringContaining("刚刚改过的待办"),
@@ -93,14 +93,14 @@ describe("全局搜索窗口", () => {
     await seedTodo(ipc, "修复登录超时");
     await seedTodo(ipc, "整理周报");
     renderWithProviders(<SearchApp />, ipc);
-    await screen.findByRole("listbox", { name: "最近更新" });
+    await screen.findByRole("listbox", { name: "最近使用" });
 
     fireEvent.change(input(), { target: { value: "周报" } });
     const results = await screen.findByRole("listbox", { name: "搜索结果" });
     expect(within(results).getAllByRole("option")).toHaveLength(1);
 
     fireEvent.change(input(), { target: { value: "" } });
-    const recent = screen.getByRole("listbox", { name: "最近更新" });
+    const recent = screen.getByRole("listbox", { name: "最近使用" });
     expect(within(recent).getAllByRole("option")).toHaveLength(2);
   });
 
@@ -150,6 +150,20 @@ describe("全局搜索窗口", () => {
     await waitFor(() =>
       expect(screen.getAllByRole("status").map((node) => node.textContent)).toContain("1 条结果"),
     );
+  });
+
+  it("Shift+Enter 复制选中条目的标题，并短暂提示已复制；不会打开它", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+
+    fireEvent.keyDown(input(), { key: "Enter", shiftKey: true });
+    expect(writeText).toHaveBeenCalledWith("修复登录超时");
+    expect(await screen.findByText("已复制标题")).toBeInTheDocument();
+    expect(ipc.openedItems).toEqual([]);
   });
 
   it("Esc 隐藏窗口", () => {

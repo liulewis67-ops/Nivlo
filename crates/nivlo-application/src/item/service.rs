@@ -346,6 +346,19 @@ impl ItemService {
         })
     }
 
+    /// 记录用户打开了这个 Item（详情面板）：只影响「最近使用」排序，不改内容、不发事件。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误，事务已回滚。
+    pub async fn mark_opened(&self, id: ItemId) -> Result<(), AppError> {
+        let now = self.clock.now_utc();
+        let mut tx = self.uow.begin().await?;
+        tx.items().mark_opened(id, now).await?;
+        tx.commit().await?;
+        Ok(())
+    }
+
     /// 全文搜索（Ctrl+K）：标题、正文与来源里包含 `query` 的未归档 Item，最多 `SEARCH_LIMIT` 条。
     /// 空白查询返回空列表，不访问数据库。
     ///

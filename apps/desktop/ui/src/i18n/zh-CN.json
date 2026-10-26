@@ -420,7 +420,8 @@
     "hint": "输入关键词，搜索标题、正文和来源。",
     "empty": "没有找到「{{query}}」",
     "results": "搜索结果",
-    "keys": "↑↓ 选择　↵ 打开　Esc 关闭",
+    "keys": "↑↓ 选择　↵ 打开　⇧↵ 复制标题　Esc 关闭",
+    "copied": "已复制标题",
     "count": "{{count}} 条结果",
     "open": "搜索",
     "group": {
@@ -428,7 +429,7 @@
       "note": "笔记",
       "tip": "提示"
     },
-    "recent": "最近更新",
+    "recent": "最近使用",
     "create": "新建待办「{{title}}」",
     "createHint": "Ctrl+↵ 新建待办",
     "commands": "命令",

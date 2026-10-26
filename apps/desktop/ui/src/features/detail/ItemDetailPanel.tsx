@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Textarea } from "@/components";
@@ -128,6 +129,11 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   const { query, detail, draft, status, problem, edit, save } = useItemDraft(id);
   const item = detail?.item;
   const { remove } = useDeleteItems();
+
+  // 记下「打开过」，让搜索框空输入时的「最近使用」把它排在前面。只是排序提示，失败不打扰用户。
+  useEffect(() => {
+    ipc.markItemOpened(id).catch(() => undefined);
+  }, [id]);
 
   /**
    * Esc 关闭面板（在输入框里也一样：自动保存会在卸载时完成）。

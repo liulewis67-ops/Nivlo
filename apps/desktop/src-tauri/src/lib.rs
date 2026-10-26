@@ -70,6 +70,7 @@ macro_rules! bindings_builder {
                 $crate::commands::item::get_item,
                 $crate::commands::item::list_items,
                 $crate::commands::item::search_items,
+                $crate::commands::item::mark_item_opened,
                 $crate::commands::item::get_item_detail,
                 $crate::commands::item::update_item,
                 $crate::commands::source::open_item_source::<$runtime>,

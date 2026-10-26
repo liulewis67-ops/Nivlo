@@ -556,6 +556,8 @@ pub enum ItemOrderDto {
     Updated,
     /// 项目视图：未完成 → 优先级 → 计划日期 → 创建时间。
     Project,
+    /// 最近使用的在前：最近打开与最近更新中较晚的那个（搜索框空输入时的列表）。
+    Recent,
 }
 
 /// 列出 Item 的请求。
@@ -598,6 +600,7 @@ impl TryFrom<ListItemsRequest> for ItemFilter {
                 ItemOrderDto::Created => ItemOrder::CreatedDesc,
                 ItemOrderDto::Updated => ItemOrder::UpdatedDesc,
                 ItemOrderDto::Project => ItemOrder::ProjectView,
+                ItemOrderDto::Recent => ItemOrder::RecentDesc,
             },
             limit: request.limit,
         })

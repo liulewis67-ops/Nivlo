@@ -7,6 +7,7 @@ const COMMANDS: &[&str] = &[
     "get_item",
     "list_items",
     "search_items",
+    "mark_item_opened",
     "get_item_detail",
     "update_item",
     "open_item_source",

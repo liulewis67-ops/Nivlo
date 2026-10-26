@@ -50,11 +50,11 @@ async fn migrates_from_empty_and_is_idempotent() {
     assert_eq!(db.schema_version().await.unwrap(), None);
 
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(6));
+    assert_eq!(db.schema_version().await.unwrap(), Some(7));
 
     // 再次运行不报错，版本不变。
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(6));
+    assert_eq!(db.schema_version().await.unwrap(), Some(7));
 }
 
 #[tokio::test]
@@ -917,7 +917,7 @@ async fn a_snapshot_is_a_consistent_independent_copy_that_verifies() {
 
     let snapshot = dir.path().join("snapshot.db");
     db.snapshot_to(&snapshot).await.unwrap();
-    assert_eq!(Database::verify_file(&snapshot).await.unwrap(), Some(6));
+    assert_eq!(Database::verify_file(&snapshot).await.unwrap(), Some(7));
 
     // 快照之后原库继续变化，不影响快照。
     let mut tx = db.begin().await.unwrap();

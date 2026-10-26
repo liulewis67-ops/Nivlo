@@ -233,6 +233,21 @@ impl ItemRepository for SqliteTransaction {
         Ok(())
     }
 
+    /// 记录打开时间；不存在或已删除的 Item 不受影响。
+    async fn mark_opened(&mut self, id: ItemId, at: DateTime<Utc>) -> Result<(), StorageError> {
+        let id = id.to_string();
+        let at = format_timestamp(at);
+        sqlx::query!(
+            "UPDATE items SET opened_at = ? WHERE id = ? AND deleted_at IS NULL",
+            at,
+            id
+        )
+        .execute(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        Ok(())
+    }
+
     /// 永久删除一个 Item，关联记录由外键级联删除。
     async fn delete(&mut self, id: ItemId) -> Result<(), StorageError> {
         let id = id.to_string();
@@ -393,6 +408,7 @@ impl ItemRepository for SqliteTransaction {
             ItemOrder::CreatedDesc => 0_i64,
             ItemOrder::UpdatedDesc => 1,
             ItemOrder::ProjectView => 2,
+            ItemOrder::RecentDesc => 3,
         };
         let project_id = filter.project_id.map(|id| id.to_string());
         let tag_id = filter.tag_id.map(|id| id.to_string());
@@ -419,7 +435,9 @@ impl ItemRepository for SqliteTransaction {
                     ELSE 0 END ASC,
                CASE WHEN ?4 = 2 THEN scheduled_date IS NULL ELSE 0 END ASC,
                CASE WHEN ?4 = 2 THEN scheduled_date END ASC,
-               CASE WHEN ?4 = 1 THEN updated_at ELSE created_at END DESC,
+               CASE WHEN ?4 = 1 THEN updated_at
+                    WHEN ?4 = 3 THEN max(updated_at, coalesce(opened_at, updated_at))
+                    ELSE created_at END DESC,
                id DESC
              LIMIT ?5",
             item_type,

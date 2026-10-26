@@ -122,6 +122,8 @@ pub enum ItemOrder {
     UpdatedDesc,
     /// 项目视图（D-05）：未完成的在前 → 优先级从高到低 → 计划日期从早到晚（没有计划的在后）→ 创建时间从新到旧。
     ProjectView,
+    /// 最近使用的在前：最近一次打开（[`ItemRepository::mark_opened`]）与最近更新中较晚的那个。
+    RecentDesc,
 }
 
 /// [`ItemRepository::list`] 的过滤条件。
@@ -171,6 +173,15 @@ pub trait ItemRepository: Send {
     ///
     /// 数据库不可用时返回 [`StorageError::Unavailable`]。
     async fn delete(&mut self, id: ItemId) -> Result<(), StorageError>;
+
+    /// 记录 Item 在 `at` 被打开过（只影响 [`ItemOrder::RecentDesc`] 排序）。
+    ///
+    /// 不改 `updated_at`，也不是领域状态。Item 不存在或在回收站里时是空操作。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用时返回 [`StorageError::Unavailable`]。
+    async fn mark_opened(&mut self, id: ItemId, at: DateTime<Utc>) -> Result<(), StorageError>;
 
     /// 按 ID 读取 Item；不存在时返回 `Ok(None)`。
     ///

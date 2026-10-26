@@ -421,7 +421,8 @@
     "hint": "Type keywords to search titles, content and sources.",
     "empty": "Nothing found for “{{query}}”",
     "results": "Search results",
-    "keys": "↑↓ select   ↵ open   Esc close",
+    "keys": "↑↓ select   ↵ open   ⇧↵ copy title   Esc close",
+    "copied": "Title copied",
     "open": "Search",
     "group": {
       "todo": "To-dos",
@@ -430,7 +431,7 @@
     },
     "count_one": "{{count}} result",
     "count_other": "{{count}} results",
-    "recent": "Recently updated",
+    "recent": "Recent",
     "create": "New to-do “{{title}}”",
     "createHint": "Ctrl+↵ new to-do",
     "commands": "Commands",

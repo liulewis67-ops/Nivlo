@@ -300,6 +300,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
   };
   const openedItems: string[] = [];
+  /** 详情面板打开过的条目 → 打开时间（「最近使用」排序）。 */
+  const openedAt = new Map<string, string>();
+  let openSequence = 0;
   let searchHides = 0;
   const searchShownListeners = new Set<() => void>();
   const openedViews: string[] = [];
@@ -1212,6 +1215,13 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       notifyChange();
       return Promise.resolve(ids.length);
     },
+    markItemOpened: (id: string) => {
+      calls.push("markItemOpened");
+      // 保证比任何已有时间都晚，排序在同一毫秒内也确定。
+      openSequence += 1;
+      openedAt.set(id, new Date(Date.now() + openSequence).toISOString());
+      return Promise.resolve();
+    },
     searchItems: (query: string) => {
       calls.push("searchItems");
       const terms = query
@@ -1562,6 +1572,13 @@ ${(item.content ?? "").toLowerCase()}`;
       }
       if (request.orderBy === "updated") {
         visible.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      }
+      if (request.orderBy === "recent") {
+        const recent = (item: ItemDto) => {
+          const opened = openedAt.get(item.id);
+          return opened !== undefined && opened > item.updatedAt ? opened : item.updatedAt;
+        };
+        visible.sort((a, b) => recent(b).localeCompare(recent(a)));
       }
       return Promise.resolve(request.limit === null ? visible : visible.slice(0, request.limit));
     },
