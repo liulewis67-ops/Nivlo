@@ -95,6 +95,8 @@ pub struct ShortcutStatus {
     pub conflict: bool,
     /// 用户主动停用了；`accelerator` 是重新启用时会用的组合。
     pub disabled: bool,
+    /// 在用户当前的键盘布局里这个组合会输入字符（AltGr），注册它会让用户打不出那个字符。
+    pub types_character: bool,
 }
 
 /// 快捷键控制器（一个动作一个）。
@@ -129,6 +131,7 @@ impl ShortcutController {
                 registered: false,
                 conflict: false,
                 disabled: false,
+                types_character: false,
             }),
         }
     }
@@ -232,11 +235,16 @@ impl ShortcutController {
 
     /// 更新状态。
     fn set_status(&self, accelerator: Accelerator, registered: bool, conflict: bool) {
+        let types_character = registered && self.port.types_character(accelerator);
+        if types_character {
+            tracing::warn!(event = "shortcut_types_character", action = ?self.action, accelerator = %accelerator, "当前键盘布局里这个快捷键会输入字符（AltGr）");
+        }
         *self.status.lock().unwrap_or_else(PoisonError::into_inner) = ShortcutStatus {
             accelerator: accelerator.to_string(),
             registered,
             conflict,
             disabled: false,
+            types_character,
         };
     }
 
@@ -247,6 +255,7 @@ impl ShortcutController {
             registered: false,
             conflict: false,
             disabled: true,
+            types_character: false,
         };
     }
 }
@@ -282,6 +291,7 @@ mod tests {
     struct FakePort {
         taken: Mutex<HashSet<String>>,
         current: Mutex<Option<String>>,
+        typing: Mutex<HashSet<String>>,
     }
 
     impl FakePort {
@@ -308,6 +318,12 @@ mod tests {
         }
         fn unregister(&self) {
             *self.current.lock().unwrap() = None;
+        }
+        fn types_character(&self, accelerator: Accelerator) -> bool {
+            self.typing
+                .lock()
+                .unwrap()
+                .contains(&accelerator.to_string())
         }
     }
 
@@ -348,9 +364,25 @@ mod tests {
                 accelerator: "Ctrl+Shift+Space".to_owned(),
                 registered: true,
                 conflict: false,
-                disabled: false
+                disabled: false,
+                types_character: false
             }
         );
+    }
+
+    #[tokio::test]
+    async fn a_binding_that_types_a_character_on_the_current_layout_is_flagged() {
+        let port = Arc::new(FakePort::default());
+        port.typing.lock().unwrap().insert("Ctrl+Alt+Q".to_owned());
+        let (controller, _, _) = controller(&port);
+        controller.start().await;
+        assert!(!controller.status().types_character);
+
+        // 仍然注册（用户可能就是想要它），但状态里带上提示。
+        let status = controller.rebind("Ctrl+Alt+Q").await.unwrap();
+        assert!(status.registered && status.types_character);
+        let status = controller.rebind("Ctrl+Alt+W").await.unwrap();
+        assert!(!status.types_character);
     }
 
     #[tokio::test]

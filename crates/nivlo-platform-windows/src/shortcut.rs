@@ -21,11 +21,12 @@ use nivlo_platform::shortcut::{Accelerator, Key, ShortcutCallback, ShortcutPort}
 use windows::Win32::Foundation::{ERROR_HOTKEY_ALREADY_REGISTERED, LPARAM, WPARAM};
 use windows::Win32::System::Threading::GetCurrentThreadId;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    HOT_KEY_MODIFIERS, MOD_ALT, MOD_CONTROL, MOD_NOREPEAT, MOD_SHIFT, MOD_WIN, RegisterHotKey,
-    UnregisterHotKey,
+    GetKeyboardLayout, HKL, HOT_KEY_MODIFIERS, MAPVK_VK_TO_VSC, MOD_ALT, MOD_CONTROL, MOD_NOREPEAT,
+    MOD_SHIFT, MOD_WIN, MapVirtualKeyExW, RegisterHotKey, ToUnicodeEx, UnregisterHotKey,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    GetMessageW, MSG, PM_NOREMOVE, PeekMessageW, PostThreadMessageW, WM_HOTKEY, WM_QUIT, WM_USER,
+    GetForegroundWindow, GetMessageW, GetWindowThreadProcessId, MSG, PM_NOREMOVE, PeekMessageW,
+    PostThreadMessageW, WM_HOTKEY, WM_QUIT, WM_USER,
 };
 
 /// 线程内注册热键用的 ID（每个线程只注册一个，固定即可）。
@@ -44,6 +45,71 @@ fn virtual_key(key: Key) -> u32 {
         Key::Up => 0x26,
         Key::Right => 0x27,
         Key::Down => 0x28,
+    }
+}
+
+/// `ToUnicodeEx` 的标志：不改变内核里的键盘状态（不会吃掉用户正在输入的死键），Windows 10 1607 起支持。
+const TO_UNICODE_KEEP_STATE: u32 = 0x4;
+
+/// 在 `layout` 下按 `vk`（可选 Shift、AltGr）得到的字符；什么都不输入时为 `None`。
+/// 死键（如德语 AltGr+´ 之类会和下一个键组合的键）也算输入，用替换字符表示。
+fn translate(vk: u32, layout: HKL, shift: bool, altgr: bool) -> Option<char> {
+    let mut state = [0_u8; 256];
+    if shift {
+        state[0x10] = 0x80; // VK_SHIFT
+    }
+    if altgr {
+        // AltGr = 左 Ctrl + 右 Alt。
+        for vk_modifier in [0x11_usize, 0x12, 0xA2, 0xA5] {
+            state[vk_modifier] = 0x80;
+        }
+    }
+    // SAFETY: 只读查询，参数都是本函数里的值；layout 是系统给出的句柄，无效时函数返回 0。
+    let scan = unsafe { MapVirtualKeyExW(vk, MAPVK_VK_TO_VSC, Some(layout)) };
+    let mut buffer = [0_u16; 8];
+    // SAFETY: state 是 256 字节的数组、buffer 的长度随切片一起传入；带 TO_UNICODE_KEEP_STATE 不改变键盘状态。
+    let written = unsafe {
+        ToUnicodeEx(
+            vk,
+            scan,
+            &state,
+            &mut buffer,
+            TO_UNICODE_KEEP_STATE,
+            Some(layout),
+        )
+    };
+    match written {
+        n if n < 0 => Some(char::REPLACEMENT_CHARACTER),
+        0 => None,
+        n => {
+            let len = usize::try_from(n).unwrap_or(0).min(buffer.len());
+            char::decode_utf16(buffer[..len].iter().copied())
+                .next()
+                .and_then(Result::ok)
+        }
+    }
+}
+
+/// 在 `layout` 下，`accelerator` 是不是在输入字符：只看含 Ctrl+Alt（即 AltGr）、不含 Win 的组合；
+/// 输出可见字符且和不按 AltGr 时不同，才算（没有 AltGr 的布局里 Ctrl+Alt+Space 也是空格，不算）。
+#[must_use]
+pub fn types_character_in(accelerator: Accelerator, layout: HKL) -> bool {
+    if !(accelerator.ctrl && accelerator.alt) || accelerator.meta {
+        return false;
+    }
+    let vk = virtual_key(accelerator.key);
+    match translate(vk, layout, accelerator.shift, true) {
+        Some(c) if !c.is_control() => Some(c) != translate(vk, layout, accelerator.shift, false),
+        _ => false,
+    }
+}
+
+/// 用户正在用的键盘布局：前台窗口所在线程的布局（输入语言是按线程的）。
+fn current_layout() -> HKL {
+    // SAFETY: 只读查询；没有前台窗口时线程号为 0，GetKeyboardLayout(0) 取本线程的布局。
+    unsafe {
+        let thread = GetWindowThreadProcessId(GetForegroundWindow(), None);
+        GetKeyboardLayout(thread)
     }
 }
 
@@ -190,6 +256,11 @@ impl ShortcutPort for WindowsShortcut {
             old.stop();
         }
         Ok(())
+    }
+
+    /// 在用户当前的键盘布局里，这个组合是不是在输入字符（AltGr）。
+    fn types_character(&self, accelerator: Accelerator) -> bool {
+        types_character_in(accelerator, current_layout())
     }
 
     /// 取消当前注册的快捷键。

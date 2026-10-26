@@ -714,6 +714,8 @@ pub struct ShortcutStatusDto {
     pub default_accelerator: String,
     /// 用户主动停用了；`accelerator` 是重新启用时会用的组合。
     pub disabled: bool,
+    /// 在用户当前的键盘布局里这个组合会输入字符（AltGr）：界面提示换一个。
+    pub types_character: bool,
 }
 
 impl ShortcutStatusDto {
@@ -726,6 +728,7 @@ impl ShortcutStatusDto {
             conflict: value.conflict,
             default_accelerator: action.default_accelerator().to_string(),
             disabled: value.disabled,
+            types_character: value.types_character,
         }
     }
 }

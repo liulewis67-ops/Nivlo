@@ -213,6 +213,14 @@ pub trait ShortcutPort: Send + Sync {
 
     /// 取消当前注册的快捷键；没有注册时是空操作。
     fn unregister(&self);
+
+    /// 在用户**当前的键盘布局**里，这个组合是不是在输入一个字符。
+    ///
+    /// 很多欧洲键盘布局把 `Ctrl+Alt` 当作 AltGr（德语 AltGr+Q = `@`）：把这样的组合注册成全局快捷键，
+    /// 用户就再也打不出那个字符了。界面据此提示换一个组合。不支持检测的平台返回 `false`。
+    fn types_character(&self, _accelerator: Accelerator) -> bool {
+        false
+    }
 }
 
 #[cfg(test)]

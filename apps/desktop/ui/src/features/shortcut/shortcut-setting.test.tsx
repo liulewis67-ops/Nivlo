@@ -80,6 +80,7 @@ describe("ShortcutSetting", () => {
       conflict: true,
       defaultAccelerator: "Ctrl+Shift+Space",
       disabled: false,
+      typesCharacter: false,
     });
     renderWithProviders(<ShortcutSetting />, ipc);
     expect(await screen.findByText(/已被其他程序占用，暂时无法/)).toBeInTheDocument();
@@ -114,6 +115,7 @@ describe("ShortcutSetting", () => {
         conflict: true,
         defaultAccelerator: "Ctrl+Alt+Space",
         disabled: false,
+        typesCharacter: false,
       },
       "search",
     );
@@ -143,6 +145,16 @@ describe("ShortcutSetting", () => {
       await screen.findByRole("button", { name: "快速创建：Ctrl+Shift+Space" }),
     ).toBeInTheDocument();
     expect(await ipc.getShortcutStatus("quickCreate")).toMatchObject({ disabled: false });
+  });
+
+  it("在当前键盘布局里会输入字符（AltGr）的组合：保存后提示换一个", async () => {
+    const ipc = createMemoryIpc();
+    ipc.typingShortcuts.add("Ctrl+Alt+Q");
+    renderWithProviders(<ShortcutSetting showStatus />, ipc);
+    fireEvent.click(await screen.findByRole("button", { name: /快速创建：/ }));
+    press("KeyQ", "q", { ctrl: true, alt: true });
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+    expect(await screen.findByText(/会输入字符/)).toBeInTheDocument();
   });
 
   it("Esc 取消录入", async () => {

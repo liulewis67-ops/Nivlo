@@ -688,7 +688,9 @@ export const commands = {
 	 */
 	disableShortcut: (action: ShortcutActionDto) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("disable_shortcut", { action })),
 	/**
-	 *  打开主窗口并切换到指定视图（悬浮窗上的收集箱入口）。
+	 *  打开主窗口并切换到指定视图（悬浮窗上的收集箱入口、全局搜索框的「前往」命令）。
+	 * 
+	 *  全局搜索框开着时一并隐藏它（不把焦点还给之前的应用：焦点要留在主窗口）。
 	 * 
 	 *  视图先记在应用状态里，再通知已经在运行的主窗口：主窗口可能刚刚才被创建、还没来得及监听事件，
 	 *  这时它会在启动时取走记下的视图。
@@ -1359,6 +1361,8 @@ export type ShortcutStatusDto = {
 	defaultAccelerator: string,
 	/**  用户主动停用了；`accelerator` 是重新启用时会用的组合。 */
 	disabled: boolean,
+	/**  在用户当前的键盘布局里这个组合会输入字符（AltGr）：界面提示换一个。 */
+	typesCharacter: boolean,
 };
 
 /**  来源（IPC 表示）：这条 Item 来自哪里。 */

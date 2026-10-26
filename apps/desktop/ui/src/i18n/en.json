@@ -168,7 +168,8 @@
       "registered": "Active",
       "conflict": "Used by another app",
       "inactive": "Not active",
-      "disabled": "Off"
+      "disabled": "Off",
+      "typesCharacter": "On your current keyboard layout {{accelerator}} types a character (AltGr), so it can't be typed while this shortcut is active. Consider another combination."
     },
     "unusable": {
       "noModifier": "Needs at least one modifier key (Ctrl / Alt / Shift / Win).",

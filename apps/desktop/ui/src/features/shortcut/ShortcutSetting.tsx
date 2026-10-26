@@ -124,6 +124,11 @@ export function ShortcutSetting({
           accelerator: status.disabled ? t("shortcut.status.disabled") : status.accelerator,
         })}
       </Button>
+      {showStatus && status.registered && status.typesCharacter && (
+        <p role="note" className="px-2 text-xs text-danger">
+          {t("shortcut.status.typesCharacter", { accelerator: status.accelerator })}
+        </p>
+      )}
       {showStatus && (
         <p
           className={cx(

@@ -167,7 +167,8 @@
       "registered": "已生效",
       "conflict": "被其他程序占用",
       "inactive": "未生效",
-      "disabled": "已停用"
+      "disabled": "已停用",
+      "typesCharacter": "在你当前的键盘布局里，{{accelerator}} 会输入字符（AltGr）；它被占作快捷键后这个字符就打不出来了，建议换一个组合。"
     },
     "unusable": {
       "noModifier": "需要至少一个修饰键（Ctrl / Alt / Shift / Win）。",

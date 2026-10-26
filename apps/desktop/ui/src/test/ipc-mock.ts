@@ -134,6 +134,8 @@ export interface MemoryIpc extends IpcClient, WorkflowMock {
   setShortcutStatus(status: ShortcutStatusDto, action?: ShortcutActionDto): void;
   /** 已被其他程序占用的快捷键（规范文本），`setShortcut` 遇到它们抛出 `SHORTCUT_CONFLICT`。 */
   readonly takenShortcuts: Set<string>;
+  /** 在「当前键盘布局」里会输入字符的快捷键（AltGr），`setShortcut` 后状态带 `typesCharacter`。 */
+  readonly typingShortcuts: Set<string>;
   /** 按顺序记录的 `openItemInMain` 请求的 ID。 */
   readonly openedItems: readonly string[];
   /** `hideSearch` 被调用的次数。 */
@@ -259,6 +261,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const quickAddListeners = new Set<() => void>();
   const mainViewListeners = new Set<(view: string) => void>();
   const takenShortcuts = new Set<string>();
+  const typingShortcuts = new Set<string>();
   const projects: ProjectDto[] = [];
   const tagRegistry: TagDto[] = [];
   /** Item ID → 标签 ID。 */
@@ -293,6 +296,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       conflict: false,
       defaultAccelerator: "Ctrl+Shift+Space",
       disabled: false,
+      typesCharacter: false,
     },
     search: {
       accelerator: "Ctrl+Alt+Space",
@@ -300,6 +304,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       conflict: false,
       defaultAccelerator: "Ctrl+Alt+Space",
       disabled: false,
+      typesCharacter: false,
     },
   };
   const openedItems: string[] = [];
@@ -835,6 +840,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       return Promise.resolve();
     },
     takenShortcuts,
+    typingShortcuts,
     get updates() {
       return updates;
     },
@@ -951,6 +957,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         registered: true,
         conflict: false,
         disabled: false,
+        typesCharacter: typingShortcuts.has(accelerator),
       };
       return Promise.resolve(shortcuts[action]);
     },
@@ -961,6 +968,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         registered: false,
         conflict: false,
         disabled: true,
+        typesCharacter: false,
       };
       return Promise.resolve(shortcuts[action]);
     },
