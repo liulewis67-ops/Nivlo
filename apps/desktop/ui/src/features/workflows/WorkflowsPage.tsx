@@ -12,6 +12,7 @@ import { useToastStore } from "@/stores/toast-store";
 import { ImportPreviewPanel } from "./ImportPreviewPanel";
 import { WorkflowEditor } from "./WorkflowEditor";
 import { RunInspector } from "./RunInspector";
+import { workflowText } from "./model/builtin-text";
 import { blankDefinition, freshId, stringify } from "./model/definition";
 
 /** 页面里的两个标签页。 */
@@ -39,6 +40,7 @@ type WorkflowRowProps = {
  */
 function WorkflowRow({ workflow, selected, onSelect, onToggle, onPriority }: WorkflowRowProps) {
   const { t } = useTranslation();
+  const { name, description } = workflowText(workflow);
   return (
     <li
       className={cx(
@@ -49,7 +51,7 @@ function WorkflowRow({ workflow, selected, onSelect, onToggle, onPriority }: Wor
       )}
     >
       <Switch
-        label={t("workflows.enable", { name: workflow.name })}
+        label={t("workflows.enable", { name })}
         checked={workflow.enabled}
         onCheckedChange={onToggle}
       />
@@ -59,18 +61,18 @@ function WorkflowRow({ workflow, selected, onSelect, onToggle, onPriority }: Wor
         onClick={onSelect}
         className="min-w-0 flex-1 text-left"
       >
-        <span className="block truncate text-sm font-medium text-text">{workflow.name}</span>
-        <span className="block truncate text-xs text-muted">{workflow.description}</span>
+        <span className="block truncate text-sm font-medium text-text">{name}</span>
+        <span className="block truncate text-xs text-muted">{description}</span>
       </button>
       <div
         role="group"
-        aria-label={t("workflows.priorityOf", { name: workflow.name })}
+        aria-label={t("workflows.priorityOf", { name })}
         className="flex shrink-0 items-center gap-1"
       >
         <Button
           size="sm"
           variant="ghost"
-          aria-label={t("workflows.priorityDown", { name: workflow.name })}
+          aria-label={t("workflows.priorityDown", { name })}
           onClick={() => onPriority(-1)}
         >
           {"−"}
@@ -79,7 +81,7 @@ function WorkflowRow({ workflow, selected, onSelect, onToggle, onPriority }: Wor
         <Button
           size="sm"
           variant="ghost"
-          aria-label={t("workflows.priorityUp", { name: workflow.name })}
+          aria-label={t("workflows.priorityUp", { name })}
           onClick={() => onPriority(1)}
         >
           {"+"}
