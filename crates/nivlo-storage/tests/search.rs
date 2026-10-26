@@ -403,3 +403,68 @@ async fn recently_opened_items_lead_the_recent_order() {
         .collect();
     assert_eq!(updated, ["最新", "中间", "很早建的"]);
 }
+
+#[tokio::test]
+async fn pinyin_initials_find_chinese_titles_after_regular_hits() {
+    let (_dir, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&item(1, ItemType::Todo, "整理本周周报", None, 0))
+        .await
+        .unwrap();
+    tx.items()
+        .insert(&item(2, ItemType::Note, "bzzb 是什么缩写", None, 1))
+        .await
+        .unwrap();
+    tx.items()
+        .insert(&item(3, ItemType::Todo, "Grab a bag", None, 2))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    // 字面命中在前，拼音首字母命中接在后面。
+    assert_eq!(
+        titles(&db, "bzzb").await,
+        ["bzzb 是什么缩写", "整理本周周报"]
+    );
+    // 不区分大小写；英文标题不参与首字母匹配（「Grab a bag」不会因为 ab 被误中）。
+    assert_eq!(titles(&db, "ZLBZ").await, ["整理本周周报"]);
+    assert!(titles(&db, "gab").await.is_empty());
+    // 改标题后首字母跟着更新。
+    let mut tx = db.begin().await.unwrap();
+    let mut renamed = tx.items().get(id(1)).await.unwrap().unwrap();
+    renamed.rename("准备季度复盘", t(5)).unwrap();
+    tx.items().update(&renamed).await.unwrap();
+    tx.commit().await.unwrap();
+    assert!(titles(&db, "zlbz").await.is_empty());
+    assert_eq!(titles(&db, "jdfp").await, ["准备季度复盘"]);
+}
+
+#[tokio::test]
+async fn migrate_backfills_initials_for_rows_written_before_the_column_existed() {
+    use sqlx::Connection;
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("nivlo.db");
+    let db = Database::open(&path).await.unwrap();
+    db.migrate().await.unwrap();
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&item(1, ItemType::Todo, "整理本周周报", None, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    // 模拟升级前的数据：这一列还没有值。
+    let url = format!("sqlite:{}", path.display());
+    let mut conn = sqlx::SqliteConnection::connect(&url).await.unwrap();
+    sqlx::query("UPDATE items SET title_initials = NULL")
+        .execute(&mut conn)
+        .await
+        .unwrap();
+    conn.close().await.unwrap();
+    assert!(titles(&db, "bzzb").await.is_empty());
+
+    db.migrate().await.unwrap();
+    assert_eq!(titles(&db, "bzzb").await, ["整理本周周报"]);
+}

@@ -20,6 +20,23 @@ use crate::codec::{
     format_date, format_time, format_timestamp, parse_date, parse_time, parse_timestamp,
 };
 use crate::error::map_sqlx;
+use crate::pinyin_initials::{initials_query, title_initials};
+
+impl SqliteTransaction {
+    /// 写入 Item 后同步标题的拼音首字母（同一事务，见 `0008_title_initials.sql`）。
+    async fn write_initials(&mut self, id: &str, title: &str) -> Result<(), StorageError> {
+        let initials = title_initials(title);
+        sqlx::query!(
+            "UPDATE items SET title_initials = ? WHERE id = ?",
+            initials,
+            id
+        )
+        .execute(&mut *self.tx)
+        .await
+        .map_err(map_sqlx)?;
+        Ok(())
+    }
+}
 
 /// `items` 表的一行，字段类型与列一一对应（均为文本）。
 struct ItemRow {
@@ -230,7 +247,7 @@ impl ItemRepository for SqliteTransaction {
         .execute(&mut *self.tx)
         .await
         .map_err(map_sqlx)?;
-        Ok(())
+        self.write_initials(&id, &s.title).await
     }
 
     /// 记录打开时间；不存在或已删除的 Item 不受影响。
@@ -308,7 +325,7 @@ impl ItemRepository for SqliteTransaction {
         if result.rows_affected() == 0 {
             return Err(StorageError::NotFound { entity: "item", id });
         }
-        Ok(())
+        self.write_initials(&id, &s.title).await
     }
 
     /// 按 ID 读取 Item。
@@ -577,7 +594,43 @@ impl ItemRepository for SqliteTransaction {
             .await
         }
         .map_err(map_sqlx)?;
-        rows.into_iter().map(row_to_item).collect()
+        let mut items = rows
+            .into_iter()
+            .map(row_to_item)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // 拼音首字母（「bzzb」→「本周周报」）：只对纯字母的查询，结果接在正常命中之后、去重。
+        let wanted = usize::try_from(limit).unwrap_or(usize::MAX);
+        if let Some(initials) = initials_query(text)
+            && items.len() < wanted
+        {
+            let pattern = like_pattern(&initials);
+            let extra = sqlx::query_as!(
+                ItemRow,
+                "SELECT id, type AS item_type, title, content, content_format, status, priority,
+                        scheduled_date, scheduled_time, due_date, due_time, reminder_at,
+                        project_id, in_inbox, created_at, updated_at, completed_at, archived_at
+                 FROM items
+                 WHERE title_initials LIKE ?1 ESCAPE '\\'
+                   AND (?2 = 1 OR archived_at IS NULL)
+                   AND deleted_at IS NULL
+                 ORDER BY status = 'done', updated_at DESC, id DESC
+                 LIMIT ?3",
+                pattern,
+                include_archived,
+                limit
+            )
+            .fetch_all(&mut *self.tx)
+            .await
+            .map_err(map_sqlx)?;
+            for row in extra {
+                let item = row_to_item(row)?;
+                if items.len() < wanted && !items.iter().any(|found| found.id() == item.id()) {
+                    items.push(item);
+                }
+            }
+        }
+        Ok(items)
     }
 }
 

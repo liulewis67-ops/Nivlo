@@ -50,7 +50,7 @@ describe("全局搜索（Ctrl+K）", () => {
     pressCtrlK();
     expect(await screen.findByRole("dialog", { name: "搜索" })).toBeInTheDocument();
     expect(screen.getByLabelText("搜索关键词")).toHaveFocus();
-    expect(await screen.findByText("输入关键词，搜索标题、正文和来源。")).toBeInTheDocument();
+    expect(await screen.findByText(/输入关键词，搜索标题、正文和来源/)).toBeInTheDocument();
 
     pressCtrlK();
     expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
@@ -94,7 +94,7 @@ describe("全局搜索（Ctrl+K）", () => {
     typeQuery("不存在的词");
     expect(await screen.findByText("没有找到「不存在的词」")).toBeInTheDocument();
     typeQuery("");
-    expect(await screen.findByText("输入关键词，搜索标题、正文和来源。")).toBeInTheDocument();
+    expect(await screen.findByText(/输入关键词，搜索标题、正文和来源/)).toBeInTheDocument();
   });
 
   it("↑↓ 循环选择，回车打开选中项的详情并关闭面板", async () => {

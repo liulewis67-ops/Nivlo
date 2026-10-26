@@ -11,6 +11,7 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, S
 
 use crate::error::map_sqlx;
 use crate::item_repository::SqliteTransaction;
+use crate::pinyin_initials::title_initials;
 
 /// 编译期嵌入的 Migration。已合入的 Migration 不得修改（sqlx 会校验 checksum）。
 static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
@@ -81,12 +82,47 @@ impl Database {
     ///
     /// Migration 失败（SQL 错误、checksum 不匹配、版本比应用更新）时返回
     /// [`StorageError::Migration`]。此时宿主**不得**启动业务 Runtime。
+    /// 回填拼音首字母失败时返回存储错误。
     pub async fn migrate(&self) -> Result<(), StorageError> {
         MIGRATOR
             .run(&self.pool)
             .await
             .map_err(|e| StorageError::Migration(e.to_string()))?;
         tracing::info!(event = "migrations_applied", "数据库迁移完成");
+        self.backfill_title_initials().await
+    }
+
+    /// 给还没算过拼音首字母的 Item 补上（`0008_title_initials.sql` 之前写入的数据）。
+    ///
+    /// 之后的写入由 Repository 维护；没有汉字的标题存空字符串，所以这里只在升级后第一次有活干。
+    async fn backfill_title_initials(&self) -> Result<(), StorageError> {
+        let rows = sqlx::query!(
+            "SELECT id AS \"id!\", title AS \"title!\" FROM items WHERE title_initials IS NULL"
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(map_sqlx)?;
+        if rows.is_empty() {
+            return Ok(());
+        }
+        let mut tx = self.pool.begin().await.map_err(map_sqlx)?;
+        for row in &rows {
+            let initials = title_initials(&row.title);
+            sqlx::query!(
+                "UPDATE items SET title_initials = ? WHERE id = ?",
+                initials,
+                row.id
+            )
+            .execute(&mut *tx)
+            .await
+            .map_err(map_sqlx)?;
+        }
+        tx.commit().await.map_err(map_sqlx)?;
+        tracing::info!(
+            event = "title_initials_backfilled",
+            count = rows.len(),
+            "已回填拼音首字母"
+        );
         Ok(())
     }
 

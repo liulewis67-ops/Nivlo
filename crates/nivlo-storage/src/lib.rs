@@ -17,6 +17,7 @@ mod database;
 mod error;
 mod item_repository;
 mod organize_repository;
+mod pinyin_initials;
 mod trash_repository;
 mod trigger_repository;
 mod workflow_repository;
