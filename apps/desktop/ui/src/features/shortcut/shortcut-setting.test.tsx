@@ -79,6 +79,7 @@ describe("ShortcutSetting", () => {
       registered: false,
       conflict: true,
       defaultAccelerator: "Ctrl+Shift+Space",
+      disabled: false,
     });
     renderWithProviders(<ShortcutSetting />, ipc);
     expect(await screen.findByText(/已被其他程序占用，暂时无法/)).toBeInTheDocument();
@@ -112,6 +113,7 @@ describe("ShortcutSetting", () => {
         registered: false,
         conflict: true,
         defaultAccelerator: "Ctrl+Alt+Space",
+        disabled: false,
       },
       "search",
     );
@@ -124,6 +126,23 @@ describe("ShortcutSetting", () => {
     );
     expect(await screen.findByText("已生效")).toBeInTheDocument();
     expect(screen.getByText("被其他程序占用")).toBeInTheDocument();
+  });
+
+  it("可以停用快捷键，再一键用原来的组合重新启用", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<ShortcutSetting showStatus />, ipc);
+    fireEvent.click(await screen.findByRole("button", { name: /快速创建：/ }));
+    fireEvent.click(screen.getByRole("button", { name: "停用" }));
+
+    expect(await screen.findByRole("button", { name: "快速创建：已停用" })).toBeInTheDocument();
+    expect(ipc.calls).toContain("disableShortcut");
+
+    fireEvent.click(screen.getByRole("button", { name: "快速创建：已停用" }));
+    fireEvent.click(screen.getByRole("button", { name: "启用（Ctrl+Shift+Space）" }));
+    expect(
+      await screen.findByRole("button", { name: "快速创建：Ctrl+Shift+Space" }),
+    ).toBeInTheDocument();
+    expect(await ipc.getShortcutStatus("quickCreate")).toMatchObject({ disabled: false });
   });
 
   it("Esc 取消录入", async () => {

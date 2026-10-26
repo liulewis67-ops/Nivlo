@@ -61,6 +61,14 @@ export function ShortcutSetting({
       close();
     },
   });
+  const disable = useMutation({
+    mutationFn: () => ipc.disableShortcut(action),
+    onSuccess: (next) => {
+      queryClient.setQueryData(queryKeys.shortcut(action), next);
+      useToastStore.getState().push("success", t(`${copy}.disabled`));
+      close();
+    },
+  });
 
   if (status === undefined) return null;
   const open = userOpen ?? status.conflict;
@@ -109,10 +117,12 @@ export function ShortcutSetting({
         aria-expanded={open}
         onClick={() => (open ? close() : setUserOpen(true))}
       >
-        {status.registered ? null : (
+        {status.registered || status.disabled ? null : (
           <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-danger" />
         )}
-        {t(`${copy}.button`, { accelerator: status.accelerator })}
+        {t(`${copy}.button`, {
+          accelerator: status.disabled ? t("shortcut.status.disabled") : status.accelerator,
+        })}
       </Button>
       {showStatus && (
         <p
@@ -124,9 +134,11 @@ export function ShortcutSetting({
           {t(
             status.registered
               ? "shortcut.status.registered"
-              : status.conflict
-                ? "shortcut.status.conflict"
-                : "shortcut.status.inactive",
+              : status.disabled
+                ? "shortcut.status.disabled"
+                : status.conflict
+                  ? "shortcut.status.conflict"
+                  : "shortcut.status.inactive",
           )}
         </p>
       )}
@@ -154,18 +166,37 @@ export function ShortcutSetting({
               {problem}
             </p>
           )}
-          <div className="flex justify-end gap-1">
+          <div className="flex flex-wrap items-center gap-1">
+            {status.disabled ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={save.isPending}
+                onClick={() => save.mutate(status.accelerator)}
+              >
+                {t("shortcut.enable", { accelerator: status.accelerator })}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={disable.isPending}
+                onClick={() => disable.mutate()}
+              >
+                {t("shortcut.disable")}
+              </Button>
+            )}
             {status.accelerator !== status.defaultAccelerator && (
               <Button
                 size="sm"
                 variant="ghost"
-                className="mr-auto"
                 disabled={save.isPending}
                 onClick={() => save.mutate(status.defaultAccelerator)}
               >
                 {t("shortcut.restore", { accelerator: status.defaultAccelerator })}
               </Button>
             )}
+            <span className="flex-1" />
             <Button size="sm" variant="ghost" onClick={close}>
               {t("shortcut.cancel")}
             </Button>

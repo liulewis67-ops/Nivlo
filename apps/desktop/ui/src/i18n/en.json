@@ -162,10 +162,13 @@
     "save": "Save",
     "cancel": "Cancel",
     "restore": "Restore default ({{accelerator}})",
+    "disable": "Turn off",
+    "enable": "Turn on ({{accelerator}})",
     "status": {
       "registered": "Active",
       "conflict": "Used by another app",
-      "inactive": "Not active"
+      "inactive": "Not active",
+      "disabled": "Off"
     },
     "unusable": {
       "noModifier": "Needs at least one modifier key (Ctrl / Alt / Shift / Win).",
@@ -176,13 +179,15 @@
         "label": "Quick Create shortcut",
         "button": "Quick Create: {{accelerator}}",
         "conflict": "{{accelerator}} is used by another app, so Quick Create can't use it right now. Please pick another shortcut.",
-        "saved": "Quick Create shortcut changed to {{accelerator}}"
+        "saved": "Quick Create shortcut changed to {{accelerator}}",
+        "disabled": "Quick Create shortcut turned off"
       },
       "search": {
         "label": "Global search shortcut",
         "button": "Search: {{accelerator}}",
         "conflict": "{{accelerator}} is used by another app, so global search can't use it right now. Please pick another shortcut.",
-        "saved": "Global search shortcut changed to {{accelerator}}"
+        "saved": "Global search shortcut changed to {{accelerator}}",
+        "disabled": "Global search shortcut turned off"
       }
     }
   },

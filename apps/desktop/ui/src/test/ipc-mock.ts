@@ -291,12 +291,14 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       registered: true,
       conflict: false,
       defaultAccelerator: "Ctrl+Shift+Space",
+      disabled: false,
     },
     search: {
       accelerator: "Ctrl+Alt+Space",
       registered: true,
       conflict: false,
       defaultAccelerator: "Ctrl+Alt+Space",
+      disabled: false,
     },
   };
   const openedItems: string[] = [];
@@ -936,12 +938,29 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         return Promise.reject(new AppError("SHORTCUT_INVALID", "无效的快捷键"));
       }
       const usedByOther = Object.entries(shortcuts).some(
-        ([other, status]) => other !== action && status.accelerator === accelerator,
+        ([other, status]) =>
+          other !== action && !status.disabled && status.accelerator === accelerator,
       );
       if (takenShortcuts.has(accelerator) || usedByOther) {
         return Promise.reject(new AppError("SHORTCUT_CONFLICT", "已被占用"));
       }
-      shortcuts[action] = { ...shortcuts[action], accelerator, registered: true, conflict: false };
+      shortcuts[action] = {
+        ...shortcuts[action],
+        accelerator,
+        registered: true,
+        conflict: false,
+        disabled: false,
+      };
+      return Promise.resolve(shortcuts[action]);
+    },
+    disableShortcut: (action: ShortcutActionDto) => {
+      calls.push("disableShortcut");
+      shortcuts[action] = {
+        ...shortcuts[action],
+        registered: false,
+        conflict: false,
+        disabled: true,
+      };
       return Promise.resolve(shortcuts[action]);
     },
     get openedItems() {

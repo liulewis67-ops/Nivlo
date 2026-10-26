@@ -81,6 +81,9 @@ impl ShortcutAction {
     }
 }
 
+/// 设置里表示「停用」的值：不注册任何快捷键。
+pub const DISABLED_SETTING_VALUE: &str = "off";
+
 /// 快捷键当前的状态。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ShortcutStatus {
@@ -90,6 +93,8 @@ pub struct ShortcutStatus {
     pub registered: bool,
     /// 没注册成功的原因是被其他程序占用。
     pub conflict: bool,
+    /// 用户主动停用了；`accelerator` 是重新启用时会用的组合。
+    pub disabled: bool,
 }
 
 /// 快捷键控制器（一个动作一个）。
@@ -123,6 +128,7 @@ impl ShortcutController {
                 accelerator: action.default_accelerator().to_string(),
                 registered: false,
                 conflict: false,
+                disabled: false,
             }),
         }
     }
@@ -140,7 +146,7 @@ impl ShortcutController {
             .clone()
     }
 
-    /// 读取用户保存的绑定（缺失或无法解析时用默认值）并注册。
+    /// 读取用户保存的绑定（缺失或无法解析时用默认值）并注册；保存的是「停用」时不注册。
     ///
     /// 注册失败只记录日志并把状态标为未注册，不返回错误。
     pub async fn start(&self) {
@@ -151,6 +157,11 @@ impl ShortcutController {
                 None
             }
         };
+        if saved.as_deref() == Some(DISABLED_SETTING_VALUE) {
+            tracing::info!(event = "shortcut_disabled", action = ?self.action, "全局快捷键已被用户停用");
+            self.set_disabled(self.action.default_accelerator());
+            return;
+        }
         let accelerator = saved
             .as_deref()
             .and_then(|text| text.parse::<Accelerator>().ok())
@@ -196,6 +207,24 @@ impl ShortcutController {
         Ok(self.status())
     }
 
+    /// 停用：取消注册并保存，重启后也不再注册；重新绑定（[`ShortcutController::rebind`]）即重新启用。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误：本次运行已经停用，但重启后会恢复原来的绑定。
+    pub async fn disable(&self) -> Result<ShortcutStatus, AppError> {
+        self.port.unregister();
+        let current = self.status().accelerator;
+        let accelerator = current
+            .parse::<Accelerator>()
+            .unwrap_or(self.action.default_accelerator());
+        self.set_disabled(accelerator);
+        self.settings
+            .set(self.action.setting_key(), DISABLED_SETTING_VALUE)
+            .await?;
+        Ok(self.status())
+    }
+
     /// 取消注册（退出时调用）。
     pub fn stop(&self) {
         self.port.unregister();
@@ -207,6 +236,17 @@ impl ShortcutController {
             accelerator: accelerator.to_string(),
             registered,
             conflict,
+            disabled: false,
+        };
+    }
+
+    /// 标记为停用；`accelerator` 是重新启用时用的组合。
+    fn set_disabled(&self, accelerator: Accelerator) {
+        *self.status.lock().unwrap_or_else(PoisonError::into_inner) = ShortcutStatus {
+            accelerator: accelerator.to_string(),
+            registered: false,
+            conflict: false,
+            disabled: true,
         };
     }
 }
@@ -272,7 +312,15 @@ mod tests {
     }
 
     fn controller(port: &Arc<FakePort>) -> (ShortcutController, FakeUnitOfWork, Arc<AtomicUsize>) {
-        let uow = FakeUnitOfWork::new();
+        controller_on(port, &FakeUnitOfWork::new())
+    }
+
+    /// 在已有的（共享的）设置数据上创建 Quick Create 的控制器，模拟重启。
+    fn controller_on(
+        port: &Arc<FakePort>,
+        uow: &FakeUnitOfWork,
+    ) -> (ShortcutController, FakeUnitOfWork, Arc<AtomicUsize>) {
+        let uow = uow.clone();
         let clock = FakeClock::at_utc(Utc.with_ymd_and_hms(2026, 10, 10, 8, 0, 0).unwrap());
         let settings = SettingsService::new(Arc::new(uow.clone()), Arc::new(clock));
         let presses = Arc::new(AtomicUsize::new(0));
@@ -299,9 +347,40 @@ mod tests {
             ShortcutStatus {
                 accelerator: "Ctrl+Shift+Space".to_owned(),
                 registered: true,
-                conflict: false
+                conflict: false,
+                disabled: false
             }
         );
+    }
+
+    #[tokio::test]
+    async fn disabling_unregisters_persists_and_survives_a_restart() {
+        let port = Arc::new(FakePort::default());
+        let (controller, uow, _) = controller(&port);
+        controller.start().await;
+        controller.rebind("Ctrl+Alt+Q").await.unwrap();
+
+        let status = controller.disable().await.unwrap();
+        assert!(status.disabled && !status.registered);
+        // 记住原来的组合，重新启用时用它。
+        assert_eq!(status.accelerator, "Ctrl+Alt+Q");
+        assert_eq!(port.current(), None);
+        assert_eq!(
+            uow.committed_setting(SHORTCUT_SETTING_KEY).as_deref(),
+            Some(DISABLED_SETTING_VALUE)
+        );
+
+        // 「重启」：不注册，状态是停用。
+        let port2 = Arc::new(FakePort::default());
+        let (second, _, _) = controller_on(&port2, &uow);
+        second.start().await;
+        assert_eq!(port2.current(), None);
+        assert!(second.status().disabled);
+
+        // 重新绑定即重新启用。
+        let status = second.rebind("Ctrl+Shift+Space").await.unwrap();
+        assert!(status.registered && !status.disabled);
+        assert_eq!(port2.current().as_deref(), Some("Ctrl+Shift+Space"));
     }
 
     #[tokio::test]

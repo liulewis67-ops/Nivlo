@@ -61,7 +61,9 @@ pub async fn set_shortcut<R: Runtime>(
         .into_iter()
         .filter(|other| *other != action)
     {
+        // 停用的动作不占用它的组合。
         if let Some(existing) = state.runtime.shortcut(other)
+            && !existing.status().disabled
             && existing.status().accelerator == wanted
         {
             return Err(IpcError::from(AppError::new(
@@ -71,6 +73,26 @@ pub async fn set_shortcut<R: Runtime>(
         }
     }
     let status = controller(&state, action)?.rebind(&accelerator).await?;
+    if action == ShortcutAction::Search {
+        crate::tray::refresh_search_shortcut(&app);
+    }
+    Ok(ShortcutStatusDto::new(status, action))
+}
+
+/// 停用一个动作的全局快捷键并保存（重启后也不注册）；再次设置快捷键即重新启用。
+///
+/// # Errors
+///
+/// 应用尚未启动完成时返回 `INVALID_INPUT`；保存失败时返回存储错误（本次运行已经停用）。
+#[tauri::command]
+#[specta::specta]
+pub async fn disable_shortcut<R: Runtime>(
+    app: AppHandle<R>,
+    state: State<'_, AppState>,
+    action: ShortcutActionDto,
+) -> Result<ShortcutStatusDto, IpcError> {
+    let action = ShortcutAction::from(action);
+    let status = controller(&state, action)?.disable().await?;
     if action == ShortcutAction::Search {
         crate::tray::refresh_search_shortcut(&app);
     }

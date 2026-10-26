@@ -70,6 +70,7 @@
     "allow-take-pending-main-view",
     "allow-get-shortcut-status",
     "allow-set-shortcut",
+    "allow-disable-shortcut",
     "allow-list-inbox",
     "allow-get-inbox-count",
     "allow-organize-items",

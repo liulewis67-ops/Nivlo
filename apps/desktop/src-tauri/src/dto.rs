@@ -712,6 +712,8 @@ pub struct ShortcutStatusDto {
     pub conflict: bool,
     /// 这个动作的默认绑定（设置页的「恢复默认」用），规范文本。
     pub default_accelerator: String,
+    /// 用户主动停用了；`accelerator` 是重新启用时会用的组合。
+    pub disabled: bool,
 }
 
 impl ShortcutStatusDto {
@@ -723,6 +725,7 @@ impl ShortcutStatusDto {
             registered: value.registered,
             conflict: value.conflict,
             default_accelerator: action.default_accelerator().to_string(),
+            disabled: value.disabled,
         }
     }
 }

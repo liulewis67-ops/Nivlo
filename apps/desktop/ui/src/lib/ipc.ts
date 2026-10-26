@@ -307,6 +307,8 @@ export interface IpcClient {
    * 此时原来的绑定保持不变。
    */
   setShortcut(action: ShortcutActionDto, accelerator: string): Promise<ShortcutStatusDto>;
+  /** 停用一个动作的全局快捷键并保存（重启后也不注册）；再次 `setShortcut` 即重新启用。 */
+  disableShortcut(action: ShortcutActionDto): Promise<ShortcutStatusDto>;
   /** 全局搜索框：打开主窗口并定位到这个 Item 的详情，同时隐藏搜索框。 */
   openItemInMain(id: string): Promise<void>;
   /** 全局搜索框：隐藏自己，焦点还给之前正在使用的窗口。 */
@@ -552,6 +554,7 @@ const tauriIpc: IpcClient = {
   getShortcutStatus: (action) => call("get_shortcut_status", commands.getShortcutStatus(action)),
   setShortcut: (action, accelerator) =>
     call("set_shortcut", commands.setShortcut(action, accelerator)),
+  disableShortcut: (action) => call("disable_shortcut", commands.disableShortcut(action)),
   openItemInMain: async (id) => {
     await call("open_item_in_main", commands.openItemInMain(id));
   },
@@ -689,6 +692,7 @@ export const ipc: IpcClient = {
   openMain: () => current.openMain(),
   getShortcutStatus: (action) => current.getShortcutStatus(action),
   setShortcut: (action, accelerator) => current.setShortcut(action, accelerator),
+  disableShortcut: (action) => current.disableShortcut(action),
   openItemInMain: (id) => current.openItemInMain(id),
   hideSearch: () => current.hideSearch(),
   subscribeSearchWindowShown: (onShown) => current.subscribeSearchWindowShown(onShown),

@@ -672,6 +672,14 @@ export const commands = {
 	 */
 	setShortcut: (action: ShortcutActionDto, accelerator: string) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("set_shortcut", { action, accelerator })),
 	/**
+	 *  停用一个动作的全局快捷键并保存（重启后也不注册）；再次设置快捷键即重新启用。
+	 * 
+	 *  # Errors
+	 * 
+	 *  应用尚未启动完成时返回 `INVALID_INPUT`；保存失败时返回存储错误（本次运行已经停用）。
+	 */
+	disableShortcut: (action: ShortcutActionDto) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("disable_shortcut", { action })),
+	/**
 	 *  打开主窗口并切换到指定视图（悬浮窗上的收集箱入口）。
 	 * 
 	 *  视图先记在应用状态里，再通知已经在运行的主窗口：主窗口可能刚刚才被创建、还没来得及监听事件，
@@ -1333,6 +1341,8 @@ export type ShortcutStatusDto = {
 	conflict: boolean,
 	/**  这个动作的默认绑定（设置页的「恢复默认」用），规范文本。 */
 	defaultAccelerator: string,
+	/**  用户主动停用了；`accelerator` 是重新启用时会用的组合。 */
+	disabled: boolean,
 };
 
 /**  来源（IPC 表示）：这条 Item 来自哪里。 */

@@ -161,10 +161,13 @@
     "save": "保存",
     "cancel": "取消",
     "restore": "恢复默认（{{accelerator}}）",
+    "disable": "停用",
+    "enable": "启用（{{accelerator}}）",
     "status": {
       "registered": "已生效",
       "conflict": "被其他程序占用",
-      "inactive": "未生效"
+      "inactive": "未生效",
+      "disabled": "已停用"
     },
     "unusable": {
       "noModifier": "需要至少一个修饰键（Ctrl / Alt / Shift / Win）。",
@@ -175,13 +178,15 @@
         "label": "快速创建快捷键",
         "button": "快速创建：{{accelerator}}",
         "conflict": "{{accelerator}} 已被其他程序占用，暂时无法用它呼出快速创建。请换一个快捷键。",
-        "saved": "快速创建的快捷键已改为 {{accelerator}}"
+        "saved": "快速创建的快捷键已改为 {{accelerator}}",
+        "disabled": "已停用快速创建的快捷键"
       },
       "search": {
         "label": "全局搜索快捷键",
         "button": "全局搜索：{{accelerator}}",
         "conflict": "{{accelerator}} 已被其他程序占用，暂时无法用它呼出全局搜索。请换一个快捷键。",
-        "saved": "全局搜索的快捷键已改为 {{accelerator}}"
+        "saved": "全局搜索的快捷键已改为 {{accelerator}}",
+        "disabled": "已停用全局搜索的快捷键"
       }
     }
   },
