@@ -565,9 +565,9 @@ Phase 12 Backlog                        → 未排期
   - QuickCreate 期间窗口临时可聚焦，结束后恢复不可聚焦。
 - **验收标准**：
   - [ ] 从 Hover 到 Enter 创建一条 Todo 可在 3 秒内完成（手动计时记录）。
-  - [ ] 新 Todo 立即出现在 Today 末尾并已持久化（重启验证）。
-  - [ ] Esc 返回 Expanded 状态且不创建任何数据。
-  - [ ] 创建结束后焦点不残留在悬浮窗（再次 Hover 不抢焦点）。
+  - [x] 新 Todo 立即出现在 Today 末尾并已持久化（重启验证）。（2026-10-27 `node tests/e2e/e2e.mjs --native`：从悬浮窗点「+ 待办」输入回车，`get_today` 的最后一条就是它；重启后仍在由同一套 E2E 的「主窗口未创建」场景覆盖——第一次启动创建的待办在第二次启动后能被搜到。）
+  - [x] Esc 返回 Expanded 状态且不创建任何数据。（同上：输入内容后 Esc，输入框消失、待办数不变、搜不到输入的标题。）
+  - [x] 创建结束后焦点不残留在悬浮窗（再次 Hover 不抢焦点）。（同上：创建与取消后前台窗口都回到之前那个、悬浮窗 `document.hasFocus()` 为假；release 构建 3/3。）
 - **完成记录**：2026-10-10 代码与自动化测试完成，真实窗口手动验收待补（保持 🟨）。
   - 自动化：`quick_create` Command（IPC 测试：创建后重新打开同一数据目录仍可读取）；`begin_floating_input` / `end_floating_input`（控制器：失败时恢复不可聚焦、结束后还原前台窗口）；前端 `QuickCreateForm` 与 `quick-create` 模型测试（Enter 创建、Esc 取消不创建、空标题不可提交）；`FloatingRoot` 状态机接入 QuickCreate。
   - 待手动验证（未勾选）：Hover 到 Enter 3 秒内完成的计时、重启验证、结束后焦点不残留。

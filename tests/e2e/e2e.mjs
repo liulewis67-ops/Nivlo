@@ -131,7 +131,9 @@ const listPages = async () =>
  * 转交给它——而它的临时数据目录已经删掉了（表现为 STORAGE_UNAVAILABLE）。
  */
 function testInstanceRunning() {
-  const script = `@(Get-Process -Name nivlo-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${JSON.stringify(EXE)} }).Count`;
+  // PowerShell 的单引号字符串里反斜杠不是转义符（JSON.stringify 的 \\ 会原样留下，永远匹配不上）。
+  const quoted = `'${EXE.replaceAll("'", "''")}'`;
+  const script = `@(Get-Process -Name nivlo-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${quoted} }).Count`;
   return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8" }).trim()) > 0;
 }
 
@@ -285,6 +287,61 @@ async function runOnce(index) {
         "设置页的快捷键分区",
       );
     });
+
+    // 11.5（--native）悬浮窗的 Quick Create（实施计划 1.5 的验收）：Enter 创建并排到 Today 末尾、
+    // 结束后焦点还给之前的前台窗口；Esc 取消不创建任何数据，回到展开状态。
+    if (NATIVE) {
+      await step("悬浮窗 Quick Create（原生）", async () => {
+        /** 让悬浮窗展开（指针移到徽标上），返回「+ 待办」按钮的中心点。 */
+        const openAddButton = async () => {
+          const centre = (selector) =>
+            floating.evaluate(`(() => { const e = ${selector}; if (!e) return null; const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()`);
+          return until(async () => {
+            const add = await centre("[...document.querySelectorAll('button')].find((b) => ['+ 待办', '+ To-do'].includes(b.textContent.trim()))");
+            if (add) return add;
+            const badge = await centre("document.querySelector('button')");
+            if (badge) await floating.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: badge[0], y: badge[1] });
+            return null;
+          }, "悬浮窗展开出「+ 待办」");
+        };
+        const click = async ([x, y]) => {
+          await floating.send("Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+          await floating.send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
+          await floating.send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });
+        };
+        const key = async (name, code) => {
+          await floating.send("Input.dispatchKeyEvent", { type: "keyDown", key: name, code: name, windowsVirtualKeyCode: code });
+          await floating.send("Input.dispatchKeyEvent", { type: "keyUp", key: name, code: name, windowsVirtualKeyCode: code });
+        };
+        const inputReady = "document.hasFocus() && ['标题', 'Title'].includes(document.activeElement?.getAttribute('aria-label')) && !document.activeElement.disabled";
+
+        // Enter 创建。
+        const before = foregroundWindow();
+        await click(await openAddButton());
+        await until(() => floating.evaluate(inputReady), "Quick Create 输入框拿到真实焦点");
+        const quickTitle = `e2e-quick-${index}`;
+        await floating.send("Input.insertText", { text: quickTitle });
+        await key("Enter", 13);
+        await until(async () => {
+          const today = await main.invoke("get_today");
+          return today.todos.at(-1)?.title === quickTitle;
+        }, "新待办出现在 Today 末尾");
+        await until(() => foregroundWindow() === before, "创建后焦点还给之前的前台窗口", 5000);
+        if (await floating.evaluate("document.hasFocus()")) throw new Error("创建后焦点残留在悬浮窗");
+
+        // Esc 取消：不创建任何数据，回到展开状态（底部又出现「+ 待办」）。
+        const countBefore = (await main.invoke("get_today")).todos.length;
+        await click(await openAddButton());
+        await until(() => floating.evaluate(inputReady), "第二次 Quick Create 拿到焦点");
+        await floating.send("Input.insertText", { text: "e2e-should-not-exist" });
+        await key("Escape", 27);
+        await until(() => floating.evaluate("!document.querySelector('[aria-label=标题],[aria-label=Title]')"), "Esc 之后输入框消失");
+        await until(() => foregroundWindow() === before, "取消后焦点还给之前的前台窗口", 5000);
+        const after = await main.invoke("get_today");
+        if (after.todos.length !== countBefore) throw new Error("Esc 之后 Today 的待办数变了");
+        if ((await main.invoke("search_items", { query: "e2e-should-not-exist" })).length > 0) throw new Error("Esc 之后仍然创建了条目");
+      });
+    }
 
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。
     if (NATIVE) {
