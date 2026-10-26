@@ -201,7 +201,14 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
             // 阶段 1.5：如果上次选择了从备份恢复，趁数据库还没打开把数据换上
             // （当前数据整体挪到 replaced-<时间>/，不删除）。
-            let stamp = chrono::Utc::now().format("%Y%m%d-%H%M%S").to_string();
+            // 应用状态（以及它的 Clock）还没建好，这里直接用系统时钟，同样经过 Clock 接口。
+            let stamp = {
+                use nivlo_common::clock::{Clock, SystemClock};
+                SystemClock::new()
+                    .now_utc()
+                    .format("%Y%m%d-%H%M%S")
+                    .to_string()
+            };
             match backup::apply_pending_restore(&environment.paths, &stamp) {
                 Ok(true) => tracing::info!(event = "restore_applied", "已从备份恢复数据"),
                 Ok(false) => {}

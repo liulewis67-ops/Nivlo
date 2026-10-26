@@ -12,7 +12,7 @@ use nivlo_application::ports::http::{HostPolicy, HttpError, HttpPort, HttpReques
 use nivlo_application::testing::{FakeAttachmentFiles, FakeUnitOfWork, RecordingPublisher};
 use nivlo_application::workflow::{RunStatus, WorkflowService};
 use nivlo_capture::normalize_text;
-use nivlo_common::clock::FakeClock;
+use nivlo_common::clock::{Clock, FakeClock};
 use nivlo_domain::capture::{CaptureOrigin, CaptureRequest};
 use nivlo_domain::event::DomainEvent;
 use nivlo_workflow::{WorkflowEngineAdapter, builtin::builtin_workflows};
@@ -177,7 +177,7 @@ async fn items_the_user_already_changed_are_not_overwritten() {
     {
         let mut tx = f.uow.begin().await.unwrap();
         let mut item = tx.items().get(result.items[0].id()).await.unwrap().unwrap();
-        item.rename("我自己起的名字", Utc::now()).unwrap();
+        item.rename("我自己起的名字", f.clock.now_utc()).unwrap();
         tx.items().update(&item).await.unwrap();
         tx.commit().await.unwrap();
     }

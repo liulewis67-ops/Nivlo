@@ -995,7 +995,11 @@ async fn the_wal_is_truncated_only_once_it_passes_the_limit() {
     let size = db.wal_size();
     assert!(size > 64 * 1024, "写入后 WAL 应当变大：{size}");
     // 没超过阈值：不动。
-    assert!(!db.checkpoint_if_wal_exceeds(size + 1024 * 1024).await.unwrap());
+    assert!(
+        !db.checkpoint_if_wal_exceeds(size + 1024 * 1024)
+            .await
+            .unwrap()
+    );
     drop(reader);
     // 超过阈值：截断。
     assert!(db.checkpoint_if_wal_exceeds(1024).await.unwrap());

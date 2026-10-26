@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use chrono_tz::Tz;
-use nivlo_common::clock::FakeClock;
+use nivlo_common::clock::{Clock, FakeClock};
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::{DatePoint, Item, ItemType, NewItem, Priority};
 use uuid::Uuid;
@@ -256,7 +256,7 @@ async fn stale_ids_in_the_order_table_are_ignored() {
     f.uow
         .seed_today_order(date(10, 9), vec![id(99), id(2), id(1)]);
     let mut moved = make(2, ItemType::Todo, "B", Some(date(10, 9)), 1);
-    moved.set_scheduled(Some(DatePoint::all_day(date(10, 10))), Utc::now());
+    moved.set_scheduled(Some(DatePoint::all_day(date(10, 10))), f.clock.now_utc());
     f.uow.seed(moved);
 
     let view = today(&f).await;
@@ -268,10 +268,13 @@ async fn stale_ids_in_the_order_table_are_ignored() {
 async fn priority_and_due_date_do_not_affect_the_order() {
     let f = utc_fixture();
     let mut low_urgent = make(1, ItemType::Todo, "低优先级但先排", Some(date(10, 9)), 0);
-    low_urgent.set_priority(Priority::Low, Utc::now()).unwrap();
+    low_urgent
+        .set_priority(Priority::Low, f.clock.now_utc())
+        .unwrap();
     let mut high = make(2, ItemType::Todo, "高优先级排在后面", Some(date(10, 9)), 1);
-    high.set_priority(Priority::High, Utc::now()).unwrap();
-    high.set_due(Some(DatePoint::all_day(date(10, 9))), Utc::now())
+    high.set_priority(Priority::High, f.clock.now_utc())
+        .unwrap();
+    high.set_due(Some(DatePoint::all_day(date(10, 9))), f.clock.now_utc())
         .unwrap();
     f.uow.seed(low_urgent);
     f.uow.seed(high);
