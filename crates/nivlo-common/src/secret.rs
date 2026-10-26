@@ -9,7 +9,7 @@ use std::fmt;
 use serde::Deserialize;
 
 /// 包装一个不得出现在日志、序列化输出或错误信息中的敏感值。
-#[derive(Clone, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(transparent)]
 pub struct Secret<T>(T);
 

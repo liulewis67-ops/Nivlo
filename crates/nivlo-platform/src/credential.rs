@@ -31,6 +31,13 @@ impl Secret {
     }
 }
 
+impl From<Secret> for nivlo_common::secret::Secret<String> {
+    /// 交给 HTTP 端口等只认通用包装的地方；内容始终留在包装里，不经过明文变量。
+    fn from(value: Secret) -> Self {
+        Self::new(value.0)
+    }
+}
+
 impl std::fmt::Debug for Secret {
     /// 只输出占位，绝不输出内容。
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
