@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",\n                        items.content, items.content_format AS \"content_format!\",\n                        items.status AS \"status!\", items.priority AS \"priority!\",\n                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,\n                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",\n                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",\n                        items.completed_at, items.archived_at\n                 FROM items_fts JOIN items ON items.id = items_fts.item_id\n                 WHERE (items_fts.title LIKE ?1 ESCAPE '\\'\n                        OR items_fts.content LIKE ?1 ESCAPE '\\'\n                        OR items_fts.source_text LIKE ?1 ESCAPE '\\')\n                   AND (?2 = 1 OR items.archived_at IS NULL)\n                   AND items.deleted_at IS NULL\n                 ORDER BY (items_fts.title LIKE ?1 ESCAPE '\\') DESC, items.updated_at DESC, items.id DESC\n                 LIMIT ?3",
+  "query": "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",\n                        items.content, items.content_format AS \"content_format!\",\n                        items.status AS \"status!\", items.priority AS \"priority!\",\n                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,\n                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",\n                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",\n                        items.completed_at, items.archived_at\n                 FROM items_fts JOIN items ON items.id = items_fts.item_id\n                 WHERE (items_fts.title LIKE ?1 ESCAPE '\\'\n                        OR items_fts.content LIKE ?1 ESCAPE '\\'\n                        OR items_fts.source_text LIKE ?1 ESCAPE '\\')\n                   AND (?2 = 1 OR items.archived_at IS NULL)\n                   AND items.deleted_at IS NULL\n                 ORDER BY items.status = 'done', (items_fts.title LIKE ?1 ESCAPE '\\') DESC,\n                          items.updated_at DESC, items.id DESC\n                 LIMIT ?3",
   "describe": {
     "columns": [
       {
@@ -118,5 +118,5 @@
       true
     ]
   },
-  "hash": "bb41631055242941ffecca49a4fba865c9d16479ea8d8de23485cc04e455b4b9"
+  "hash": "94bcba0ace7b657d984ca3c1b710747049d62c865a163f48d6989bba61ceffae"
 }

@@ -89,6 +89,31 @@ async fn chinese_substring_search_works_with_and_without_the_index() {
 }
 
 #[tokio::test]
+async fn open_items_rank_above_completed_ones_on_both_paths() {
+    let (_dir, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    // 已完成的那条更新、标题也更贴切，但仍然排在未完成的后面。
+    let mut done = item(1, ItemType::Todo, "周报模板", None, 5);
+    done.complete(t(6)).unwrap();
+    tx.items().insert(&done).await.unwrap();
+    tx.items()
+        .insert(&item(2, ItemType::Todo, "写本周的周报模板草稿", None, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    // LIKE 回退（2 个字符）与 FTS（3 个字符以上）排序规则一致。
+    assert_eq!(
+        titles(&db, "周报").await,
+        ["写本周的周报模板草稿", "周报模板"]
+    );
+    assert_eq!(
+        titles(&db, "周报模板").await,
+        ["写本周的周报模板草稿", "周报模板"]
+    );
+}
+
+#[tokio::test]
 async fn search_ignores_case_and_requires_every_word() {
     let (_dir, db) = new_db().await;
     let mut tx = db.begin().await.unwrap();

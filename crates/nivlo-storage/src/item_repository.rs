@@ -484,7 +484,7 @@ impl ItemRepository for SqliteTransaction {
         rows.into_iter().map(row_to_item).collect()
     }
 
-    /// 全文搜索：词都不短时走 FTS5（trigram），否则退化为 LIKE 扫描。
+    /// 全文搜索：词都不短时走 FTS5（trigram），否则退化为 LIKE 扫描；未完成的排在已完成之前。
     async fn search(
         &mut self,
         text: &str,
@@ -520,7 +520,8 @@ impl ItemRepository for SqliteTransaction {
                         OR items_fts.source_text LIKE ?1 ESCAPE '\\')
                    AND (?2 = 1 OR items.archived_at IS NULL)
                    AND items.deleted_at IS NULL
-                 ORDER BY (items_fts.title LIKE ?1 ESCAPE '\\') DESC, items.updated_at DESC, items.id DESC
+                 ORDER BY items.status = 'done', (items_fts.title LIKE ?1 ESCAPE '\\') DESC,
+                          items.updated_at DESC, items.id DESC
                  LIMIT ?3",
                 pattern,
                 include_archived,
@@ -547,7 +548,8 @@ impl ItemRepository for SqliteTransaction {
                  FROM items_fts JOIN items ON items.id = items_fts.item_id
                  WHERE items_fts MATCH ?1 AND (?2 = 1 OR items.archived_at IS NULL)
                    AND items.deleted_at IS NULL
-                 ORDER BY bm25(items_fts, 0.0, 8.0, 1.0, 2.0), items.updated_at DESC, items.id DESC
+                 ORDER BY items.status = 'done', bm25(items_fts, 0.0, 8.0, 1.0, 2.0),
+                          items.updated_at DESC, items.id DESC
                  LIMIT ?3",
                 query,
                 include_archived,

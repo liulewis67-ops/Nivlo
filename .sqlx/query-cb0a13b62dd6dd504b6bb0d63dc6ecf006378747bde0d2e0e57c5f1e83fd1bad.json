@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",\n                        items.content, items.content_format AS \"content_format!\",\n                        items.status AS \"status!\", items.priority AS \"priority!\",\n                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,\n                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",\n                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",\n                        items.completed_at, items.archived_at\n                 FROM items_fts JOIN items ON items.id = items_fts.item_id\n                 WHERE items_fts MATCH ?1 AND (?2 = 1 OR items.archived_at IS NULL)\n                   AND items.deleted_at IS NULL\n                 ORDER BY bm25(items_fts, 0.0, 8.0, 1.0, 2.0), items.updated_at DESC, items.id DESC\n                 LIMIT ?3",
+  "query": "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",\n                        items.content, items.content_format AS \"content_format!\",\n                        items.status AS \"status!\", items.priority AS \"priority!\",\n                        items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,\n                        items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",\n                        items.created_at AS \"created_at!\", items.updated_at AS \"updated_at!\",\n                        items.completed_at, items.archived_at\n                 FROM items_fts JOIN items ON items.id = items_fts.item_id\n                 WHERE items_fts MATCH ?1 AND (?2 = 1 OR items.archived_at IS NULL)\n                   AND items.deleted_at IS NULL\n                 ORDER BY items.status = 'done', bm25(items_fts, 0.0, 8.0, 1.0, 2.0),\n                          items.updated_at DESC, items.id DESC\n                 LIMIT ?3",
   "describe": {
     "columns": [
       {
@@ -118,5 +118,5 @@
       true
     ]
   },
-  "hash": "59c325d40d2efee9fae80d3b8673240ce5196e25ffb44bd453a12d3df8d7ef3b"
+  "hash": "cb0a13b62dd6dd504b6bb0d63dc6ecf006378747bde0d2e0e57c5f1e83fd1bad"
 }

@@ -404,7 +404,7 @@ impl ItemRepository for FakeTransaction {
         Ok(items)
     }
 
-    /// 搜索：忽略大小写的子串匹配（标题 / 正文 / 来源），所有词都要出现；标题命中在前。
+    /// 搜索：忽略大小写的子串匹配（标题 / 正文 / 来源），所有词都要出现；未完成在前，其次标题命中。
     async fn search(
         &mut self,
         text: &str,
@@ -448,8 +448,9 @@ impl ItemRepository for FakeTransaction {
             }
         }
         found.sort_by(|(a_title, a), (b_title, b)| {
-            b_title
-                .cmp(a_title)
+            (a.status() == ItemStatus::Done)
+                .cmp(&(b.status() == ItemStatus::Done))
+                .then(b_title.cmp(a_title))
                 .then(b.updated_at().cmp(&a.updated_at()))
                 .then(b.id().cmp(&a.id()))
         });
