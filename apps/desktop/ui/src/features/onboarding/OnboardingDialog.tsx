@@ -85,7 +85,8 @@ function Illustration({ step }: { step: number }) {
  *
  * * 全键盘：← / → 切换步骤，Enter 下一步 / 完成，Esc 跳过；焦点停留在对话框内；
  * * 步骤指示点可以点击跳转；最后一步的「开始使用」与任何时候的「跳过」都算看过；
- * * 快捷键取自真实的绑定（用户改过就显示改过的），不是写死的文案。
+ * * 快捷键取自真实的绑定（用户改过就显示改过的），不是写死的文案；最后一步同时介绍
+ *   快速创建与全局搜索两个快捷键（全局搜索没生效时不提）。
  *
  * @param props 结束回调。
  * @returns 模态对话框。
@@ -94,6 +95,7 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const shortcut = useShortcutQuery("quickCreate").data?.accelerator ?? "Ctrl+Shift+Space";
+  const search = useShortcutQuery("search").data;
   const primaryRef = useRef<HTMLButtonElement>(null);
   const last = step === ONBOARDING_STEPS - 1;
 
@@ -128,6 +130,15 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
         <kbd className="ml-1 rounded border border-border bg-bg px-1.5 py-0.5 text-xs text-text">
           {shortcut}
         </kbd>
+        {/* 全局搜索只在真的生效时介绍，免得教用户一个按了没反应的组合。 */}
+        {search?.registered === true && (
+          <span className="mt-2 block">
+            {t("onboarding.step3.search")}
+            <kbd className="ml-1 rounded border border-border bg-bg px-1.5 py-0.5 text-xs text-text">
+              {search.accelerator}
+            </kbd>
+          </span>
+        )}
       </>
     ) : (
       t(`onboarding.step${step}.body`)

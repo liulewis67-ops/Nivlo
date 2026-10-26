@@ -735,7 +735,8 @@
     },
     "step3": {
       "title": "Schedule in plain language",
-      "body": "Write “tomorrow 3pm review the plan” and Nivlo recognizes the date and time, letting you confirm before adding. In any app, press the shortcut to jot something down right away:"
+      "body": "Write “tomorrow 3pm review the plan” and Nivlo recognizes the date and time, letting you confirm before adding. In any app, press the shortcut to jot something down right away:",
+      "search": "To find something you saved, press this in any app:"
     }
   },
   "workflows": {

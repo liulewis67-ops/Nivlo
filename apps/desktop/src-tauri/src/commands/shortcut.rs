@@ -1,7 +1,7 @@
 //! 全局快捷键相关的 Command（仅主窗口）。
 
 use nivlo_application::error::{AppError, ErrorCode};
-use tauri::State;
+use tauri::{AppHandle, Runtime, State};
 
 use crate::app::AppState;
 use crate::dto::{IpcError, ShortcutActionDto, ShortcutStatusDto};
@@ -48,7 +48,8 @@ pub async fn get_shortcut_status(
 /// `SHORTCUT_CONFLICT`；平台不支持返回 `INVALID_INPUT`；保存失败时返回存储错误（快捷键本次运行仍然有效）。
 #[tauri::command]
 #[specta::specta]
-pub async fn set_shortcut(
+pub async fn set_shortcut<R: Runtime>(
+    app: AppHandle<R>,
     state: State<'_, AppState>,
     action: ShortcutActionDto,
     accelerator: String,
@@ -70,5 +71,8 @@ pub async fn set_shortcut(
         }
     }
     let status = controller(&state, action)?.rebind(&accelerator).await?;
+    if action == ShortcutAction::Search {
+        crate::tray::refresh_search_shortcut(&app);
+    }
     Ok(ShortcutStatusDto::new(status, action))
 }

@@ -1,8 +1,10 @@
 //! 系统托盘（实施计划 1.9）。
 //!
 //! 托盘是应用常驻的"安全出口"：悬浮窗被隐藏、主窗口被关闭后，用户仍然可以从托盘
-//! 打开 Nivlo、快速添加、重新显示悬浮窗或退出。菜单项的行为由纯函数 [`action_for`]
+//! 打开 Nivlo、快速添加、搜索、重新显示悬浮窗或退出。菜单项的行为由纯函数 [`action_for`]
 //! 决定，因此可以脱离系统托盘做单元测试。
+
+use std::sync::{Mutex, PoisonError};
 
 use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -13,6 +15,7 @@ use crate::app::AppState;
 use crate::events::QuickAddRequestedEvent;
 use crate::native_i18n::Lang;
 use crate::scheduling::PauseMenuItem;
+use crate::shortcut::ShortcutAction;
 use crate::windows::{self, FLOATING_WINDOW_LABEL};
 
 /// 托盘图标的 ID。
@@ -26,6 +29,8 @@ struct Labels {
     open: &'static str,
     /// 快速添加。
     quick_add: &'static str,
+    /// 打开全局搜索框。
+    search: &'static str,
     /// 显示 / 隐藏悬浮窗。
     toggle_floating: &'static str,
     /// 暂停通知（勾选 = 已暂停）。
@@ -43,6 +48,7 @@ fn labels(lang: Lang) -> Labels {
             tooltip: "拾序 Nivlo",
             open: "打开拾序",
             quick_add: "快速添加待办",
+            search: "搜索…",
             toggle_floating: "显示 / 隐藏悬浮窗",
             pause_notifications: "暂停通知",
             settings: "设置",
@@ -52,6 +58,7 @@ fn labels(lang: Lang) -> Labels {
             tooltip: "Nivlo",
             open: "Open Nivlo",
             quick_add: "Quick add to-do",
+            search: "Search…",
             toggle_floating: "Show / hide floating window",
             pause_notifications: "Pause notifications",
             settings: "Settings",
@@ -68,6 +75,8 @@ pub struct TrayMenuItems {
     open: MenuItem<Wry>,
     /// 快速添加。
     quick_add: MenuItem<Wry>,
+    /// 搜索（文案带当前的全局快捷键）。
+    search: MenuItem<Wry>,
     /// 显示 / 隐藏悬浮窗。
     toggle: MenuItem<Wry>,
     /// 暂停通知。
@@ -76,6 +85,44 @@ pub struct TrayMenuItems {
     settings: MenuItem<Wry>,
     /// 退出。
     quit: MenuItem<Wry>,
+    /// 当前菜单语言：只更新「搜索」的快捷键时要用同一种语言重写文案。
+    lang: Mutex<Lang>,
+}
+
+/// 「搜索…」菜单项的文案：快捷键生效时附在后面。Windows 菜单把制表符之后的文字右对齐显示，
+/// 和系统菜单里的快捷键提示一致；其他平台用括号。
+#[must_use]
+pub fn search_text(base: &str, accelerator: Option<&str>) -> String {
+    match accelerator {
+        Some(accelerator) if cfg!(windows) => format!("{base}\t{accelerator}"),
+        Some(accelerator) => format!("{base} ({accelerator})"),
+        None => base.to_owned(),
+    }
+}
+
+/// 全局搜索当前生效的快捷键；没有注册成功（被占用、平台不支持）时为 `None`。
+fn active_search_accelerator<R: tauri::Runtime>(app: &AppHandle<R>) -> Option<String> {
+    let status = app
+        .try_state::<AppState>()?
+        .runtime
+        .shortcut(ShortcutAction::Search)?
+        .status();
+    status.registered.then_some(status.accelerator)
+}
+
+/// 全局搜索的快捷键变了（设置页重新绑定）：更新托盘「搜索…」里显示的快捷键。
+pub fn refresh_search_shortcut<R: tauri::Runtime>(app: &AppHandle<R>) {
+    let Some(items) = app.try_state::<TrayMenuItems>() else {
+        return;
+    };
+    let lang = *items.lang.lock().unwrap_or_else(PoisonError::into_inner);
+    let text = search_text(
+        labels(lang).search,
+        active_search_accelerator(app).as_deref(),
+    );
+    if let Err(error) = items.search.set_text(text) {
+        tracing::warn!(event = "tray_search_label_failed", %error, "更新托盘搜索文案失败");
+    }
 }
 
 /// 把托盘菜单与悬停提示切换到 `lang`；托盘不存在（创建失败）时什么都不做。
@@ -83,10 +130,13 @@ pub fn apply_language<R: tauri::Runtime>(app: &AppHandle<R>, lang: Lang) {
     let Some(items) = app.try_state::<TrayMenuItems>() else {
         return;
     };
+    *items.lang.lock().unwrap_or_else(PoisonError::into_inner) = lang;
     let text = labels(lang);
+    let search = search_text(text.search, active_search_accelerator(app).as_deref());
     let results = [
         items.open.set_text(text.open),
         items.quick_add.set_text(text.quick_add),
+        items.search.set_text(search),
         items.toggle.set_text(text.toggle_floating),
         items.pause.set_text(text.pause_notifications),
         items.settings.set_text(text.settings),
@@ -104,6 +154,8 @@ mod ids {
     pub const OPEN: &str = "open";
     /// 快速添加。
     pub const QUICK_ADD: &str = "quick_add";
+    /// 搜索。
+    pub const SEARCH: &str = "search";
     /// 显示 / 隐藏悬浮窗。
     pub const TOGGLE_FLOATING: &str = "toggle_floating";
     /// 暂停通知。
@@ -121,6 +173,8 @@ pub enum TrayAction {
     OpenMain,
     /// 显示悬浮窗并进入快速创建。
     QuickAdd,
+    /// 弹出全局搜索框（与全局快捷键相同）。
+    Search,
     /// 切换悬浮窗的显示 / 隐藏。
     ToggleFloating,
     /// 暂停 / 恢复系统通知。
@@ -137,6 +191,7 @@ pub fn action_for(id: &str) -> Option<TrayAction> {
     match id {
         ids::OPEN | ids::SETTINGS => Some(TrayAction::OpenMain),
         ids::QUICK_ADD => Some(TrayAction::QuickAdd),
+        ids::SEARCH => Some(TrayAction::Search),
         ids::TOGGLE_FLOATING => Some(TrayAction::ToggleFloating),
         ids::PAUSE_NOTIFICATIONS => Some(TrayAction::TogglePause),
         ids::QUIT => Some(TrayAction::Quit),
@@ -153,6 +208,14 @@ pub fn setup(app: &AppHandle<Wry>, lang: Lang) -> tauri::Result<()> {
     let text = labels(lang);
     let open = MenuItem::with_id(app, ids::OPEN, text.open, true, None::<&str>)?;
     let quick_add = MenuItem::with_id(app, ids::QUICK_ADD, text.quick_add, true, None::<&str>)?;
+    // 快捷键只写进文案，不作为菜单的 accelerator：那会尝试解析快捷键文本，失败时整个托盘建不起来。
+    let search = MenuItem::with_id(
+        app,
+        ids::SEARCH,
+        search_text(text.search, active_search_accelerator(app).as_deref()),
+        true,
+        None::<&str>,
+    )?;
     let toggle = MenuItem::with_id(
         app,
         ids::TOGGLE_FLOATING,
@@ -182,6 +245,7 @@ pub fn setup(app: &AppHandle<Wry>, lang: Lang) -> tauri::Result<()> {
         &[
             &open,
             &quick_add,
+            &search,
             &toggle,
             &pause,
             &separator_top,
@@ -218,10 +282,12 @@ pub fn setup(app: &AppHandle<Wry>, lang: Lang) -> tauri::Result<()> {
         tray,
         open,
         quick_add,
+        search,
         toggle,
         pause,
         settings,
         quit,
+        lang: Mutex::new(lang),
     });
     Ok(())
 }
@@ -235,6 +301,13 @@ fn perform(app: &AppHandle<Wry>, action: TrayAction) {
             }
         }
         TrayAction::QuickAdd => request_quick_add(app),
+        TrayAction::Search => {
+            // 第一次要创建窗口（会阻塞），不能在菜单事件所在的主线程上做，和全局快捷键一样放到后台线程。
+            let app = app.clone();
+            drop(tauri::async_runtime::spawn_blocking(move || {
+                crate::windows::search::toggle(&app);
+            }));
+        }
         TrayAction::ToggleFloating => {
             let visible = app
                 .get_webview_window(FLOATING_WINDOW_LABEL)
@@ -297,18 +370,30 @@ fn set_floating_visible(app: &AppHandle<Wry>, visible: bool) {
 
 #[cfg(test)]
 mod tests {
-    use super::{TrayAction, action_for};
+    use super::{TrayAction, action_for, search_text};
 
     #[test]
     fn menu_ids_map_to_actions() {
         assert_eq!(action_for("open"), Some(TrayAction::OpenMain));
         assert_eq!(action_for("settings"), Some(TrayAction::OpenMain));
         assert_eq!(action_for("quick_add"), Some(TrayAction::QuickAdd));
+        assert_eq!(action_for("search"), Some(TrayAction::Search));
         assert_eq!(
             action_for("toggle_floating"),
             Some(TrayAction::ToggleFloating)
         );
         assert_eq!(action_for("quit"), Some(TrayAction::Quit));
+    }
+
+    #[test]
+    fn search_label_shows_the_shortcut_only_when_it_is_active() {
+        assert_eq!(search_text("搜索…", None), "搜索…");
+        let expected = if cfg!(windows) {
+            "搜索…\tCtrl+Alt+Space"
+        } else {
+            "搜索… (Ctrl+Alt+Space)"
+        };
+        assert_eq!(search_text("搜索…", Some("Ctrl+Alt+Space")), expected);
     }
 
     #[test]
