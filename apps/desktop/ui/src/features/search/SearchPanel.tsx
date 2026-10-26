@@ -19,6 +19,40 @@ import { itemMeta } from "./model/meta";
 /** 停止输入多久之后才发起搜索（毫秒）。 */
 export const SEARCH_DEBOUNCE_MS = 140;
 
+/** 输入以它开头时进入命令模式（与常见编辑器的命令面板一致）。 */
+export const COMMAND_PREFIX = ">";
+
+/** 命令面板里的一条命令：执行仍然走已有的界面动作或 IPC。 */
+export type PaletteCommand = {
+  /** 稳定的 ID（用于列表 key 与无障碍关联）。 */
+  id: string;
+  /** 显示的名称，也参与匹配。 */
+  label: string;
+  /** 额外的匹配词（如英文名、拼音），不显示。 */
+  keywords?: readonly string[];
+  /** 执行。 */
+  run: () => void;
+};
+
+/**
+ * 按输入过滤命令：名称或匹配词里包含输入（忽略大小写）；输入为空时全部列出。
+ *
+ * @param commands 全部命令。
+ * @param input 去掉前缀之后的输入。
+ * @returns 匹配的命令，保持原有顺序。
+ */
+export function matchCommands(
+  commands: readonly PaletteCommand[],
+  input: string,
+): PaletteCommand[] {
+  const needle = input.trim().toLowerCase();
+  return commands.filter((command) =>
+    [command.label, ...(command.keywords ?? [])].some((text) =>
+      text.toLowerCase().includes(needle),
+    ),
+  );
+}
+
 /** 输入为空时列出多少条最近更新的条目。 */
 export const RECENT_LIMIT = 8;
 
@@ -45,6 +79,11 @@ export type SearchPanelProps = {
    * 点「新建待办」；标题里的日期短语（「明天」「周五 3pm」）按 Quick Create 的规则识别。
    */
   onCreated?: (item: ItemDto) => void;
+  /**
+   * 命令面板的命令。提供时，输入以 `>` 开头就只列出命令（回车执行），不搜索条目；
+   * 输入为空时底部提示这个用法。
+   */
+  commands?: readonly PaletteCommand[] | undefined;
 };
 
 /** 从搜索词新建待办的草稿。 */
@@ -164,6 +203,7 @@ function TypeGlyph({ type }: { type: ItemTypeDto }) {
  *   不必先想关键词；
  * * 提供 `onCreated` 时，Ctrl+Enter 把搜索词直接建成待办（没有结果时还会给出按钮），
  *   找不到就顺手记下，不必换到别的入口；
+ * * 提供 `commands` 时，以 `>` 开头的输入只列出匹配的命令，回车执行；
  * * 挂载时输入框聚焦；重置（清空输入）由调用方用 `key` 重新挂载完成。
  *
  * @param props 关闭与打开回调、外观。
@@ -176,6 +216,7 @@ export function SearchPanel({
   emptyHint,
   footerExtra,
   onCreated,
+  commands,
 }: SearchPanelProps) {
   const { t } = useTranslation();
   const listId = useId();
@@ -186,11 +227,20 @@ export function SearchPanel({
   const openWhenReady = useRef(false);
   const activeRef = useRef<HTMLLIElement | null>(null);
 
+  /** 命令模式：只列出命令，不搜索条目。 */
+  const commandMode = commands !== undefined && text.trimStart().startsWith(COMMAND_PREFIX);
+  const matches =
+    commands !== undefined && commandMode
+      ? matchCommands(commands, text.trimStart().slice(COMMAND_PREFIX.length))
+      : [];
+  /** 送去搜索的文本；命令模式下为空，不打后端。 */
+  const searchable = commandMode ? "" : text.trim();
+
   // 输入停顿之后才更新查询，避免每个字符都打一次后端。
   useEffect(() => {
-    const timer = setTimeout(() => setDebounced(text.trim()), SEARCH_DEBOUNCE_MS);
+    const timer = setTimeout(() => setDebounced(searchable), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
-  }, [text]);
+  }, [searchable]);
 
   const search = useQuery({
     queryKey: queryKeys.search(debounced),
@@ -213,23 +263,34 @@ export function SearchPanel({
         limit: RECENT_LIMIT,
       }),
   });
-  const query = text.trim();
+  const query = searchable;
   /** 输入为空：浏览最近的条目。 */
-  const browsing = query === "";
+  const browsing = !commandMode && query === "";
   // 刚开始输入、第一次搜索的结果还没到时继续显示最近条目，避免列表闪一下空白。
-  const showRecent = browsing || debounced === "" || search.data === undefined;
+  const showRecent = !commandMode && (browsing || debounced === "" || search.data === undefined);
   const recentItems = recent.data ?? [];
   const terms = showRecent ? [] : searchTerms(debounced);
-  const groups: Group[] = showRecent
-    ? recentItems.length > 0
-      ? [{ key: "recent", items: recentItems }]
-      : []
-    : groupByType(search.data ?? []);
+  const groups: Group[] = commandMode
+    ? []
+    : showRecent
+      ? recentItems.length > 0
+        ? [{ key: "recent", items: recentItems }]
+        : []
+      : groupByType(search.data ?? []);
   // 展示顺序（分组后）的扁平列表，键盘选择按它走。
   const flat = groups.flatMap((group) => group.items);
-  const activeIndex = flat.length === 0 ? -1 : Math.min(active, flat.length - 1);
-  const activeItem = activeIndex >= 0 ? flat[activeIndex] : undefined;
-  const draft = onCreated === undefined || browsing ? null : draftFrom(query);
+  /** 键盘选择的条数：命令模式下是命令，否则是条目。 */
+  const count = commandMode ? matches.length : flat.length;
+  const activeIndex = count === 0 ? -1 : Math.min(active, count - 1);
+  const activeItem = !commandMode && activeIndex >= 0 ? flat[activeIndex] : undefined;
+  const activeCommand = commandMode && activeIndex >= 0 ? matches[activeIndex] : undefined;
+  const activeOptionId =
+    activeCommand !== undefined
+      ? `${listId}-cmd-${activeCommand.id}`
+      : activeItem !== undefined
+        ? `${listId}-${activeItem.id}`
+        : undefined;
+  const draft = onCreated === undefined || browsing || commandMode ? null : draftFrom(query);
   const create = useMutation({
     mutationFn: (value: Draft) => ipc.quickCreate("todo", value.title, value.schedule),
     onSuccess: (item) => onCreated?.(item),
@@ -242,17 +303,19 @@ export function SearchPanel({
   }
 
   /** 列表与输入一致，可以直接打开选中项。 */
-  const settled = browsing
-    ? recent.data !== undefined
-    : debounced !== "" &&
-      search.data !== undefined &&
-      !search.isPlaceholderData &&
-      debounced === query;
+  const settled = commandMode
+    ? false
+    : browsing
+      ? recent.data !== undefined
+      : debounced !== "" &&
+        search.data !== undefined &&
+        !search.isPlaceholderData &&
+        debounced === query;
 
   // 选中项滚进可见区域。
   useEffect(() => {
     activeRef.current?.scrollIntoView?.({ block: "nearest" });
-  }, [activeItem?.id]);
+  }, [activeOptionId]);
 
   // 提前按下的回车：这次输入的结果到了就打开第一条；没有结果就作罢。
   useEffect(() => {
@@ -272,26 +335,21 @@ export function SearchPanel({
       event.preventDefault();
       event.stopPropagation();
       onClose();
-    } else if (event.key === "ArrowDown" && flat.length > 0) {
+    } else if (event.key === "ArrowDown" && count > 0) {
       event.preventDefault();
-      setActive((activeIndex + 1) % flat.length);
-    } else if (event.key === "ArrowUp" && flat.length > 0) {
+      setActive((activeIndex + 1) % count);
+    } else if (event.key === "ArrowUp" && count > 0) {
       event.preventDefault();
-      setActive((activeIndex - 1 + flat.length) % flat.length);
-    } else if (
-      (event.key === "PageDown" || event.key === "End") &&
-      event.ctrlKey &&
-      flat.length > 0
-    ) {
+      setActive((activeIndex - 1 + count) % count);
+    } else if ((event.key === "PageDown" || event.key === "End") && event.ctrlKey && count > 0) {
       event.preventDefault();
-      setActive(flat.length - 1);
-    } else if (
-      (event.key === "PageUp" || event.key === "Home") &&
-      event.ctrlKey &&
-      flat.length > 0
-    ) {
+      setActive(count - 1);
+    } else if ((event.key === "PageUp" || event.key === "Home") && event.ctrlKey && count > 0) {
       event.preventDefault();
       setActive(0);
+    } else if (event.key === "Enter" && commandMode) {
+      event.preventDefault();
+      activeCommand?.run();
     } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
       openWhenReady.current = false;
@@ -332,12 +390,10 @@ export function SearchPanel({
         <input
           autoFocus
           role="combobox"
-          aria-expanded={flat.length > 0}
+          aria-expanded={count > 0}
           aria-controls={listId}
           aria-autocomplete="list"
-          aria-activedescendant={
-            activeItem === undefined ? undefined : `${listId}-${activeItem.id}`
-          }
+          aria-activedescendant={activeOptionId}
           aria-label={t("search.input")}
           placeholder={t("search.placeholder")}
           value={text}
@@ -385,12 +441,49 @@ export function SearchPanel({
             )}
           </div>
         )}
+        {commandMode && matches.length === 0 && (
+          <p role="status" className="px-6 py-8 text-center text-sm text-muted">
+            {t("search.noCommand")}
+          </p>
+        )}
+        {commandMode && matches.length > 0 && (
+          <ul id={listId} role="listbox" aria-label={t("search.commands")} className="p-2">
+            {matches.map((command, index) => {
+              const selected = index === activeIndex;
+              return (
+                <li
+                  key={command.id}
+                  id={`${listId}-cmd-${command.id}`}
+                  ref={selected ? activeRef : undefined}
+                  role="option"
+                  aria-selected={selected}
+                  onMouseMove={() => setActive(index)}
+                  onClick={command.run}
+                  className={cx(
+                    "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2",
+                    selected ? "bg-primary/10" : "hover:bg-surface-hover",
+                  )}
+                >
+                  <span aria-hidden="true" className="w-4 shrink-0 text-center text-muted">
+                    {COMMAND_PREFIX}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-text">{command.label}</span>
+                  {selected && (
+                    <kbd className="shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
+                      {"↵"}
+                    </kbd>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {flat.length > 0 && (
           <ul
             id={listId}
             role="listbox"
             aria-label={showRecent ? t("search.recent") : t("search.results")}
-            className="p-2"
+            className={cx("p-2", isWindow && "nv-list-in")}
           >
             {groups.map((group) => (
               <li key={group.key} role="presentation">
@@ -466,6 +559,7 @@ export function SearchPanel({
               : ""}
           </span>
           {draft !== null && flat.length > 0 && <span>{t("search.createHint")}</span>}
+          {browsing && commands !== undefined && <span>{t("search.commandHint")}</span>}
           {browsing && footerExtra}
         </span>
       </footer>

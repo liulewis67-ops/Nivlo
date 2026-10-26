@@ -30,6 +30,9 @@ const ITEM_REQUEST_PREFIX = "item:";
 /** 侧栏导航项，按展示顺序排列（产品文档 §23）。 */
 const NAV_VIEWS: MainView[] = ["inbox", "today", "calendar", "notes", "projects"];
 
+/** 命令面板（Ctrl+K 输入 `>`）里可以直接前往的视图。 */
+const PALETTE_VIEWS: MainView[] = [...NAV_VIEWS, "workflows", "trash", "settings"];
+
 /** 开发模式额外显示的视图：Phase 0 的 IPC 演示页，发布版本不出现。 */
 const DEV_VIEWS: MainView[] = import.meta.env.DEV ? ["dev"] : [];
 
@@ -239,7 +242,18 @@ export function MainShell() {
             }}
           />
         )}
-        {searching && <CommandPalette onClose={() => setSearching(false)} onOpenItem={setOpenId} />}
+        {searching && (
+          <CommandPalette
+            onClose={() => setSearching(false)}
+            onOpenItem={setOpenId}
+            commands={PALETTE_VIEWS.map((target) => ({
+              id: `goto-${target}`,
+              label: t("search.goto", { view: t(`shell.nav.${target}`) }),
+              keywords: [target],
+              run: () => setView(target),
+            }))}
+          />
+        )}
         {openId !== null && (
           <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />
         )}

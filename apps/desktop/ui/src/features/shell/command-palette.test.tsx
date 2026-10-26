@@ -139,6 +139,36 @@ describe("全局搜索（Ctrl+K）", () => {
     expect(ipc.items.find((item) => item.title === "预约体检")?.itemType).toBe("todo");
   });
 
+  it("输入 > 列出命令，按名称过滤，回车前往对应视图并关闭面板；不会搜索条目", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<MainShell />, ipc);
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    expect(await screen.findByText("输入 > 使用命令")).toBeInTheDocument();
+
+    typeQuery(">");
+    const commands = screen.getByRole("listbox", { name: "命令" });
+    expect(within(commands).getByRole("option", { name: /前往：收集箱/ })).toBeInTheDocument();
+
+    typeQuery("> 设置");
+    expect(within(commands).getAllByRole("option")).toHaveLength(1);
+    fireEvent.keyDown(screen.getByLabelText("搜索关键词"), { key: "Enter" });
+    expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
+    expect(useNavStore.getState().view).toBe("settings");
+    expect(ipc.calls).not.toContain("searchItems");
+  });
+
+  it("命令也能用英文视图名匹配；没有匹配时给出提示", async () => {
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+
+    typeQuery(">trash");
+    expect(screen.getByRole("option", { name: /前往：回收站/ })).toBeInTheDocument();
+    typeQuery(">不存在");
+    expect(screen.getByText("没有匹配的命令")).toBeInTheDocument();
+  });
+
   it("点击结果打开详情；点击遮罩关闭", async () => {
     const ipc = createMemoryIpc();
     await seed(ipc, "note", "读书笔记");

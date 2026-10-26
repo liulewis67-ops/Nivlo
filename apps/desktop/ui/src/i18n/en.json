@@ -433,6 +433,10 @@
     "recent": "Recently updated",
     "create": "New to-do “{{title}}”",
     "createHint": "Ctrl+↵ new to-do",
+    "commands": "Commands",
+    "commandHint": "Type > for commands",
+    "noCommand": "No matching commands",
+    "goto": "Go to: {{view}}",
     "meta": {
       "yesterday": "Yesterday",
       "inbox": "Inbox",

@@ -431,6 +431,10 @@
     "recent": "最近更新",
     "create": "新建待办「{{title}}」",
     "createHint": "Ctrl+↵ 新建待办",
+    "commands": "命令",
+    "commandHint": "输入 > 使用命令",
+    "noCommand": "没有匹配的命令",
+    "goto": "前往：{{view}}",
     "meta": {
       "yesterday": "昨天",
       "inbox": "收集箱",
