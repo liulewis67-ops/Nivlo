@@ -11,7 +11,7 @@ import { SearchPanel } from "./SearchPanel";
  * 全局搜索窗口的根组件：在任何应用之上按全局快捷键弹出（默认 Ctrl+Alt+Space）。
  *
  * * 窗口由后端显示 / 隐藏；每次显示（`search_window_shown`）都重新挂载面板——清空上次的输入、
- *   重新聚焦输入框，并丢掉旧的搜索缓存，保证结果是最新的；
+ *   重新聚焦输入框，并丢掉旧的搜索缓存与项目名称，保证结果是最新的（它不接收数据变化事件）；
  * * 页面失去焦点时（后端随即隐藏窗口）也先重置，下次出现时不会闪一下上次的结果；
  * * 回车 / 点击：交给主窗口打开详情（后端同时隐藏搜索框）；Esc：隐藏并把焦点还给之前的应用；
  * * 输入 `>` 列出「前往：…」命令，回车在主窗口打开那个视图（后端同时隐藏搜索框）；
@@ -26,6 +26,8 @@ export function SearchApp() {
 
   const reset = useCallback(() => {
     queryClient.removeQueries({ queryKey: queryKeys.searchAll() });
+    // 搜索框收不到数据变化事件（后端只发给主窗口与悬浮窗），项目名称也要每次重读。
+    queryClient.removeQueries({ queryKey: queryKeys.projects() });
     setSession((current) => current + 1);
   }, [queryClient]);
 

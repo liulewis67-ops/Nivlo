@@ -10,29 +10,37 @@ use tokio::sync::broadcast::error::RecvError;
 use tokio_util::sync::CancellationToken;
 
 use super::{DayChangedEvent, ItemCreatedEvent, ItemUpdatedEvent, TodayReorderedEvent};
+use crate::windows::{FLOATING_WINDOW_LABEL, MAIN_WINDOW_LABEL};
 
-/// 发送一个 UI 事件到所有窗口。
+/// 收数据变化事件的窗口（后端规范 §5.2：用 `emit_to` 只发给需要的窗口）。
 ///
-/// TODO(P1.1): 悬浮窗与主窗口上线后改为 `emit_to` 只发给需要的窗口（后端规范 §5.2）。
-fn emit(app: &AppHandle<Wry>, event: UiEvent) {
-    let result = match event {
-        UiEvent::ItemCreated { item_id } => ItemCreatedEvent {
-            item_id: item_id.to_string(),
+/// 全局搜索框不在其中：它几乎一直隐藏，每次出现都会丢掉旧数据重新读取；
+/// 广播给它只会让隐藏的 WebView 在每次修改后白白重新查询。
+pub const DATA_EVENT_TARGETS: [&str; 2] = [MAIN_WINDOW_LABEL, FLOATING_WINDOW_LABEL];
+
+/// 把一个 UI 事件发给 [`DATA_EVENT_TARGETS`] 里的窗口。还没创建的窗口（主窗口按需创建）自然收不到，
+/// 它创建时会自己读取最新数据。
+fn emit(app: &AppHandle<Wry>, event: &UiEvent) {
+    for target in DATA_EVENT_TARGETS {
+        let result = match event {
+            UiEvent::ItemCreated { item_id } => ItemCreatedEvent {
+                item_id: item_id.to_string(),
+            }
+            .emit_to(app, target),
+            UiEvent::ItemUpdated { item_id } => ItemUpdatedEvent {
+                item_id: item_id.to_string(),
+            }
+            .emit_to(app, target),
+            UiEvent::TodayReordered => TodayReorderedEvent {}.emit_to(app, target),
+            UiEvent::DayChanged { date } => DayChangedEvent {
+                date: date.format("%Y-%m-%d").to_string(),
+            }
+            .emit_to(app, target),
+        };
+        if let Err(error) = result {
+            // 窗口正在销毁等情况下发送会失败；事件只是刷新信号，丢失不影响数据正确性。
+            tracing::warn!(event = "ui_event_emit_failed", %error, target, "向前端发送事件失败");
         }
-        .emit(app),
-        UiEvent::ItemUpdated { item_id } => ItemUpdatedEvent {
-            item_id: item_id.to_string(),
-        }
-        .emit(app),
-        UiEvent::TodayReordered => TodayReorderedEvent {}.emit(app),
-        UiEvent::DayChanged { date } => DayChangedEvent {
-            date: date.format("%Y-%m-%d").to_string(),
-        }
-        .emit(app),
-    };
-    if let Err(error) = result {
-        // 窗口正在销毁等情况下发送会失败；事件只是刷新信号，丢失不影响数据正确性。
-        tracing::warn!(event = "ui_event_emit_failed", %error, "向前端发送事件失败");
     }
 }
 
@@ -56,7 +64,7 @@ pub fn spawn_forwarder(
                 received = receiver.recv() => match received {
                     Ok(event) => {
                         if let Some(ui_event) = mapper.map(&event) {
-                            emit(&app, ui_event);
+                            emit(&app, &ui_event);
                         }
                     }
                     // 订阅者落后太多时旧事件已被丢弃；前端收到下一个事件后会刷新，这里只记录。
@@ -68,4 +76,18 @@ pub fn spawn_forwarder(
             }
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DATA_EVENT_TARGETS;
+    use crate::windows::search::SEARCH_WINDOW_LABEL;
+    use crate::windows::{FLOATING_WINDOW_LABEL, MAIN_WINDOW_LABEL};
+
+    #[test]
+    fn data_events_go_to_main_and_floating_but_not_the_hidden_search_box() {
+        assert!(DATA_EVENT_TARGETS.contains(&MAIN_WINDOW_LABEL));
+        assert!(DATA_EVENT_TARGETS.contains(&FLOATING_WINDOW_LABEL));
+        assert!(!DATA_EVENT_TARGETS.contains(&SEARCH_WINDOW_LABEL));
+    }
 }

@@ -253,7 +253,7 @@ impl RuntimeHandles {
     ///
     /// 1. 取消后台任务并等待它们结束（含"停止接收新的 Workflow"）；
     /// 2. 刷写关键写入——所有写入都在已提交事务中，这里无待刷数据；
-    /// 3. 持久化窗口状态；停止 Scheduler 在 Phase 4（见下方 TODO）加入；
+    /// 3. 持久化窗口状态（Scheduler 是受跟踪的任务，已在第 1 步随取消信号停止）；
     /// 4. 关闭数据库（刷写 WAL）；
     /// 5. 最后释放日志守卫。
     pub async fn shutdown(&self) {
@@ -286,7 +286,6 @@ impl RuntimeHandles {
             floating.flush().await;
             tracing::info!(event = "shutdown_window_state_saved", "窗口状态已保存");
         }
-        // TODO(P4.4): 停止 Scheduler Actor。
         if let Some(worker) = self.script_worker.get() {
             worker.shutdown();
         }

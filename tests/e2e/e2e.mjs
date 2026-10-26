@@ -125,6 +125,13 @@ async function runOnce(index) {
       todo = { id };
       const found = await main.invoke("search_items", { query: title });
       if (!found.some((i) => i.title === title)) throw new Error("搜索不到刚创建的 Todo");
+      // 数据变化事件只发给主窗口与悬浮窗（emit_to）：悬浮窗的 Today 面板要自己刷新出这一条。
+      try {
+        await until(() => floating.evaluate(`document.body.innerText.includes(${JSON.stringify(title)})`), "悬浮窗收到事件并刷新", 8000);
+      } catch (e) {
+        const state = await floating.evaluate("JSON.stringify({ panel: !!document.querySelector(\"[aria-label='今日面板'],[aria-label='Today panel']\"), text: document.body.innerText.slice(0, 300) })");
+        throw new Error(`${e.message} ${state}`);
+      }
     });
 
     // 4. 完成 Todo。
