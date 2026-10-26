@@ -30,13 +30,29 @@ const hotkeyTimings = { first: [], again: [] };
  * WebView2 的 `document.visibilityState` 不会随窗口隐藏变化，所以隐藏与否要问系统。
  */
 function visibleWindowCount(pid) {
-  const script = [
-    `Add-Type -Namespace E2E -Name Win -MemberDefinition '[DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, System.IntPtr p); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid); public delegate bool EnumProc(System.IntPtr h, System.IntPtr p);'`,
-    "$count = 0",
-    `[E2E.Win]::EnumWindows({ param($h, $p) $owner = 0; [void][E2E.Win]::GetWindowThreadProcessId($h, [ref]$owner); if ($owner -eq ${pid} -and [E2E.Win]::IsWindowVisible($h)) { $script:count++ }; $true }, [System.IntPtr]::Zero) | Out-Null`,
-    "$count",
-  ].join("; ");
-  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8" }).trim());
+  return Number(
+    win32(
+      `$count = 0; [E2E.Native]::EnumWindows({ param($h, $p) $owner = 0; [void][E2E.Native]::GetWindowThreadProcessId($h, [ref]$owner); if ($owner -eq ${pid} -and [E2E.Native]::IsWindowVisible($h)) { $script:count++ }; $true }, [System.IntPtr]::Zero) | Out-Null; $count`,
+    ),
+  );
+}
+
+/** 一段 PowerShell 共用的 Win32 声明。 */
+const WIN32 = `Add-Type -Namespace E2E -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, System.IntPtr p); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid); [DllImport("user32.dll")] public static extern bool GetWindowRect(System.IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr h, uint msg, System.IntPtr w, System.IntPtr l); public delegate bool EnumProc(System.IntPtr h, System.IntPtr p); public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }'`;
+
+/** 运行一段带 Win32 声明的 PowerShell，返回去掉首尾空白的输出。 */
+function win32(body) {
+  return execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", `${WIN32}; ${body}`], { encoding: "utf8" }).trim();
+}
+
+/** 当前前台窗口的句柄（数字）。 */
+const foregroundWindow = () => win32("[E2E.Native]::GetForegroundWindow().ToInt64()");
+
+/** 像用户点「关闭」一样，给进程 `pid` 面积最大的可见窗口（主窗口）发 WM_CLOSE；主窗口会把关闭变成隐藏。 */
+function closeLargestWindow(pid) {
+  win32(
+    `$best = [System.IntPtr]::Zero; $area = 0; [E2E.Native]::EnumWindows({ param($h, $x) $owner = 0; [void][E2E.Native]::GetWindowThreadProcessId($h, [ref]$owner); if ($owner -eq ${pid} -and [E2E.Native]::IsWindowVisible($h)) { $r = New-Object E2E.Native+RECT; [void][E2E.Native]::GetWindowRect($h, [ref]$r); $a = ($r.Right - $r.Left) * ($r.Bottom - $r.Top); if ($a -gt $script:area) { $script:area = $a; $script:best = $h } }; $true }, [System.IntPtr]::Zero) | Out-Null; [void][E2E.Native]::PostMessage($best, 0x10, [System.IntPtr]::Zero, [System.IntPtr]::Zero)`,
+  );
 }
 
 /** 用 SendInput（keybd_event）按下并松开 Ctrl+Alt+Shift+F9——第 10 步把全局搜索绑到了这个组合。 */
@@ -261,6 +277,7 @@ async function runOnce(index) {
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。
     if (NATIVE) {
       await step("全局搜索快捷键（原生）", async () => {
+        const previousForeground = foregroundWindow();
         // 计时从松开按键那一刻开始；第一次包含创建窗口、加载页面与 CDP 连接。
         const firstStarted = pressSearchHotkey();
         const page = await until(async () => (await listPages()).find((p) => p.id !== floating.pageId && p.id !== main.pageId), "搜索窗口页面", 8000).catch(async (e) => {
@@ -285,12 +302,39 @@ async function runOnce(index) {
             throw new Error(`${e.message}（可见窗口：之前 ${shown}，现在 ${visibleWindowCount(child.pid)}）`);
           });
           if (await search.evaluate("document.hasFocus()")) throw new Error("隐藏后搜索框仍然拿着焦点");
+          await until(() => foregroundWindow() === previousForeground, "Esc 之后焦点回到原来的前台窗口", 5000);
 
           // 再按一次：出现时是干净的、焦点在输入框。
           const againStarted = pressSearchHotkey();
           await until(() => search.evaluate(`document.hasFocus() && document.activeElement?.value === '' && ${inputFocused}`), "再次出现时输入已清空并聚焦", 20000, 5);
           hotkeyTimings.again.push(Date.now() - againStarted);
           await until(() => visibleWindowCount(child.pid) === shown, "再次出现");
+
+          /** 在搜索框里搜 `title` 并回车，等主窗口的详情面板显示它。 */
+          const openFromSearch = async (what) => {
+            await search.send("Input.insertText", { text: title });
+            await until(() => search.evaluate(`[...document.querySelectorAll('[role=option]')].some((o) => o.textContent.includes(${JSON.stringify(title)}))`), `${what}：结果出现`);
+            await search.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+            await search.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+            await until(
+              () => main.evaluate(`[...document.querySelectorAll('aside input, aside textarea')].some((e) => e.value === ${JSON.stringify(title)})`),
+              `${what}：主窗口显示详情`,
+            );
+          };
+
+          // ① 主窗口开着。
+          await openFromSearch("主窗口开着");
+          // ② 主窗口被关掉（隐藏）：回车要把它重新显示出来。
+          closeLargestWindow(child.pid);
+          const withoutMain = await until(async () => {
+            const n = visibleWindowCount(child.pid);
+            return n < shown - 1 ? n : null;
+          }, "主窗口被关掉");
+          pressSearchHotkey();
+          await until(() => search.evaluate(`document.hasFocus() && ${inputFocused}`), "主窗口隐藏时搜索框出现", 20000, 5);
+          await openFromSearch("主窗口隐藏");
+          // 主窗口回来（+1），搜索框已经隐藏（关掉主窗口时搜索框本来就是隐藏的）。
+          await until(() => visibleWindowCount(child.pid) === withoutMain + 1, "主窗口重新显示、搜索框隐藏");
         } finally {
           search.close();
         }
