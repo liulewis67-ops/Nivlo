@@ -190,6 +190,8 @@ export interface IpcClient {
   setAutostart(enabled: boolean): Promise<boolean>;
   /** 设置悬浮窗是否置顶，立即生效并保存。 */
   setFloatingAlwaysOnTop(enabled: boolean): Promise<void>;
+  /** 开启 / 关闭「预先准备全局搜索框」：开启时马上在后台创建，关闭时释放没在显示的那个。 */
+  setSearchPrewarm(enabled: boolean): Promise<void>;
   /** 修改「稍后」的规则（悬浮窗与收集箱的「稍后」按钮都按它算日期）。 */
   setLaterRule(rule: LaterRuleDto): Promise<void>;
   /**
@@ -452,6 +454,9 @@ const tauriIpc: IpcClient = {
   listItems: (request) => call("list_items", commands.listItems(request)),
   getAppSettings: () => call("get_app_settings", commands.getAppSettings()),
   setAutostart: (enabled) => call("set_autostart", commands.setAutostart(enabled)),
+  setSearchPrewarm: async (enabled) => {
+    await call("set_search_prewarm", commands.setSearchPrewarm(enabled));
+  },
   setFloatingAlwaysOnTop: async (enabled) => {
     await call("set_floating_always_on_top", commands.setFloatingAlwaysOnTop(enabled));
   },
@@ -632,6 +637,7 @@ export const ipc: IpcClient = {
   getAppSettings: () => current.getAppSettings(),
   setAutostart: (enabled) => current.setAutostart(enabled),
   setFloatingAlwaysOnTop: (enabled) => current.setFloatingAlwaysOnTop(enabled),
+  setSearchPrewarm: (enabled) => current.setSearchPrewarm(enabled),
   setLaterRule: (rule) => current.setLaterRule(rule),
   getCalendar: (request) => current.getCalendar(request),
   setWeekStart: (weekStart) => current.setWeekStart(weekStart),

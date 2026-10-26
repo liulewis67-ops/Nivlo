@@ -26,6 +26,9 @@ pub mod keys {
     pub const LATER_RULE: &str = "schedule.later";
     /// 是否暂停系统通知（`"true"` / `"false"`，托盘「暂停通知」），缺省为 `false`。
     pub const NOTIFICATIONS_PAUSED: &str = "notifications.paused";
+    /// 是否在启动后空闲时预先创建全局搜索框（`"true"` / `"false"`），缺省为否：
+    /// 第一次按快捷键更快，代价是多占一个 WebView 的内存。
+    pub const SEARCH_PREWARM: &str = "search.prewarm";
     /// 是否已经看过（或跳过）首次运行引导（`"true"`），缺省为未看过。
     pub const ONBOARDING_COMPLETED: &str = "onboarding.completed";
     /// 悬浮窗外观偏好（JSON，前端定义结构，D-14）。

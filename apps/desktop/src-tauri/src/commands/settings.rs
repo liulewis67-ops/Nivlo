@@ -52,6 +52,12 @@ pub async fn get_app_settings<R: Runtime>(
         .get(keys::ONBOARDING_COMPLETED)
         .await?
         .is_some_and(|value| value == "true");
+    let search_prewarm = state
+        .services
+        .settings
+        .get(keys::SEARCH_PREWARM)
+        .await?
+        .is_some_and(|value| value == "true");
     Ok(AppSettingsDto {
         autostart,
         floating_always_on_top: always_on_top,
@@ -59,6 +65,7 @@ pub async fn get_app_settings<R: Runtime>(
         week_start: week_start.into(),
         notifications_paused,
         onboarding_completed,
+        search_prewarm,
     })
 }
 
@@ -123,6 +130,34 @@ pub async fn set_floating_always_on_top(
             ))
         })?;
     }
+    Ok(())
+}
+
+/// 开启或关闭「预先准备全局搜索框」：保存后立即生效——开启时马上在后台创建，关闭时释放没在显示的那个。
+///
+/// # Errors
+///
+/// 保存失败返回存储错误，窗口不变。
+#[tauri::command]
+#[specta::specta]
+pub async fn set_search_prewarm<R: Runtime>(
+    app: AppHandle<R>,
+    state: State<'_, AppState>,
+    enabled: bool,
+) -> Result<(), IpcError> {
+    state
+        .services
+        .settings
+        .set(keys::SEARCH_PREWARM, if enabled { "true" } else { "false" })
+        .await?;
+    // 创建窗口会阻塞到完成，不能在命令所在的线程上做。
+    drop(tauri::async_runtime::spawn_blocking(move || {
+        if enabled {
+            crate::windows::search::prewarm(&app);
+        } else {
+            crate::windows::search::release_prewarmed(&app);
+        }
+    }));
     Ok(())
 }
 

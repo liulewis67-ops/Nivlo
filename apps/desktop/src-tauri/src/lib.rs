@@ -108,6 +108,7 @@ macro_rules! bindings_builder {
                 $crate::commands::settings::set_ui_pref::<$runtime>,
                 $crate::commands::settings::set_autostart::<$runtime>,
                 $crate::commands::settings::set_floating_always_on_top,
+                $crate::commands::settings::set_search_prewarm::<$runtime>,
                 $crate::commands::settings::set_later_rule,
                 $crate::commands::calendar::get_calendar,
                 $crate::commands::settings::set_week_start,
@@ -163,6 +164,9 @@ macro_rules! bindings_builder {
             ])
     };
 }
+
+/// 开了「预先准备全局搜索框」时，启动后等多久再创建它（让启动本身先完成）。
+const SEARCH_PREWARM_DELAY: std::time::Duration = std::time::Duration::from_secs(10);
 
 /// 运行桌面应用，直到退出。
 ///
@@ -434,6 +438,29 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             ));
             if let Err(error) = tray::setup(app.handle(), lang) {
                 tracing::warn!(event = "tray_setup_failed", %error, "创建托盘失败");
+            }
+            // 用户开了「预先准备全局搜索框」：启动完成、空闲下来之后（10 秒，一次性）在后台创建，
+            // 不拖慢启动。
+            {
+                let handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    let enabled = handle
+                        .state::<AppState>()
+                        .services
+                        .settings
+                        .get(nivlo_application::settings::keys::SEARCH_PREWARM)
+                        .await
+                        .ok()
+                        .flatten()
+                        .is_some_and(|value| value == "true");
+                    if !enabled {
+                        return;
+                    }
+                    tokio::time::sleep(SEARCH_PREWARM_DELAY).await;
+                    drop(tauri::async_runtime::spawn_blocking(move || {
+                        windows::search::prewarm(&handle);
+                    }));
+                });
             }
             // 首次运行询问一次是否开机自启（默认关闭）。
             tauri::async_runtime::spawn(autostart::prompt_once(

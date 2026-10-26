@@ -91,7 +91,7 @@ pub fn toggle<R: Runtime>(app: &AppHandle<R>) {
         present(app, &window);
         return;
     }
-    match create(app) {
+    match create(app, true) {
         Ok(window) => {
             install_foreground(app, &window);
             remember_foreground(app);
@@ -101,6 +101,38 @@ pub fn toggle<R: Runtime>(app: &AppHandle<R>) {
         Err(error) => {
             tracing::warn!(event = "search_window_create_failed", %error, "创建搜索窗口失败");
         }
+    }
+}
+
+/// 预先创建（隐藏的）搜索窗口，让第一次按快捷键时不必再等创建与加载；已经存在时什么都不做。
+///
+/// 和 [`toggle`] 一样会阻塞到窗口创建完成，要在后台线程上调用。
+pub fn prewarm<R: Runtime>(app: &AppHandle<R>) {
+    if app.get_webview_window(SEARCH_WINDOW_LABEL).is_some() {
+        return;
+    }
+    match create(app, false) {
+        Ok(window) => {
+            install_foreground(app, &window);
+            tracing::info!(event = "search_window_prewarmed", "已预先创建全局搜索框");
+        }
+        Err(error) => {
+            tracing::warn!(event = "search_window_prewarm_failed", %error, "预先创建搜索窗口失败");
+        }
+    }
+}
+
+/// 关掉预先创建、当前没有显示的搜索窗口（用户关闭了「预先准备」），释放它占用的内存。
+/// 正在显示时不动，下次唤出前它就是普通的按需窗口。
+pub fn release_prewarmed<R: Runtime>(app: &AppHandle<R>) {
+    let Some(window) = app.get_webview_window(SEARCH_WINDOW_LABEL) else {
+        return;
+    };
+    if window.is_visible().unwrap_or(false) {
+        return;
+    }
+    if let Err(error) = window.destroy() {
+        tracing::warn!(event = "search_window_release_failed", %error, "释放搜索窗口失败");
     }
 }
 
@@ -120,11 +152,15 @@ pub fn dismiss<R: Runtime>(app: &AppHandle<R>, restore_focus: bool) {
     }
 }
 
-/// 创建（隐藏的）搜索窗口；页面加载完成后才第一次显示。
-fn create<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<WebviewWindow<R>> {
+/// 创建（隐藏的）搜索窗口。`show_when_loaded` 为真（按了快捷键）时页面加载完成后显示；
+/// 预先创建时保持隐藏，等真正按快捷键。
+fn create<R: Runtime>(
+    app: &AppHandle<R>,
+    show_when_loaded: bool,
+) -> tauri::Result<WebviewWindow<R>> {
     let handle = app.clone();
     // 只在第一次加载完成时自动显示；之后的重新加载（开发时的整页刷新）不应把窗口弹出来。
-    let first_load = AtomicBool::new(true);
+    let first_load = AtomicBool::new(show_when_loaded);
     WebviewWindowBuilder::new(
         app,
         SEARCH_WINDOW_LABEL,

@@ -292,6 +292,19 @@ export function SettingsPage() {
           <Row label={t("settings.searchShortcut.label")} hint={t("settings.searchShortcut.hint")}>
             <ShortcutSetting action="search" showStatus />
           </Row>
+          <Row label={t("settings.searchPrewarm.label")} hint={t("settings.searchPrewarm.hint")}>
+            <Switch
+              label={t("settings.searchPrewarm.label")}
+              checked={current?.searchPrewarm ?? false}
+              disabled={current === undefined}
+              onCheckedChange={(enabled) =>
+                change.mutate({
+                  patch: { searchPrewarm: enabled },
+                  apply: () => ipc.setSearchPrewarm(enabled),
+                })
+              }
+            />
+          </Row>
         </Section>
         <Section title={t("settings.section.appearance")}>
           <Row

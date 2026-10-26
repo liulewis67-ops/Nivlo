@@ -700,6 +700,10 @@
     "searchShortcut": {
       "label": "Global search shortcut",
       "hint": "Press it in any app to pop up search and jump straight to a to-do, note or tip."
+    },
+    "searchPrewarm": {
+      "label": "Prepare global search in advance",
+      "hint": "Creates the search box in the background after start-up so the first press of the shortcut opens it faster (about 0.3 s → 0.12 s), at the cost of roughly 90 MB of extra memory."
     }
   },
   "calendar": {

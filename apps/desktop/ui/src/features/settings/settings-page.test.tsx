@@ -181,4 +181,16 @@ describe("设置页：语言", () => {
     await setLanguage("zh-CN");
     expect(formatDate(new Date(2026, 9, 14), "monthDayWeekday")).toBe("10月14日 星期三");
   });
+
+  it("「预先准备全局搜索框」默认关闭，打开后立即生效并保存", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    const toggle = await screen.findByRole("switch", { name: "预先准备全局搜索框" });
+    await waitFor(() => expect(toggle).toBeEnabled());
+    expect(toggle).toHaveAttribute("aria-checked", "false");
+    fireEvent.click(toggle);
+    await waitFor(() => expect(toggle).toHaveAttribute("aria-checked", "true"));
+    await waitFor(() => expect(ipc.appSettings.searchPrewarm).toBe(true));
+    expect(ipc.calls).toContain("setSearchPrewarm");
+  });
 });

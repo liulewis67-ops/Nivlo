@@ -47,6 +47,7 @@
     "allow-set-ui-pref",
     "allow-set-autostart",
     "allow-set-floating-always-on-top",
+    "allow-set-search-prewarm",
     "allow-set-later-rule",
     "allow-get-calendar",
     "allow-set-week-start",

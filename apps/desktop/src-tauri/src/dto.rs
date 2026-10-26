@@ -1117,6 +1117,8 @@ pub struct AppSettingsDto {
     pub notifications_paused: bool,
     /// 是否已经看过（或跳过）首次运行引导。
     pub onboarding_completed: bool,
+    /// 是否在启动后空闲时预先创建全局搜索框。
+    pub search_prewarm: bool,
 }
 
 /// 一周从哪天开始（IPC 表示）。

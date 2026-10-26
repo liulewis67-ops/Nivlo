@@ -280,6 +280,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     notificationsPaused: false,
     // 测试默认「已经看过引导」，避免它盖住被测界面；需要时用 `showOnboarding()` 打开。
     onboardingCompleted: true,
+    searchPrewarm: false,
   };
   let settingFailure: AppError | undefined;
   /** 回收站：Item ID → 删除时间（ISO）。 */
@@ -1152,6 +1153,11 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       }
       appSettings = { ...appSettings, autostart: enabled };
       return Promise.resolve(enabled);
+    },
+    setSearchPrewarm: (enabled: boolean) => {
+      calls.push("setSearchPrewarm");
+      appSettings = { ...appSettings, searchPrewarm: enabled };
+      return Promise.resolve();
     },
     setFloatingAlwaysOnTop: (enabled: boolean) => {
       calls.push("setFloatingAlwaysOnTop");

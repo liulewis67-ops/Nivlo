@@ -45,6 +45,7 @@ const COMMANDS: &[&str] = &[
     "set_ui_pref",
     "set_autostart",
     "set_floating_always_on_top",
+    "set_search_prewarm",
     "set_later_rule",
     "get_calendar",
     "set_week_start",

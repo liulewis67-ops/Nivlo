@@ -459,6 +459,84 @@ async function coldMainScenario() {
   }
 }
 
+/** 进程 `pid` 及其全部子孙进程（WebView2 的浏览器与渲染进程）的工作集之和，MB。 */
+function treeWorkingSetMb(pid) {
+  const script = `$all = Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, WorkingSetSize; $ids = @(${pid}); $added = $true; while ($added) { $added = $false; foreach ($p in $all) { if ($ids -contains $p.ParentProcessId -and -not ($ids -contains $p.ProcessId)) { $ids += $p.ProcessId; $added = $true } } }; [math]::Round((($all | Where-Object { $ids -contains $_.ProcessId } | Measure-Object WorkingSetSize -Sum).Sum) / 1MB)`;
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8" }).trim());
+}
+
+/**
+ * （--native）「预先准备全局搜索框」：开启后重启，启动约 10 秒后后台出现隐藏的搜索窗口；
+ * 第一次按快捷键的耗时与多占的内存都记下来。
+ */
+async function prewarmScenario() {
+  await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
+  const data = mkdtempSync(join(tmpdir(), "nivlo-e2e-prewarm-"));
+  const env = {
+    ...process.env,
+    NIVLO_DATA_DIR: join(data, "data"),
+    NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
+    WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
+  };
+  try {
+    let child = spawn(EXE, [], { env, stdio: "ignore" });
+    try {
+      const [floatingPage] = await until(async () => {
+        const pages = await listPages();
+        return pages.length >= 1 ? pages : null;
+      }, "悬浮窗页面");
+      const floating = await connect(floatingPage.webSocketDebuggerUrl);
+      await until(() => floating.evaluate("document.getElementById('root')?.children.length > 0"), "悬浮窗渲染");
+      floating.close();
+      spawn(EXE, [], { env, stdio: "ignore" }).on("error", () => {});
+      const page = await until(async () => (await listPages()).find((x) => x.id !== floatingPage.id), "主窗口页面");
+      const main = await connect(page.webSocketDebuggerUrl);
+      await until(() => main.evaluate("!!window.__TAURI_INTERNALS__"), "主窗口就绪");
+      await main.invoke("set_shortcut", { action: "search", accelerator: "Ctrl+Alt+Shift+F9" });
+      await main.invoke("set_search_prewarm", { enabled: true });
+      main.close();
+    } finally {
+      await stopInstance(child);
+    }
+
+    child = spawn(EXE, [], { env, stdio: "ignore" });
+    try {
+      const [floatingPage] = await until(async () => {
+        const pages = await listPages();
+        return pages.length >= 1 ? pages : null;
+      }, "第二次启动的悬浮窗页面");
+      const floating = await connect(floatingPage.webSocketDebuggerUrl);
+      await until(() => floating.evaluate("document.getElementById('root')?.children.length > 0"), "悬浮窗渲染");
+      floating.close();
+      await sleep(3000);
+      const before = treeWorkingSetMb(child.pid);
+      const visibleBefore = visibleWindowCount(child.pid);
+      // 预先创建发生在启动后约 10 秒；窗口隐藏，所以可见窗口数不变。
+      const searchPage = await until(async () => (await listPages()).find((x) => x.id !== floatingPage.id), "预先创建的搜索窗口", 30000);
+      const search = await connect(searchPage.webSocketDebuggerUrl);
+      await until(() => search.evaluate("document.getElementById('root')?.children.length > 0"), "搜索框页面加载完成");
+      if (visibleWindowCount(child.pid) !== visibleBefore) throw new Error("预先创建的搜索窗口不应该显示出来");
+      await sleep(3000);
+      const after = treeWorkingSetMb(child.pid);
+
+      const started = pressSearchHotkey();
+      await until(
+        () => search.evaluate("document.hasFocus() && document.activeElement?.getAttribute('role') === 'combobox'"),
+        "按快捷键后预先创建的搜索框拿到焦点",
+        20000,
+        5,
+      );
+      const firstMs = Date.now() - started;
+      search.close();
+      return { firstMs, extraMb: after - before };
+    } finally {
+      await stopInstance(child);
+    }
+  } finally {
+    rmSync(data, { recursive: true, force: true });
+  }
+}
+
 if (!existsSync(EXE)) {
   console.error(`找不到 ${EXE}，请先运行 pnpm tauri build --no-bundle`);
   process.exit(2);
@@ -481,6 +559,15 @@ if (NATIVE) {
   } catch (e) {
     failed += 1;
     console.error(`✗ 主窗口未创建时从全局搜索框回车打开结果：${e.message}`);
+  }
+}
+if (NATIVE) {
+  try {
+    const { firstMs, extraMb } = await prewarmScenario();
+    console.log(`✓ 预先准备全局搜索框：第一次唤出 ${firstMs} ms，进程树多占约 ${extraMb} MB`);
+  } catch (e) {
+    failed += 1;
+    console.error(`✗ 预先准备全局搜索框：${e.message}`);
   }
 }
 if (NATIVE && hotkeyTimings.first.length > 0) {

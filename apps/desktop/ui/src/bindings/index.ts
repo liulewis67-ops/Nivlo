@@ -403,6 +403,14 @@ export const commands = {
 	 */
 	setFloatingAlwaysOnTop: (enabled: boolean) => typedError<null, IpcError>(__TAURI_INVOKE("set_floating_always_on_top", { enabled })),
 	/**
+	 *  开启或关闭「预先准备全局搜索框」：保存后立即生效——开启时马上在后台创建，关闭时释放没在显示的那个。
+	 * 
+	 *  # Errors
+	 * 
+	 *  保存失败返回存储错误，窗口不变。
+	 */
+	setSearchPrewarm: (enabled: boolean) => typedError<null, IpcError>(__TAURI_INVOKE("set_search_prewarm", { enabled })),
+	/**
 	 *  修改「稍后」的规则（悬浮窗与收集箱的「稍后」按钮都按它算日期）。
 	 * 
 	 *  # Errors
@@ -804,6 +812,8 @@ export type AppSettingsDto = {
 	notificationsPaused: boolean,
 	/**  是否已经看过（或跳过）首次运行引导。 */
 	onboardingCompleted: boolean,
+	/**  是否在启动后空闲时预先创建全局搜索框。 */
+	searchPrewarm: boolean,
 };
 
 /**  附件（IPC 表示）。 */
