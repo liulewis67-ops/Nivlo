@@ -724,6 +724,12 @@
     "more_other": "{{count}} more"
   },
   "onboarding": {
+    "demo": {
+      "add": "+ To-do",
+      "sources": "Links · Text · Images · Files",
+      "input": "Review the plan tomorrow 3pm",
+      "parsed": "Plan detected: Tomorrow · Thu 15:00"
+    },
     "label": "Welcome to Nivlo",
     "steps": "Getting-started steps",
     "goTo": "Step {{step}}",
@@ -750,6 +756,22 @@
     }
   },
   "workflows": {
+    "newName": "New workflow",
+    "matcher": {
+      "exists": "{{field}} exists",
+      "and": " and ",
+      "or": " or "
+    },
+    "scriptApi": {
+      "input": "Input fields, such as input.title, input.url, input.text.",
+      "vars": "Variables written by earlier steps.",
+      "metadata": "Source information, such as url.host.",
+      "item": "Information about the current item (reserved).",
+      "trim": "Converts to a string and trims surrounding whitespace.",
+      "truncate": "Keeps at most n characters.",
+      "httpGet": "GET request; only hosts declared under “Script hosts” are reachable. Other hosts fail with PermissionDenied.",
+      "log": "Writes to the dry-run log (not to run records)."
+    },
     "label": "Automation",
     "tabs": "Automation sections",
     "tab": {

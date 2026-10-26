@@ -6,7 +6,7 @@ import { bracketMatching, indentOnInput } from "@codemirror/language";
 import { EditorState } from "@codemirror/state";
 import { EditorView, keymap, lineNumbers } from "@codemirror/view";
 import { useEffect, useRef } from "react";
-import { CTX_API } from "./script-api";
+import { ctxApi } from "./script-api";
 
 /** [`ScriptEditor`] 的 Props。 */
 type ScriptEditorProps = {
@@ -19,7 +19,7 @@ type ScriptEditorProps = {
 };
 
 /**
- * 脚本里 `ctx.` / `console.` 的补全：候选来自 [`CTX_API`]，与参考文档同源。
+ * 脚本里 `ctx.` / `console.` 的补全：候选来自 [`ctxApi`]，与参考文档同源。
  *
  * @param context 补全上下文。
  * @returns 补全结果；光标前不是 `ctx` / `console` 的成员访问时为 `null`。
@@ -30,7 +30,7 @@ function ctxCompletions(context: CompletionContext): CompletionResult | null {
   if (!/^(c|ct|ctx|co|con|cons|conso|consol|console)(\.[\w.]*)?$/.test(word.text)) return null;
   return {
     from: word.from,
-    options: CTX_API.map((entry) => ({
+    options: ctxApi().map((entry) => ({
       label: entry.label,
       type: entry.label.startsWith("console") ? "function" : "property",
       detail: entry.detail,

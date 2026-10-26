@@ -21,6 +21,7 @@ export type OnboardingDialogProps = {
  * @returns 插图元素。
  */
 function Illustration({ step }: { step: number }) {
+  const { t } = useTranslation();
   if (step === 0) {
     return (
       <div className="relative h-36 w-full overflow-hidden rounded-lg border border-border bg-bg">
@@ -49,7 +50,7 @@ function Illustration({ step }: { step: number }) {
           ))}
         </div>
         <span className="absolute right-[4.5rem] bottom-3 rounded-md bg-primary px-2 py-1 text-[10px] text-primary-contrast">
-          {"+ 待办"}
+          {t("onboarding.demo.add")}
         </span>
       </div>
     );
@@ -61,7 +62,7 @@ function Illustration({ step }: { step: number }) {
           <span className="text-2xl" aria-hidden="true">
             {"📥"}
           </span>
-          <span className="text-xs text-primary">{"链接 · 文字 · 图片 · 文件"}</span>
+          <span className="text-xs text-primary">{t("onboarding.demo.sources")}</span>
         </div>
       </div>
     );
@@ -69,12 +70,12 @@ function Illustration({ step }: { step: number }) {
   return (
     <div className="relative h-36 w-full overflow-hidden rounded-lg border border-border bg-bg p-4">
       <div className="rounded-md border border-primary bg-surface px-2 py-1.5 text-sm text-text">
-        {"明天下午3点 评审方案"}
+        {t("onboarding.demo.input")}
         <span className="nv-onboarding-caret ml-0.5 inline-block h-3.5 w-px bg-text align-middle" />
       </div>
       <div className="mt-2 flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs text-text">
         <span aria-hidden="true">{"📅"}</span>
-        <span>{"识别到计划：明天 · 周四 15:00"}</span>
+        <span>{t("onboarding.demo.parsed")}</span>
       </div>
     </div>
   );

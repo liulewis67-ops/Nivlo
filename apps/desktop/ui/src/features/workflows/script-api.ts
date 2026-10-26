@@ -1,3 +1,5 @@
+import i18next from "i18next";
+
 /** 脚本里可用的 `ctx` API 条目：补全与参考文档共用同一份数据。 */
 export type ApiEntry = {
   /** 补全文本，如 `ctx.http.get`。 */
@@ -8,33 +10,35 @@ export type ApiEntry = {
   info: string;
 };
 
-/** `ctx` 的全部公开成员（实施计划 8.2）。没有列出的名字都不存在：脚本拿不到文件系统、进程、原始网络。 */
-export const CTX_API: readonly ApiEntry[] = [
+/** `ctx` 的成员与签名；说明文字在 i18n 的 `workflows.scriptApi.<key>` 里。 */
+const CTX_MEMBERS: readonly { key: string; label: string; detail: string }[] = [
+  { key: "input", label: "ctx.input", detail: "Record<string, string>" },
+  { key: "vars", label: "ctx.vars", detail: "Record<string, string>" },
+  { key: "metadata", label: "ctx.metadata", detail: "Record<string, string>" },
+  { key: "item", label: "ctx.item", detail: "object" },
+  { key: "trim", label: "ctx.utils.trim", detail: "(s: unknown) => string" },
+  { key: "truncate", label: "ctx.utils.truncate", detail: "(s: unknown, n: number) => string" },
   {
-    label: "ctx.input",
-    detail: "Record<string, string>",
-    info: "输入字段，如 input.title、input.url、input.text。",
-  },
-  { label: "ctx.vars", detail: "Record<string, string>", info: "前面的 Step 写入的变量。" },
-  { label: "ctx.metadata", detail: "Record<string, string>", info: "来源信息，如 url.host。" },
-  { label: "ctx.item", detail: "object", info: "当前条目的信息（预留）。" },
-  { label: "ctx.utils.trim", detail: "(s: unknown) => string", info: "转成字符串并去掉首尾空白。" },
-  {
-    label: "ctx.utils.truncate",
-    detail: "(s: unknown, n: number) => string",
-    info: "最多保留 n 个字符。",
-  },
-  {
+    key: "httpGet",
     label: "ctx.http.get",
     detail: "(url: string) => { status: number; body: string }",
-    info: "GET 请求，只能访问「脚本主机」里声明过的主机；未授权的主机会以 PermissionDenied 失败。",
   },
-  {
-    label: "console.log",
-    detail: "(...args: unknown[]) => void",
-    info: "输出到试运行的日志（不写入运行记录）。",
-  },
+  { key: "log", label: "console.log", detail: "(...args: unknown[]) => void" },
 ];
+
+/**
+ * `ctx` 的全部公开成员（实施计划 8.2），说明按当前界面语言。没有列出的名字都不存在：
+ * 脚本拿不到文件系统、进程、原始网络。
+ *
+ * @returns 补全与参考文档共用的条目。
+ */
+export function ctxApi(): ApiEntry[] {
+  return CTX_MEMBERS.map(({ key, label, detail }) => ({
+    label,
+    detail,
+    info: i18next.t(`workflows.scriptApi.${key}`),
+  }));
+}
 
 /** 脚本入口与返回值的 TypeScript 声明，在编辑器的参考面板里展示。 */
 export const CTX_DTS = `declare const console: { log(...args: unknown[]): void };

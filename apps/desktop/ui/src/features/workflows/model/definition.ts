@@ -1,3 +1,5 @@
+import i18next from "i18next";
+
 /** 表单编辑器能理解的匹配字段。 */
 export const CONDITION_FIELDS = [
   "input.type",
@@ -222,13 +224,19 @@ export function describeMatcher(matcher: unknown): string | null {
   const conditions = conditionsOf(matcher);
   if (conditions !== null) {
     return conditions
-      .map((c) => (c.op === "exists" ? `${c.field} 存在` : `${c.field} ${c.op} ${c.value}`))
-      .join(" 且 ");
+      .map((c) =>
+        c.op === "exists"
+          ? i18next.t("workflows.matcher.exists", { field: c.field })
+          : `${c.field} ${c.op} ${c.value}`,
+      )
+      .join(i18next.t("workflows.matcher.and"));
   }
   if (isObject(matcher) && Array.isArray(matcher.any)) {
     const parts = matcher.any.map(leafToForm);
     if (parts.every((p) => p !== null)) {
-      return parts.map((c) => `${c.field} ${c.op} ${c.value}`).join(" 或 ");
+      return parts
+        .map((c) => `${c.field} ${c.op} ${c.value}`)
+        .join(i18next.t("workflows.matcher.or"));
     }
   }
   return null;
@@ -244,7 +252,7 @@ export function blankDefinition(id: string): Json {
   return {
     schemaVersion: 1,
     id,
-    name: "新的 Workflow",
+    name: i18next.t("workflows.newName"),
     description: "",
     priority: 10,
     enabled: true,
