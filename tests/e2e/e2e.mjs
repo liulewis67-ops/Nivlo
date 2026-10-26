@@ -22,6 +22,8 @@ const EXE = process.env.NIVLO_EXE ?? join(ROOT, "target", "release", process.pla
 const PORT = 9244;
 const RUNS = Number(process.argv[process.argv.indexOf("--runs") + 1]) || 1;
 const NATIVE = process.argv.includes("--native");
+/** --native 测得的唤出耗时（毫秒）：从按键发出到输入框拿到焦点。 */
+const hotkeyTimings = { first: [], again: [] };
 
 /**
  * 进程 `pid` 当前可见的顶层窗口数（Win32 EnumWindows + IsWindowVisible）。
@@ -45,12 +47,14 @@ function pressSearchHotkey() {
     "foreach ($k in $keys) { [E2E.Keys]::keybd_event($k, 0, 0, [System.UIntPtr]::Zero) }",
     "[array]::Reverse($keys)",
     "foreach ($k in $keys) { [E2E.Keys]::keybd_event($k, 0, 2, [System.UIntPtr]::Zero) }",
+    "[DateTimeOffset]::Now.ToUnixTimeMilliseconds()",
   ].join("; ");
-  execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { stdio: "ignore" });
+  // 返回松开按键那一刻的时间（Unix 毫秒），计时从这里开始，不受 PowerShell 退出快慢影响。
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8" }).trim());
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function until(fn, what, ms = 20000) {
+async function until(fn, what, ms = 20000, every = 200) {
   const end = Date.now() + ms;
   let last;
   while (Date.now() < end) {
@@ -60,7 +64,7 @@ async function until(fn, what, ms = 20000) {
     } catch (e) {
       last = e;
     }
-    await sleep(200);
+    await sleep(every);
   }
   throw new Error(`等待超时：${what}${last ? `（${last.message}）` : ""}`);
 }
@@ -257,14 +261,16 @@ async function runOnce(index) {
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。
     if (NATIVE) {
       await step("全局搜索快捷键（原生）", async () => {
-        pressSearchHotkey();
+        // 计时从松开按键那一刻开始；第一次包含创建窗口、加载页面与 CDP 连接。
+        const firstStarted = pressSearchHotkey();
         const page = await until(async () => (await listPages()).find((p) => p.id !== floating.pageId && p.id !== main.pageId), "搜索窗口页面", 8000).catch(async (e) => {
           throw new Error(`${e.message}；当前页面：${JSON.stringify((await listPages()).map((p) => p.url))}`);
         });
         const search = await connect(page.webSocketDebuggerUrl);
         try {
           const inputFocused = "['搜索关键词', 'Search keywords'].includes(document.activeElement?.getAttribute('aria-label'))";
-          await until(() => search.evaluate(`document.visibilityState === 'visible' && document.hasFocus() && ${inputFocused}`), "搜索框可见且输入框拿到键盘焦点");
+          await until(() => search.evaluate(`document.visibilityState === 'visible' && document.hasFocus() && ${inputFocused}`), "搜索框可见且输入框拿到键盘焦点", 20000, 5);
+          hotkeyTimings.first.push(Date.now() - firstStarted);
           const geometry = await search.evaluate("({ x: window.screenX, y: window.screenY, w: window.outerWidth, h: window.outerHeight, left: screen.availLeft, top: screen.availTop, aw: screen.availWidth, ah: screen.availHeight })");
           const centre = geometry.x + geometry.w / 2 - (geometry.left + geometry.aw / 2);
           const inside = geometry.x >= geometry.left && geometry.y >= geometry.top && geometry.x + geometry.w <= geometry.left + geometry.aw && geometry.y + geometry.h <= geometry.top + geometry.ah;
@@ -281,9 +287,10 @@ async function runOnce(index) {
           if (await search.evaluate("document.hasFocus()")) throw new Error("隐藏后搜索框仍然拿着焦点");
 
           // 再按一次：出现时是干净的、焦点在输入框。
-          pressSearchHotkey();
+          const againStarted = pressSearchHotkey();
+          await until(() => search.evaluate(`document.hasFocus() && document.activeElement?.value === '' && ${inputFocused}`), "再次出现时输入已清空并聚焦", 20000, 5);
+          hotkeyTimings.again.push(Date.now() - againStarted);
           await until(() => visibleWindowCount(child.pid) === shown, "再次出现");
-          await until(() => search.evaluate(`document.hasFocus() && document.activeElement?.value === '' && ${inputFocused}`), "再次出现时输入已清空并聚焦");
         } finally {
           search.close();
         }
@@ -317,5 +324,9 @@ for (let i = 1; i <= RUNS; i++) {
     failed += 1;
     console.error(`✗ 第 ${i} 次：${e.message}`);
   }
+}
+if (NATIVE && hotkeyTimings.first.length > 0) {
+  const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+  console.log(`全局搜索唤出（按键之后到输入框拿到焦点）：第一次 中位数 ${median(hotkeyTimings.first)} ms ${JSON.stringify(hotkeyTimings.first)}；之后 中位数 ${median(hotkeyTimings.again)} ms ${JSON.stringify(hotkeyTimings.again)}`);
 }
 process.exit(failed ? 1 : 0);
