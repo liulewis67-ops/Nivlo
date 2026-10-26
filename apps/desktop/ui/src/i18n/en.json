@@ -427,6 +427,12 @@
     "recent": "Recently updated",
     "create": "New to-do “{{title}}”",
     "createHint": "Ctrl+↵ new to-do",
+    "meta": {
+      "yesterday": "Yesterday",
+      "inbox": "Inbox",
+      "done": "Done",
+      "due": "Due {{date}}"
+    },
     "windowHint": "Type keywords to search titles, content and sources. Enter opens it in the main window.",
     "globalTip": "Search from any app"
   },

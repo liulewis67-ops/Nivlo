@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { useProjectsQuery } from "@/features/organize";
 import { parseDatePhrase } from "@/features/quick-create";
 import type { DatePhraseResult } from "@/features/quick-create";
 import { cx } from "@/lib/cx";
@@ -13,6 +14,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { highlight, searchTerms, snippetAround } from "./model/highlight";
 import type { Segment } from "./model/highlight";
+import { itemMeta } from "./model/meta";
 
 /** 停止输入多久之后才发起搜索（毫秒）。 */
 export const SEARCH_DEBOUNCE_MS = 140;
@@ -198,6 +200,9 @@ export function SearchPanel({
     // 继续输入时先保留上一次的结果，新结果到了再替换，列表不会闪一下空白。
     placeholderData: keepPreviousData,
   });
+  const projects = useProjectsQuery();
+  const projectNames = new Map(projects.data?.map((project) => [project.id, project.name]));
+  const today = new Date();
   const recent = useQuery({
     queryKey: queryKeys.searchRecent(),
     queryFn: () =>
@@ -399,6 +404,7 @@ export function SearchPanel({
                   {group.items.map((item) => {
                     const selected = item.id === activeItem?.id;
                     const snippet = snippetAround(item.content, terms);
+                    const meta = itemMeta(item, today, (id) => projectNames.get(id));
                     return (
                       <li
                         key={item.id}
@@ -431,6 +437,11 @@ export function SearchPanel({
                             </span>
                           )}
                         </span>
+                        {meta.length > 0 && (
+                          <span className="mt-0.5 max-w-[40%] shrink-0 truncate text-xs text-muted">
+                            {meta.join(" · ")}
+                          </span>
+                        )}
                         {selected && (
                           <kbd className="mt-0.5 shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
                             {"↵"}

@@ -425,6 +425,12 @@
     "recent": "最近更新",
     "create": "新建待办「{{title}}」",
     "createHint": "Ctrl+↵ 新建待办",
+    "meta": {
+      "yesterday": "昨天",
+      "inbox": "收集箱",
+      "done": "已完成",
+      "due": "截止 {{date}}"
+    },
     "windowHint": "输入关键词，搜索标题、正文和来源；回车在主窗口中打开。",
     "globalTip": "在任何应用里搜索"
   },
