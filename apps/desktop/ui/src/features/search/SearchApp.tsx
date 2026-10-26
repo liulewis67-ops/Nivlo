@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
+import { GOTO_VIEWS } from "./model/commands";
 import { SearchPanel } from "./SearchPanel";
 
 /**
@@ -13,6 +14,7 @@ import { SearchPanel } from "./SearchPanel";
  *   重新聚焦输入框，并丢掉旧的搜索缓存，保证结果是最新的；
  * * 页面失去焦点时（后端随即隐藏窗口）也先重置，下次出现时不会闪一下上次的结果；
  * * 回车 / 点击：交给主窗口打开详情（后端同时隐藏搜索框）；Esc：隐藏并把焦点还给之前的应用；
+ * * 输入 `>` 列出「前往：…」命令，回车在主窗口打开那个视图（后端同时隐藏搜索框）；
  * * Ctrl+Enter：把搜索词记成待办，随即隐藏、焦点回到之前的应用（和悬浮窗的 Quick Create 一样不打断手头的事）。
  *
  * @returns 填满窗口的搜索面板。
@@ -41,6 +43,14 @@ export function SearchApp() {
         emptyHint={t("search.windowHint")}
         onClose={() => void ipc.hideSearch()}
         onCreated={() => void ipc.hideSearch()}
+        commands={GOTO_VIEWS.map((target) => ({
+          id: `goto-${target}`,
+          label: t("search.goto", { view: t(`shell.nav.${target}`) }),
+          keywords: [target],
+          run: () => {
+            ipc.openMainAt(target).catch(reportError);
+          },
+        }))}
         onOpenItem={(id) => {
           ipc.openItemInMain(id).catch(reportError);
         }}

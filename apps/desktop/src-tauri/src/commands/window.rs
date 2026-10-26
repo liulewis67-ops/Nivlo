@@ -30,9 +30,20 @@ pub async fn open_main<R: Runtime>(app: AppHandle<R>) -> Result<(), IpcError> {
 }
 
 /// 主窗口里可以被直接打开的视图。
-const MAIN_VIEWS: &[&str] = &["inbox", "today", "calendar", "notes", "projects"];
+const MAIN_VIEWS: &[&str] = &[
+    "inbox",
+    "today",
+    "calendar",
+    "notes",
+    "projects",
+    "workflows",
+    "trash",
+    "settings",
+];
 
-/// 打开主窗口并切换到指定视图（悬浮窗上的收集箱入口）。
+/// 打开主窗口并切换到指定视图（悬浮窗上的收集箱入口、全局搜索框的「前往」命令）。
+///
+/// 全局搜索框开着时一并隐藏它（不把焦点还给之前的应用：焦点要留在主窗口）。
 ///
 /// 视图先记在应用状态里，再通知已经在运行的主窗口：主窗口可能刚刚才被创建、还没来得及监听事件，
 /// 这时它会在启动时取走记下的视图。
@@ -54,6 +65,7 @@ pub async fn open_main_at<R: Runtime>(
         )));
     }
     state.runtime.set_pending_main_view(view.clone());
+    crate::windows::search::dismiss(&app, false);
     open_main(app.clone()).await?;
     let event = MainViewRequestedEvent { view };
     if let Err(error) = event.emit_to(&app, crate::windows::MAIN_WINDOW_LABEL) {

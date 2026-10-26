@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "search-window",
-  "description": "全局搜索框的最小权限：只能搜索、列出最近的条目、项目名称与标签、用 Quick Create 记下待办、把结果交给主窗口打开、隐藏自己，并监听事件（架构文档 §13）。",
+  "description": "全局搜索框的最小权限：只能搜索、列出最近的条目、项目名称与标签、用 Quick Create 记下待办、把结果交给主窗口打开、在主窗口打开某个视图（「>」命令）、隐藏自己，并监听事件（架构文档 §13）。",
   "windows": ["search"],
   "permissions": [
     "core:event:default",
@@ -11,6 +11,7 @@
     "allow-tags-for-items",
     "allow-quick-create",
     "allow-open-item-in-main",
+    "allow-open-main-at",
     "allow-hide-search"
   ]
 }

@@ -12,8 +12,17 @@ export type MainView =
   | "settings"
   | "dev";
 
-/** 可以由悬浮窗等外部请求直接打开的视图。 */
-const OPENABLE_VIEWS: readonly MainView[] = ["inbox", "today", "calendar", "notes", "projects"];
+/** 可以由悬浮窗、全局搜索框等外部请求直接打开的视图（与后端 `open_main_at` 一致）。 */
+const OPENABLE_VIEWS: readonly MainView[] = [
+  "inbox",
+  "today",
+  "calendar",
+  "notes",
+  "projects",
+  "workflows",
+  "trash",
+  "settings",
+];
 
 /**
  * 把后端传来的视图名变成 [`MainView`]；不认识的返回 `null`。

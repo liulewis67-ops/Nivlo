@@ -537,7 +537,7 @@ async fn main_view_handoff_validates_the_view_and_is_taken_only_once() {
     );
 
     // 不认识的视图被拒绝，并且不会留下待处理的请求。
-    let rejected = invoke(&webview, "open_main_at", json!({ "view": "settings" })).unwrap_err();
+    let rejected = invoke(&webview, "open_main_at", json!({ "view": "nonexistent" })).unwrap_err();
     assert_eq!(rejected["code"], "INVALID_INPUT");
     assert!(
         invoke(&webview, "take_pending_main_view", json!({}))

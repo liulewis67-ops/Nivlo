@@ -166,6 +166,15 @@ describe("全局搜索窗口", () => {
     expect(ipc.openedItems).toEqual([]);
   });
 
+  it("输入 > 列出命令，回车在主窗口打开对应视图", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.change(input(), { target: { value: "> 设置" } });
+    expect(screen.getByRole("option", { name: /前往：设置/ })).toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "Enter" });
+    await waitFor(() => expect(ipc.calls).toContain("openMainAt"));
+  });
+
   it("Esc 隐藏窗口", () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<SearchApp />, ipc);

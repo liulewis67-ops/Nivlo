@@ -49,6 +49,7 @@ const SEARCH_ALLOWED: &[&str] = &[
     "tags_for_items",
     "quick_create",
     "open_item_in_main",
+    "open_main_at",
     "hide_search",
 ];
 
