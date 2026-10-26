@@ -93,7 +93,7 @@ function Illustration({ step }: { step: number }) {
 export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
-  const shortcut = useShortcutQuery().data?.accelerator ?? "Ctrl+Shift+Space";
+  const shortcut = useShortcutQuery("quickCreate").data?.accelerator ?? "Ctrl+Shift+Space";
   const primaryRef = useRef<HTMLButtonElement>(null);
   const last = step === ONBOARDING_STEPS - 1;
 

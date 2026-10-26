@@ -68,7 +68,7 @@
     "allow-capture-from-clipboard",
     "allow-take-pending-main-view",
     "allow-get-shortcut-status",
-    "allow-set-quick-create-shortcut",
+    "allow-set-shortcut",
     "allow-list-inbox",
     "allow-get-inbox-count",
     "allow-organize-items",

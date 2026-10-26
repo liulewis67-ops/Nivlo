@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { FloatingApp } from "@/app/floating/FloatingApp";
 import { MainApp } from "@/app/main/MainApp";
+import { SearchApp } from "@/features/search";
 import { AppProviders } from "@/app/providers/AppProviders";
 import { hydrateLanguage, initI18n } from "@/i18n";
 import { ipc, isRunningInTauri, setIpcClient } from "@/lib/ipc";
@@ -15,6 +16,21 @@ import "@/styles/global.css";
 
 /** 悬浮窗的窗口 label，与后端窗口配置一致（架构文档 §10）。 */
 const FLOATING_WINDOW_LABEL = "floating";
+
+/** 全局搜索窗口的 label，与后端 `windows::search` 一致。 */
+const SEARCH_WINDOW_LABEL = "search";
+
+/**
+ * 按窗口 label 选择根组件。
+ *
+ * @param label 窗口 label。
+ * @returns 根组件。
+ */
+function rootFor(label: string) {
+  if (label === FLOATING_WINDOW_LABEL) return <FloatingApp />;
+  if (label === SEARCH_WINDOW_LABEL) return <SearchApp />;
+  return <MainApp />;
+}
 
 /** 从后端读取外观、皮肤、语言与主题，覆盖本地缓存；失败时沿用缓存。 */
 async function hydrateUiPrefs(): Promise<void> {
@@ -64,12 +80,13 @@ async function bootstrap(): Promise<void> {
     const memory = createMemoryIpc();
     await seedDemoData(memory);
     setIpcClient(memory);
-    // 预览悬浮窗：http://localhost:1420/?window=floating
+    // 预览悬浮窗：http://localhost:1420/?window=floating；全局搜索框：?window=search
     label = new URLSearchParams(window.location.search).get("window") ?? "main";
   }
 
-  // 主窗口启动时以后端保存的外观 / 皮肤为准（备份恢复后也能还原）；悬浮窗靠 storage 事件同步。
-  if (label !== FLOATING_WINDOW_LABEL) void hydrateUiPrefs();
+  // 主窗口启动时以后端保存的外观 / 皮肤为准（备份恢复后也能还原）；悬浮窗与搜索框靠 storage 事件同步
+  // （它们也没有读取偏好的权限）。
+  if (label !== FLOATING_WINDOW_LABEL && label !== SEARCH_WINDOW_LABEL) void hydrateUiPrefs();
 
   // 让样式能按窗口区分（悬浮窗需要透明背景）。
   document.documentElement.dataset["window"] = label;
@@ -80,7 +97,7 @@ async function bootstrap(): Promise<void> {
   }
   createRoot(container).render(
     <StrictMode>
-      <AppProviders>{label === FLOATING_WINDOW_LABEL ? <FloatingApp /> : <MainApp />}</AppProviders>
+      <AppProviders>{rootFor(label)}</AppProviders>
     </StrictMode>,
   );
 }

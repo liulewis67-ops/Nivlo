@@ -20,6 +20,7 @@ import type {
   PreviousStateDto,
   ProjectDto,
   RescheduleTargetDto,
+  ShortcutActionDto,
   ShortcutStatusDto,
   TagDto,
   TagSummaryDto,
@@ -75,6 +76,7 @@ export type {
   ProjectDto,
   RescheduleTargetDto,
   ScheduleTargetDto,
+  ShortcutActionDto,
   ShortcutStatusDto,
   SourceDto,
   TagDto,
@@ -295,13 +297,25 @@ export interface IpcClient {
   setItemTags(id: string, names: string[]): Promise<TagDto[]>;
   /** 打开（必要时创建）并聚焦主窗口。 */
   openMain(): Promise<void>;
-  /** 读取 Quick Create 全局快捷键的绑定与注册状态；被其他程序占用时 `conflict` 为 `true`。 */
-  getShortcutStatus(): Promise<ShortcutStatusDto>;
+  /** 读取一个动作的全局快捷键的绑定与注册状态；被其他程序占用时 `conflict` 为 `true`。 */
+  getShortcutStatus(action: ShortcutActionDto): Promise<ShortcutStatusDto>;
   /**
-   * 修改 Quick Create 的全局快捷键并保存（如 `Ctrl+Alt+Q`）。
-   * 不合法抛出 `SHORTCUT_INVALID`，被占用抛出 `SHORTCUT_CONFLICT`，此时原来的绑定保持不变。
+   * 修改一个动作的全局快捷键并保存（如 `Ctrl+Alt+Q`）。
+   * 不合法抛出 `SHORTCUT_INVALID`，被占用（其他程序或 Nivlo 的另一个动作）抛出 `SHORTCUT_CONFLICT`，
+   * 此时原来的绑定保持不变。
    */
-  setQuickCreateShortcut(accelerator: string): Promise<ShortcutStatusDto>;
+  setShortcut(action: ShortcutActionDto, accelerator: string): Promise<ShortcutStatusDto>;
+  /** 全局搜索框：打开主窗口并定位到这个 Item 的详情，同时隐藏搜索框。 */
+  openItemInMain(id: string): Promise<void>;
+  /** 全局搜索框：隐藏自己，焦点还给之前正在使用的窗口。 */
+  hideSearch(): Promise<void>;
+  /**
+   * 订阅「全局搜索框刚被显示」事件（每次按下全局快捷键）。
+   *
+   * @param onShown 事件到达时的回调。
+   * @returns 取消订阅的函数，组件卸载时必须调用。
+   */
+  subscribeSearchWindowShown(onShown: () => void): () => void;
   /** 打开主窗口并切换到指定视图（`inbox` / `today` / `calendar` / `notes` / `projects`）。 */
   openMainAt(view: string): Promise<void>;
   /**
@@ -530,9 +544,15 @@ const tauriIpc: IpcClient = {
   openMain: async () => {
     await call("open_main", commands.openMain());
   },
-  getShortcutStatus: () => call("get_shortcut_status", commands.getShortcutStatus()),
-  setQuickCreateShortcut: (accelerator) =>
-    call("set_quick_create_shortcut", commands.setQuickCreateShortcut(accelerator)),
+  getShortcutStatus: (action) => call("get_shortcut_status", commands.getShortcutStatus(action)),
+  setShortcut: (action, accelerator) =>
+    call("set_shortcut", commands.setShortcut(action, accelerator)),
+  openItemInMain: async (id) => {
+    await call("open_item_in_main", commands.openItemInMain(id));
+  },
+  hideSearch: () => commands.hideSearch(),
+  subscribeSearchWindowShown: (onShown) =>
+    listenAll([() => events.searchWindowShown.listen(() => onShown())]),
   openMainAt: async (view) => {
     await call("open_main_at", commands.openMainAt(view));
   },
@@ -661,8 +681,11 @@ export const ipc: IpcClient = {
   organizeItems: (itemIds, action) => current.organizeItems(itemIds, action),
   restoreItems: (previous) => current.restoreItems(previous),
   openMain: () => current.openMain(),
-  getShortcutStatus: () => current.getShortcutStatus(),
-  setQuickCreateShortcut: (accelerator) => current.setQuickCreateShortcut(accelerator),
+  getShortcutStatus: (action) => current.getShortcutStatus(action),
+  setShortcut: (action, accelerator) => current.setShortcut(action, accelerator),
+  openItemInMain: (id) => current.openItemInMain(id),
+  hideSearch: () => current.hideSearch(),
+  subscribeSearchWindowShown: (onShown) => current.subscribeSearchWindowShown(onShown),
   openMainAt: (view) => current.openMainAt(view),
   takePendingMainView: () => current.takePendingMainView(),
   subscribeMainViewRequested: (onRequested) => current.subscribeMainViewRequested(onRequested),

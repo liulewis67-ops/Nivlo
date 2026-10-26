@@ -1,3 +1,5 @@
+import type { ShortcutActionDto } from "./ipc";
+
 /**
  * Query Key 工厂。所有 TanStack Query 的 Key 都必须由这里生成，
  * 禁止在业务代码中手写数组字面量（前端规范 §7.2）。
@@ -19,6 +21,8 @@ export const queryKeys = {
   tagItems: (tagId: string) => ["items", "tag", tagId] as const,
   /** 全文搜索的结果；属于 `items` 前缀，Item 变化时会一起失效。 */
   search: (query: string) => ["items", "search", query] as const,
+  /** 全部搜索结果的前缀（全局搜索框每次出现时丢弃旧结果）。 */
+  searchAll: () => ["items", "search"] as const,
   /** Calendar 的某一页；属于 `items` 前缀，Item 变化时会一起失效。 */
   calendar: (view: string, anchor: string) => ["items", "calendar", view, anchor] as const,
   /** 设置页的设置（开机自启、置顶、「稍后」规则）。 */
@@ -37,7 +41,7 @@ export const queryKeys = {
   /** Inbox 数量。 */
   inboxCount: () => ["inbox", "count"] as const,
   /** 全局快捷键的绑定与注册状态。 */
-  shortcut: () => ["shortcut"] as const,
+  shortcut: (action: ShortcutActionDto) => ["shortcut", action] as const,
   /** 所有单个 Item 查询（含详情）的前缀，用于一次性失效。 */
   itemsOne: () => ["item"] as const,
   /** 单个 Item。 */

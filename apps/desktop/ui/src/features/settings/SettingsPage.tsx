@@ -285,7 +285,10 @@ export function SettingsPage() {
             />
           </Row>
           <Row label={t("settings.shortcut.label")} hint={t("settings.shortcut.hint")}>
-            <ShortcutSetting />
+            <ShortcutSetting action="quickCreate" />
+          </Row>
+          <Row label={t("settings.searchShortcut.label")} hint={t("settings.searchShortcut.hint")}>
+            <ShortcutSetting action="search" />
           </Row>
         </Section>
         <Section title={t("settings.section.appearance")}>

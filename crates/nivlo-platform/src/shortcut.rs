@@ -79,6 +79,15 @@ impl Accelerator {
         meta: false,
         key: Key::Space,
     };
+
+    /// 默认的全局搜索快捷键：`Ctrl+Alt+Space`（和 Quick Create 同一组按键，好记）。
+    pub const SEARCH_DEFAULT: Self = Self {
+        ctrl: true,
+        alt: true,
+        shift: false,
+        meta: false,
+        key: Key::Space,
+    };
 }
 
 impl FromStr for Accelerator {

@@ -62,6 +62,31 @@ pub async fn open_main_at<R: Runtime>(
     Ok(())
 }
 
+/// 打开主窗口并定位到一个 Item 的详情（全局搜索框选中结果时调用），同时隐藏搜索框。
+///
+/// # Errors
+///
+/// ID 格式不对返回 `INVALID_INPUT`；窗口创建或显示失败返回 `WINDOW_UNAVAILABLE`。
+#[tauri::command]
+#[specta::specta]
+pub async fn open_item_in_main<R: Runtime>(app: AppHandle<R>, id: String) -> Result<(), IpcError> {
+    let id = crate::dto::parse_item_id(&id)?;
+    crate::windows::search::dismiss(&app, false);
+    crate::windows::open_item_in_main(&app, &id.to_string()).map_err(|error| {
+        tracing::error!(event = "open_item_in_main_failed", %error, "打开主窗口失败");
+        let mut app_error = AppError::new(ErrorCode::WindowUnavailable, error.to_string());
+        app_error.action = Some(ErrorAction::OpenDiagnostics);
+        IpcError::from(app_error)
+    })
+}
+
+/// 隐藏全局搜索框（Esc）：焦点还给打开搜索之前正在使用的窗口。
+#[tauri::command]
+#[specta::specta]
+pub async fn hide_search<R: Runtime>(app: AppHandle<R>) {
+    crate::windows::search::dismiss(&app, true);
+}
+
 /// 取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。
 ///
 /// # Errors

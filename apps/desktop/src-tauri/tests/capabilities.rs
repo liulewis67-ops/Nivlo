@@ -39,6 +39,10 @@ const FLOATING_ALLOWED: &[&str] = &[
     "end_floating_input",
 ];
 
+/// 全局搜索框允许使用的全部命令：只读搜索、把结果交给主窗口、隐藏自己。
+/// 它在任何应用之上弹出，不应拥有任何写入数据的命令。
+const SEARCH_ALLOWED: &[&str] = &["search_items", "open_item_in_main", "hide_search"];
+
 /// 解析一个 Capability 文件。
 fn parse(text: &str) -> Value {
     serde_json::from_str(text).unwrap()
@@ -79,6 +83,18 @@ fn main_capability_only_targets_the_main_window() {
 }
 
 #[test]
+fn search_capability_only_targets_the_search_window_and_is_read_only() {
+    let search = parse(include_str!("../capabilities/search.json"));
+    assert_eq!(windows(&search), ["search"]);
+    for command in allowed_commands(&search) {
+        assert!(
+            SEARCH_ALLOWED.contains(&command.as_str()),
+            "搜索框不应拥有命令 {command}"
+        );
+    }
+}
+
+#[test]
 fn floating_only_has_whitelisted_commands() {
     let floating = parse(include_str!("../capabilities/floating.json"));
     for command in allowed_commands(&floating) {
@@ -105,6 +121,7 @@ fn no_window_gets_blanket_permissions() {
     for text in [
         include_str!("../capabilities/floating.json"),
         include_str!("../capabilities/main.json"),
+        include_str!("../capabilities/search.json"),
     ] {
         let capability = parse(text);
         for permission in capability["permissions"].as_array().unwrap() {
@@ -125,6 +142,7 @@ fn every_command_in_build_rs_is_granted_to_some_window() {
     // build.rs 里登记的命令如果没有任何窗口使用，说明它是死代码或漏配了权限。
     let main = allowed_commands(&parse(include_str!("../capabilities/main.json")));
     let floating = allowed_commands(&parse(include_str!("../capabilities/floating.json")));
+    let search = allowed_commands(&parse(include_str!("../capabilities/search.json")));
     // 直接解析 build.rs 中 `COMMANDS` 常量里的字符串，而不是在测试里再维护一份列表。
     let build_rs = include_str!("../build.rs");
     let start = build_rs.find("const COMMANDS").unwrap();
@@ -138,7 +156,10 @@ fn every_command_in_build_rs_is_granted_to_some_window() {
     );
     for command in commands {
         assert!(
-            main.iter().chain(floating.iter()).any(|c| c == command),
+            main.iter()
+                .chain(floating.iter())
+                .chain(search.iter())
+                .any(|c| c == command),
             "命令 {command} 没有授予任何窗口"
         );
     }

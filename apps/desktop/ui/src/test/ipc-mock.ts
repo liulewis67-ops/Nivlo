@@ -19,6 +19,7 @@ import type {
   LaterRuleDto,
   PatchDto,
   UpdateItemRequest,
+  ShortcutActionDto,
   ShortcutStatusDto,
   CaptureRequestDto,
   InboxEntryDto,
@@ -128,10 +129,16 @@ export interface MemoryIpc extends IpcClient, WorkflowMock {
   failNextOpenSourceWith(error: AppError): void;
   /** 设置模拟剪贴板的内容；`null` 表示空剪贴板（`captureFromClipboard` 抛出 `CLIPBOARD_EMPTY`）。 */
   setClipboard(content: { text?: string; files?: string[] } | null): void;
-  /** 设置全局快捷键的状态（模拟启动时被占用等）。 */
-  setShortcutStatus(status: ShortcutStatusDto): void;
-  /** 已被其他程序占用的快捷键（规范文本），`setQuickCreateShortcut` 遇到它们抛出 `SHORTCUT_CONFLICT`。 */
+  /** 设置一个动作的全局快捷键状态（模拟启动时被占用等）；缺省为 Quick Create。 */
+  setShortcutStatus(status: ShortcutStatusDto, action?: ShortcutActionDto): void;
+  /** 已被其他程序占用的快捷键（规范文本），`setShortcut` 遇到它们抛出 `SHORTCUT_CONFLICT`。 */
   readonly takenShortcuts: Set<string>;
+  /** 按顺序记录的 `openItemInMain` 请求的 ID。 */
+  readonly openedItems: readonly string[];
+  /** `hideSearch` 被调用的次数。 */
+  readonly searchHides: number;
+  /** 模拟全局快捷键唤出了搜索框。 */
+  emitSearchWindowShown(): void;
   /** 模拟托盘「快速添加」。 */
   emitQuickAddRequested(): void;
   /** 模拟后端看门狗补发"指针已离开"事件。 */
@@ -278,11 +285,13 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let updateFailure: AppError | undefined;
   let openSourceFailure: AppError | undefined;
   let clipboard: { text?: string; files?: string[] } | null = null;
-  let shortcut: ShortcutStatusDto = {
-    accelerator: "Ctrl+Shift+Space",
-    registered: true,
-    conflict: false,
+  const shortcuts: Record<ShortcutActionDto, ShortcutStatusDto> = {
+    quickCreate: { accelerator: "Ctrl+Shift+Space", registered: true, conflict: false },
+    search: { accelerator: "Ctrl+Alt+Space", registered: true, conflict: false },
   };
+  const openedItems: string[] = [];
+  let searchHides = 0;
+  const searchShownListeners = new Set<() => void>();
   const openedViews: string[] = [];
   let pendingMainView: string | null = null;
   let pendingFailure = options.failNextCreateWith;
@@ -901,23 +910,51 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
           : { input: { kind: "text", text }, origin: "paste", sourceApplication: null },
       );
     },
-    setShortcutStatus: (status: ShortcutStatusDto) => {
-      shortcut = status;
+    setShortcutStatus: (status: ShortcutStatusDto, action: ShortcutActionDto = "quickCreate") => {
+      shortcuts[action] = status;
     },
-    getShortcutStatus: () => {
+    getShortcutStatus: (action: ShortcutActionDto) => {
       calls.push("getShortcutStatus");
-      return Promise.resolve(shortcut);
+      return Promise.resolve(shortcuts[action]);
     },
-    setQuickCreateShortcut: (accelerator: string) => {
-      calls.push("setQuickCreateShortcut");
+    setShortcut: (action: ShortcutActionDto, accelerator: string) => {
+      calls.push("setShortcut");
       if (!/^(Ctrl|Alt|Shift|Win)(\+(Ctrl|Alt|Shift|Win))*\+[A-Za-z0-9]+$/.test(accelerator)) {
         return Promise.reject(new AppError("SHORTCUT_INVALID", "无效的快捷键"));
       }
-      if (takenShortcuts.has(accelerator)) {
+      const usedByOther = Object.entries(shortcuts).some(
+        ([other, status]) => other !== action && status.accelerator === accelerator,
+      );
+      if (takenShortcuts.has(accelerator) || usedByOther) {
         return Promise.reject(new AppError("SHORTCUT_CONFLICT", "已被占用"));
       }
-      shortcut = { accelerator, registered: true, conflict: false };
-      return Promise.resolve(shortcut);
+      shortcuts[action] = { accelerator, registered: true, conflict: false };
+      return Promise.resolve(shortcuts[action]);
+    },
+    get openedItems() {
+      return openedItems;
+    },
+    get searchHides() {
+      return searchHides;
+    },
+    openItemInMain: (id: string) => {
+      calls.push("openItemInMain");
+      openedItems.push(id);
+      return Promise.resolve();
+    },
+    hideSearch: () => {
+      calls.push("hideSearch");
+      searchHides += 1;
+      return Promise.resolve();
+    },
+    emitSearchWindowShown: () => {
+      for (const notify of searchShownListeners) notify();
+    },
+    subscribeSearchWindowShown: (onShown: () => void) => {
+      searchShownListeners.add(onShown);
+      return () => {
+        searchShownListeners.delete(onShown);
+      };
     },
     get openedViews() {
       return openedViews;

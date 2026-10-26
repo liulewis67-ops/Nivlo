@@ -644,24 +644,24 @@ export const commands = {
 	 */
 	openMain: () => typedError<null, IpcError>(__TAURI_INVOKE("open_main")),
 	/**
-	 *  读取全局快捷键的当前绑定与注册状态：被其他程序占用时 `conflict` 为 `true`。
+	 *  读取一个动作的全局快捷键的当前绑定与注册状态：被其他程序占用时 `conflict` 为 `true`。
 	 * 
 	 *  # Errors
 	 * 
 	 *  应用尚未启动完成时返回 `INVALID_INPUT`。
 	 */
-	getShortcutStatus: () => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("get_shortcut_status")),
+	getShortcutStatus: (action: ShortcutActionDto) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("get_shortcut_status", { action })),
 	/**
-	 *  修改 Quick Create 的全局快捷键并保存。
+	 *  修改一个动作的全局快捷键并保存。
 	 * 
 	 *  新的注册失败时原来的绑定保持不变。
 	 * 
 	 *  # Errors
 	 * 
-	 *  不是合法的快捷键返回 `SHORTCUT_INVALID`；被其他程序占用返回 `SHORTCUT_CONFLICT`；
-	 *  平台不支持返回 `INVALID_INPUT`；保存失败时返回存储错误（快捷键本次运行仍然有效）。
+	 *  不是合法的快捷键返回 `SHORTCUT_INVALID`；已经绑定给 Nivlo 的另一个动作、或被其他程序占用返回
+	 *  `SHORTCUT_CONFLICT`；平台不支持返回 `INVALID_INPUT`；保存失败时返回存储错误（快捷键本次运行仍然有效）。
 	 */
-	setQuickCreateShortcut: (accelerator: string) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("set_quick_create_shortcut", { accelerator })),
+	setShortcut: (action: ShortcutActionDto, accelerator: string) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("set_shortcut", { action, accelerator })),
 	/**
 	 *  打开主窗口并切换到指定视图（悬浮窗上的收集箱入口）。
 	 * 
@@ -738,6 +738,16 @@ export const commands = {
 	 *  窗口不可用时返回 `WINDOW_UNAVAILABLE`。
 	 */
 	endFloatingInput: () => typedError<null, IpcError>(__TAURI_INVOKE("end_floating_input")),
+	/**
+	 *  打开主窗口并定位到一个 Item 的详情（全局搜索框选中结果时调用），同时隐藏搜索框。
+	 * 
+	 *  # Errors
+	 * 
+	 *  ID 格式不对返回 `INVALID_INPUT`；窗口创建或显示失败返回 `WINDOW_UNAVAILABLE`。
+	 */
+	openItemInMain: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_item_in_main", { id })),
+	/**  隐藏全局搜索框（Esc）：焦点还给打开搜索之前正在使用的窗口。 */
+	hideSearch: () => __TAURI_INVOKE<void>("hide_search"),
 };
 
 /** Events */
@@ -748,6 +758,7 @@ export const events = {
 	itemUpdated: makeEvent<ItemUpdatedEvent>("item_updated"),
 	mainViewRequested: makeEvent<MainViewRequestedEvent>("main_view_requested"),
 	quickAddRequested: makeEvent<QuickAddRequestedEvent>("quick_add_requested"),
+	searchWindowShown: makeEvent<SearchWindowShownEvent>("search_window_shown"),
 	todayReordered: makeEvent<TodayReorderedEvent>("today_reordered"),
 };
 
@@ -1290,6 +1301,16 @@ export type ScheduleTargetDto =
 { kind: "date"; 
 /**  本地日期，`YYYY-MM-DD`。 */
 date: string };
+
+/**  全局搜索框刚被显示：页面应清空上一次的输入并聚焦输入框。 */
+export type SearchWindowShownEvent = Record<string, never>;
+
+/**  可以绑定全局快捷键的动作（IPC 表示）。 */
+export type ShortcutActionDto = 
+/**  在悬浮窗里快速创建。 */
+"quickCreate" | 
+/**  打开全局搜索框。 */
+"search";
 
 /**  全局快捷键的状态（IPC 表示）。 */
 export type ShortcutStatusDto = {

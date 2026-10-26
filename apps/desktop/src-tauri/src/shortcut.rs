@@ -1,6 +1,10 @@
 //! 全局快捷键控制器（实施计划 2.6）：读取 / 保存用户的绑定、向系统注册、处理冲突。
 //!
-//! 默认 `Ctrl+Shift+Space`（产品文档 §6.2），保存在设置 `shortcut.quick_create`。
+//! 每个 [`ShortcutAction`] 一个控制器、一个独立的平台注册：
+//!
+//! * Quick Create：默认 `Ctrl+Shift+Space`（产品文档 §6.2），保存在设置 `shortcut.quick_create`；
+//! * 全局搜索：默认 `Ctrl+Alt+Space`，保存在设置 `shortcut.search`。
+//!
 //! 启动时注册失败（被其他程序占用）**不是致命错误**：应用继续运行，状态里记下冲突，
 //! 界面据此提示用户并引导重新绑定；重新绑定时新的注册失败会保持旧的不变。
 
@@ -39,8 +43,43 @@ impl ShortcutPort for UnsupportedShortcut {
     fn unregister(&self) {}
 }
 
-/// 保存快捷键的设置键。
+/// 保存 Quick Create 快捷键的设置键。
 pub const SHORTCUT_SETTING_KEY: &str = "shortcut.quick_create";
+
+/// 保存全局搜索快捷键的设置键。
+pub const SEARCH_SHORTCUT_SETTING_KEY: &str = "shortcut.search";
+
+/// 可以绑定全局快捷键的动作。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ShortcutAction {
+    /// 在悬浮窗里快速创建。
+    QuickCreate,
+    /// 打开全局搜索框。
+    Search,
+}
+
+impl ShortcutAction {
+    /// 全部动作。
+    pub const ALL: [Self; 2] = [Self::QuickCreate, Self::Search];
+
+    /// 保存绑定的设置键。
+    #[must_use]
+    pub const fn setting_key(self) -> &'static str {
+        match self {
+            Self::QuickCreate => SHORTCUT_SETTING_KEY,
+            Self::Search => SEARCH_SHORTCUT_SETTING_KEY,
+        }
+    }
+
+    /// 没有保存绑定时使用的默认值。
+    #[must_use]
+    pub const fn default_accelerator(self) -> Accelerator {
+        match self {
+            Self::QuickCreate => Accelerator::QUICK_CREATE_DEFAULT,
+            Self::Search => Accelerator::SEARCH_DEFAULT,
+        }
+    }
+}
 
 /// 快捷键当前的状态。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -53,8 +92,10 @@ pub struct ShortcutStatus {
     pub conflict: bool,
 }
 
-/// 快捷键控制器。
+/// 快捷键控制器（一个动作一个）。
 pub struct ShortcutController {
+    /// 控制的动作，决定设置键与默认值。
+    action: ShortcutAction,
     /// 平台注册。
     port: Arc<dyn ShortcutPort>,
     /// 设置读写。
@@ -68,20 +109,27 @@ pub struct ShortcutController {
 impl ShortcutController {
     /// 创建控制器；尚未注册，调用 [`ShortcutController::start`] 开始。
     pub fn new(
+        action: ShortcutAction,
         port: Arc<dyn ShortcutPort>,
         settings: SettingsService,
         on_pressed: ShortcutCallback,
     ) -> Self {
         Self {
+            action,
             port,
             settings,
             on_pressed,
             status: Mutex::new(ShortcutStatus {
-                accelerator: Accelerator::QUICK_CREATE_DEFAULT.to_string(),
+                accelerator: action.default_accelerator().to_string(),
                 registered: false,
                 conflict: false,
             }),
         }
+    }
+
+    /// 控制的动作。
+    pub fn action(&self) -> ShortcutAction {
+        self.action
     }
 
     /// 当前状态。
@@ -96,7 +144,7 @@ impl ShortcutController {
     ///
     /// 注册失败只记录日志并把状态标为未注册，不返回错误。
     pub async fn start(&self) {
-        let saved = match self.settings.get(SHORTCUT_SETTING_KEY).await {
+        let saved = match self.settings.get(self.action.setting_key()).await {
             Ok(value) => value,
             Err(error) => {
                 tracing::warn!(event = "shortcut_setting_read_failed", %error, "读取快捷键设置失败，使用默认值");
@@ -106,15 +154,15 @@ impl ShortcutController {
         let accelerator = saved
             .as_deref()
             .and_then(|text| text.parse::<Accelerator>().ok())
-            .unwrap_or(Accelerator::QUICK_CREATE_DEFAULT);
+            .unwrap_or(self.action.default_accelerator());
         match self.port.register(accelerator, self.on_pressed.clone()) {
             Ok(()) => {
-                tracing::info!(event = "shortcut_registered", accelerator = %accelerator, "全局快捷键已注册");
+                tracing::info!(event = "shortcut_registered", action = ?self.action, accelerator = %accelerator, "全局快捷键已注册");
                 self.set_status(accelerator, true, false);
             }
             Err(error) => {
                 let conflict = matches!(error, PlatformError::Conflict(_));
-                tracing::warn!(event = "shortcut_register_failed", accelerator = %accelerator, %error, "全局快捷键注册失败");
+                tracing::warn!(event = "shortcut_register_failed", action = ?self.action, accelerator = %accelerator, %error, "全局快捷键注册失败");
                 self.set_status(accelerator, false, conflict);
             }
         }
@@ -131,12 +179,7 @@ impl ShortcutController {
     /// * `INVALID_INPUT` - 当前平台不支持全局快捷键，或系统调用失败。
     /// * 存储错误：注册成功但保存设置失败时，快捷键本次运行仍然有效。
     pub async fn rebind(&self, text: &str) -> Result<ShortcutStatus, AppError> {
-        let accelerator: Accelerator = text.parse().map_err(|error| {
-            AppError::new(
-                ErrorCode::ShortcutInvalid,
-                format!("无效的快捷键「{text}」：{error}"),
-            )
-        })?;
+        let accelerator = parse_accelerator(text)?;
         self.port
             .register(accelerator, self.on_pressed.clone())
             .map_err(|error| match error {
@@ -148,7 +191,7 @@ impl ShortcutController {
             })?;
         self.set_status(accelerator, true, false);
         self.settings
-            .set(SHORTCUT_SETTING_KEY, &accelerator.to_string())
+            .set(self.action.setting_key(), &accelerator.to_string())
             .await?;
         Ok(self.status())
     }
@@ -166,6 +209,20 @@ impl ShortcutController {
             conflict,
         };
     }
+}
+
+/// 解析用户输入的快捷键文本。
+///
+/// # Errors
+///
+/// 不是合法的快捷键时返回 `SHORTCUT_INVALID`。
+pub fn parse_accelerator(text: &str) -> Result<Accelerator, AppError> {
+    text.parse().map_err(|error| {
+        AppError::new(
+            ErrorCode::ShortcutInvalid,
+            format!("无效的快捷键「{text}」：{error}"),
+        )
+    })
 }
 
 #[cfg(test)]
@@ -221,6 +278,7 @@ mod tests {
         let presses = Arc::new(AtomicUsize::new(0));
         let counter = presses.clone();
         let controller = ShortcutController::new(
+            ShortcutAction::QuickCreate,
             port.clone(),
             settings,
             Arc::new(move || {
@@ -294,7 +352,12 @@ mod tests {
                 Utc.with_ymd_and_hms(2026, 10, 10, 9, 0, 0).unwrap(),
             )),
         );
-        let second = ShortcutController::new(port2.clone(), settings, Arc::new(|| {}));
+        let second = ShortcutController::new(
+            ShortcutAction::QuickCreate,
+            port2.clone(),
+            settings,
+            Arc::new(|| {}),
+        );
         second.start().await;
         assert_eq!(port2.current().as_deref(), Some("Ctrl+Alt+Q"));
     }
@@ -339,5 +402,29 @@ mod tests {
 
         let status = controller.rebind("Ctrl+Alt+Space").await.unwrap();
         assert!(status.registered && !status.conflict);
+    }
+
+    #[tokio::test]
+    async fn the_search_action_has_its_own_default_and_setting() {
+        let port = Arc::new(FakePort::default());
+        let uow = FakeUnitOfWork::new();
+        let clock = FakeClock::at_utc(Utc.with_ymd_and_hms(2026, 10, 10, 8, 0, 0).unwrap());
+        let settings = SettingsService::new(Arc::new(uow.clone()), Arc::new(clock));
+        let controller = ShortcutController::new(
+            ShortcutAction::Search,
+            port.clone(),
+            settings,
+            Arc::new(|| {}),
+        );
+        controller.start().await;
+        assert_eq!(port.current().as_deref(), Some("Ctrl+Alt+Space"));
+
+        controller.rebind("Ctrl+Alt+F").await.unwrap();
+        assert_eq!(
+            uow.committed_setting(SEARCH_SHORTCUT_SETTING_KEY)
+                .as_deref(),
+            Some("Ctrl+Alt+F")
+        );
+        assert_eq!(uow.committed_setting(SHORTCUT_SETTING_KEY), None);
     }
 }

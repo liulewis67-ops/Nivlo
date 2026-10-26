@@ -64,3 +64,9 @@ pub struct MainViewRequestedEvent {
 #[serde(rename_all = "camelCase")]
 #[tauri_specta(event_name = "quick_add_requested")]
 pub struct QuickAddRequestedEvent {}
+
+/// 全局搜索框刚被显示：页面应清空上一次的输入并聚焦输入框。
+#[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
+#[serde(rename_all = "camelCase")]
+#[tauri_specta(event_name = "search_window_shown")]
+pub struct SearchWindowShownEvent {}

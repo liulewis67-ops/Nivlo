@@ -1,16 +1,18 @@
 //! 窗口创建与显示。
 //!
-//! MVP 只有两个长期窗口（架构文档 §10）：
+//! 长期窗口（架构文档 §10）：
 //!
 //! * `floating`：悬浮窗，启动时创建，常驻；
 //! * `main`：主窗口，**按需**创建（第一次打开时才创建 WebView，节省常驻内存），
-//!   之后关闭只是隐藏，不退出应用。
+//!   之后关闭只是隐藏，不退出应用；
+//! * `search`：全局搜索框，按全局快捷键时按需创建，之后只隐藏 / 显示（见 [`search`]）。
 //!
 //! 两个窗口的 IPC 权限由 `capabilities/` 下各自的文件决定（架构文档 §13）。
 //! 悬浮窗的位置、吸附与持久化见 [`floating`]。
 
 pub mod floating;
 pub mod floating_port;
+pub mod search;
 
 use nivlo_platform::placement::{COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, Point};
 use tauri::{
@@ -129,24 +131,33 @@ pub fn handle_activation<R: Runtime>(app: &AppHandle<R>, args: &[String]) -> boo
     else {
         return false;
     };
-    // 先记下要打开的 Item：主窗口可能刚创建、还没监听事件，启动时会取走它。
-    if let Some(state) = app.try_state::<AppState>() {
-        state
-            .runtime
-            .set_pending_main_view(format!("item:{item_id}"));
-    }
-    if let Err(error) = show_main_window(app) {
+    if let Err(error) = open_item_in_main(app, &item_id) {
         tracing::warn!(event = "activation_show_failed", %error, "通知激活时无法显示主窗口");
         return true;
     }
-    let event = crate::events::MainViewRequestedEvent {
-        view: format!("item:{item_id}"),
-    };
-    if let Err(error) = tauri_specta::Event::emit_to(&event, app, MAIN_WINDOW_LABEL) {
-        tracing::warn!(event = "activation_event_failed", %error, "通知激活时无法通知主窗口");
-    }
     tracing::info!(event = "notification_activated", "已按通知打开对应的 Item");
     true
+}
+
+/// 打开主窗口并定位到一个 Item 的详情（点击通知、全局搜索选中结果）。
+///
+/// `item_id` 必须已经校验过。
+///
+/// # Errors
+///
+/// 主窗口创建或显示失败时返回 Tauri 错误。
+pub fn open_item_in_main<R: Runtime>(app: &AppHandle<R>, item_id: &str) -> tauri::Result<()> {
+    let view = format!("item:{item_id}");
+    // 先记下要打开的 Item：主窗口可能刚创建、还没监听事件，启动时会取走它。
+    if let Some(state) = app.try_state::<AppState>() {
+        state.runtime.set_pending_main_view(view.clone());
+    }
+    show_main_window(app)?;
+    let event = crate::events::MainViewRequestedEvent { view };
+    if let Err(error) = tauri_specta::Event::emit_to(&event, app, MAIN_WINDOW_LABEL) {
+        tracing::warn!(event = "open_item_event_failed", %error, "无法通知主窗口打开 Item");
+    }
+    Ok(())
 }
 
 /// 处理窗口事件。
@@ -154,6 +165,7 @@ pub fn handle_activation<R: Runtime>(app: &AppHandle<R>, args: &[String]) -> boo
 /// * 主窗口：关闭只是隐藏，应用与悬浮窗继续运行；只有显式"退出"（托盘菜单、`quit_app`）才结束应用。
 /// * 悬浮窗：移动事件交给位置控制器做防抖、吸附与保存。回调运行在主线程上，不能阻塞，
 ///   所以这里只转发，真正的工作在控制器派生的后台任务里。
+/// * 搜索窗口：失去焦点（用户点了别的窗口）就隐藏，像系统的其他弹出层一样；关闭只是隐藏。
 pub fn on_window_event<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
     match (window.label(), event) {
         (MAIN_WINDOW_LABEL, WindowEvent::CloseRequested { api, .. }) => {
@@ -172,6 +184,13 @@ pub fn on_window_event<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
                     y: position.y,
                 });
             }
+        }
+        (search::SEARCH_WINDOW_LABEL, WindowEvent::Focused(false)) => {
+            search::dismiss(window.app_handle(), false);
+        }
+        (search::SEARCH_WINDOW_LABEL, WindowEvent::CloseRequested { api, .. }) => {
+            api.prevent_close();
+            search::dismiss(window.app_handle(), false);
         }
         _ => {}
     }

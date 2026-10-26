@@ -156,18 +156,28 @@
     }
   },
   "shortcut": {
-    "label": "Quick Create shortcut",
-    "button": "Quick Create: {{accelerator}}",
-    "conflict": "{{accelerator}} is used by another app, so Quick Create can't use it right now. Please pick another shortcut.",
     "hint": "Press the new shortcut in the box below. It needs at least one modifier key (Ctrl / Alt / Shift / Win).",
     "placeholder": "Press a new shortcut…",
     "input": "New shortcut",
     "save": "Save",
     "cancel": "Cancel",
-    "saved": "Quick Create shortcut changed to {{accelerator}}",
     "unusable": {
       "noModifier": "Needs at least one modifier key (Ctrl / Alt / Shift / Win).",
       "unsupportedKey": "This key can't be used in a shortcut."
+    },
+    "action": {
+      "quickCreate": {
+        "label": "Quick Create shortcut",
+        "button": "Quick Create: {{accelerator}}",
+        "conflict": "{{accelerator}} is used by another app, so Quick Create can't use it right now. Please pick another shortcut.",
+        "saved": "Quick Create shortcut changed to {{accelerator}}"
+      },
+      "search": {
+        "label": "Global search shortcut",
+        "button": "Search: {{accelerator}}",
+        "conflict": "{{accelerator}} is used by another app, so global search can't use it right now. Please pick another shortcut.",
+        "saved": "Global search shortcut changed to {{accelerator}}"
+      }
     }
   },
   "inbox": {
@@ -413,7 +423,9 @@
       "tip": "Tips"
     },
     "count_one": "{{count}} result",
-    "count_other": "{{count}} results"
+    "count_other": "{{count}} results",
+    "windowHint": "Type keywords to search titles, content and sources. Enter opens it in the main window.",
+    "globalTip": "Search from any app"
   },
   "trash": {
     "label": "Trash",
@@ -657,6 +669,10 @@
       "install": "Install and restart",
       "installing": "Installing — Nivlo will restart…",
       "error": "Couldn’t update. Your current version is unchanged."
+    },
+    "searchShortcut": {
+      "label": "Global search shortcut",
+      "hint": "Press it in any app to pop up search and jump straight to a to-do, note or tip."
     }
   },
   "calendar": {

@@ -136,7 +136,7 @@ macro_rules! bindings_builder {
                 $crate::commands::today::reorder_today,
                 $crate::commands::window::open_main::<$runtime>,
                 $crate::commands::shortcut::get_shortcut_status,
-                $crate::commands::shortcut::set_quick_create_shortcut,
+                $crate::commands::shortcut::set_shortcut,
                 $crate::commands::window::open_main_at::<$runtime>,
                 $crate::commands::window::take_pending_main_view,
                 $crate::commands::window::quit_app::<$runtime>,
@@ -145,6 +145,8 @@ macro_rules! bindings_builder {
                 $crate::commands::window::collapse_floating,
                 $crate::commands::window::begin_floating_input,
                 $crate::commands::window::end_floating_input,
+                $crate::commands::window::open_item_in_main::<$runtime>,
+                $crate::commands::window::hide_search::<$runtime>,
             ])
             .events($crate::tauri_specta::collect_events![
                 $crate::events::ItemCreatedEvent,
@@ -153,7 +155,8 @@ macro_rules! bindings_builder {
                 $crate::events::TodayReorderedEvent,
                 $crate::events::DayChangedEvent,
                 $crate::events::MainViewRequestedEvent,
-                $crate::events::QuickAddRequestedEvent
+                $crate::events::QuickAddRequestedEvent,
+                $crate::events::SearchWindowShownEvent
             ])
     };
 }
@@ -381,12 +384,27 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             app.state::<AppState>().runtime.set_floating(controller);
 
             // 全局快捷键不是必需功能：注册失败（被占用）只记录并在界面提示，应用照常运行。
-            {
+            // 每个动作一个独立的系统注册：一个被占用不影响另一个。
+            app.manage(windows::search::SearchWindowState::default());
+            for action in shortcut::ShortcutAction::ALL {
                 let handle = app.handle().clone();
+                let on_pressed: nivlo_platform::shortcut::ShortcutCallback = match action {
+                    shortcut::ShortcutAction::QuickCreate => {
+                        Arc::new(move || tray::request_quick_add(&handle))
+                    }
+                    // 回调在快捷键的消息线程上，必须立刻返回；第一次要创建窗口（会阻塞），放到后台线程。
+                    shortcut::ShortcutAction::Search => Arc::new(move || {
+                        let handle = handle.clone();
+                        drop(tauri::async_runtime::spawn_blocking(move || {
+                            windows::search::toggle(&handle);
+                        }));
+                    }),
+                };
                 let controller = Arc::new(shortcut::ShortcutController::new(
+                    action,
                     shortcut::platform_port(),
                     app.state::<AppState>().services.settings.clone(),
-                    Arc::new(move || tray::request_quick_add(&handle)),
+                    on_pressed,
                 ));
                 tauri::async_runtime::block_on(controller.start());
                 app.state::<AppState>().runtime.set_shortcut(controller);

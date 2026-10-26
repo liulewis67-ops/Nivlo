@@ -23,7 +23,7 @@ use nivlo_storage::Database;
 use tauri::async_runtime::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
-use crate::shortcut::ShortcutController;
+use crate::shortcut::{ShortcutAction, ShortcutController};
 use crate::windows::floating::FloatingHandle;
 
 /// Application 层的 Use Case 服务集合。
@@ -77,8 +77,10 @@ pub struct RuntimeHandles {
     pending_main_view: Mutex<Option<String>>,
     /// Scheduler 的外部控制（唤醒、暂停通知）。
     scheduler_control: Arc<nivlo_scheduler::Control>,
-    /// 全局快捷键控制器；窗口创建之后才能构造（回调要用 `AppHandle`），因此用 `OnceLock`。
+    /// Quick Create 的全局快捷键控制器；窗口创建之后才能构造（回调要用 `AppHandle`），因此用 `OnceLock`。
     shortcut: OnceLock<Arc<ShortcutController>>,
+    /// 全局搜索的快捷键控制器。
+    search_shortcut: OnceLock<Arc<ShortcutController>>,
     /// 应用目录布局；启动时登记，导出诊断包 / 备份时使用。
     paths: OnceLock<nivlo_common::paths::AppPaths>,
     /// 需要和应用同寿命的系统监听器（电源事件窗口等）；退出时一并释放。
@@ -112,6 +114,7 @@ impl RuntimeHandles {
             floating: OnceLock::new(),
             pending_main_view: Mutex::new(None),
             shortcut: OnceLock::new(),
+            search_shortcut: OnceLock::new(),
             enrichment_queue: Mutex::new(None),
             paths: OnceLock::new(),
             script_worker: OnceLock::new(),
@@ -180,14 +183,22 @@ impl RuntimeHandles {
         self.database.clone()
     }
 
-    /// 设置全局快捷键控制器；只能设置一次，重复设置被忽略。
+    /// 登记一个动作的全局快捷键控制器；每个动作只能设置一次，重复设置被忽略。
     pub fn set_shortcut(&self, controller: Arc<ShortcutController>) {
-        let _ = self.shortcut.set(controller);
+        let _ = self.shortcut_slot(controller.action()).set(controller);
     }
 
-    /// 全局快捷键控制器；启动完成之前为 `None`。
-    pub fn shortcut(&self) -> Option<Arc<ShortcutController>> {
-        self.shortcut.get().cloned()
+    /// 一个动作的全局快捷键控制器；启动完成之前为 `None`。
+    pub fn shortcut(&self, action: ShortcutAction) -> Option<Arc<ShortcutController>> {
+        self.shortcut_slot(action).get().cloned()
+    }
+
+    /// 动作对应的存放位置。
+    fn shortcut_slot(&self, action: ShortcutAction) -> &OnceLock<Arc<ShortcutController>> {
+        match action {
+            ShortcutAction::QuickCreate => &self.shortcut,
+            ShortcutAction::Search => &self.search_shortcut,
+        }
     }
 
     /// 记录主窗口应当打开的视图。
@@ -262,8 +273,11 @@ impl RuntimeHandles {
         }
         tracing::info!(event = "shutdown_tasks_stopped", "后台任务已停止");
 
-        // 先取消全局快捷键：退出过程中不应再被它唤起 Quick Create。
-        if let Some(shortcut) = self.shortcut.get() {
+        // 先取消全局快捷键：退出过程中不应再被它唤起 Quick Create / 搜索。
+        for shortcut in [self.shortcut.get(), self.search_shortcut.get()]
+            .into_iter()
+            .flatten()
+        {
             shortcut.stop();
         }
 

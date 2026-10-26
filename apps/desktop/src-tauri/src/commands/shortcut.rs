@@ -4,13 +4,15 @@ use nivlo_application::error::{AppError, ErrorCode};
 use tauri::State;
 
 use crate::app::AppState;
-use crate::dto::{IpcError, ShortcutStatusDto};
+use crate::dto::{IpcError, ShortcutActionDto, ShortcutStatusDto};
+use crate::shortcut::{ShortcutAction, parse_accelerator};
 
-/// 取得全局快捷键控制器；启动完成之前不可用。
+/// 取得某个动作的全局快捷键控制器；启动完成之前不可用。
 fn controller(
     state: &AppState,
+    action: ShortcutAction,
 ) -> Result<std::sync::Arc<crate::shortcut::ShortcutController>, IpcError> {
-    state.runtime.shortcut().ok_or_else(|| {
+    state.runtime.shortcut(action).ok_or_else(|| {
         IpcError::from(AppError::new(
             ErrorCode::InvalidInput,
             "全局快捷键尚未初始化".to_owned(),
@@ -18,7 +20,7 @@ fn controller(
     })
 }
 
-/// 读取全局快捷键的当前绑定与注册状态：被其他程序占用时 `conflict` 为 `true`。
+/// 读取一个动作的全局快捷键的当前绑定与注册状态：被其他程序占用时 `conflict` 为 `true`。
 ///
 /// # Errors
 ///
@@ -27,24 +29,44 @@ fn controller(
 #[specta::specta]
 pub async fn get_shortcut_status(
     state: State<'_, AppState>,
+    action: ShortcutActionDto,
 ) -> Result<ShortcutStatusDto, IpcError> {
-    Ok(ShortcutStatusDto::from(controller(&state)?.status()))
+    Ok(ShortcutStatusDto::from(
+        controller(&state, action.into())?.status(),
+    ))
 }
 
-/// 修改 Quick Create 的全局快捷键并保存。
+/// 修改一个动作的全局快捷键并保存。
 ///
 /// 新的注册失败时原来的绑定保持不变。
 ///
 /// # Errors
 ///
-/// 不是合法的快捷键返回 `SHORTCUT_INVALID`；被其他程序占用返回 `SHORTCUT_CONFLICT`；
-/// 平台不支持返回 `INVALID_INPUT`；保存失败时返回存储错误（快捷键本次运行仍然有效）。
+/// 不是合法的快捷键返回 `SHORTCUT_INVALID`；已经绑定给 Nivlo 的另一个动作、或被其他程序占用返回
+/// `SHORTCUT_CONFLICT`；平台不支持返回 `INVALID_INPUT`；保存失败时返回存储错误（快捷键本次运行仍然有效）。
 #[tauri::command]
 #[specta::specta]
-pub async fn set_quick_create_shortcut(
+pub async fn set_shortcut(
     state: State<'_, AppState>,
+    action: ShortcutActionDto,
     accelerator: String,
 ) -> Result<ShortcutStatusDto, IpcError> {
-    let status = controller(&state)?.rebind(&accelerator).await?;
+    let action = ShortcutAction::from(action);
+    // 和另一个动作撞车时给出明确的原因，而不是让系统报「被其他程序占用」。
+    let wanted = parse_accelerator(&accelerator)?.to_string();
+    for other in ShortcutAction::ALL
+        .into_iter()
+        .filter(|other| *other != action)
+    {
+        if let Some(existing) = state.runtime.shortcut(other)
+            && existing.status().accelerator == wanted
+        {
+            return Err(IpcError::from(AppError::new(
+                ErrorCode::ShortcutConflict,
+                format!("快捷键 {wanted} 已经用于 Nivlo 的另一个动作"),
+            )));
+        }
+    }
+    let status = controller(&state, action)?.rebind(&accelerator).await?;
     Ok(ShortcutStatusDto::from(status))
 }

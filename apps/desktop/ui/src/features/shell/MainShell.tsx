@@ -208,7 +208,7 @@ export function MainShell() {
               count={null}
               onSelect={() => setView("settings")}
             />
-            <ShortcutSetting />
+            <ShortcutSetting action="quickCreate" />
             <ThemeMenu />
           </div>
         </aside>

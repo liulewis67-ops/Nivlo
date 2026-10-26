@@ -1,6 +1,6 @@
 //! 设置页相关的 Command（仅主窗口，实施计划 3.5）。
 //!
-//! 全局快捷键有自己的命令（`get_shortcut_status` / `set_quick_create_shortcut`）；
+//! 全局快捷键有自己的命令（`get_shortcut_status` / `set_shortcut`）；
 //! 主题与语言是纯前端的显示偏好，不经过后端。
 
 use nivlo_application::error::{AppError, ErrorCode};

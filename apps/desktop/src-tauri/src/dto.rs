@@ -33,7 +33,7 @@ use nivlo_domain::tag::Tag;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::shortcut::ShortcutStatus;
+use crate::shortcut::{ShortcutAction, ShortcutStatus};
 
 /// IPC 统一的错误结构 `{ code, message, action }`（架构文档 §43）。
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
@@ -674,6 +674,26 @@ impl TryFrom<UpdateItemRequest> for UpdateItemInput {
             reminder_at: patch(request.reminder_at, |text| parse_utc(&text))?,
             project_id: patch(request.project_id, |text| parse_project_id(&text))?,
         })
+    }
+}
+
+/// 可以绑定全局快捷键的动作（IPC 表示）。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum ShortcutActionDto {
+    /// 在悬浮窗里快速创建。
+    QuickCreate,
+    /// 打开全局搜索框。
+    Search,
+}
+
+impl From<ShortcutActionDto> for ShortcutAction {
+    /// DTO → Host。
+    fn from(value: ShortcutActionDto) -> Self {
+        match value {
+            ShortcutActionDto::QuickCreate => Self::QuickCreate,
+            ShortcutActionDto::Search => Self::Search,
+        }
     }
 }
 

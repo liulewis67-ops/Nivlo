@@ -6,13 +6,21 @@ import { Button } from "@/components";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
 import { ipc } from "@/lib/ipc";
+import type { ShortcutActionDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { useToastStore } from "@/stores/toast-store";
 import { useShortcutQuery } from "./api";
 import { captureAccelerator } from "./model/accelerator";
 
+/** [`ShortcutSetting`] 的 Props。 */
+export type ShortcutSettingProps = {
+  /** 设置哪个动作的快捷键，缺省为 Quick Create。 */
+  action?: ShortcutActionDto;
+};
+
 /**
- * 侧栏底部的「快速创建快捷键」：显示当前绑定，点击后在原地录入新的快捷键并保存。
+ * 一个全局快捷键的设置（侧栏底部的 Quick Create、设置页的 Quick Create 与全局搜索）：
+ * 显示当前绑定，点击后在原地录入新的快捷键并保存。
  *
  * 启动时快捷键被其他程序占用（冲突）时自动展开并说明原因，引导用户直接换一个——
  * 不需要先去找设置页（实施计划 2.6；完整设置页在 3.5）。
@@ -21,26 +29,29 @@ import { captureAccelerator } from "./model/accelerator";
  * 否则快捷键会吞掉用户正常的输入。保存失败（不合法 / 被占用）时原因显示在框下方，
  * 原来的绑定保持不变。
  *
+ * @param props 动作。
  * @returns 快捷键设置区域。
  */
-export function ShortcutSetting() {
+export function ShortcutSetting({ action = "quickCreate" }: ShortcutSettingProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const status = useShortcutQuery().data;
+  const status = useShortcutQuery(action).data;
+  /** 当前动作的文案前缀。 */
+  const copy = `shortcut.action.${action}`;
   /** 用户是否主动展开 / 收起；`null` 表示跟随状态（冲突时自动展开）。 */
   const [userOpen, setUserOpen] = useState<boolean | null>(null);
   const [draft, setDraft] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
   const save = useMutation({
-    mutationFn: (accelerator: string) => ipc.setQuickCreateShortcut(accelerator),
+    mutationFn: (accelerator: string) => ipc.setShortcut(action, accelerator),
     // 失败原因显示在录入框下面（不弹全局 Toast），用户可以直接再按一个。
     onError: (error) => setProblem(errorMessage(toAppError(error))),
     onSuccess: (next) => {
-      queryClient.setQueryData(queryKeys.shortcut(), next);
+      queryClient.setQueryData(queryKeys.shortcut(action), next);
       useToastStore
         .getState()
-        .push("success", t("shortcut.saved", { accelerator: next.accelerator }));
+        .push("success", t(`${copy}.saved`, { accelerator: next.accelerator }));
       close();
     },
   });
@@ -95,17 +106,17 @@ export function ShortcutSetting() {
         {status.registered ? null : (
           <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-danger" />
         )}
-        {t("shortcut.button", { accelerator: status.accelerator })}
+        {t(`${copy}.button`, { accelerator: status.accelerator })}
       </Button>
       {open && (
         <div
           role="group"
-          aria-label={t("shortcut.label")}
+          aria-label={t(`${copy}.label`)}
           className="flex flex-col gap-2 rounded-md border border-border bg-bg p-2"
         >
           <p className="text-xs text-muted">
             {status.conflict
-              ? t("shortcut.conflict", { accelerator: status.accelerator })
+              ? t(`${copy}.conflict`, { accelerator: status.accelerator })
               : t("shortcut.hint")}
           </p>
           <input

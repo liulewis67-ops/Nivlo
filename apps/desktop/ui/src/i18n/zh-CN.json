@@ -155,18 +155,28 @@
     }
   },
   "shortcut": {
-    "label": "快速创建快捷键",
-    "button": "快速创建：{{accelerator}}",
-    "conflict": "{{accelerator}} 已被其他程序占用，暂时无法用它呼出快速创建。请换一个快捷键。",
     "hint": "在下面的框里按下新的快捷键，需要至少一个修饰键（Ctrl / Alt / Shift / Win）。",
     "placeholder": "按下新的快捷键…",
     "input": "新的快捷键",
     "save": "保存",
     "cancel": "取消",
-    "saved": "快速创建的快捷键已改为 {{accelerator}}",
     "unusable": {
       "noModifier": "需要至少一个修饰键（Ctrl / Alt / Shift / Win）。",
       "unsupportedKey": "这个按键不能用作快捷键。"
+    },
+    "action": {
+      "quickCreate": {
+        "label": "快速创建快捷键",
+        "button": "快速创建：{{accelerator}}",
+        "conflict": "{{accelerator}} 已被其他程序占用，暂时无法用它呼出快速创建。请换一个快捷键。",
+        "saved": "快速创建的快捷键已改为 {{accelerator}}"
+      },
+      "search": {
+        "label": "全局搜索快捷键",
+        "button": "全局搜索：{{accelerator}}",
+        "conflict": "{{accelerator}} 已被其他程序占用，暂时无法用它呼出全局搜索。请换一个快捷键。",
+        "saved": "全局搜索的快捷键已改为 {{accelerator}}"
+      }
     }
   },
   "inbox": {
@@ -411,7 +421,9 @@
       "todo": "待办",
       "note": "笔记",
       "tip": "提示"
-    }
+    },
+    "windowHint": "输入关键词，搜索标题、正文和来源；回车在主窗口中打开。",
+    "globalTip": "在任何应用里搜索"
   },
   "trash": {
     "label": "回收站",
@@ -653,6 +665,10 @@
       "install": "安装并重启",
       "installing": "正在安装，Nivlo 将自动重启…",
       "error": "更新失败，当前版本没有变化。"
+    },
+    "searchShortcut": {
+      "label": "全局搜索快捷键",
+      "hint": "在任何应用里按下它，弹出搜索框，直接找到待办、笔记和提示。"
     }
   },
   "calendar": {

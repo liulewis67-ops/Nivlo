@@ -88,3 +88,30 @@ describe("ShortcutSetting", () => {
     expect(screen.queryByLabelText("新的快捷键")).not.toBeInTheDocument();
   });
 });
+
+describe("ShortcutSetting（全局搜索）", () => {
+  it("显示全局搜索的绑定，保存只改搜索的快捷键", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<ShortcutSetting action="search" />, ipc);
+    fireEvent.click(await screen.findByRole("button", { name: "全局搜索：Ctrl+Alt+Space" }));
+
+    press("KeyF", "f", { ctrl: true, alt: true });
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+    expect(await screen.findByRole("button", { name: "全局搜索：Ctrl+Alt+F" })).toBeInTheDocument();
+    expect(await ipc.getShortcutStatus("quickCreate")).toMatchObject({
+      accelerator: "Ctrl+Shift+Space",
+    });
+  });
+
+  it("和 Quick Create 撞车时说明原因，原来的绑定不变", async () => {
+    renderWithProviders(<ShortcutSetting action="search" />, createMemoryIpc());
+    fireEvent.click(await screen.findByRole("button", { name: /全局搜索：/ }));
+
+    press("Space", " ", { ctrl: true, shift: true });
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "全局搜索：Ctrl+Alt+Space" })).toBeInTheDocument();
+  });
+});
