@@ -38,7 +38,7 @@ function visibleWindowCount(pid) {
 }
 
 /** 一段 PowerShell 共用的 Win32 声明。 */
-const WIN32 = `Add-Type -Namespace E2E -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, System.IntPtr p); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid); [DllImport("user32.dll")] public static extern bool GetWindowRect(System.IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr h, uint msg, System.IntPtr w, System.IntPtr l); public delegate bool EnumProc(System.IntPtr h, System.IntPtr p); public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }'`;
+const WIN32 = `Add-Type -Namespace E2E -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, System.IntPtr p); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid); [DllImport("user32.dll")] public static extern bool GetWindowRect(System.IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr h); [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, System.UIntPtr extra); [DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr h, uint msg, System.IntPtr w, System.IntPtr l); public delegate bool EnumProc(System.IntPtr h, System.IntPtr p); public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }'`;
 
 /** 运行一段带 Win32 声明的 PowerShell，返回去掉首尾空白的输出。 */
 function win32(body) {
@@ -48,10 +48,22 @@ function win32(body) {
 /** 当前前台窗口的句柄（数字）。 */
 const foregroundWindow = () => win32("[E2E.Native]::GetForegroundWindow().ToInt64()");
 
-/** 像用户点「关闭」一样，给进程 `pid` 面积最大的可见窗口（主窗口）发 WM_CLOSE；主窗口会把关闭变成隐藏。 */
+/** PowerShell 片段：找出进程 `pid` 面积最大的可见窗口（主窗口），放进 `$best`。 */
+const largestWindow = (pid) =>
+  `$best = [System.IntPtr]::Zero; $area = 0; [E2E.Native]::EnumWindows({ param($h, $x) $owner = 0; [void][E2E.Native]::GetWindowThreadProcessId($h, [ref]$owner); if ($owner -eq ${pid} -and [E2E.Native]::IsWindowVisible($h)) { $r = New-Object E2E.Native+RECT; [void][E2E.Native]::GetWindowRect($h, [ref]$r); $a = ($r.Right - $r.Left) * ($r.Bottom - $r.Top); if ($a -gt $script:area) { $script:area = $a; $script:best = $h } }; $true }, [System.IntPtr]::Zero) | Out-Null`;
+
+/** 像用户点「关闭」一样，给进程 `pid` 的主窗口发 WM_CLOSE；主窗口会把关闭变成隐藏。 */
 function closeLargestWindow(pid) {
-  win32(
-    `$best = [System.IntPtr]::Zero; $area = 0; [E2E.Native]::EnumWindows({ param($h, $x) $owner = 0; [void][E2E.Native]::GetWindowThreadProcessId($h, [ref]$owner); if ($owner -eq ${pid} -and [E2E.Native]::IsWindowVisible($h)) { $r = New-Object E2E.Native+RECT; [void][E2E.Native]::GetWindowRect($h, [ref]$r); $a = ($r.Right - $r.Left) * ($r.Bottom - $r.Top); if ($a -gt $script:area) { $script:area = $a; $script:best = $h } }; $true }, [System.IntPtr]::Zero) | Out-Null; [void][E2E.Native]::PostMessage($best, 0x10, [System.IntPtr]::Zero, [System.IntPtr]::Zero)`,
+  win32(`${largestWindow(pid)}; [void][E2E.Native]::PostMessage($best, 0x10, [System.IntPtr]::Zero, [System.IntPtr]::Zero)`);
+}
+
+/**
+ * 把焦点切到进程 `pid` 的主窗口（相当于用户点了别的窗口），返回它的句柄。
+ * 先按一下 Alt：系统只允许「刚收到输入」的进程改前台窗口。
+ */
+function focusLargestWindow(pid) {
+  return win32(
+    `${largestWindow(pid)}; [E2E.Native]::keybd_event(0x12, 0, 0, [System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x12, 0, 2, [System.UIntPtr]::Zero); [void][E2E.Native]::SetForegroundWindow($best); $best.ToInt64()`,
   );
 }
 
@@ -324,6 +336,16 @@ async function runOnce(index) {
 
           // ① 主窗口开着。
           await openFromSearch("主窗口开着");
+          // 点到别处：焦点切到主窗口后搜索框隐藏，并且不会把焦点抢回来。
+          const beforeAway = visibleWindowCount(child.pid);
+          pressSearchHotkey();
+          await until(() => search.evaluate(`document.hasFocus() && ${inputFocused}`), "点别处之前搜索框出现", 20000, 5);
+          await until(() => visibleWindowCount(child.pid) === beforeAway + 1, "点别处之前搜索框可见");
+          const mainHandle = focusLargestWindow(child.pid);
+          await until(() => visibleWindowCount(child.pid) === beforeAway, "焦点离开后搜索框隐藏", 5000);
+          await sleep(500);
+          if (foregroundWindow() !== mainHandle) throw new Error("搜索框隐藏后焦点没有留在用户点的窗口上");
+
           // ② 主窗口被关掉（隐藏）：回车要把它重新显示出来。
           closeLargestWindow(child.pid);
           const withoutMain = await until(async () => {
