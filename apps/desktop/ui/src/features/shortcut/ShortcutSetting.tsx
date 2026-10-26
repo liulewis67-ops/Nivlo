@@ -3,6 +3,7 @@ import { useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { cx } from "@/lib/cx";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
 import { ipc } from "@/lib/ipc";
@@ -16,6 +17,8 @@ import { captureAccelerator } from "./model/accelerator";
 export type ShortcutSettingProps = {
   /** 设置哪个动作的快捷键，缺省为 Quick Create。 */
   action?: ShortcutActionDto;
+  /** 在按钮下方显示注册状态（已生效 / 被占用 / 未生效）；设置页用，侧栏保持紧凑。 */
+  showStatus?: boolean;
 };
 
 /**
@@ -27,12 +30,15 @@ export type ShortcutSettingProps = {
  *
  * 录入框是只读输入框：按下组合键即录入，不是输入文字。需要至少一个修饰键，
  * 否则快捷键会吞掉用户正常的输入。保存失败（不合法 / 被占用）时原因显示在框下方，
- * 原来的绑定保持不变。
+ * 原来的绑定保持不变。改过的绑定可以在编辑区「恢复默认」。
  *
  * @param props 动作。
  * @returns 快捷键设置区域。
  */
-export function ShortcutSetting({ action = "quickCreate" }: ShortcutSettingProps) {
+export function ShortcutSetting({
+  action = "quickCreate",
+  showStatus = false,
+}: ShortcutSettingProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const status = useShortcutQuery(action).data;
@@ -108,6 +114,22 @@ export function ShortcutSetting({ action = "quickCreate" }: ShortcutSettingProps
         )}
         {t(`${copy}.button`, { accelerator: status.accelerator })}
       </Button>
+      {showStatus && (
+        <p
+          className={cx(
+            "px-2 text-xs",
+            status.registered ? "text-success" : status.conflict ? "text-danger" : "text-muted",
+          )}
+        >
+          {t(
+            status.registered
+              ? "shortcut.status.registered"
+              : status.conflict
+                ? "shortcut.status.conflict"
+                : "shortcut.status.inactive",
+          )}
+        </p>
+      )}
       {open && (
         <div
           role="group"
@@ -133,6 +155,17 @@ export function ShortcutSetting({ action = "quickCreate" }: ShortcutSettingProps
             </p>
           )}
           <div className="flex justify-end gap-1">
+            {status.accelerator !== status.defaultAccelerator && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mr-auto"
+                disabled={save.isPending}
+                onClick={() => save.mutate(status.defaultAccelerator)}
+              >
+                {t("shortcut.restore", { accelerator: status.defaultAccelerator })}
+              </Button>
+            )}
             <Button size="sm" variant="ghost" onClick={close}>
               {t("shortcut.cancel")}
             </Button>

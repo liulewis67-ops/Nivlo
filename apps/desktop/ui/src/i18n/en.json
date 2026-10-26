@@ -161,6 +161,12 @@
     "input": "New shortcut",
     "save": "Save",
     "cancel": "Cancel",
+    "restore": "Restore default ({{accelerator}})",
+    "status": {
+      "registered": "Active",
+      "conflict": "Used by another app",
+      "inactive": "Not active"
+    },
     "unusable": {
       "noModifier": "Needs at least one modifier key (Ctrl / Alt / Shift / Win).",
       "unsupportedKey": "This key can't be used in a shortcut."
@@ -464,6 +470,7 @@
     "section": {
       "general": "General",
       "floating": "Floating badge",
+      "shortcuts": "Shortcuts",
       "appearance": "Appearance",
       "schedule": "Schedule",
       "notifications": "Notifications",

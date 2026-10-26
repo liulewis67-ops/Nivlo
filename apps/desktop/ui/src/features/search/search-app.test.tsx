@@ -142,6 +142,16 @@ describe("全局搜索窗口", () => {
     expect(ipc.searchHides).toBe(0);
   });
 
+  it("搜索完成时通过 status 区域播报结果数量", async () => {
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "周报模板");
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.change(input(), { target: { value: "周报" } });
+    await waitFor(() =>
+      expect(screen.getAllByRole("status").map((node) => node.textContent)).toContain("1 条结果"),
+    );
+  });
+
   it("Esc 隐藏窗口", () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<SearchApp />, ipc);

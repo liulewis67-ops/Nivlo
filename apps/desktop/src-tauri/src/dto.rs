@@ -707,15 +707,19 @@ pub struct ShortcutStatusDto {
     pub registered: bool,
     /// 没注册成功是因为被其他程序占用：界面应提示并引导重新绑定。
     pub conflict: bool,
+    /// 这个动作的默认绑定（设置页的「恢复默认」用），规范文本。
+    pub default_accelerator: String,
 }
 
-impl From<ShortcutStatus> for ShortcutStatusDto {
-    /// Host → DTO。
-    fn from(value: ShortcutStatus) -> Self {
+impl ShortcutStatusDto {
+    /// Host → DTO：状态加上该动作的默认绑定。
+    #[must_use]
+    pub fn new(value: ShortcutStatus, action: ShortcutAction) -> Self {
         Self {
             accelerator: value.accelerator,
             registered: value.registered,
             conflict: value.conflict,
+            default_accelerator: action.default_accelerator().to_string(),
         }
     }
 }

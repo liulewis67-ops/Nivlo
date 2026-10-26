@@ -31,8 +31,10 @@ pub async fn get_shortcut_status(
     state: State<'_, AppState>,
     action: ShortcutActionDto,
 ) -> Result<ShortcutStatusDto, IpcError> {
-    Ok(ShortcutStatusDto::from(
-        controller(&state, action.into())?.status(),
+    let action = ShortcutAction::from(action);
+    Ok(ShortcutStatusDto::new(
+        controller(&state, action)?.status(),
+        action,
     ))
 }
 
@@ -68,5 +70,5 @@ pub async fn set_shortcut(
         }
     }
     let status = controller(&state, action)?.rebind(&accelerator).await?;
-    Ok(ShortcutStatusDto::from(status))
+    Ok(ShortcutStatusDto::new(status, action))
 }

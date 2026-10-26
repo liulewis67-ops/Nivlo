@@ -160,6 +160,12 @@
     "input": "新的快捷键",
     "save": "保存",
     "cancel": "取消",
+    "restore": "恢复默认（{{accelerator}}）",
+    "status": {
+      "registered": "已生效",
+      "conflict": "被其他程序占用",
+      "inactive": "未生效"
+    },
     "unusable": {
       "noModifier": "需要至少一个修饰键（Ctrl / Alt / Shift / Win）。",
       "unsupportedKey": "这个按键不能用作快捷键。"
@@ -461,6 +467,7 @@
     "section": {
       "general": "通用",
       "floating": "悬浮窗",
+      "shortcuts": "快捷键",
       "appearance": "悬浮窗外观",
       "schedule": "日程",
       "notifications": "通知",

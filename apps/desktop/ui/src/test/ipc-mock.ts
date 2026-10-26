@@ -286,8 +286,18 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let openSourceFailure: AppError | undefined;
   let clipboard: { text?: string; files?: string[] } | null = null;
   const shortcuts: Record<ShortcutActionDto, ShortcutStatusDto> = {
-    quickCreate: { accelerator: "Ctrl+Shift+Space", registered: true, conflict: false },
-    search: { accelerator: "Ctrl+Alt+Space", registered: true, conflict: false },
+    quickCreate: {
+      accelerator: "Ctrl+Shift+Space",
+      registered: true,
+      conflict: false,
+      defaultAccelerator: "Ctrl+Shift+Space",
+    },
+    search: {
+      accelerator: "Ctrl+Alt+Space",
+      registered: true,
+      conflict: false,
+      defaultAccelerator: "Ctrl+Alt+Space",
+    },
   };
   const openedItems: string[] = [];
   let searchHides = 0;
@@ -928,7 +938,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       if (takenShortcuts.has(accelerator) || usedByOther) {
         return Promise.reject(new AppError("SHORTCUT_CONFLICT", "已被占用"));
       }
-      shortcuts[action] = { accelerator, registered: true, conflict: false };
+      shortcuts[action] = { ...shortcuts[action], accelerator, registered: true, conflict: false };
       return Promise.resolve(shortcuts[action]);
     },
     get openedItems() {

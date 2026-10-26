@@ -459,9 +459,12 @@ export function SearchPanel({
       <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-xs text-muted">
         <span>{t("search.keys")}</span>
         <span className="flex items-center gap-3">
-          {!showRecent && settled && flat.length > 0 && (
-            <span className="tabular-nums">{t("search.count", { count: flat.length })}</span>
-          )}
+          {/* 结果数量兼作读屏播报：元素一直存在、只更新文字（新插入的 live 区域常常不会被播报）。 */}
+          <span role="status" className="tabular-nums empty:hidden">
+            {!showRecent && settled && flat.length > 0
+              ? t("search.count", { count: flat.length })
+              : ""}
+          </span>
           {draft !== null && flat.length > 0 && <span>{t("search.createHint")}</span>}
           {browsing && footerExtra}
         </span>

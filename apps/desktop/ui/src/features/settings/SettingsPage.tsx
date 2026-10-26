@@ -284,11 +284,13 @@ export function SettingsPage() {
               }
             />
           </Row>
+        </Section>
+        <Section title={t("settings.section.shortcuts")}>
           <Row label={t("settings.shortcut.label")} hint={t("settings.shortcut.hint")}>
-            <ShortcutSetting action="quickCreate" />
+            <ShortcutSetting action="quickCreate" showStatus />
           </Row>
           <Row label={t("settings.searchShortcut.label")} hint={t("settings.searchShortcut.hint")}>
-            <ShortcutSetting action="search" />
+            <ShortcutSetting action="search" showStatus />
           </Row>
         </Section>
         <Section title={t("settings.section.appearance")}>

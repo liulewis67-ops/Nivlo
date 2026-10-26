@@ -74,10 +74,56 @@ describe("ShortcutSetting", () => {
 
   it("启动时快捷键被占用：自动展开并提示换一个", async () => {
     const ipc = createMemoryIpc();
-    ipc.setShortcutStatus({ accelerator: "Ctrl+Shift+Space", registered: false, conflict: true });
+    ipc.setShortcutStatus({
+      accelerator: "Ctrl+Shift+Space",
+      registered: false,
+      conflict: true,
+      defaultAccelerator: "Ctrl+Shift+Space",
+    });
     renderWithProviders(<ShortcutSetting />, ipc);
     expect(await screen.findByText(/已被其他程序占用，暂时无法/)).toBeInTheDocument();
     expect(screen.getByLabelText("新的快捷键")).toBeInTheDocument();
+  });
+
+  it("改过的快捷键可以一键恢复默认；本来就是默认时不显示这个按钮", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<ShortcutSetting />, ipc);
+    fireEvent.click(await screen.findByRole("button", { name: /快速创建：/ }));
+    expect(screen.queryByRole("button", { name: /恢复默认/ })).not.toBeInTheDocument();
+
+    press("KeyW", "w", { ctrl: true, alt: true });
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+    fireEvent.click(await screen.findByRole("button", { name: "快速创建：Ctrl+Alt+W" }));
+    fireEvent.click(screen.getByRole("button", { name: "恢复默认（Ctrl+Shift+Space）" }));
+
+    expect(
+      await screen.findByRole("button", { name: "快速创建：Ctrl+Shift+Space" }),
+    ).toBeInTheDocument();
+    expect(await ipc.getShortcutStatus("quickCreate")).toMatchObject({
+      accelerator: "Ctrl+Shift+Space",
+    });
+  });
+
+  it("showStatus 时显示注册状态：已生效 / 被占用", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setShortcutStatus(
+      {
+        accelerator: "Ctrl+Alt+Space",
+        registered: false,
+        conflict: true,
+        defaultAccelerator: "Ctrl+Alt+Space",
+      },
+      "search",
+    );
+    renderWithProviders(
+      <>
+        <ShortcutSetting showStatus />
+        <ShortcutSetting action="search" showStatus />
+      </>,
+      ipc,
+    );
+    expect(await screen.findByText("已生效")).toBeInTheDocument();
+    expect(screen.getByText("被其他程序占用")).toBeInTheDocument();
   });
 
   it("Esc 取消录入", async () => {

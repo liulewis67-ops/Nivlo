@@ -1320,6 +1320,8 @@ export type ShortcutStatusDto = {
 	registered: boolean,
 	/**  没注册成功是因为被其他程序占用：界面应提示并引导重新绑定。 */
 	conflict: boolean,
+	/**  这个动作的默认绑定（设置页的「恢复默认」用），规范文本。 */
+	defaultAccelerator: string,
 };
 
 /**  来源（IPC 表示）：这条 Item 来自哪里。 */
