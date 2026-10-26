@@ -376,6 +376,89 @@ async function runOnce(index) {
   }
 }
 
+/** 结束一个被测进程并等它退干净。 */
+async function stopInstance(child) {
+  child.kill();
+  await sleep(800);
+  try {
+    execFileSync("taskkill", ["/F", "/T", "/PID", String(child.pid)], { stdio: "ignore" });
+  } catch {
+    /* 已退出 */
+  }
+  await until(() => !testInstanceRunning(), "被测进程退出", 15000);
+}
+
+/**
+ * （--native）主窗口**从未创建**时在全局搜索框里回车：后端要先创建主窗口，再定位到详情。
+ *
+ * 同一个数据目录启动两次：第一次（借主窗口）把全局搜索改绑到测试专用的组合、建一条待办后退出；
+ * 第二次启动时只有悬浮窗，按快捷键、搜索、回车，主窗口被创建出来并显示那一条。
+ */
+async function coldMainScenario() {
+  await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
+  const data = mkdtempSync(join(tmpdir(), "nivlo-e2e-cold-"));
+  const env = {
+    ...process.env,
+    NIVLO_DATA_DIR: join(data, "data"),
+    NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
+    WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
+  };
+  const title = "e2e-cold-main";
+  try {
+    // 第一次启动：准备数据。
+    let child = spawn(EXE, [], { env, stdio: "ignore" });
+    try {
+      const [floatingPage] = await until(async () => {
+        const pages = await listPages();
+        return pages.length >= 1 ? pages : null;
+      }, "悬浮窗页面");
+      // 等悬浮窗渲染出来（应用启动完成）再启动第二个进程，单实例转交才会被处理。
+      const floating = await connect(floatingPage.webSocketDebuggerUrl);
+      await until(() => floating.evaluate("document.getElementById('root')?.children.length > 0"), "悬浮窗渲染");
+      floating.close();
+      spawn(EXE, [], { env, stdio: "ignore" }).on("error", () => {});
+      const page = await until(async () => (await listPages()).find((x) => x.id !== floatingPage.id), "主窗口页面");
+      const main = await connect(page.webSocketDebuggerUrl);
+      await until(() => main.evaluate("!!window.__TAURI_INTERNALS__"), "主窗口就绪");
+      await main.invoke("set_shortcut", { action: "search", accelerator: "Ctrl+Alt+Shift+F9" });
+      await main.invoke("quick_create", { request: { itemType: "todo", title, scheduled: null } });
+      main.close();
+    } finally {
+      await stopInstance(child);
+    }
+
+    // 第二次启动：只有悬浮窗。
+    child = spawn(EXE, [], { env, stdio: "ignore" });
+    try {
+      const [floatingPage] = await until(async () => {
+        const pages = await listPages();
+        return pages.length >= 1 ? pages : null;
+      }, "第二次启动的悬浮窗页面");
+      await until(async () => (await listPages()).length === 1, "启动时只有悬浮窗");
+      pressSearchHotkey();
+      const searchPage = await until(async () => (await listPages()).find((x) => x.id !== floatingPage.id), "搜索窗口页面");
+      const search = await connect(searchPage.webSocketDebuggerUrl);
+      await until(() => search.evaluate("document.hasFocus() && document.activeElement?.getAttribute('role') === 'combobox'"), "搜索框拿到焦点", 20000, 5);
+      await search.send("Input.insertText", { text: title });
+      await until(() => search.evaluate(`[...document.querySelectorAll('[role=option]')].some((o) => o.textContent.includes(${JSON.stringify(title)}))`), "结果出现");
+      await search.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+      await search.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+      search.close();
+      const mainPage = await until(async () => (await listPages()).find((x) => x.id !== floatingPage.id && x.id !== searchPage.id), "主窗口被创建");
+      const main = await connect(mainPage.webSocketDebuggerUrl);
+      await until(
+        () => main.evaluate(`[...document.querySelectorAll('aside input, aside textarea')].some((e) => e.value === ${JSON.stringify(title)})`),
+        "新建的主窗口显示详情",
+      );
+      main.close();
+    } finally {
+      await stopInstance(child);
+    }
+  } finally {
+    rmSync(data, { recursive: true, force: true });
+  }
+}
+
 if (!existsSync(EXE)) {
   console.error(`找不到 ${EXE}，请先运行 pnpm tauri build --no-bundle`);
   process.exit(2);
@@ -389,6 +472,15 @@ for (let i = 1; i <= RUNS; i++) {
   } catch (e) {
     failed += 1;
     console.error(`✗ 第 ${i} 次：${e.message}`);
+  }
+}
+if (NATIVE) {
+  try {
+    await coldMainScenario();
+    console.log("✓ 主窗口未创建时从全局搜索框回车打开结果");
+  } catch (e) {
+    failed += 1;
+    console.error(`✗ 主窗口未创建时从全局搜索框回车打开结果：${e.message}`);
   }
 }
 if (NATIVE && hotkeyTimings.first.length > 0) {
