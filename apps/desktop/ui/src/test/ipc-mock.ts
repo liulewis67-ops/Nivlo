@@ -33,6 +33,7 @@ import type {
   DatePointDto,
   ItemDto,
   IpcClient,
+  ItemTagsDto,
   ItemTypeDto,
   ListItemsRequest,
   RescheduleTargetDto,
@@ -1485,6 +1486,12 @@ ${(item.content ?? "").toLowerCase()}`;
       }
       projects[at] = { ...current, archivedAt: null };
       return Promise.resolve(projects[at] as ProjectDto);
+    },
+    tagsForItems: (ids: string[]) => {
+      calls.push("tagsForItems");
+      return Promise.resolve(
+        ids.slice(0, 100).map((itemId): ItemTagsDto => ({ itemId, tags: tagsOf(itemId) })),
+      );
     },
     listTags: () => {
       calls.push("listTags");

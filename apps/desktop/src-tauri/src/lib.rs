@@ -119,6 +119,7 @@ macro_rules! bindings_builder {
                 $crate::commands::organize::archive_project,
                 $crate::commands::organize::unarchive_project,
                 $crate::commands::organize::list_tags,
+                $crate::commands::organize::tags_for_items,
                 $crate::commands::organize::rename_tag,
                 $crate::commands::organize::merge_tags,
                 $crate::commands::organize::set_item_tags,

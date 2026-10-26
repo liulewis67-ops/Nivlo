@@ -26,6 +26,8 @@ export const queryKeys = {
    * 末尾是对象而不是字符串，不会与某个查询词的 Key 撞上。
    */
   searchRecent: () => ["items", "search", { recent: true }] as const,
+  /** 一批搜索结果各自的标签；放在 `searchAll` 前缀下，Item 变化与搜索框重置时一起失效。 */
+  searchTags: (ids: readonly string[]) => ["items", "search", { tags: ids.join(",") }] as const,
   /** 全部搜索结果的前缀（全局搜索框每次出现时丢弃旧结果）。 */
   searchAll: () => ["items", "search"] as const,
   /** Calendar 的某一页；属于 `items` 前缀，Item 变化时会一起失效。 */

@@ -39,13 +39,14 @@ const FLOATING_ALLOWED: &[&str] = &[
     "end_floating_input",
 ];
 
-/// 全局搜索框允许使用的全部命令：只读搜索、列出最近的条目（空输入时显示）与项目（结果旁显示项目名）、把结果交给主窗口、
+/// 全局搜索框允许使用的全部命令：只读搜索、列出最近的条目（空输入时显示）、项目与标签（结果旁显示）、把结果交给主窗口、
 /// 隐藏自己；唯一的写入是和悬浮窗相同的 `quick_create`（找不到就顺手记成待办）。
 /// 它在任何应用之上弹出，不应拥有修改或删除已有数据的命令。
 const SEARCH_ALLOWED: &[&str] = &[
     "search_items",
     "list_items",
     "list_projects",
+    "tags_for_items",
     "quick_create",
     "open_item_in_main",
     "hide_search",

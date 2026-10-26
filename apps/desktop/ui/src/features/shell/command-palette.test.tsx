@@ -187,6 +187,17 @@ describe("全局搜索（Ctrl+K）", () => {
     );
   });
 
+  it("结果旁显示条目的标签", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seed(ipc, "todo", "整理发票");
+    await ipc.setItemTags(id, ["报销", "财务"]);
+    renderWithProviders(<MainShell />, ipc);
+    pressCtrlK();
+    typeQuery("发票");
+    const results = await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(await within(results).findByText(/#报销 #财务/)).toBeInTheDocument();
+  });
+
   it("点击结果打开详情；点击遮罩关闭", async () => {
     const ipc = createMemoryIpc();
     await seed(ipc, "note", "读书笔记");

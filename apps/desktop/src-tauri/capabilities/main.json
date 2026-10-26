@@ -58,6 +58,7 @@
     "allow-archive-project",
     "allow-unarchive-project",
     "allow-list-tags",
+    "allow-tags-for-items",
     "allow-rename-tag",
     "allow-merge-tags",
     "allow-set-item-tags",

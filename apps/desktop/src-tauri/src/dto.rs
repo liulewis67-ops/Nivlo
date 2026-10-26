@@ -1001,6 +1001,16 @@ pub struct TagDto {
     pub name: String,
 }
 
+/// 一个 Item 的标签（搜索结果旁显示用）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemTagsDto {
+    /// Item ID。
+    pub item_id: String,
+    /// 标签，按名称排序。
+    pub tags: Vec<TagDto>,
+}
+
 impl From<&Tag> for TagDto {
     /// Domain → DTO。
     fn from(value: &Tag) -> Self {

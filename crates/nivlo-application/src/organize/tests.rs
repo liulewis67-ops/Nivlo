@@ -353,3 +353,30 @@ async fn tag_filter_returns_only_tagged_items() {
     assert_eq!(listed.len(), 1);
     assert_eq!(listed[0].id(), a);
 }
+
+#[tokio::test]
+async fn tags_for_items_reads_a_batch_in_order() {
+    let f = fixture();
+    let a = todo(&f, "A").await;
+    let b = todo(&f, "B").await;
+    f.tags
+        .set_item_tags(a, &["work".to_owned(), "jira".to_owned()])
+        .await
+        .unwrap();
+
+    let found = f.tags.for_items(&[b, a]).await.unwrap();
+    let names: Vec<(ItemId, Vec<String>)> = found
+        .iter()
+        .map(|(id, tags)| {
+            (
+                *id,
+                tags.iter().map(|t| t.name.as_str().to_owned()).collect(),
+            )
+        })
+        .collect();
+    assert_eq!(names[0], (b, Vec::<String>::new()));
+    assert_eq!(names[1].0, a);
+    let mut a_tags = names[1].1.clone();
+    a_tags.sort();
+    assert_eq!(a_tags, ["jira", "work"]);
+}

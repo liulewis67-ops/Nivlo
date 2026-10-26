@@ -70,6 +70,11 @@ describe("itemMeta", () => {
     ).toEqual(["已完成"]);
   });
 
+  it("标签以 # 开头，最多两个，多的显示 +N", () => {
+    expect(itemMeta(item(), TODAY, names, ["工作"])).toEqual(["#工作"]);
+    expect(itemMeta(item(), TODAY, names, ["a", "b", "c", "d"])).toEqual(["#a #b +2"]);
+  });
+
   it("查不到名称的项目（已归档、未加载）不显示", () => {
     expect(itemMeta(item({ projectId: "gone" }), TODAY, names)).toEqual([]);
   });

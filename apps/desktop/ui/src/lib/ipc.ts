@@ -12,6 +12,7 @@ import type {
   InboxEntryDto,
   IpcError,
   ItemDto,
+  ItemTagsDto,
   ItemTypeDto,
   LaterRuleDto,
   ListItemsRequest,
@@ -66,6 +67,7 @@ export type {
   InboxEntryDto,
   ItemDto,
   ItemStatusDto,
+  ItemTagsDto,
   ItemTypeDto,
   ListItemsRequest,
   OrganizeActionDto,
@@ -291,6 +293,8 @@ export interface IpcClient {
   unarchiveProject(id: string): Promise<ProjectDto>;
   /** 全部标签与各自的 Item 数量（按名称排序），标签管理与自动补全共用。 */
   listTags(): Promise<TagSummaryDto[]>;
+  /** 一批条目各自的标签（只读，搜索结果旁显示），顺序与 `ids` 一致，最多 100 个。 */
+  tagsForItems(ids: string[]): Promise<ItemTagsDto[]>;
   /** 重命名标签，所有关联的 Item 同步更新。与另一个标签重名抛出 `TAG_NAME_TAKEN`。 */
   renameTag(id: string, name: string): Promise<TagDto>;
   /** 把标签 `from` 合并进 `into`，返回留下的标签。 */
@@ -526,6 +530,7 @@ const tauriIpc: IpcClient = {
   archiveProject: (id) => call("archive_project", commands.archiveProject(id)),
   unarchiveProject: (id) => call("unarchive_project", commands.unarchiveProject(id)),
   listTags: () => call("list_tags", commands.listTags()),
+  tagsForItems: (ids) => call("tags_for_items", commands.tagsForItems(ids)),
   renameTag: (id, name) => call("rename_tag", commands.renameTag(id, name)),
   mergeTags: (from, into) => call("merge_tags", commands.mergeTags(from, into)),
   setItemTags: (id, names) => call("set_item_tags", commands.setItemTags(id, names)),
@@ -673,6 +678,7 @@ export const ipc: IpcClient = {
   archiveProject: (id) => current.archiveProject(id),
   unarchiveProject: (id) => current.unarchiveProject(id),
   listTags: () => current.listTags(),
+  tagsForItems: (ids) => current.tagsForItems(ids),
   renameTag: (id, name) => current.renameTag(id, name),
   mergeTags: (from, into) => current.mergeTags(from, into),
   setItemTags: (id, names) => current.setItemTags(id, names),

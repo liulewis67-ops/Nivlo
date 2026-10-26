@@ -56,6 +56,7 @@ const COMMANDS: &[&str] = &[
     "archive_project",
     "unarchive_project",
     "list_tags",
+    "tags_for_items",
     "rename_tag",
     "merge_tags",
     "set_item_tags",

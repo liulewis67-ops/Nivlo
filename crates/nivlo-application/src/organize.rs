@@ -17,6 +17,9 @@ use crate::error::{AppError, ErrorCode};
 use crate::event::EventPublisher;
 use crate::ports::{ItemFilter, UnitOfWork};
 
+/// [`TagService::for_items`] 一次最多读取多少个 Item 的标签。
+pub const TAGS_FOR_ITEMS_LIMIT: usize = 100;
+
 /// 侧栏里的一个项目：项目本身与未完成的 Item 数量。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProjectSummary {
@@ -253,6 +256,25 @@ impl TagService {
     pub async fn for_item(&self, item_id: ItemId) -> Result<Vec<Tag>, AppError> {
         let mut tx = self.uow.begin().await?;
         Ok(tx.tags().for_item(item_id).await?)
+    }
+
+    /// 一批 Item 各自的标签（搜索结果旁显示用），一个事务里读完，顺序与 `item_ids` 一致。
+    ///
+    /// 最多读 [`TAGS_FOR_ITEMS_LIMIT`] 个，多出来的忽略（搜索结果本身也有上限）。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误。
+    pub async fn for_items(
+        &self,
+        item_ids: &[ItemId],
+    ) -> Result<Vec<(ItemId, Vec<Tag>)>, AppError> {
+        let mut tx = self.uow.begin().await?;
+        let mut result = Vec::with_capacity(item_ids.len().min(TAGS_FOR_ITEMS_LIMIT));
+        for &item_id in item_ids.iter().take(TAGS_FOR_ITEMS_LIMIT) {
+            result.push((item_id, tx.tags().for_item(item_id).await?));
+        }
+        Ok(result)
     }
 
     /// 用 `names` 整体替换某个 Item 的标签：不存在的标签自动创建，忽略大小写重复的名称只留一个

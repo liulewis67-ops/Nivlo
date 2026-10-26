@@ -294,6 +294,17 @@ export function SearchPanel({
   /** 键盘选择的条数：命令模式下是命令，否则是条目。 */
   const count = commandMode ? matches.length : flat.length;
   const activeIndex = count === 0 ? -1 : Math.min(active, count - 1);
+  // 列表里的条目各自的标签：一次请求取一批，切换结果时先保留上一批，避免元信息闪动。
+  const visibleIds = flat.map((item) => item.id);
+  const tagsQuery = useQuery({
+    queryKey: queryKeys.searchTags(visibleIds),
+    queryFn: () => ipc.tagsForItems(visibleIds),
+    enabled: visibleIds.length > 0,
+    placeholderData: keepPreviousData,
+  });
+  const tagNames = new Map(
+    tagsQuery.data?.map((entry) => [entry.itemId, entry.tags.map((tag) => tag.name)]),
+  );
   const activeItem = !commandMode && activeIndex >= 0 ? flat[activeIndex] : undefined;
   const activeCommand = commandMode && activeIndex >= 0 ? matches[activeIndex] : undefined;
   const activeOptionId =
@@ -516,7 +527,12 @@ export function SearchPanel({
                   {group.items.map((item) => {
                     const selected = item.id === activeItem?.id;
                     const snippet = snippetAround(item.content, terms);
-                    const meta = itemMeta(item, today, (id) => projectNames.get(id));
+                    const meta = itemMeta(
+                      item,
+                      today,
+                      (id) => projectNames.get(id),
+                      tagNames.get(item.id),
+                    );
                     return (
                       <li
                         key={item.id}

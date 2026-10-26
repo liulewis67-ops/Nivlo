@@ -4,7 +4,8 @@ use tauri::State;
 
 use crate::app::AppState;
 use crate::dto::{
-    IpcError, ProjectDto, TagDto, TagSummaryDto, parse_item_id, parse_project_id, parse_tag_id,
+    IpcError, ItemTagsDto, ProjectDto, TagDto, TagSummaryDto, parse_item_id, parse_project_id,
+    parse_tag_id,
 };
 
 /// 列出项目（创建时间从早到晚）与各自未完成的 Item 数量。
@@ -105,6 +106,31 @@ pub async fn unarchive_project(
 pub async fn list_tags(state: State<'_, AppState>) -> Result<Vec<TagSummaryDto>, IpcError> {
     let tags = state.services.tags.list().await?;
     Ok(tags.iter().map(TagSummaryDto::from).collect())
+}
+
+/// 一批 Item 各自的标签（只读；搜索结果旁显示），顺序与 `ids` 一致，最多 100 个。
+///
+/// # Errors
+///
+/// 某个 ID 格式不合法返回 `INVALID_INPUT`；存储失败时返回 [`IpcError`]。
+#[tauri::command]
+#[specta::specta]
+pub async fn tags_for_items(
+    state: State<'_, AppState>,
+    ids: Vec<String>,
+) -> Result<Vec<ItemTagsDto>, IpcError> {
+    let ids = ids
+        .iter()
+        .map(|id| parse_item_id(id))
+        .collect::<Result<Vec<_>, _>>()?;
+    let found = state.services.tags.for_items(&ids).await?;
+    Ok(found
+        .iter()
+        .map(|(item_id, tags)| ItemTagsDto {
+            item_id: item_id.to_string(),
+            tags: tags.iter().map(TagDto::from).collect(),
+        })
+        .collect())
 }
 
 /// 重命名标签；所有关联的 Item 同步显示新名称。

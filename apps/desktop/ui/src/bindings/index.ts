@@ -496,6 +496,14 @@ export const commands = {
 	 */
 	listTags: () => typedError<TagSummaryDto[], IpcError>(__TAURI_INVOKE("list_tags")),
 	/**
+	 *  一批 Item 各自的标签（只读；搜索结果旁显示），顺序与 `ids` 一致，最多 100 个。
+	 * 
+	 *  # Errors
+	 * 
+	 *  某个 ID 格式不合法返回 `INVALID_INPUT`；存储失败时返回 [`IpcError`]。
+	 */
+	tagsForItems: (ids: string[]) => typedError<ItemTagsDto[], IpcError>(__TAURI_INVOKE("tags_for_items", { ids })),
+	/**
 	 *  重命名标签；所有关联的 Item 同步显示新名称。
 	 * 
 	 *  # Errors
@@ -1128,6 +1136,14 @@ export type ItemStatusDto =
 "open" | 
 /**  已完成。 */
 "done";
+
+/**  一个 Item 的标签（搜索结果旁显示用）。 */
+export type ItemTagsDto = {
+	/**  Item ID。 */
+	itemId: string,
+	/**  标签，按名称排序。 */
+	tags: TagDto[],
+};
 
 /**  Item 类型。 */
 export type ItemTypeDto = 
