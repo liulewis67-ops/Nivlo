@@ -425,6 +425,8 @@
     "count_one": "{{count}} result",
     "count_other": "{{count}} results",
     "recent": "Recently updated",
+    "create": "New to-do “{{title}}”",
+    "createHint": "Ctrl+↵ new to-do",
     "windowHint": "Type keywords to search titles, content and sources. Enter opens it in the main window.",
     "globalTip": "Search from any app"
   },

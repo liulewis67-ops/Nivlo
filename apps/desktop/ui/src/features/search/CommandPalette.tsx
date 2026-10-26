@@ -16,7 +16,8 @@ export type CommandPaletteProps = {
  *
  * * 打开时输入框聚焦，关闭时焦点回到打开之前的元素；
  * * 点击面板外的遮罩关闭；
- * * 底部提示全局搜索的快捷键，让用户知道在其他应用里也能直接搜。
+ * * 底部提示全局搜索的快捷键，让用户知道在其他应用里也能直接搜；
+ * * Ctrl+Enter 把搜索词建成待办，并直接打开它的详情，方便接着补充。
  *
  * @param props 关闭与打开回调。
  * @returns 对话框。
@@ -46,6 +47,10 @@ export function CommandPalette({ onClose, onOpenItem }: CommandPaletteProps) {
           onClose={onClose}
           onOpenItem={(id) => {
             onOpenItem(id);
+            onClose();
+          }}
+          onCreated={(item) => {
+            onOpenItem(item.id);
             onClose();
           }}
           footerExtra={

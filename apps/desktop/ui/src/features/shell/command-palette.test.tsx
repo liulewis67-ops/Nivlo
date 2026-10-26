@@ -125,6 +125,20 @@ describe("全局搜索（Ctrl+K）", () => {
     expect(ipc.items.find((i) => i.id === second)?.title).toBe("登录二");
   });
 
+  it("没有结果时点「新建待办」：建好后直接打开它的详情", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<MainShell />, ipc);
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+
+    typeQuery("预约体检");
+    fireEvent.click(await screen.findByRole("button", { name: /新建待办「预约体检」/ }));
+    const detail = await screen.findByLabelText("条目详情");
+    expect(await within(detail).findByDisplayValue("预约体检")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
+    expect(ipc.items.find((item) => item.title === "预约体检")?.itemType).toBe("todo");
+  });
+
   it("点击结果打开详情；点击遮罩关闭", async () => {
     const ipc = createMemoryIpc();
     await seed(ipc, "note", "读书笔记");

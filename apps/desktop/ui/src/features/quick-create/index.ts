@@ -1,2 +1,4 @@
 export { QuickCreateForm } from "./QuickCreateForm";
 export { normalizeTitle, resolveKey } from "./model/quick-create";
+export { parseDatePhrase } from "./model/date-phrase";
+export type { DatePhraseResult } from "./model/date-phrase";

@@ -1,11 +1,16 @@
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components";
+import { parseDatePhrase } from "@/features/quick-create";
+import type { DatePhraseResult } from "@/features/quick-create";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { ItemDto, ItemTypeDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
+import { reportError } from "@/lib/report-error";
 import { highlight, searchTerms, snippetAround } from "./model/highlight";
 import type { Segment } from "./model/highlight";
 
@@ -31,9 +36,37 @@ export type SearchPanelProps = {
   variant?: "dialog" | "window";
   /** 输入框为空、也还没有任何条目可列出时显示的提示，缺省为通用的搜索说明。 */
   emptyHint?: ReactNode;
-  /** 底部右侧的附加内容（结果数量之外，如全局快捷键提示）。 */
+  /** 输入为空时底部右侧的附加内容（如全局快捷键提示）。 */
   footerExtra?: ReactNode;
+  /**
+   * 从搜索创建的待办建好之后调用。提供时才能从搜索直接创建：Ctrl+Enter，或者没有结果时
+   * 点「新建待办」；标题里的日期短语（「明天」「周五 3pm」）按 Quick Create 的规则识别。
+   */
+  onCreated?: (item: ItemDto) => void;
 };
+
+/** 从搜索词新建待办的草稿。 */
+type Draft = {
+  /** 去掉日期短语之后的标题。 */
+  title: string;
+  /** 识别出的计划；没有时由后端按 Quick Create 的默认值（今天）处理。 */
+  schedule: DatePhraseResult["schedule"] | null;
+  /** 识别出的计划的说明，如「明天 · 10月28日 周三」。 */
+  label: string | null;
+};
+
+/**
+ * 把搜索词变成待办草稿：识别日期短语，识别不到就原样作为标题。
+ *
+ * @param query 搜索词（已去掉首尾空白，非空）。
+ * @returns 草稿。
+ */
+function draftFrom(query: string): Draft {
+  const parsed = parseDatePhrase(query, format(new Date(), "yyyy-MM-dd"));
+  return parsed === null
+    ? { title: query, schedule: null, label: null }
+    : { title: parsed.title, schedule: parsed.schedule, label: parsed.label };
+}
 
 /**
  * 一个分组：类型与其中的结果（保持后端给出的相关度顺序）；输入为空时只有一组 `recent`，
@@ -127,6 +160,8 @@ function TypeGlyph({ type }: { type: ItemTypeDto }) {
  * * 输入还没停顿就按回车时，等这次搜索出结果后再打开第一条，不会因为手快而落空；
  * * 输入为空时列出最近更新的几条（[`RECENT_LIMIT`]），直接 ↑ / ↓ + 回车就能打开，
  *   不必先想关键词；
+ * * 提供 `onCreated` 时，Ctrl+Enter 把搜索词直接建成待办（没有结果时还会给出按钮），
+ *   找不到就顺手记下，不必换到别的入口；
  * * 挂载时输入框聚焦；重置（清空输入）由调用方用 `key` 重新挂载完成。
  *
  * @param props 关闭与打开回调、外观。
@@ -138,6 +173,7 @@ export function SearchPanel({
   variant = "dialog",
   emptyHint,
   footerExtra,
+  onCreated,
 }: SearchPanelProps) {
   const { t } = useTranslation();
   const listId = useId();
@@ -188,6 +224,18 @@ export function SearchPanel({
   const flat = groups.flatMap((group) => group.items);
   const activeIndex = flat.length === 0 ? -1 : Math.min(active, flat.length - 1);
   const activeItem = activeIndex >= 0 ? flat[activeIndex] : undefined;
+  const draft = onCreated === undefined || browsing ? null : draftFrom(query);
+  const create = useMutation({
+    mutationFn: (value: Draft) => ipc.quickCreate("todo", value.title, value.schedule),
+    onSuccess: (item) => onCreated?.(item),
+    onError: reportError,
+  });
+
+  /** 用当前搜索词新建待办（正在创建时忽略重复触发）。 */
+  function createDraft(): void {
+    if (draft !== null && !create.isPending) create.mutate(draft);
+  }
+
   /** 列表与输入一致，可以直接打开选中项。 */
   const settled = browsing
     ? recent.data !== undefined
@@ -239,6 +287,10 @@ export function SearchPanel({
     ) {
       event.preventDefault();
       setActive(0);
+    } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      openWhenReady.current = false;
+      createDraft();
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (settled && activeItem !== undefined) onOpenItem(activeItem.id);
@@ -313,9 +365,20 @@ export function SearchPanel({
           </p>
         )}
         {!browsing && settled && flat.length === 0 && (
-          <p role="status" className="px-6 py-8 text-center text-sm text-muted">
-            {t("search.empty", { query: debounced })}
-          </p>
+          <div className="flex flex-col items-center gap-3 px-6 py-8">
+            <p role="status" className="text-center text-sm text-muted">
+              {t("search.empty", { query: debounced })}
+            </p>
+            {draft !== null && (
+              <Button size="sm" disabled={create.isPending} onClick={createDraft}>
+                <span className="truncate">{t("search.create", { title: draft.title })}</span>
+                {draft.label !== null && <span className="text-muted">{draft.label}</span>}
+                <kbd className="rounded border border-border px-1 text-[11px] text-muted">
+                  {"Ctrl+↵"}
+                </kbd>
+              </Button>
+            )}
+          </div>
         )}
         {flat.length > 0 && (
           <ul
@@ -388,7 +451,8 @@ export function SearchPanel({
           {!showRecent && settled && flat.length > 0 && (
             <span className="tabular-nums">{t("search.count", { count: flat.length })}</span>
           )}
-          {footerExtra}
+          {draft !== null && flat.length > 0 && <span>{t("search.createHint")}</span>}
+          {browsing && footerExtra}
         </span>
       </footer>
     </div>

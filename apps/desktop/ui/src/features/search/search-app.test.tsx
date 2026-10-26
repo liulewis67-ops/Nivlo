@@ -1,4 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { addDays, format } from "date-fns";
 import { describe, expect, it } from "vitest";
 import { SearchApp } from "./SearchApp";
 import { createMemoryIpc } from "@/test/ipc-mock";
@@ -101,6 +102,44 @@ describe("全局搜索窗口", () => {
     fireEvent.change(input(), { target: { value: "" } });
     const recent = screen.getByRole("listbox", { name: "最近更新" });
     expect(within(recent).getAllByRole("option")).toHaveLength(2);
+  });
+
+  it("找不到时 Ctrl+Enter 把搜索词记成待办（识别日期短语），随即隐藏窗口", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+
+    fireEvent.change(input(), { target: { value: "买咖啡豆 明天" } });
+    expect(await screen.findByText("没有找到「买咖啡豆 明天」")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /新建待办「买咖啡豆」/ })).toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => expect(ipc.searchHides).toBe(1));
+    const created = ipc.items.find((item) => item.title === "买咖啡豆");
+    expect(created?.itemType).toBe("todo");
+    expect(created?.scheduled?.date).toBe(format(addDays(new Date(), 1), "yyyy-MM-dd"));
+    expect(ipc.openedItems).toEqual([]);
+  });
+
+  it("有结果时 Ctrl+Enter 仍然新建，而不是打开选中的结果", async () => {
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "周报模板");
+    renderWithProviders(<SearchApp />, ipc);
+
+    fireEvent.change(input(), { target: { value: "周报" } });
+    await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(screen.getByText("Ctrl+↵ 新建待办")).toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => expect(ipc.items.map((item) => item.title)).toContain("周报"));
+    expect(ipc.openedItems).toEqual([]);
+  });
+
+  it("空输入时 Ctrl+Enter 什么也不做", () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
+    expect(ipc.items).toEqual([]);
+    expect(ipc.searchHides).toBe(0);
   });
 
   it("Esc 隐藏窗口", () => {

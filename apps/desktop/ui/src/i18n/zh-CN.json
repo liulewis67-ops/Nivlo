@@ -423,6 +423,8 @@
       "tip": "提示"
     },
     "recent": "最近更新",
+    "create": "新建待办「{{title}}」",
+    "createHint": "Ctrl+↵ 新建待办",
     "windowHint": "输入关键词，搜索标题、正文和来源；回车在主窗口中打开。",
     "globalTip": "在任何应用里搜索"
   },

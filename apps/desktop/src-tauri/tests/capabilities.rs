@@ -40,10 +40,12 @@ const FLOATING_ALLOWED: &[&str] = &[
 ];
 
 /// 全局搜索框允许使用的全部命令：只读搜索、列出最近的条目（空输入时显示）、把结果交给主窗口、
-/// 隐藏自己。它在任何应用之上弹出，不应拥有任何写入数据的命令。
+/// 隐藏自己；唯一的写入是和悬浮窗相同的 `quick_create`（找不到就顺手记成待办）。
+/// 它在任何应用之上弹出，不应拥有修改或删除已有数据的命令。
 const SEARCH_ALLOWED: &[&str] = &[
     "search_items",
     "list_items",
+    "quick_create",
     "open_item_in_main",
     "hide_search",
 ];
@@ -88,7 +90,7 @@ fn main_capability_only_targets_the_main_window() {
 }
 
 #[test]
-fn search_capability_only_targets_the_search_window_and_is_read_only() {
+fn search_capability_only_targets_the_search_window_and_cannot_modify_existing_data() {
     let search = parse(include_str!("../capabilities/search.json"));
     assert_eq!(windows(&search), ["search"]);
     for command in allowed_commands(&search) {
