@@ -38,6 +38,21 @@
 
 **压低峰值（已做）**：宿主订阅领域事件总线，每 100 个事件看一眼 WAL 大小，超过 16 MiB 就立刻 `checkpoint()`（`Database::checkpoint_if_wal_exceeds`，事件驱动，没有新增定时器；有回归测试 `the_wal_is_truncated_only_once_it_passes_the_limit`）。真机复测同样的 3000 次捕获（45.6 秒，无错误）：WAL 峰值 **25 MB**（之前 195 MB），结束后 5 秒内回到 **0 字节**，主文件 5.5 MB。
 
+## 2026-10-27 · 搜索（含拼音首字母，release 构建，1 万条）
+
+`crates/nivlo-storage/tests/search.rs` 的 `searching_ten_thousand_items_is_fast`，`cargo test --release -- --nocapture`：
+
+| 查询 | 路径 | 耗时 | 命中 |
+|---|---|---|---|
+| 登录超时 | FTS | 0.9 ms | 1 |
+| 登录 | LIKE 回退（2 字符） | 6.1 ms | 1 |
+| 第 7776 条 | FTS | 0.2 ms | 1 |
+| xfdlcs | FTS 无命中 + 拼音首字母 | 4.4 ms | 1 |
+| ptdb | 拼音首字母命中全部行（取满 50 条） | 8.7 ms | 50 |
+| zzqq | 两条路径都扫描、无命中（最坏情况） | 7.1 ms | 0 |
+
+全部远低于 50 ms 的预算与 140 ms 的输入防抖；拼音首字母额外的一次查询最多多花约 7 ms，不需要索引。
+
 ## 尚未测量
 
 * 启用循环皮肤 / 附加动效时的 CPU（D-13）；

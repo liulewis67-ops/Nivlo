@@ -341,12 +341,14 @@ async fn searching_ten_thousand_items_is_fast() {
     }
     tx.commit().await.unwrap();
 
-    for query in ["登录超时", "登录", "第 7776 条"] {
+    // 后三个是纯字母查询，会额外走拼音首字母：命中一条、命中全部（「普通待办」= ptdb）、全表扫描无命中。
+    for query in ["登录超时", "登录", "第 7776 条", "xfdlcs", "ptdb", "zzqq"] {
         let started = Instant::now();
         let mut tx = db.begin().await.unwrap();
         let found = tx.items().search(query, false, 50).await.unwrap();
         let elapsed = started.elapsed();
-        assert!(!found.is_empty(), "{query}");
+        eprintln!("search {query:?}: {elapsed:?}, {} hits", found.len());
+        assert_eq!(found.is_empty(), query == "zzqq", "{query}");
         // 目标是 < 50ms（实施计划 3.4）；留出 debug 构建与 CI 抖动的余量，只防止退化到量级错误。
         assert!(
             elapsed.as_millis() < 500,
