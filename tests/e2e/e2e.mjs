@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // 桌面端 E2E 关键路径（实施计划 7.1）：启动真实的发布版程序（临时数据目录），通过 WebView2 的调试端口
-// （CDP）驱动界面与 IPC，覆盖：应用启动、Hover 悬浮窗、Quick Add、完成 Todo、拖入文件、排期。
+// （CDP）驱动界面与 IPC，覆盖：应用启动、Hover 悬浮窗、Quick Add、完成 Todo、拖入文件、排期，
+// 以及搜索相关的优化：拼音首字母（迁移 0008）、最近使用（迁移 0007）、结果标签、快捷键停用 / 启用、
+// 从命令打开主窗口的视图。
 //
 // 用法：node tests/e2e/e2e.mjs [--runs N]    需要先构建：pnpm tauri build --no-bundle（仅 Windows / WebView2）
 // 说明：计划里写的是 tauri-driver（WebDriver）；这里用 CDP 是因为它不需要额外下载 msedgedriver，
@@ -148,6 +150,51 @@ async function runOnce(index) {
       const id = t?.id ?? t?.item?.id;
       const moved = await main.invoke("reschedule_item", { id, target: { kind: "tomorrow" } });
       if (!moved.scheduled) throw new Error("排期后没有计划日期");
+    });
+
+    // 7. 拼音首字母：升级迁移 0008 之后，新建的中文标题能用首字母搜到。
+    let chinese;
+    await step("拼音首字母搜索", async () => {
+      const created = await main.invoke("quick_create", { request: { itemType: "note", title: "整理本周周报", scheduled: null } });
+      chinese = created?.id ?? created?.item?.id;
+      const found = await main.invoke("search_items", { query: "zlbzzb" });
+      if (!found.some((i) => i.id === chinese)) throw new Error("用 zlbzzb 搜不到「整理本周周报」");
+    });
+
+    // 8. 最近使用（迁移 0007）：打开过的条目排到最前，即使它不是最近修改的。
+    await step("最近使用", async () => {
+      await main.invoke("mark_item_opened", { id: todo.id });
+      const recent = await main.invoke("list_items", {
+        request: { itemType: null, includeArchived: false, projectId: null, tagId: null, orderBy: "recent", limit: 3 },
+      });
+      if (recent[0]?.id !== todo.id) throw new Error(`最近使用的第一条不是刚打开的条目：${JSON.stringify(recent.map((i) => i.title))}`);
+    });
+
+    // 9. 结果旁的标签：一次取一批。
+    await step("结果标签", async () => {
+      await main.invoke("set_item_tags", { id: chinese, names: ["e2e", "周报"] });
+      const tags = await main.invoke("tags_for_items", { ids: [todo.id, chinese] });
+      const names = tags.find((t) => t.itemId === chinese)?.tags.map((t) => t.name).sort();
+      if (JSON.stringify(names) !== JSON.stringify(["e2e", "周报"])) throw new Error(`标签不对：${JSON.stringify(tags)}`);
+      if (tags.find((t) => t.itemId === todo.id)?.tags.length !== 0) throw new Error("没有标签的条目返回了标签");
+    });
+
+    // 10. 快捷键停用后再启用（用一个少见的组合启用，避免和本机正在运行的 Nivlo 撞车）。
+    await step("快捷键停用 / 启用", async () => {
+      const off = await main.invoke("disable_shortcut", { action: "search" });
+      if (!off.disabled || off.registered) throw new Error(`停用后的状态不对：${JSON.stringify(off)}`);
+      const on = await main.invoke("set_shortcut", { action: "search", accelerator: "Ctrl+Alt+Shift+F9" });
+      if (on.disabled || !on.registered) throw new Error(`重新启用后的状态不对：${JSON.stringify(on)}`);
+    });
+
+    // 11. 命令「前往：设置」：主窗口切到设置页（以前只接受五个视图）。
+    await step("前往设置", async () => {
+      // 主窗口自己切换视图，不拥有这个命令；悬浮窗和全局搜索框才会请求主窗口打开某个视图。
+      await floating.invoke("open_main_at", { view: "settings" });
+      await until(
+        () => main.evaluate("[...document.querySelectorAll('section[aria-label]')].some((s) => ['快捷键', 'Shortcuts'].includes(s.getAttribute('aria-label')))"),
+        "设置页的快捷键分区",
+      );
     });
     return steps;
   } finally {
