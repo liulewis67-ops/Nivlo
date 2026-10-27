@@ -24,6 +24,8 @@ const RUNS = Number(process.argv[process.argv.indexOf("--runs") + 1]) || 1;
 const NATIVE = process.argv.includes("--native");
 /** --native 测得的唤出耗时（毫秒）：从按键发出到输入框拿到焦点。 */
 const hotkeyTimings = { first: [], again: [] };
+/** Quick Create 从点「+ 待办」/ 按快捷键到输入框可以打字（毫秒），实施计划 1.5「Hover → Enter 3 秒内」里系统自己的那部分。 */
+const quickCreateTimings = { click: [], hotkey: [] };
 
 /**
  * 进程 `pid` 当前可见的顶层窗口数（Win32 EnumWindows + IsWindowVisible）。
@@ -384,8 +386,11 @@ async function runOnce(index) {
 
         // Enter 创建。
         const before = foregroundWindow();
-        await click(await openAddButton());
-        await until(() => floating.evaluate(inputReady), "Quick Create 输入框拿到真实焦点");
+        const addButton = await openAddButton();
+        const clicked = Date.now();
+        await click(addButton);
+        await until(() => floating.evaluate(inputReady), "Quick Create 输入框拿到真实焦点", 20000, 5);
+        quickCreateTimings.click.push(Date.now() - clicked);
         const quickTitle = `e2e-quick-${index}`;
         await floating.send("Input.insertText", { text: quickTitle });
         await key("Enter", 13);
@@ -416,9 +421,10 @@ async function runOnce(index) {
       await step("Quick Create 快捷键（原生）", async () => {
         await main.invoke("set_shortcut", { action: "quickCreate", accelerator: "Ctrl+Alt+Shift+F8" });
         const before = foregroundWindow();
-        pressHotkey([0x11, 0x12, 0x10, 0x77]);
+        const pressed = pressHotkey([0x11, 0x12, 0x10, 0x77]);
         const inputReady = "document.hasFocus() && ['标题', 'Title'].includes(document.activeElement?.getAttribute('aria-label')) && !document.activeElement.disabled";
-        await until(() => floating.evaluate(inputReady), "快捷键呼出的 Quick Create 拿到焦点");
+        await until(() => floating.evaluate(inputReady), "快捷键呼出的 Quick Create 拿到焦点", 20000, 5);
+        quickCreateTimings.hotkey.push(Date.now() - pressed);
         const viaHotkey = `e2e-hotkey-${index}`;
         await floating.send("Input.insertText", { text: viaHotkey });
         await floating.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
@@ -854,8 +860,11 @@ if (NATIVE) {
     console.error(`✗ 预先准备全局搜索框：${e.message}`);
   }
 }
+const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+if (NATIVE && quickCreateTimings.click.length > 0) {
+  console.log(`Quick Create 输入就绪：点「+ 待办」中位数 ${median(quickCreateTimings.click)} ms ${JSON.stringify(quickCreateTimings.click)}；快捷键 中位数 ${median(quickCreateTimings.hotkey)} ms ${JSON.stringify(quickCreateTimings.hotkey)}`);
+}
 if (NATIVE && hotkeyTimings.first.length > 0) {
-  const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
   console.log(`全局搜索唤出（按键之后到输入框拿到焦点）：第一次 中位数 ${median(hotkeyTimings.first)} ms ${JSON.stringify(hotkeyTimings.first)}；之后 中位数 ${median(hotkeyTimings.again)} ms ${JSON.stringify(hotkeyTimings.again)}`);
 }
 process.exit(failed ? 1 : 0);
