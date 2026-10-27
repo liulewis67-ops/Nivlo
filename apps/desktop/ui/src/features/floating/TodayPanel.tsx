@@ -1,7 +1,7 @@
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components";
+import { Button, Tooltip } from "@/components";
 import { CaptureFeedbackBar } from "@/features/capture";
 import type { CaptureFeedback } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
@@ -67,22 +67,45 @@ export function TodayPanel({
       style={{ transformOrigin: origin }}
       className="nv-panel-in nv-float relative flex h-full w-full flex-col overflow-hidden"
     >
-      <header className="flex items-center justify-between border-b border-border px-3 py-2">
-        <h2 className="text-sm font-semibold text-text">
+      <header className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
+        {/* 面板只有 300px：用短日期、不换行（英文的「Tuesday, Oct 27」会把「27」挤到第二行），放不下时截断。 */}
+        <h2 className="min-w-0 truncate text-sm font-semibold whitespace-nowrap text-text">
           {t("today.panel.title")}
           <span className="ml-2 font-normal text-muted">
-            {formatDate(view === undefined ? new Date() : parseISO(view.date), "monthDayWeekday")}
+            {formatDate(
+              view === undefined ? new Date() : parseISO(view.date),
+              "monthDayWeekdayShort",
+            )}
           </span>
         </h2>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1">
           {inboxCount > 0 && (
             <Button size="sm" variant="ghost" onClick={() => void ipc.openMainAt("inbox")}>
               {t("today.panel.inbox", { count: inboxCount })}
             </Button>
           )}
-          <Button size="sm" variant="ghost" onClick={() => void ipc.openMain()}>
-            {t("today.panel.openMain")}
-          </Button>
+          {/* 图标按钮：「打开主窗口」的文字（尤其英文）会把日期挤掉；点徽标同样能打开主窗口，这里只是捷径。 */}
+          <Tooltip content={t("today.panel.openMain")}>
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-label={t("today.panel.openMain")}
+              onClick={() => void ipc.openMain()}
+            >
+              <svg
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9.5 2.5h4v4M13.5 2.5 8 8M7 3.5H3.5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9" />
+              </svg>
+            </Button>
+          </Tooltip>
         </div>
       </header>
       {view !== undefined &&
