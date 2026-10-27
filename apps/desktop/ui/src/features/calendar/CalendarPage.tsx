@@ -36,6 +36,21 @@ import {
 } from "./model/calendar-grid";
 import type { CalendarViewKind } from "./model/calendar-grid";
 
+/**
+ * 在某一天里写的时间（「下午3点 开会」「15:00 评审」）就是那天的时间；日期由格子决定，
+ * 所以只认只有时间的短语（以这一格为「今天」解析，日期仍是这一天的才算）。
+ *
+ * @param title 输入的文字。
+ * @param date 格子的日期。
+ * @returns 去掉时间短语之后的标题与 `HH:MM`；没有认出时间时为 `null`。
+ */
+function timeInDay(title: string, date: string): { title: string; time: string } | null {
+  const parsed = parseDatePhrase(title, date);
+  if (parsed === null || parsed.schedule.date !== date || parsed.schedule.time === null)
+    return null;
+  return { title: parsed.title, time: parsed.schedule.time.slice(0, 5) };
+}
+
 /** 月视图每个格子最多直接显示几个条目，其余折叠成「还有 N 项」。 */
 const MONTH_CELL_LIMIT = 3;
 
@@ -118,6 +133,8 @@ function DayCell({
   const weekend = parsed.getDay() === 0 || parsed.getDay() === 6;
   const visible = view === "month" ? entries.slice(0, MONTH_CELL_LIMIT) : entries;
   const hidden = entries.length - visible.length;
+  /** 输入里认出的时间：在格子里给个小提示，回车后就是这一天的这个时间。 */
+  const recognised = adding ? timeInDay(title, date) : null;
 
   /**
    * 回车创建，Esc / 失焦取消。
@@ -208,6 +225,11 @@ function DayCell({
             }}
             className="h-7 w-full rounded-md border border-primary bg-surface px-1.5 text-xs text-text placeholder:text-muted focus-visible:outline-none"
           />
+        )}
+        {adding && recognised !== null && (
+          <span role="status" className="px-1 text-[11px] text-primary tabular-nums">
+            {t("calendar.timeRecognised", { time: recognised.time })}
+          </span>
         )}
       </div>
     </div>
@@ -320,13 +342,7 @@ export function CalendarPage() {
    * @param title 标题。
    */
   function createTodo(date: string, title: string): void {
-    // 在某一天里写的时间（「下午3点 开会」「15:00 评审」）就是那天的时间；日期由格子决定，
-    // 所以只认只有时间的短语（以这一格为「今天」解析，日期仍是这一天的才算）。
-    const parsed = parseDatePhrase(title, date);
-    const timed =
-      parsed !== null && parsed.schedule.date === date && parsed.schedule.time !== null
-        ? parsed
-        : null;
+    const timed = timeInDay(title, date);
     ipc
       .createItem({
         itemType: "todo",
@@ -334,7 +350,7 @@ export function CalendarPage() {
         content: null,
         contentFormat: null,
         priority: null,
-        scheduled: { date, time: timed?.schedule.time ?? null },
+        scheduled: { date, time: timed?.time ?? null },
         due: null,
         reminderAt: null,
         projectId: null,

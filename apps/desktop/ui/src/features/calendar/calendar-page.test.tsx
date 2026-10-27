@@ -212,6 +212,8 @@ describe("CalendarPage 添加与待安排", () => {
     fireEvent.click(screen.getByRole("button", { name: "在10月14日添加待办" }));
     const input = screen.getByLabelText("新待办");
     fireEvent.change(input, { target: { value: "下午3点 开会" } });
+    // 格子里提示认出的时间。
+    expect(screen.getByText("🕒 15:00")).toBeInTheDocument();
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => expect(ipc.items).toHaveLength(1));

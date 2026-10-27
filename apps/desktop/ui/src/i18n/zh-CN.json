@@ -731,6 +731,7 @@
     "addOn": "在{{date}}添加待办",
     "newTodo": "新待办",
     "newTodoPlaceholder": "写下一件事，回车添加",
+    "timeRecognised": "🕒 {{time}}",
     "unscheduled": "待安排",
     "unscheduledHint": "把待办拖到日期格上，就安排好了。",
     "unscheduledEmpty": "没有待安排的待办 🎉",

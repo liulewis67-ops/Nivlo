@@ -734,6 +734,7 @@
     "addOn": "Add a to-do on {{date}}",
     "newTodo": "New to-do",
     "newTodoPlaceholder": "Write something, Enter to add",
+    "timeRecognised": "🕒 {{time}}",
     "unscheduled": "Unscheduled",
     "unscheduledHint": "Drag a to-do onto a day to schedule it.",
     "unscheduledEmpty": "Nothing unscheduled 🎉",
