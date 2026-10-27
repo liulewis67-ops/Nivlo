@@ -30,7 +30,20 @@ function Illustration({ step }: { step: number }) {
             {"3"}
           </span>
         </div>
-        <p className="absolute top-3 left-4 text-xs text-muted">{"…"}</p>
+        {/* 用户正在用的别的应用：一个淡淡的窗口，徽标停在它旁边的屏幕边缘。 */}
+        <div
+          aria-hidden="true"
+          className="absolute top-4 bottom-4 left-4 w-[55%] rounded-md border border-border bg-surface p-2.5 opacity-80"
+        >
+          <div className="mb-2.5 flex gap-1">
+            {[0, 1, 2].map((dot) => (
+              <span key={dot} className="size-1.5 rounded-full bg-muted/50" />
+            ))}
+          </div>
+          {["w-4/5", "w-3/5", "w-11/12", "w-2/3", "w-1/2"].map((width) => (
+            <span key={width} className={cx("mb-1.5 block h-1.5 rounded bg-text/15", width)} />
+          ))}
+        </div>
       </div>
     );
   }
