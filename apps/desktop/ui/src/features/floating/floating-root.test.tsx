@@ -293,7 +293,9 @@ describe("FloatingRoot", () => {
     await openPanel(ipc);
     fireEvent.click(screen.getByRole("button", { name: "+ 待办" }));
     await advance(0);
-    fireEvent.change(screen.getByRole("textbox", { name: "标题" }), { target: { value: "半句话" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "标题" }), {
+      target: { value: "半句话" },
+    });
 
     act(() => {
       window.dispatchEvent(new FocusEvent("blur"));
