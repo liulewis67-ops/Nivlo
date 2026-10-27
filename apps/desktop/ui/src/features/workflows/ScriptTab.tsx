@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, ConfirmButton, Input } from "@/components";
 import { parseDefinition, stringify } from "./model/definition";
 import { SCRIPT_TEMPLATE, findScript, parseHosts, withScript, withoutScript } from "./model/script";
-import { ScriptEditor } from "./ScriptEditor";
 import { CTX_DTS } from "./script-api";
+
+/**
+ * 脚本编辑器（CodeMirror）按需加载：只有打开「脚本」页签才需要它，不必让每次打开主窗口都下载、解析它。
+ */
+const ScriptEditor = lazy(() =>
+  import("./ScriptEditor").then((module) => ({ default: module.ScriptEditor })),
+);
 
 /** [`ScriptTab`] 的 Props。 */
 type ScriptTabProps = {
@@ -69,13 +75,20 @@ export function ScriptTab({ text, onTextChange }: ScriptTabProps) {
         />
       </label>
       <p className="-mt-2 text-xs text-muted">{t("workflows.script.hostsHint")}</p>
-      <ScriptEditor
-        label={t("workflows.script.editorLabel")}
-        value={script.source}
-        onChange={(source) =>
-          onTextChange(stringify(withScript(definition, { source, hosts: script.hosts })))
+      {/* 加载编辑器期间占住同样的高度，页面不会跳一下。 */}
+      <Suspense
+        fallback={
+          <div aria-busy="true" className="h-56 rounded-md border border-border bg-surface" />
         }
-      />
+      >
+        <ScriptEditor
+          label={t("workflows.script.editorLabel")}
+          value={script.source}
+          onChange={(source) =>
+            onTextChange(stringify(withScript(definition, { source, hosts: script.hosts })))
+          }
+        />
+      </Suspense>
       <details className="text-xs text-muted">
         <summary className="cursor-pointer">{t("workflows.script.reference")}</summary>
         <pre className="mt-2 overflow-auto rounded-md border border-border bg-surface p-3 font-mono text-text">
