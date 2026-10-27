@@ -183,7 +183,7 @@ Phase 12 Backlog                        → 未排期
 | # | 事项 | 子阶段 | 说明 |
 |---|---|---|---|
 | A1 | 推送远端并让 CI 全绿，Windows Job 设为必需检查 | 0.2 | 全局完成定义（§0.3）的第一条目前无法满足。 |
-| A2 | 资源管理器文件拖放 | 10.1、D-15 | 产品文档 §28 把「Drag & Drop → File」与内置 PDF / File Workflow 列为 MVP 必须有；HTML5 Drop 拿不到磁盘路径（ADR-011），目前只能复制 → 粘贴。 |
+| A2 | 资源管理器文件拖放 | 10.1、D-15 | 产品文档 §28 把「Drag & Drop → File」与内置 PDF / File Workflow 列为 MVP 必须有；HTML5 Drop 拿不到磁盘路径（ADR-011），目前只能复制 → 粘贴。✅ 2026-10-27：10.1 的 `postMessageWithAdditionalObjects` 通道已用真实 OLE 拖放（`CF_HDROP`：文件、多文件、含中文与空格的文件名、文件夹）在原生 E2E 里验证，见 `drop-matrix.md`；剩下的只是从资源管理器亲手拖一次。 |
 | A3 | 常驻性能基线与长稳 | 1.11、7.2 | `docs/development/perf-baseline.md` 尚不存在；7.7 的皮肤动效需一并测量（D-13）。 |
 | A4 | Desktop E2E 关键路径 | 7.1 | 7.6 的依赖。 |
 | A5 | 安装包、签名、Updater、发布流水线 | 7.6 | 4.6 的「通知显示正确应用名与图标」也依赖安装包注册的应用标识。 |
@@ -1522,7 +1522,7 @@ Phase 12 Backlog                        → 未排期
   - 范围拆分（D-15）：`CF_HDROP`（单 / 多文件、文件夹）为 MVP 部分，建议在 M4 发布前完成；`FileGroupDescriptor` 等其余格式按矩阵结果留在 Phase 10。
 - **验收标准**：
   - [ ] 2.4 兼容矩阵中所有失败项重新测试并更新结果，核心项全部通过。
-- **完成记录**：2026-10-12：**没有自定义 `IDropTarget`**——真机用 Win32 探测发现 WebView2 的拖放目标在浏览器进程（`Chrome_WidgetWin_1`，pid 不是本进程）的窗口上，本进程无法接管。改用 WebView2 正式接口 `postMessageWithAdditionalObjects`：`nivlo-platform-windows::webview_files::watch_file_drops` 在悬浮窗 WebView 上监听 `WebMessageReceived`，从 `ICoreWebView2File.Path` 取磁盘路径；桌面端 `native_drop` 用 Tauri 事件回传；前端 `native-paths.ts` + `extractCapture` 把非图片文件变成 `files` 捕获（取不到路径时仍提示不支持）。真机验证（调试端口 + 真实磁盘文件）：宿主拿到完整路径（含中文与空格），整条链路创建出 Item（`capture_completed kind=file origin=drop`）。**未验证**：真实的资源管理器拖动（单 / 多文件、文件夹）、Outlook 附件等 `FileGroupDescriptor` 场景（未实现）；验收「兼容矩阵所有失败项重新测试」未完成。（2026-10-11 盘点：2.4 的单元测试已确认资源管理器文件（单 / 多 / 文件夹）在 HTML5 Drop 下拿不到磁盘路径，满足 Phase 10 引言「核心来源失败时提前」的条件；是否列入 M4 待 D-15 定稿。
+- **完成记录**：2026-10-12：**没有自定义 `IDropTarget`**——真机用 Win32 探测发现 WebView2 的拖放目标在浏览器进程（`Chrome_WidgetWin_1`，pid 不是本进程）的窗口上，本进程无法接管。改用 WebView2 正式接口 `postMessageWithAdditionalObjects`：`nivlo-platform-windows::webview_files::watch_file_drops` 在悬浮窗 WebView 上监听 `WebMessageReceived`，从 `ICoreWebView2File.Path` 取磁盘路径；桌面端 `native_drop` 用 Tauri 事件回传；前端 `native-paths.ts` + `extractCapture` 把非图片文件变成 `files` 捕获（取不到路径时仍提示不支持）。真机验证（调试端口 + 真实磁盘文件）：宿主拿到完整路径（含中文与空格），整条链路创建出 Item（`capture_completed kind=file origin=drop`）。**未验证**：真实的资源管理器拖动（单 / 多文件、文件夹）、Outlook 附件等 `FileGroupDescriptor` 场景（未实现）；验收「兼容矩阵所有失败项重新测试」未完成。2026-10-27：原生 E2E 新增真实 OLE 拖放（`tests/e2e/ole-drag.ps1`，`CF_HDROP`）：文件、多文件、含中文与空格的文件名、文件夹一次拖入，各建成一条条目，附件路径正确（release，3 轮）。矩阵里资源管理器的三行已更新；`FileGroupDescriptor` 仍未实现。（2026-10-11 盘点：2.4 的单元测试已确认资源管理器文件（单 / 多 / 文件夹）在 HTML5 Drop 下拿不到磁盘路径，满足 Phase 10 引言「核心来源失败时提前」的条件；是否列入 M4 待 D-15 定稿。
 
 ### 10.2 高级悬浮窗行为
 

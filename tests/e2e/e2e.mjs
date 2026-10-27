@@ -549,6 +549,53 @@ async function runOnce(index) {
           realMouse(original[0], original[1]);
         }
       });
+
+      // 11.8（--native）资源管理器式拖放（实施计划 10.1 / 发布阻塞项 A2）：真实的 OLE 拖放把两个文件
+      // （CF_HDROP，资源管理器拖文件用的格式）放到悬浮窗上，页面拿到磁盘路径，各建一条带文件附件的条目。
+      await step("拖入文件（真实 OLE 拖放）", async () => {
+        const original = cursorPosition();
+        try {
+          // 一个普通文件、一个带中文与空格的文件、一个文件夹（拖放矩阵里文件夹一项此前未验证）。
+          const names = [`e2e-ole-a-${index}.txt`, `e2e-ole-b-${index} 中文 名.txt`, `e2e-ole-dir-${index}`];
+          const paths = names.map((name) => join(data, name));
+          writeFileSync(paths[0], "ole drop");
+          writeFileSync(paths[1], "ole drop");
+          mkdirSync(paths[2]);
+          const target = await until(
+            () => floating.evaluate("(() => { const k = window.devicePixelRatio; return [(window.screenX + window.innerWidth / 2) * k, (window.screenY + window.innerHeight / 2) * k]; })()"),
+            "悬浮窗的位置",
+          );
+          // 从悬浮窗左边（放不下就右边）开始拖。
+          const from = [target[0] > 400 ? target[0] - 300 : target[0] + 300, target[1]];
+          const quote = (text) => `'${text.replaceAll("'", "''")}'`;
+          const result = execFileSync(
+            "powershell",
+            [
+              "-NoProfile",
+              "-NonInteractive",
+              "-STA",
+              "-ExecutionPolicy",
+              "Bypass",
+              "-Command",
+              `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} -Files ${paths.map(quote).join(",")} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])}`,
+            ],
+            { encoding: "utf8", timeout: 30000 },
+          ).trim();
+          if (result === "None" || result === "NotStarted") throw new Error(`拖放没有被接受：${result}`);
+          // 每一项都建成条目，并且附件引用的是磁盘上的真实路径（不是只拿到了文件名）。
+          for (const [i, name] of names.entries()) {
+            const key = name.split(" ")[0].replace(".txt", "");
+            const item = await until(async () => (await main.invoke("search_items", { query: key }))[0], `拖入的 ${name} 建成了条目`, 10000);
+            const detail = await main.invoke("get_item_detail", { id: item.id });
+            const attached = detail.attachments.map((a) => a.path.toLowerCase());
+            if (!attached.includes(paths[i].toLowerCase())) {
+              throw new Error(`${name} 的附件路径不对：${JSON.stringify(detail.attachments.map((a) => a.path))}，应为 ${paths[i]}`);
+            }
+          }
+        } finally {
+          realMouse(original[0], original[1]);
+        }
+      });
     }
 
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。
