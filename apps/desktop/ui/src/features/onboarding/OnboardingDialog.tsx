@@ -108,7 +108,8 @@ function Illustration({ step }: { step: number }) {
 export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
-  const shortcut = useShortcutQuery("quickCreate").data?.accelerator ?? "Ctrl+Shift+Space";
+  const quickCreate = useShortcutQuery("quickCreate").data;
+  const shortcut = quickCreate?.accelerator ?? "Ctrl+Shift+Space";
   const search = useShortcutQuery("search").data;
   const primaryRef = useRef<HTMLButtonElement>(null);
   const last = step === ONBOARDING_STEPS - 1;
@@ -144,7 +145,18 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
         <kbd className="ml-1 rounded border border-border bg-bg px-1.5 py-0.5 text-xs text-text">
           {shortcut}
         </kbd>
-        {/* 全局搜索只在真的生效时介绍，免得教用户一个按了没反应的组合。 */}
+        {/* 被别的程序占用的快捷键按了没反应：直接说明，并指向侧栏里的修改框（那里有可用的组合）。 */}
+        {quickCreate?.conflict === true && (
+          <span className="mt-2 block text-danger">
+            {t("onboarding.step3.taken", { shortcut })}
+          </span>
+        )}
+        {/* 全局搜索只在真的生效时介绍，免得教用户一个按了没反应的组合；被占用时告诉用户去哪里换。 */}
+        {search?.conflict === true && (
+          <span className="mt-2 block text-danger">
+            {t("onboarding.step3.searchTaken", { shortcut: search.accelerator })}
+          </span>
+        )}
         {search?.registered === true && (
           <span className="mt-2 block">
             {t("onboarding.step3.search")}

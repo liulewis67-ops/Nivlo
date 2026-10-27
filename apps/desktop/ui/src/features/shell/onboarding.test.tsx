@@ -50,6 +50,32 @@ describe("首次运行引导", () => {
     await waitFor(() => expect(ipc.appSettings.onboardingCompleted).toBe(true));
   });
 
+  it("快捷键被别的程序占用时，最后一步说明按了没反应、去哪里换，而不是教一个用不了的组合", async () => {
+    const user = userEvent.setup();
+    useNavStore.setState({ view: "today" });
+    const ipc = createMemoryIpc();
+    ipc.showOnboarding();
+    ipc.setShortcutStatus(
+      {
+        accelerator: "Ctrl+Alt+Space",
+        registered: false,
+        conflict: true,
+        defaultAccelerator: "Ctrl+Alt+Space",
+        disabled: false,
+        typesCharacter: false,
+      },
+      "search",
+    );
+    renderWithProviders(<MainShell />, ipc);
+    const dialog = await screen.findByRole("dialog", { name: "欢迎使用拾序" });
+
+    await user.click(screen.getByRole("tab", { name: "第 4 步" }));
+    expect(dialog).toHaveTextContent("全局搜索的快捷键 Ctrl+Alt+Space 被别的程序占用了");
+    expect(dialog).not.toHaveTextContent("在任何应用里按：Ctrl+Alt+Space");
+    // Quick Create 没被占用：照常介绍，不出提示。
+    expect(dialog).not.toHaveTextContent("按了不会有反应");
+  });
+
   it("键盘：← → 切换步骤，Esc 跳过并记为看过；每步焦点都在主按钮上", async () => {
     useNavStore.setState({ view: "today" });
     const ipc = createMemoryIpc();
