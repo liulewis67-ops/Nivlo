@@ -204,6 +204,32 @@ describe("CalendarPage 添加与待安排", () => {
     expect(ipc.items).toHaveLength(1);
   });
 
+  it("在某一天里写的时间就是那天的时间（「下午3点 开会」→ 15:00），日期仍由格子决定", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<CalendarPage />, ipc);
+    await screen.findByRole("heading", { name: "2026年10月" });
+
+    fireEvent.click(screen.getByRole("button", { name: "在10月14日添加待办" }));
+    const input = screen.getByLabelText("新待办");
+    fireEvent.change(input, { target: { value: "下午3点 开会" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    await waitFor(() => expect(ipc.items).toHaveLength(1));
+    expect(ipc.items[0]?.scheduled).toEqual({ date: "2026-10-14", time: "15:00" });
+    expect(ipc.items[0]?.title).toBe("开会");
+
+    // 写了别的日期：不挪到那天，原样记在这一格（格子才是用户选的日期）。
+    fireEvent.click(screen.getByRole("button", { name: "在10月15日添加待办" }));
+    const second = screen.getByLabelText("新待办");
+    fireEvent.change(second, { target: { value: "明天 交报告" } });
+    fireEvent.keyDown(second, { key: "Enter" });
+    await waitFor(() => expect(ipc.items).toHaveLength(2));
+    expect(ipc.items.find((item) => item.title === "明天 交报告")?.scheduled).toEqual({
+      date: "2026-10-15",
+      time: null,
+    });
+  });
+
   it("「待安排」列出还没有日期的待办；没有时给出提示", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<CalendarPage />, ipc);

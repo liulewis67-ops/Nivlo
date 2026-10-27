@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { parseDatePhrase } from "@/features/quick-create";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { CalendarEntryDto, CalendarItemDto } from "@/lib/ipc";
@@ -319,14 +320,21 @@ export function CalendarPage() {
    * @param title 标题。
    */
   function createTodo(date: string, title: string): void {
+    // 在某一天里写的时间（「下午3点 开会」「15:00 评审」）就是那天的时间；日期由格子决定，
+    // 所以只认只有时间的短语（以这一格为「今天」解析，日期仍是这一天的才算）。
+    const parsed = parseDatePhrase(title, date);
+    const timed =
+      parsed !== null && parsed.schedule.date === date && parsed.schedule.time !== null
+        ? parsed
+        : null;
     ipc
       .createItem({
         itemType: "todo",
-        title,
+        title: timed?.title ?? title,
         content: null,
         contentFormat: null,
         priority: null,
-        scheduled: { date, time: null },
+        scheduled: { date, time: timed?.schedule.time ?? null },
         due: null,
         reminderAt: null,
         projectId: null,
