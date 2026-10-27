@@ -315,7 +315,7 @@ impl ItemService {
     /// * [`crate::error::ErrorCode::ItemNotFound`] - Item 不存在。
     /// * 存储错误。
     pub async fn get_item(&self, id: ItemId) -> Result<Item, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         tx.items()
             .get(id)
             .await?
@@ -329,7 +329,7 @@ impl ItemService {
     /// * [`crate::error::ErrorCode::ItemNotFound`] - Item 不存在。
     /// * 存储错误。
     pub async fn get_item_detail(&self, id: ItemId) -> Result<InboxEntry, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let item = tx
             .items()
             .get(id)
@@ -369,7 +369,7 @@ impl ItemService {
         if query.trim().is_empty() {
             return Ok(Vec::new());
         }
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         Ok(tx.items().search(query, false, SEARCH_LIMIT).await?)
     }
 
@@ -379,7 +379,7 @@ impl ItemService {
     ///
     /// 存储错误（含 [`crate::error::ErrorCode::StorageCorrupt`]）。
     pub async fn list_items(&self, filter: ItemFilter) -> Result<Vec<Item>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         Ok(tx.items().list(&filter).await?)
     }
 }

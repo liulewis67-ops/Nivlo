@@ -126,7 +126,7 @@ impl InboxService {
     ///
     /// 存储错误。
     pub async fn list(&self) -> Result<Vec<InboxEntry>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let items = tx
             .items()
             .list(&ItemFilter {
@@ -155,7 +155,7 @@ impl InboxService {
     ///
     /// 存储错误。
     pub async fn count(&self) -> Result<u32, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let items = tx
             .items()
             .list(&ItemFilter {

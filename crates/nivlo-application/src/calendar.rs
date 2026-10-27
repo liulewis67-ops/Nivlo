@@ -157,7 +157,7 @@ impl CalendarService {
         view: CalendarView,
         anchor: NaiveDate,
     ) -> Result<CalendarData, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let week_start = read_week_start(&mut *tx).await?;
         let (from, to) = visible_range(view, anchor, week_start);
         let items = tx.items().list_calendar(from, to).await?;

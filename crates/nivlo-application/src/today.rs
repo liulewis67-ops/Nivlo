@@ -132,7 +132,7 @@ impl TodayService {
         let from = start_of_local_day(date, timezone);
         let to = start_of_local_day(date.succ_opt().unwrap_or(date), timezone);
 
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let open_todos = tx
             .items()
             .list_open_todos_scheduled_on_or_before(date)

@@ -443,7 +443,7 @@ impl WorkflowService {
     ///
     /// 存储错误。
     pub async fn list(&self) -> Result<Vec<StoredWorkflow>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let mut all = tx.workflows().list().await?;
         all.sort_by(|a, b| {
             let rank = |w: &StoredWorkflow| u8::from(w.workflow.source != WorkflowSource::Builtin);
@@ -461,7 +461,7 @@ impl WorkflowService {
     ///
     /// `WORKFLOW_NOT_FOUND`；存储错误。
     pub async fn get(&self, id: &WorkflowId) -> Result<StoredWorkflow, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         tx.workflows().get(id).await?.ok_or_else(|| not_found(id))
     }
 
@@ -604,7 +604,7 @@ impl WorkflowService {
         // 导入的 Workflow 默认禁用：用户看过之后自己启用。
         workflow.enabled = false;
         let original = workflow.id.clone();
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         // ID 已被占用（内置或已有的）就换一个，不覆盖任何现有 Workflow。
         let mut candidate = original.clone();
         let mut n = 1_u32;
@@ -715,7 +715,7 @@ impl WorkflowService {
     ///
     /// 存储错误。
     pub async fn recent_runs(&self, limit: u32) -> Result<Vec<RunRecord>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         Ok(tx.workflows().list_runs(limit).await?)
     }
 

@@ -167,7 +167,7 @@ impl SettingsService {
     /// * 存储错误。
     pub async fn get(&self, key: &str) -> Result<Option<String>, AppError> {
         validate_key(key)?;
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         Ok(tx.settings().get(key).await?)
     }
 
@@ -177,7 +177,7 @@ impl SettingsService {
     ///
     /// 存储错误。
     pub async fn later_rule(&self) -> Result<LaterRule, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         read_later_rule(&mut *tx).await
     }
 
@@ -187,7 +187,7 @@ impl SettingsService {
     ///
     /// 存储错误。
     pub async fn week_start(&self) -> Result<WeekStart, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         read_week_start(&mut *tx).await
     }
 

@@ -24,6 +24,14 @@ const MAX_CONNECTIONS: u32 = 4;
 /// 检查点之后 WAL 文件最多保留的字节数（32 MiB）。
 const WAL_SIZE_LIMIT_BYTES: &str = "33554432";
 
+/// 事务一开始就拿写锁。
+///
+/// 默认的 `BEGIN` 是延迟事务：先读后写时，如果别的连接在这期间提交过写入，WAL 下 SQLite 会在升级为
+/// 写事务的那一刻直接返回 `SQLITE_BUSY_SNAPSHOT`（不等 [`BUSY_TIMEOUT`]），表现为偶发的
+/// `STORAGE_UNAVAILABLE`。`BEGIN IMMEDIATE` 让第二个写事务在开始时就排队等待，最多等 `BUSY_TIMEOUT`。
+/// 只读的事务用 [`UnitOfWork::begin_read`]（延迟事务），不受影响。
+const BEGIN_WRITE: &str = "BEGIN IMMEDIATE";
+
 /// 等待数据库锁的最长时间。
 const BUSY_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -105,7 +113,7 @@ impl Database {
         if rows.is_empty() {
             return Ok(());
         }
-        let mut tx = self.pool.begin().await.map_err(map_sqlx)?;
+        let mut tx = self.pool.begin_with(BEGIN_WRITE).await.map_err(map_sqlx)?;
         for row in &rows {
             let initials = title_initials(&row.title);
             sqlx::query!(
@@ -246,8 +254,14 @@ impl Database {
 
 #[async_trait]
 impl UnitOfWork for Database {
-    /// 从连接池取一个连接并开启事务。
+    /// 从连接池取一个连接并开启事务（立即拿写锁，见 [`BEGIN_WRITE`]）。
     async fn begin(&self) -> Result<Box<dyn Transaction>, StorageError> {
+        let tx = self.pool.begin_with(BEGIN_WRITE).await.map_err(map_sqlx)?;
+        Ok(Box::new(SqliteTransaction::new(tx)))
+    }
+
+    /// 从连接池取一个连接并开启延迟事务：只在第一次读取时拿快照，不占写锁。
+    async fn begin_read(&self) -> Result<Box<dyn Transaction>, StorageError> {
         let tx = self.pool.begin().await.map_err(map_sqlx)?;
         Ok(Box::new(SqliteTransaction::new(tx)))
     }

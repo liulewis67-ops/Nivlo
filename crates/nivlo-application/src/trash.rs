@@ -110,7 +110,7 @@ impl TrashService {
     ///
     /// 存储错误。
     pub async fn list(&self) -> Result<Vec<TrashEntry>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         Ok(tx
             .trash()
             .list_deleted()

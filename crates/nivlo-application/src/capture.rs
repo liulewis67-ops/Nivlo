@@ -364,7 +364,7 @@ impl CaptureService {
         let Some(engine) = &self.workflows else {
             return fallback(plan(&request.input));
         };
-        let workflows = match self.uow.begin().await {
+        let workflows = match self.uow.begin_read().await {
             Ok(mut tx) => match tx.workflows().list().await {
                 Ok(stored) => stored.into_iter().map(|s| s.workflow).collect::<Vec<_>>(),
                 Err(error) => {

@@ -64,7 +64,7 @@ impl CaptureService {
 
     /// 读取一个 Workflow 的当前定义。
     async fn load_workflow(&self, id: &WorkflowId) -> Option<nivlo_domain::workflow::Workflow> {
-        let mut tx = self.uow.begin().await.ok()?;
+        let mut tx = self.uow.begin_read().await.ok()?;
         tx.workflows()
             .get(id)
             .await
@@ -163,7 +163,7 @@ impl CaptureService {
             return Err(failed("Workflow 引擎不可用"));
         };
         let (input, workflows) = {
-            let mut tx = self.uow.begin().await?;
+            let mut tx = self.uow.begin_read().await?;
             if tx.items().get(item_id).await?.is_none() {
                 return Err(AppError::new(ErrorCode::ItemNotFound, "条目不存在"));
             }

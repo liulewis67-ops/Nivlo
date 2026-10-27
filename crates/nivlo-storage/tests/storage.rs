@@ -958,7 +958,7 @@ async fn a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_wa
     let (_dir, path, db) = new_db().await;
     let wal = path.with_extension("db-wal");
     // 一个一直开着的读事务：自动检查点没法重置 WAL，文件只增不减（实测问题）。
-    let mut reader = db.begin().await.unwrap();
+    let mut reader = db.begin_read().await.unwrap();
     let _ = reader.items().list(&ItemFilter::default()).await.unwrap();
     for batch in 0..40_u128 {
         let mut tx = db.begin().await.unwrap();
@@ -984,7 +984,7 @@ async fn a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_wa
 #[tokio::test]
 async fn the_wal_is_truncated_only_once_it_passes_the_limit() {
     let (_dir, _path, db) = new_db().await;
-    let mut reader = db.begin().await.unwrap();
+    let mut reader = db.begin_read().await.unwrap();
     let _ = reader.items().list(&ItemFilter::default()).await.unwrap();
     for n in 0..300_u128 {
         let mut tx = db.begin().await.unwrap();
@@ -1004,4 +1004,52 @@ async fn the_wal_is_truncated_only_once_it_passes_the_limit() {
     // 超过阈值：截断。
     assert!(db.checkpoint_if_wal_exceeds(1024).await.unwrap());
     assert!(db.wal_size() < 64 * 1024);
+}
+
+/// 两个事务交错：A 先读，B 在 A 读之后写入并提交，A 再写入。
+///
+/// 延迟事务（`BEGIN`）下 A 在 WAL 里拿着一个旧快照，升级为写事务时 SQLite 直接返回
+/// `SQLITE_BUSY`（不等 `busy_timeout`），表现为偶发的 `STORAGE_UNAVAILABLE`——比如启动时后台任务
+/// 正在写，用户的第一次操作就失败了。写事务以 `BEGIN IMMEDIATE` 开始后，B 会等 A 提交再写，两边都成功。
+#[tokio::test]
+async fn interleaved_read_then_write_transactions_both_succeed() {
+    let (_dir, _path, db) = new_db().await;
+    let db = std::sync::Arc::new(db);
+
+    let mut a = db.begin().await.unwrap();
+    assert_eq!(a.settings().get("race").await.unwrap(), None);
+
+    // B 在另一个任务里写入；A 还没提交时它只能等待（立即事务），不能抢先提交。
+    let other = std::sync::Arc::clone(&db);
+    let b = tokio::spawn(async move {
+        let mut b = other.begin().await?;
+        b.settings().set("race", "b", t(9, 1)).await?;
+        b.commit().await
+    });
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    a.settings().set("race", "a", t(9, 0)).await.unwrap();
+    a.commit().await.unwrap();
+    b.await.unwrap().unwrap();
+
+    let mut check = db.begin().await.unwrap();
+    assert_eq!(
+        check.settings().get("race").await.unwrap().as_deref(),
+        Some("b")
+    );
+}
+
+/// 只读事务不占写锁：导出这类长时间的读取开着时，写入照常完成。
+#[tokio::test]
+async fn an_open_read_transaction_does_not_block_writes() {
+    let (_dir, _path, db) = new_db().await;
+    let mut reader = db.begin_read().await.unwrap();
+    assert_eq!(reader.settings().get("k").await.unwrap(), None);
+
+    let mut writer = db.begin().await.unwrap();
+    writer.settings().set("k", "v", t(9, 0)).await.unwrap();
+    writer.commit().await.unwrap();
+
+    // 读事务看到的仍是开始时的快照。
+    assert_eq!(reader.settings().get("k").await.unwrap(), None);
 }

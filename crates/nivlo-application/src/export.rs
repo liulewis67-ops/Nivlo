@@ -105,7 +105,7 @@ impl ExportService {
 
     /// 读取全部 Item 及其标签 / 来源 / 项目名（一个事务，一致的视图）。
     async fn collect(&self) -> Result<Vec<Entry>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let filter = ItemFilter {
             include_archived: true,
             ..ItemFilter::default()

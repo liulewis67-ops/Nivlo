@@ -9,7 +9,7 @@
 //! // 只有提交成功后才发布事件。
 //! ```
 //!
-//! 事务被丢弃而未提交时必须回滚。
+//! 事务被丢弃而未提交时必须回滚。只读的 Use Case 用 `begin_read`：它不占写锁，不会让写入排队。
 
 use async_trait::async_trait;
 use chrono::{DateTime, NaiveDate, Utc};
@@ -54,12 +54,26 @@ pub enum StorageError {
 /// 事务工厂。
 #[async_trait]
 pub trait UnitOfWork: Send + Sync {
-    /// 开启一个新事务。
+    /// 开启一个**写**事务：一开始就拿到写锁，其他写事务排队等它提交。
+    ///
+    /// 会写入的 Use Case 必须用它。先读后写的事务如果在读之后才去拿写锁，别的连接在这期间提交过
+    /// 写入时就会直接失败（SQLite WAL 的 `SQLITE_BUSY_SNAPSHOT`），不会等待。
+    ///
+    /// # Errors
+    ///
+    /// 数据库不可用（或等写锁超时）时返回 [`StorageError::Unavailable`]。
+    async fn begin(&self) -> Result<Box<dyn Transaction>, StorageError>;
+
+    /// 开启一个**只读**事务：多次查询看到同一个一致的快照，不占写锁（导出这类长时间的读取不会挡住写入）。
+    ///
+    /// 只读事务里不应写入；缺省实现直接用 [`UnitOfWork::begin`]。
     ///
     /// # Errors
     ///
     /// 数据库不可用时返回 [`StorageError::Unavailable`]。
-    async fn begin(&self) -> Result<Box<dyn Transaction>, StorageError>;
+    async fn begin_read(&self) -> Result<Box<dyn Transaction>, StorageError> {
+        self.begin().await
+    }
 }
 
 /// 一个进行中的事务，聚合了各 Repository 的访问入口。

@@ -59,7 +59,7 @@ impl ProjectService {
     ///
     /// 存储错误。
     pub async fn list(&self, include_archived: bool) -> Result<Vec<ProjectSummary>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let projects = tx.projects().list(include_archived).await?;
         let counts: HashMap<ProjectId, u32> = tx
             .projects()
@@ -175,7 +175,7 @@ impl TagService {
     ///
     /// 存储错误。
     pub async fn list(&self) -> Result<Vec<TagSummary>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         Ok(tx
             .tags()
             .list_with_counts()
@@ -254,7 +254,7 @@ impl TagService {
     ///
     /// 存储错误。
     pub async fn for_item(&self, item_id: ItemId) -> Result<Vec<Tag>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         Ok(tx.tags().for_item(item_id).await?)
     }
 
@@ -269,7 +269,7 @@ impl TagService {
         &self,
         item_ids: &[ItemId],
     ) -> Result<Vec<(ItemId, Vec<Tag>)>, AppError> {
-        let mut tx = self.uow.begin().await?;
+        let mut tx = self.uow.begin_read().await?;
         let mut result = Vec::with_capacity(item_ids.len().min(TAGS_FOR_ITEMS_LIMIT));
         for &item_id in item_ids.iter().take(TAGS_FOR_ITEMS_LIMIT) {
             result.push((item_id, tx.tags().for_item(item_id).await?));
