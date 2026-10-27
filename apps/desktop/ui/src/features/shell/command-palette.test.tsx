@@ -158,6 +158,38 @@ describe("全局搜索（Ctrl+K）", () => {
     expect(ipc.calls).not.toContain("searchItems");
   });
 
+  it("「新建笔记」命令建好一篇未命名笔记并直接打开它的详情", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<MainShell />, ipc);
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+
+    typeQuery("> 新建笔记");
+    fireEvent.keyDown(screen.getByLabelText("搜索关键词"), { key: "Enter" });
+
+    const detail = await screen.findByLabelText("条目详情");
+    expect(await within(detail).findByDisplayValue("未命名笔记")).toBeInTheDocument();
+    expect(ipc.items.map((item) => [item.itemType, item.title])).toEqual([["note", "未命名笔记"]]);
+  });
+
+  it("「暂停通知」与设置页是同一个开关；暂停后命令变成「恢复通知」", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<MainShell />, ipc);
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+
+    typeQuery(">pause");
+    fireEvent.click(await screen.findByRole("option", { name: /暂停通知/ }));
+    await waitFor(() => expect(ipc.appSettings.notificationsPaused).toBe(true));
+    expect(await screen.findByText(/已暂停通知/)).toBeInTheDocument();
+
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery(">pause");
+    expect(screen.getByRole("option", { name: /恢复通知/ })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /暂停通知/ })).not.toBeInTheDocument();
+  });
+
   it("命令也能用英文视图名匹配；没有匹配时给出提示", async () => {
     renderWithProviders(<MainShell />, createMemoryIpc());
     pressCtrlK();

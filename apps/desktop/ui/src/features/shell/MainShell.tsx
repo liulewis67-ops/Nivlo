@@ -11,6 +11,7 @@ import { OnboardingDialog } from "@/features/onboarding";
 import { useUpdateCheckOnStart } from "@/features/settings";
 import { ProjectsPage } from "@/features/projects";
 import { CommandPalette, GOTO_VIEWS } from "@/features/search";
+import type { PaletteCommand } from "@/features/search";
 import { SettingsPage } from "@/features/settings";
 import { ShortcutSetting } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
@@ -19,6 +20,7 @@ import { WorkflowsPage } from "@/features/workflows";
 import { cx } from "@/lib/cx";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
+import { useToastStore } from "@/stores/toast-store";
 import { NavIcon } from "./NavIcons";
 import { parseMainView, useNavStore } from "./nav-store";
 import type { MainView } from "./nav-store";
@@ -107,6 +109,71 @@ export function MainShell() {
     queryFn: () => ipc.getAppSettings(),
     staleTime: Infinity,
   });
+
+  const notificationsPaused = settings.data?.notificationsPaused ?? false;
+  /**
+   * Ctrl+K 的命令（输入 `>`）：前往各视图，以及常用的动作——新建笔记（建好直接打开详情），
+   * 暂停 / 恢复通知（与设置页、托盘是同一个开关，名称随当前状态变化）。
+   */
+  const paletteCommands: PaletteCommand[] = [
+    ...GOTO_VIEWS.map((target) => ({
+      id: `goto-${target}`,
+      label: t("search.goto", { view: t(`shell.nav.${target}`) }),
+      keywords: [target],
+      run: () => setView(target),
+    })),
+    {
+      id: "new-note",
+      label: t("search.newNote"),
+      keywords: ["note", "new"],
+      run: () => {
+        ipc
+          .createItem({
+            itemType: "note",
+            title: t("notes.untitled"),
+            content: null,
+            contentFormat: "markdown",
+            priority: null,
+            scheduled: null,
+            due: null,
+            reminderAt: null,
+            projectId: null,
+          })
+          .then((note) => setOpenId(note.id))
+          .catch(reportError);
+      },
+    },
+    // 设置还没读到时不知道当前状态，先不列出开关。
+    ...(settings.data === undefined
+      ? []
+      : [
+          {
+            id: "toggle-notifications",
+            label: t(
+              notificationsPaused ? "search.resumeNotifications" : "search.pauseNotifications",
+            ),
+            keywords: ["notifications", "pause", "resume"],
+            run: () => {
+              const paused = !notificationsPaused;
+              ipc
+                .setNotificationsPaused(paused)
+                .then(() => {
+                  queryClient.setQueryData<typeof settings.data>(
+                    queryKeys.appSettings(),
+                    (current) => current && { ...current, notificationsPaused: paused },
+                  );
+                  useToastStore
+                    .getState()
+                    .push(
+                      "success",
+                      t(paused ? "search.notificationsPaused" : "search.notificationsResumed"),
+                    );
+                })
+                .catch(reportError);
+            },
+          },
+        ]),
+  ];
 
   // Ctrl+K（macOS 上 ⌘K）打开 / 关闭搜索面板。
   useEffect(() => {
@@ -243,12 +310,7 @@ export function MainShell() {
           <CommandPalette
             onClose={() => setSearching(false)}
             onOpenItem={setOpenId}
-            commands={GOTO_VIEWS.map((target) => ({
-              id: `goto-${target}`,
-              label: t("search.goto", { view: t(`shell.nav.${target}`) }),
-              keywords: [target],
-              run: () => setView(target),
-            }))}
+            commands={paletteCommands}
           />
         )}
         {openId !== null && (

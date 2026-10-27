@@ -447,6 +447,11 @@
     "commandHint": "输入 > 使用命令",
     "noCommand": "没有匹配的命令",
     "goto": "前往：{{view}}",
+    "newNote": "新建笔记",
+    "pauseNotifications": "暂停通知",
+    "resumeNotifications": "恢复通知",
+    "notificationsPaused": "已暂停通知，到点的提醒会在恢复后汇总",
+    "notificationsResumed": "已恢复通知",
     "meta": {
       "yesterday": "昨天",
       "inbox": "收集箱",
