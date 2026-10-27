@@ -24,6 +24,7 @@ import { useToastStore } from "@/stores/toast-store";
 import { NavIcon } from "./NavIcons";
 import { parseMainView, useNavStore } from "./nav-store";
 import type { MainView } from "./nav-store";
+import { ShortcutsDialog } from "./ShortcutsDialog";
 import { ThemeMenu } from "./ThemeMenu";
 
 /** 后端请求打开某个 Item 时的名字前缀：`item:<ID>`（点击通知，实施计划 10.6）。 */
@@ -34,6 +35,20 @@ const NAV_VIEWS: MainView[] = ["inbox", "today", "calendar", "notes", "projects"
 
 /** 开发模式额外显示的视图：Phase 0 的 IPC 演示页，发布版本不出现。 */
 const DEV_VIEWS: MainView[] = import.meta.env.DEV ? ["dev"] : [];
+
+/**
+ * 按键是不是落在可输入的地方（输入框、文本区、可编辑内容）：这时「?」只是一个字符。
+ *
+ * @param event 键盘事件。
+ * @returns 正在输入时为 `true`。
+ */
+function isTyping(event: KeyboardEvent): boolean {
+  const target = event.target;
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+  );
+}
 
 /** [`NavButton`] 的 Props。 */
 type NavButtonProps = {
@@ -102,6 +117,8 @@ export function MainShell() {
   const [openId, setOpenId] = useState<string | null>(null);
   /** 搜索面板（Ctrl+K）是否打开。 */
   const [searching, setSearching] = useState(false);
+  /** 键盘快捷键一览是否打开。 */
+  const [showingShortcuts, setShowingShortcuts] = useState(false);
   useUpdateCheckOnStart();
   const queryClient = useQueryClient();
   const settings = useQuery({
@@ -123,6 +140,12 @@ export function MainShell() {
       keywords: [target],
       run: () => setView(target),
     })),
+    {
+      id: "shortcuts",
+      label: t("shortcuts.title"),
+      keywords: ["shortcuts", "keyboard", "help", "?"],
+      run: () => setShowingShortcuts(true),
+    },
     {
       id: "new-note",
       label: t("search.newNote"),
@@ -187,6 +210,16 @@ export function MainShell() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearching((open) => !open);
+      } else if (
+        event.key === "?" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !isTyping(event)
+      ) {
+        // 「?」打开快捷键一览（常见的约定）；正在输入时它只是一个问号。
+        event.preventDefault();
+        setShowingShortcuts(true);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -316,6 +349,7 @@ export function MainShell() {
             commands={paletteCommands}
           />
         )}
+        {showingShortcuts && <ShortcutsDialog onClose={() => setShowingShortcuts(false)} />}
         {openId !== null && (
           <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />
         )}

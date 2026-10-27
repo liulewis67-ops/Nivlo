@@ -260,3 +260,40 @@ describe("全局搜索（Ctrl+K）", () => {
     expect(ipc.calls.filter((c) => c === "searchItems")).toHaveLength(1);
   });
 });
+
+describe("键盘快捷键一览", () => {
+  beforeEach(() => {
+    useNavStore.setState({ view: "today" });
+  });
+
+  it("按 ? 打开，列出各处的快捷键与真实的全局绑定；Esc 关闭", async () => {
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    await screen.findByRole("textbox", { name: "添加待办" });
+
+    fireEvent.keyDown(document.body, { key: "?" });
+    const sheet = await screen.findByRole("dialog", { name: "键盘快捷键" });
+    expect(within(sheet).getByText("完成选中的待办")).toBeInTheDocument();
+    expect(within(sheet).getByText("Ctrl+D")).toBeInTheDocument();
+    expect(await within(sheet).findByText("Ctrl+Shift+Space")).toBeInTheDocument();
+    expect(within(sheet).getByText("Ctrl+Alt+Space")).toBeInTheDocument();
+
+    fireEvent.keyDown(sheet, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "键盘快捷键" })).not.toBeInTheDocument();
+  });
+
+  it("在输入框里打 ? 只是一个问号，不会打开", async () => {
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    const input = await screen.findByRole("textbox", { name: "添加待办" });
+    fireEvent.keyDown(input, { key: "?" });
+    expect(screen.queryByRole("dialog", { name: "键盘快捷键" })).not.toBeInTheDocument();
+  });
+
+  it("Ctrl+K 的命令也能打开", async () => {
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery("> 快捷键");
+    fireEvent.keyDown(screen.getByLabelText("搜索关键词"), { key: "Enter" });
+    expect(await screen.findByRole("dialog", { name: "键盘快捷键" })).toBeInTheDocument();
+  });
+});

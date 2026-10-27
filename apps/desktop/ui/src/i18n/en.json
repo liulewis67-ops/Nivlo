@@ -960,5 +960,45 @@
     "yearMonth": "MMMM yyyy",
     "yearMonthDay": "MMM d, yyyy",
     "weekdayShort": "eee"
+  },
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "close": "Close",
+    "section": {
+      "global": "In any app",
+      "main": "Main window",
+      "search": "Search (Ctrl+K and global search)",
+      "quickCreate": "Quick Create",
+      "today": "Today list"
+    },
+    "global": {
+      "quickCreate": "Quick Create",
+      "search": "Global search",
+      "taken": "taken by another program",
+      "disabled": "off"
+    },
+    "main": {
+      "search": "Search and commands",
+      "help": "Show this sheet"
+    },
+    "search": {
+      "move": "Previous / next result",
+      "open": "Open the selected item",
+      "create": "Save the search as a to-do",
+      "copy": "Copy the selected item's title",
+      "complete": "Complete the selected to-do",
+      "undo": "Undo that completion",
+      "commands": "Commands: go to a page, new note, pause notifications…",
+      "close": "Close"
+    },
+    "quickCreate": {
+      "create": "Create (“tomorrow 3pm …” sets the date)",
+      "kind": "Switch between to-do / note / tip",
+      "date": "Undo the recognised date",
+      "cancel": "Cancel"
+    },
+    "today": {
+      "reorder": "Pick up / drop a to-do; ↑ ↓ to move it"
+    }
   }
 }

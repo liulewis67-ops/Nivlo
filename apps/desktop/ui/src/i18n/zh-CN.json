@@ -955,5 +955,45 @@
     "yearMonth": "yyyy年M月",
     "yearMonthDay": "yyyy年M月d日",
     "weekdayShort": "eee"
+  },
+  "shortcuts": {
+    "title": "键盘快捷键",
+    "close": "关闭",
+    "section": {
+      "global": "在任何应用里",
+      "main": "主窗口",
+      "search": "搜索框（Ctrl+K 与全局搜索）",
+      "quickCreate": "快速创建",
+      "today": "今天的列表"
+    },
+    "global": {
+      "quickCreate": "快速创建",
+      "search": "全局搜索",
+      "taken": "被其他程序占用",
+      "disabled": "已停用"
+    },
+    "main": {
+      "search": "搜索与命令",
+      "help": "显示这张表"
+    },
+    "search": {
+      "move": "选择上一条 / 下一条",
+      "open": "打开选中的条目",
+      "create": "把搜索词记成待办",
+      "copy": "复制选中条目的标题",
+      "complete": "完成选中的待办",
+      "undo": "撤销刚才的完成",
+      "commands": "命令：前往页面、新建笔记、暂停通知…",
+      "close": "关闭"
+    },
+    "quickCreate": {
+      "create": "创建（「明天下午3点 …」会认出日期）",
+      "kind": "在待办 / 笔记 / 提示之间切换",
+      "date": "取消刚认出的日期",
+      "cancel": "取消"
+    },
+    "today": {
+      "reorder": "拿起 / 放下待办，配合 ↑ ↓ 调整顺序"
+    }
   }
 }
