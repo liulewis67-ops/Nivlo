@@ -277,8 +277,7 @@ export function MainShell() {
               onSelect={() => setView("settings")}
             />
             <ShortcutSetting action="quickCreate" />
-            {/* 全局搜索的快捷键被别的程序占用时才在侧栏出现（自动展开冲突提示与修改框）：否则用户只有打开
-                设置页才会知道全局搜索用不了，也就不知道有这个功能。 */}
+            {/* 全局搜索的快捷键被占用时才出现（自动展开提示与修改框），否则只有设置页里看得到。 */}
             {searchShortcut?.conflict === true && <ShortcutSetting action="search" />}
             <ThemeMenu />
           </div>
