@@ -180,6 +180,10 @@ fn create<R: Runtime>(
     .maximizable(false)
     .minimizable(false)
     .visible(false)
+    // 创建时不抢前台：创建之后才记住用户原来的窗口（要拿到搜索框自己的句柄），创建时就激活的话会把
+    // 搜索框自己当成「原来的窗口」，退回到上一个其他进程的窗口——从主窗口唤出时 Esc 会把焦点交给别的应用。
+    // 页面加载完成后由 `present` 显示并聚焦。
+    .focused(false)
     .on_page_load(move |window, payload| {
         if payload.event() == PageLoadEvent::Finished && first_load.swap(false, Ordering::SeqCst) {
             present(&handle, &window);

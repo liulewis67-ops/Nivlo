@@ -42,9 +42,14 @@ function visibleWindowCount(pid) {
 /** 一段 PowerShell 共用的 Win32 声明。 */
 const WIN32 = `Add-Type -Namespace E2E -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, System.IntPtr p); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid); [DllImport("user32.dll")] public static extern bool GetWindowRect(System.IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr h); [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, System.UIntPtr extra); [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y); [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p); [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, System.UIntPtr extra); public struct POINT { public int X; public int Y; } [DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr h, uint msg, System.IntPtr w, System.IntPtr l); public delegate bool EnumProc(System.IntPtr h, System.IntPtr p); public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }'`;
 
-/** 运行一段带 Win32 声明的 PowerShell，返回去掉首尾空白的输出。 */
+/**
+ * 运行一段带 Win32 声明的 PowerShell，返回去掉首尾空白的输出。
+ *
+ * 所有 PowerShell 都以 `windowsHide` 启动：否则它的控制台窗口会短暂抢到前台，关掉之后系统把前台交给
+ * 启动测试的那个应用——被测程序自己的窗口在前台时，焦点相关的断言就会被测试本身破坏。
+ */
 function win32(body) {
-  return execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", `${WIN32}; ${body}`], { encoding: "utf8", timeout: 30000 }).trim();
+  return execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", `${WIN32}; ${body}`], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim();
 }
 
 /** 真实光标的位置（物理像素）。 */
@@ -129,7 +134,7 @@ function pressSearchHotkey() {
     "[DateTimeOffset]::Now.ToUnixTimeMilliseconds()",
   ].join("; ");
   // 返回松开按键那一刻的时间（Unix 毫秒），计时从这里开始，不受 PowerShell 退出快慢影响。
-  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000 }).trim());
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim());
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -201,7 +206,7 @@ function testInstanceRunning() {
   // 正在退出的进程可能读不到路径：读不到的也算在运行，宁可多等一会儿。
   const quoted = `'${EXE.replaceAll("'", "''")}'`;
   const script = `@(Get-Process -Name nivlo-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${quoted} -or -not $_.Path }).Count`;
-  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000 }).trim()) > 0;
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim()) > 0;
 }
 
 async function runOnce(index) {
@@ -213,6 +218,8 @@ async function runOnce(index) {
       ...process.env,
       NIVLO_DATA_DIR: join(data, "data"),
       NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
+      // 前台记忆 / 还原的调试日志：焦点相关的失败可以从日志里看出记住了谁、还给了谁。
+      NIVLO_LOG: "info,nivlo_platform::foreground=debug,nivlo_desktop_lib::windows=debug",
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
   const child = spawn(EXE, [], { env, stdio: "ignore" });
@@ -581,7 +588,7 @@ async function runOnce(index) {
                 "-Command",
                 `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} ${payload} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])}`,
               ],
-              { encoding: "utf8", timeout: 30000 },
+              { encoding: "utf8", timeout: 30000, windowsHide: true },
             ).trim();
             if (result === "None" || result === "NotStarted") throw new Error(`拖放没有被接受（${payload}）：${result}`);
           };
@@ -645,6 +652,15 @@ async function runOnce(index) {
           if (Math.abs(after.x + after.w - after.right) > 1 || Math.abs(after.y - before.y) > 2 * scale) {
             throw new Error(`松开后没有贴到工作区右边缘：拖之前 ${JSON.stringify(before)}，现在 ${JSON.stringify(after)}`);
           }
+
+          // 单击收起的徽标（按下后没有移动）：打开主窗口并把它放到前台——这是用户要去的地方。
+          focusWindow(USER_FOREGROUND);
+          await until(() => foregroundWindow() === USER_FOREGROUND, "点击之前前台在别的应用", 5000);
+          realMouse(after.x + after.w / 2, after.y + after.h / 2, true);
+          await until(() => foregroundOwner().startsWith(`${child.pid} `), "单击徽标后主窗口到了前台", 5000).catch((e) => {
+            throw new Error(`${e.message}（现在的前台：${foregroundOwner()}）`);
+          });
+          await until(() => main.evaluate("document.hasFocus()"), "主窗口拿到焦点", 5000);
         } finally {
           realMouse(original[0], original[1]);
         }
@@ -679,7 +695,11 @@ async function runOnce(index) {
             throw new Error(`${e.message}（可见窗口：之前 ${shown}，现在 ${visibleWindowCount(child.pid)}）`);
           });
           if (await search.evaluate("document.hasFocus()")) throw new Error("隐藏后搜索框仍然拿着焦点");
-          await until(() => foregroundWindow() === previousForeground, "Esc 之后焦点回到原来的前台窗口", 5000);
+          await until(() => foregroundWindow() === previousForeground, "Esc 之后焦点回到原来的前台窗口", 5000).catch(() => {
+            const logs = readdirSync(join(data, "data", "logs")).map((f) => readFileSync(join(data, "data", "logs", f), "utf8")).join("\n");
+            const trace = logs.split("\n").filter((l) => /foreground_|search_focus/.test(l)).slice(-6).map((l) => l.replace(/^\S+\s+/, "").slice(0, 200)).join(" | ");
+            throw new Error(`Esc 之后焦点没有回到原来的前台窗口：原来 ${previousForeground}，现在 ${foregroundWindow()}（${foregroundOwner()}，被测进程 ${child.pid}）；日志：${trace || "无"}`);
+          });
 
           // 再按一次：出现时是干净的、焦点在输入框。
           const againStarted = pressSearchHotkey();
@@ -853,7 +873,7 @@ async function coldMainScenario() {
 /** 进程 `pid` 及其全部子孙进程（WebView2 的浏览器与渲染进程）的工作集之和，MB。 */
 function treeWorkingSetMb(pid) {
   const script = `$all = Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, WorkingSetSize; $ids = @(${pid}); $added = $true; while ($added) { $added = $false; foreach ($p in $all) { if ($ids -contains $p.ParentProcessId -and -not ($ids -contains $p.ProcessId)) { $ids += $p.ProcessId; $added = $true } } }; [math]::Round((($all | Where-Object { $ids -contains $_.ProcessId } | Measure-Object WorkingSetSize -Sum).Sum) / 1MB)`;
-  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000 }).trim());
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim());
 }
 
 /**
