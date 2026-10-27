@@ -661,6 +661,20 @@ async function runOnce(index) {
             throw new Error(`${e.message}（现在的前台：${foregroundOwner()}）`);
           });
           await until(() => main.evaluate("document.hasFocus()"), "主窗口拿到焦点", 5000);
+
+          // 在拾序自己的主窗口里按 Quick Create 快捷键：记下的「原来的窗口」是主窗口，Enter 之后焦点回到主窗口
+          // （此前只测过别的应用在前台的情况）。
+          const mainHandle = foregroundWindow();
+          pressHotkey([0x11, 0x12, 0x10, 0x77]);
+          await until(() => floating.evaluate("document.hasFocus() && ['标题', 'Title'].includes(document.activeElement?.getAttribute('aria-label')) && !document.activeElement.disabled"), "主窗口里按快捷键呼出 Quick Create", 10000);
+          const fromMain = `e2e-from-main-${index}`;
+          await floating.send("Input.insertText", { text: fromMain });
+          await floating.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+          await floating.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+          await until(async () => (await main.invoke("get_today")).todos.some((i) => i.title === fromMain), "从主窗口快捷键创建了待办");
+          await until(() => foregroundWindow() === mainHandle, "创建后焦点回到主窗口", 5000).catch(() => {
+            throw new Error(`创建后焦点没有回到主窗口：应为 ${mainHandle}，现在 ${foregroundWindow()}（${foregroundOwner()}）`);
+          });
         } finally {
           realMouse(original[0], original[1]);
         }
