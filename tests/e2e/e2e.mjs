@@ -59,6 +59,21 @@ function realMouse(x, y, click = false) {
   win32(`[void][E2E.Native]::SetProcessDPIAware(); [void][E2E.Native]::SetCursorPos(${Math.round(x)}, ${Math.round(y)})${down}`);
 }
 
+/**
+ * 用真实鼠标从 `from` 拖到 `to`（物理像素）：按下、分 12 步移动、停一下再松开。
+ * 整个过程在一次 PowerShell 里完成（每次启动 PowerShell 约 2 秒，分开调用会让拖动停顿太久）。
+ */
+function realDrag(from, to) {
+  const steps = 12;
+  const moves = Array.from({ length: steps }, (_, i) => {
+    const t = (i + 1) / steps;
+    return `[void][E2E.Native]::SetCursorPos(${Math.round(from[0] + (to[0] - from[0]) * t)}, ${Math.round(from[1] + (to[1] - from[1]) * t)}); Start-Sleep -Milliseconds 40`;
+  }).join("; ");
+  win32(
+    `[void][E2E.Native]::SetProcessDPIAware(); [void][E2E.Native]::SetCursorPos(${Math.round(from[0])}, ${Math.round(from[1])}); [E2E.Native]::mouse_event(0x2, 0, 0, 0, [System.UIntPtr]::Zero); Start-Sleep -Milliseconds 150; ${moves}; Start-Sleep -Milliseconds 250; [E2E.Native]::mouse_event(0x4, 0, 0, 0, [System.UIntPtr]::Zero)`,
+  );
+}
+
 /** 前台窗口所属的进程与标题（诊断用）。 */
 const foregroundOwner = () =>
   win32("$h = [E2E.Native]::GetForegroundWindow(); $id = 0; [void][E2E.Native]::GetWindowThreadProcessId($h, [ref]$id); $p = Get-Process -Id $id -ErrorAction SilentlyContinue; \"$id $($p.ProcessName) $($p.MainWindowTitle)\"");
@@ -160,11 +175,15 @@ async function connect(wsUrl) {
     });
   const evaluate = async (expression) => {
     const r = await send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
-    if (r.result?.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails.exception ?? r.result.exceptionDetails).slice(0, 300));
+    if (r.result?.exceptionDetails) {
+      const details = r.result.exceptionDetails;
+      throw new Error((details.exception?.description ?? JSON.stringify(details.exception ?? details)).slice(0, 600));
+    }
     return r.result?.result?.value;
   };
   const invoke = (cmd, args = {}) =>
-    evaluate(`window.__TAURI_INTERNALS__.invoke(${JSON.stringify(cmd)}, ${JSON.stringify(args)})`);
+    // 后端错误是对象：转成 JSON 字符串再抛出，失败信息里能看到完整的 code 与 message。
+    evaluate(`window.__TAURI_INTERNALS__.invoke(${JSON.stringify(cmd)}, ${JSON.stringify(args)}).catch((e) => { throw new Error(${JSON.stringify(cmd)} + ": " + JSON.stringify(e)); })`);
   return { send, evaluate, invoke, close: () => ws.close() };
 }
 
@@ -177,8 +196,9 @@ const listPages = async () =>
  */
 function testInstanceRunning() {
   // PowerShell 的单引号字符串里反斜杠不是转义符（JSON.stringify 的 \\ 会原样留下，永远匹配不上）。
+  // 正在退出的进程可能读不到路径：读不到的也算在运行，宁可多等一会儿。
   const quoted = `'${EXE.replaceAll("'", "''")}'`;
-  const script = `@(Get-Process -Name nivlo-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${quoted} }).Count`;
+  const script = `@(Get-Process -Name nivlo-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${quoted} -or -not $_.Path }).Count`;
   return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000 }).trim()) > 0;
 }
 
@@ -500,6 +520,25 @@ async function runOnce(index) {
           await until(async () => (await main.invoke("get_today")).completed.some((i) => i.title === target), "点完成框完成了待办");
           await sleep(300);
           if (foregroundWindow() !== before) throw new Error("点完成框抢走了焦点");
+
+          // 拖动排序：按下时 WebView2 会激活悬浮窗，60ms 后前台被还回去——此时左键还按着，
+          // 拖动不能因此被取消（失去前台可能让指针捕获失效、收到 pointercancel）。
+          const first = `e2e-drag-a-${index}`;
+          const second = `e2e-drag-b-${index}`;
+          for (const dragTitle of [first, second]) {
+            await main.invoke("quick_create", { request: { itemType: "todo", title: dragTitle, scheduled: null } });
+          }
+          const handle = (dragTitle) => `[...document.querySelectorAll("[aria-label]")].find((e) => /拖动以调整|Drag to reorder/.test(e.getAttribute("aria-label")) && e.getAttribute("aria-label").includes(${JSON.stringify(dragTitle)}))`;
+          const from = await hover(handle(second), "第二条的拖动手柄");
+          const to = await until(() => screenPoint(handle(first)), "第一条的拖动手柄");
+          realDrag(from, [to[0], to[1] - 6]);
+          await until(async () => {
+            const titles = (await main.invoke("get_today")).todos.map((i) => i.title);
+            return titles.indexOf(second) >= 0 && titles.indexOf(second) < titles.indexOf(first);
+          }, "拖动把第二条排到第一条前面", 8000).catch(async (e) => {
+            throw new Error(`${e.message}（Today：${JSON.stringify((await main.invoke("get_today")).todos.map((i) => i.title))}）`);
+          });
+          if (foregroundWindow() !== before) throw new Error("拖动排序抢走了焦点");
         } finally {
           realMouse(original[0], original[1]);
         }
@@ -556,14 +595,15 @@ async function runOnce(index) {
           };
           const doneStatus = async () => (await main.invoke("search_items", { query: doneTitle })).find((i) => i.title === doneTitle)?.status;
           await ctrlLetter("d");
-          await until(async () => (await doneStatus()) === "done", "Ctrl+D 完成了待办");
+          // 撤销提示只留 5 秒（DONE_UNDO_MS）：出现之后立刻按 Ctrl+Z，慢的 Win32 检查（每次约 2 秒）放到后面。
           await until(() => search.evaluate("document.body.innerText.includes('Ctrl+Z')"), "Ctrl+D 之后出现撤销");
-          if (visibleWindowCount(child.pid) !== shown) throw new Error("Ctrl+D 之后搜索框被关掉了");
+          if ((await doneStatus()) !== "done") throw new Error("出现了撤销提示，但待办没有完成");
           await ctrlLetter("z");
           await until(async () => (await doneStatus()) !== "done", "Ctrl+Z 撤销了完成", 5000).catch(async (e) => {
             const page = await search.evaluate("JSON.stringify({ focus: document.hasFocus(), footer: document.querySelector('footer')?.innerText, input: document.activeElement?.value ?? document.activeElement?.tagName })");
             throw new Error(`${e.message}；搜索框：${page}；状态：${await doneStatus()}`);
           });
+          if (visibleWindowCount(child.pid) !== shown) throw new Error("Ctrl+D / Ctrl+Z 之后搜索框被关掉了");
           // 选中输入框里的文字，下面的 openFromSearch 输入时直接替换掉。
           await search.evaluate("document.activeElement.select()");
 
@@ -609,20 +649,15 @@ async function runOnce(index) {
     }
     return steps;
   } finally {
-    child.kill();
-    await sleep(800);
-    try {
-      execFileSync("taskkill", ["/F", "/T", "/PID", String(child.pid)], { stdio: "ignore" });
-    } catch {
-      /* 已退出 */
-    }
-    await sleep(500);
+    // 等进程真正退出再删数据目录：退出中的进程仍持有单实例锁，下一轮的启动会被转交给它。
+    await stopInstance(child);
     rmSync(data, { recursive: true, force: true });
   }
 }
 
 /** 结束一个被测进程并等它退干净。 */
 async function stopInstance(child) {
+  const exited = child.exitCode !== null ? Promise.resolve() : new Promise((resolve) => child.once("exit", resolve));
   child.kill();
   await sleep(800);
   try {
@@ -630,6 +665,7 @@ async function stopInstance(child) {
   } catch {
     /* 已退出 */
   }
+  await Promise.race([exited, sleep(15000)]);
   await until(() => !testInstanceRunning(), "被测进程退出", 15000);
 }
 
