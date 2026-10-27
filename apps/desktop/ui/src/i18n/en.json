@@ -248,8 +248,8 @@
     "dismiss": "Got it",
     "failed": "Couldn't capture: {{message}}",
     "unsupported": {
-      "files": "Dropping files directly isn't supported here yet. Copy the files in your file manager, then click “Paste”.",
-      "empty": "This can't be captured. Try dropping a link, text or an image."
+      "files": "Couldn't read where these files are on disk. Copy them in your file manager, then click “Paste”.",
+      "empty": "This can't be captured. Try dropping a link, text, an image or a file."
     }
   },
   "floating": {
@@ -762,7 +762,7 @@
     },
     "step2": {
       "title": "Capture on the go",
-      "body": "Drag web links, selected text or images onto the badge, or copy and click “Paste”. Everything lands in the Inbox first, so you can sort it when you have time."
+      "body": "Drag web links, selected text, images or files onto the badge, or copy and click “Paste”. Everything lands in the Inbox first, so you can sort it when you have time."
     },
     "step3": {
       "title": "Schedule in plain language",

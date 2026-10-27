@@ -131,7 +131,7 @@ describe("拖放捕获（悬浮窗）", () => {
     fireEvent.drop(root(), { dataTransfer: transfer({}, [file]) });
     await advance(0);
 
-    expect(screen.getByRole("status")).toHaveTextContent("暂时还不能直接拖入文件");
+    expect(screen.getByRole("status")).toHaveTextContent("没能读到这些文件在磁盘上的位置");
     expect(ipc.captures).toHaveLength(0);
   });
 
