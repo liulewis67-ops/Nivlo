@@ -166,6 +166,12 @@ function SortableTodo({ item, today, onComplete, onPostpone }: SortableTodoProps
           label={t("today.complete", { title: item.title })}
           onToggle={() => onComplete(item)}
         />
+        {/* 今天的具体时间（「明天下午3点 评审」这样记下的）：和提示一样写在标题前；逾期的不写，免得看成今天的时间。 */}
+        {item.scheduled?.date === today && item.scheduled.time !== null && (
+          <span className="shrink-0 text-xs text-muted tabular-nums">
+            {item.scheduled.time.slice(0, 5)}
+          </span>
+        )}
         <ItemTitle id={item.id} title={item.title} />
         {due !== null && (
           <span

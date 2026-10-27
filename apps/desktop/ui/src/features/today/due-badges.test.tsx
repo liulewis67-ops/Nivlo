@@ -115,3 +115,32 @@ describe("隐藏已完成", () => {
     expect(screen.getByText("已经做完")).toBeTruthy();
   });
 });
+
+describe("Today 里待办的具体时间", () => {
+  it("今天带时间的待办在标题前显示时间；全天的与逾期的不显示", () => {
+    const timed: TodayItemDto = {
+      ...todo("x", "评审方案", null),
+      scheduled: { date: "2026-10-10", time: "15:00:00" },
+    };
+    const overdue: TodayItemDto = {
+      ...todo("y", "昨天的会", null),
+      scheduled: { date: "2026-10-09", time: "09:30:00" },
+      isOverdue: true,
+    };
+    renderWithProviders(
+      <TodayList
+        view={{ ...VIEW, todos: [timed, overdue, todo("z", "全天的事", null)], tips: [] }}
+        onComplete={() => undefined}
+        onMove={() => undefined}
+        onPostpone={() => undefined}
+        onReopen={() => undefined}
+      />,
+    );
+    const rows = within(screen.getByRole("list", { name: "待办" })).getAllByRole("listitem");
+    const textOf = (title: string) =>
+      rows.find((row) => row.textContent?.includes(title))?.textContent ?? "";
+    expect(textOf("评审方案")).toContain("15:00评审方案");
+    expect(textOf("昨天的会")).not.toContain("09:30");
+    expect(textOf("全天的事")).not.toMatch(/\d\d:\d\d/);
+  });
+});
