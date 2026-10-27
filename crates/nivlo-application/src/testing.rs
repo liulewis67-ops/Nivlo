@@ -111,6 +111,18 @@ impl FakeUnitOfWork {
         self.lock().data.sources.clone()
     }
 
+    /// 已提交的全部标签名称与 Item-标签关联的数量，供测试断言。
+    pub fn committed_tags(&self) -> (Vec<String>, usize) {
+        let state = self.lock();
+        let names = state
+            .data
+            .tags
+            .values()
+            .map(|tag| tag.name.as_str().to_owned())
+            .collect();
+        (names, state.data.item_tags.len())
+    }
+
     /// 已提交的全部附件记录，供测试断言。
     pub fn committed_attachments(&self) -> Vec<Attachment> {
         self.lock().data.attachments.clone()

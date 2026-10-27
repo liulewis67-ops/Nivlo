@@ -125,6 +125,55 @@ async fn a_duplicated_workflow_with_higher_priority_wins_and_tags_the_item() {
     assert!(runs[0].workflow_id.starts_with("user."));
 }
 
+/// 实施计划 5.4 第二条验收：经 Workflow 捕获且带 Tag 时提交失败，Item / Source / Tag 都不残留。
+#[tokio::test]
+async fn a_failed_commit_of_a_tagged_workflow_capture_leaves_nothing_behind() {
+    let f = fixture().await;
+    let builtin = f
+        .workflows
+        .list()
+        .await
+        .unwrap()
+        .into_iter()
+        .find(|s| s.workflow.id.as_str() == "builtin.generic-url")
+        .unwrap();
+    let mut copy = f.workflows.duplicate(&builtin.workflow.id).await.unwrap();
+    copy.steps = serde_json::from_str(
+        r##"[{"type":"createItem","itemType":"todo","title":"读：{{ input.title }}","content":"{{ input.url }}","tags":["read","later"]}]"##,
+    )
+    .unwrap();
+    f.workflows.save(copy).await.unwrap();
+    let items_before = f.uow.committed_items().len();
+    let sources_before = f.uow.committed_sources().len();
+    let (tags_before, links_before) = f.uow.committed_tags();
+    assert!(tags_before.is_empty());
+
+    f.uow.fail_next_commit();
+    let error = f
+        .capture
+        .capture(request(normalize_text("https://example.com/a").unwrap()))
+        .await
+        .unwrap_err();
+
+    assert_eq!(
+        error.code,
+        nivlo_application::error::ErrorCode::StorageUnavailable
+    );
+    assert_eq!(f.uow.committed_items().len(), items_before);
+    assert_eq!(f.uow.committed_sources().len(), sources_before);
+    assert_eq!(f.uow.committed_tags(), (tags_before, links_before));
+
+    // 同样的捕获再来一次（这次提交成功）：标签照常创建，说明上面确实走到了建标签的那一步。
+    f.capture
+        .capture(request(normalize_text("https://example.com/a").unwrap()))
+        .await
+        .unwrap();
+    let (mut names, links) = f.uow.committed_tags();
+    names.sort();
+    assert_eq!(names, ["later", "read"]);
+    assert_eq!(links, 2);
+}
+
 #[tokio::test]
 async fn a_failing_workflow_never_loses_the_capture() {
     let f = fixture().await;

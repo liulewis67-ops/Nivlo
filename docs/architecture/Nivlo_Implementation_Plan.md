@@ -220,7 +220,7 @@ Phase 12 Backlog                        → 未排期
 - 过期的代码 TODO：`apps/desktop/src-tauri/src/app.rs` 中 `TODO(P4.4)`「停止 Scheduler」已不成立（Scheduler 作为受跟踪任务随 shutdown 令牌取消，见 `scheduling.rs`），应删除；`events/forwarder.rs` 中 `TODO(P1.1)` 仍未做——事件广播到所有窗口，应改为 `emit_to` 按窗口发送（后端规范 §5.2）。✅ 2026-10-27 两处都已处理：过期的 `TODO(P4.4)` 删除；数据变化事件改为 `emit_to` 只发给主窗口与悬浮窗（`DATA_EVENT_TARGETS`，有单测），隐藏的全局搜索框不再在每次修改后重新查询（它每次出现时自己丢弃缓存，含项目名称）。E2E 的 Quick Add 一步新增断言：悬浮窗 Today 面板靠事件刷新出新条目。release 构建上第一批 3 次中有 2 次在这条断言超时、之后连续 13 次通过，未能复现；疑为悬浮窗被真实鼠标移开而收起，失败信息里已附带面板状态，供下次定位。
 - 8.1 的草稿（rquickjs Worker 与 8 个测试）放在 `.wip/`，被 `.git/info/exclude` 排除，不在版本控制中，存在丢失风险；应移到 `p8.1-script-worker` 分支。
 - Vitest 每个测试文件各建一次 jsdom（45 次，单次运行约 48s）；可评估 `pool: "vmThreads"` 或 `isolate: false`。
-- 5.4 第二条验收缺一个测试：经 Workflow 捕获且带 Tag 时提交失败，Item / Source / Tag 均不残留。
+- 5.4 第二条验收缺一个测试：经 Workflow 捕获且带 Tag 时提交失败，Item / Source / Tag 均不残留。✅ 2026-10-27：`nivlo-workflow/tests/capture.rs` `a_failed_commit_of_a_tagged_workflow_capture_leaves_nothing_behind`（带两个 Tag 的用户 Workflow，提交失败后 Item / Source / Tag / 关联都没有增加；再捕获一次成功，确认确实走到了建 Tag）。
 - 本次盘点已同步：D-11 定稿、新增 7.7 与 10.6、新增 D-13 ~ D-15。
 
 ### E. 建议顺序
