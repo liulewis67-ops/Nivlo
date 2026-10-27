@@ -32,6 +32,9 @@ use windows::Win32::UI::WindowsAndMessaging::{
 /// 线程内注册热键用的 ID（每个线程只注册一个，固定即可）。
 const HOTKEY_ID: i32 = 1;
 
+/// 探测组合是否可用时临时注册用的 ID（和正式注册的不在同一个线程，也不会撞号）。
+const PROBE_HOTKEY_ID: i32 = 0xB0B;
+
 /// 主键对应的虚拟键码（字母与数字就是它们的 ASCII 码）。
 fn virtual_key(key: Key) -> u32 {
     match key {
@@ -261,6 +264,26 @@ impl ShortcutPort for WindowsShortcut {
     /// 在用户当前的键盘布局里，这个组合是不是在输入字符（AltGr）。
     fn types_character(&self, accelerator: Accelerator) -> bool {
         types_character_in(accelerator, current_layout())
+    }
+
+    /// 在调用线程上试着注册这个组合，成功就立刻取消：成功说明现在没人占用。
+    fn is_available(&self, accelerator: Accelerator) -> Option<bool> {
+        // SAFETY: 不绑定窗口的热键属于调用线程；参数是有效的位掩码与虚拟键码。成功后马上取消，
+        // 不会留下注册，也不需要消息循环（这期间按下组合产生的 `WM_HOTKEY` 不会被处理）。
+        let registered = unsafe {
+            RegisterHotKey(
+                None,
+                PROBE_HOTKEY_ID,
+                modifiers(accelerator),
+                virtual_key(accelerator.key),
+            )
+        };
+        if registered.is_err() {
+            return Some(false);
+        }
+        // SAFETY: 取消的正是上面在本线程注册的探测热键。
+        let _ = unsafe { UnregisterHotKey(None, PROBE_HOTKEY_ID) };
+        Some(true)
     }
 
     /// 取消当前注册的快捷键。

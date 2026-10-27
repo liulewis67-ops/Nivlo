@@ -140,6 +140,7 @@ macro_rules! bindings_builder {
                 $crate::commands::window::open_main::<$runtime>,
                 $crate::commands::shortcut::get_shortcut_status,
                 $crate::commands::shortcut::set_shortcut::<$runtime>,
+                $crate::commands::shortcut::suggest_shortcuts,
                 $crate::commands::shortcut::disable_shortcut::<$runtime>,
                 $crate::commands::window::open_main_at::<$runtime>,
                 $crate::commands::window::take_pending_main_view,

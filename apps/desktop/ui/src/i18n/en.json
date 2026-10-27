@@ -164,6 +164,8 @@
     "restore": "Restore default ({{accelerator}})",
     "disable": "Turn off",
     "enable": "Turn on ({{accelerator}})",
+    "suggestions": "Available now:",
+    "useSuggestion": "Use {{accelerator}}",
     "status": {
       "registered": "Active",
       "conflict": "Used by another app",

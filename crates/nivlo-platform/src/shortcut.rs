@@ -221,6 +221,13 @@ pub trait ShortcutPort: Send + Sync {
     fn types_character(&self, _accelerator: Accelerator) -> bool {
         false
     }
+
+    /// 这个组合现在能不能注册（没有被其他程序或本程序占用）：试着注册一下再立刻取消。
+    ///
+    /// 用于在冲突时给出几个「现在可用」的组合。无法判断的平台返回 `None`。
+    fn is_available(&self, _accelerator: Accelerator) -> Option<bool> {
+        None
+    }
 }
 
 #[cfg(test)]

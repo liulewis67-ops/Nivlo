@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -68,6 +68,15 @@ export function ShortcutSetting({
       useToastStore.getState().push("success", t(`${copy}.disabled`));
       close();
     },
+  });
+
+  const conflictOpen = status?.conflict === true && (userOpen ?? true);
+  // 被占用时给出几个现在可用的组合（后端逐个试注册），点一下就换，不必自己猜一个没人用的。
+  const suggestions = useQuery({
+    queryKey: queryKeys.shortcutSuggestions(action),
+    queryFn: () => ipc.suggestShortcuts(action),
+    enabled: conflictOpen,
+    staleTime: 0,
   });
 
   if (status === undefined) return null;
@@ -170,6 +179,23 @@ export function ShortcutSetting({
             <p role="alert" className="text-xs text-danger">
               {problem}
             </p>
+          )}
+          {status.conflict && (suggestions.data?.length ?? 0) > 0 && (
+            <div className="flex flex-wrap items-center gap-1 text-xs text-muted">
+              <span>{t("shortcut.suggestions")}</span>
+              {suggestions.data?.map((accelerator) => (
+                <Button
+                  key={accelerator}
+                  size="sm"
+                  variant="secondary"
+                  disabled={save.isPending}
+                  aria-label={t("shortcut.useSuggestion", { accelerator })}
+                  onClick={() => save.mutate(accelerator)}
+                >
+                  {accelerator}
+                </Button>
+              ))}
+            </div>
           )}
           <div className="flex flex-wrap items-center gap-1">
             {status.disabled ? (

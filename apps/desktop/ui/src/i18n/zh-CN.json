@@ -163,6 +163,8 @@
     "restore": "恢复默认（{{accelerator}}）",
     "disable": "停用",
     "enable": "启用（{{accelerator}}）",
+    "suggestions": "这些现在可用：",
+    "useSuggestion": "改用 {{accelerator}}",
     "status": {
       "registered": "已生效",
       "conflict": "被其他程序占用",

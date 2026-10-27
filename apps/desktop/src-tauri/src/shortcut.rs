@@ -71,6 +71,24 @@ impl ShortcutAction {
         }
     }
 
+    /// 默认组合被占用时可以换用的候选（按推荐顺序）。都带两个以上修饰键，避免和应用自己的快捷键撞车。
+    pub const fn suggestion_candidates(self) -> &'static [&'static str] {
+        match self {
+            Self::QuickCreate => &[
+                "Ctrl+Alt+N",
+                "Alt+Shift+N",
+                "Ctrl+Alt+Shift+N",
+                "Ctrl+Shift+Q",
+            ],
+            Self::Search => &[
+                "Ctrl+Alt+K",
+                "Alt+Shift+Space",
+                "Ctrl+Alt+Shift+Space",
+                "Alt+Shift+K",
+            ],
+        }
+    }
+
     /// 没有保存绑定时使用的默认值。
     #[must_use]
     pub const fn default_accelerator(self) -> Accelerator {
@@ -139,6 +157,23 @@ impl ShortcutController {
     /// 控制的动作。
     pub fn action(&self) -> ShortcutAction {
         self.action
+    }
+
+    /// 几个现在可用的组合（最多 `limit` 个），供冲突时一键换用。
+    ///
+    /// 从这个动作的候选里挑：跳过 `taken`（Nivlo 各动作当前的绑定）、在当前键盘布局里会输入字符的
+    /// （AltGr），以及现在注册不了的。平台无法判断是否可用时返回空列表。
+    pub fn suggestions(&self, taken: &[String], limit: usize) -> Vec<String> {
+        self.action
+            .suggestion_candidates()
+            .iter()
+            .filter_map(|text| parse_accelerator(text).ok())
+            .filter(|accelerator| !taken.contains(&accelerator.to_string()))
+            .filter(|accelerator| !self.port.types_character(*accelerator))
+            .filter(|accelerator| self.port.is_available(*accelerator) == Some(true))
+            .take(limit)
+            .map(|accelerator| accelerator.to_string())
+            .collect()
     }
 
     /// 当前状态。
@@ -324,6 +359,15 @@ mod tests {
                 .lock()
                 .unwrap()
                 .contains(&accelerator.to_string())
+        }
+        fn is_available(&self, accelerator: Accelerator) -> Option<bool> {
+            Some(
+                !self
+                    .taken
+                    .lock()
+                    .unwrap()
+                    .contains(&accelerator.to_string()),
+            )
         }
     }
 
@@ -513,6 +557,45 @@ mod tests {
 
         let status = controller.rebind("Ctrl+Alt+Space").await.unwrap();
         assert!(status.registered && !status.conflict);
+    }
+
+    #[tokio::test]
+    async fn suggestions_skip_taken_bindings_altgr_combinations_and_ones_already_in_use() {
+        let port = Arc::new(FakePort::default());
+        let (controller, _, _) = controller(&port);
+        // 第一个候选被别的程序占用，第二个在当前布局里会打出字符，第三个是 Nivlo 另一个动作正在用的。
+        port.take("Ctrl+Alt+N");
+        port.typing.lock().unwrap().insert("Alt+Shift+N".to_owned());
+        let taken = ["Ctrl+Alt+Shift+N".to_owned()];
+
+        assert_eq!(controller.suggestions(&taken, 3), ["Ctrl+Shift+Q"]);
+        assert!(controller.suggestions(&taken, 0).is_empty());
+    }
+
+    #[tokio::test]
+    async fn no_suggestions_when_the_platform_cannot_tell_what_is_free() {
+        /// 注册总是成功、但说不出组合是否可用的平台（`is_available` 用缺省实现）。
+        struct UnknownAvailability;
+        impl ShortcutPort for UnknownAvailability {
+            fn register(&self, _: Accelerator, _: ShortcutCallback) -> Result<(), PlatformError> {
+                Ok(())
+            }
+            fn unregister(&self) {}
+        }
+
+        let settings = SettingsService::new(
+            Arc::new(FakeUnitOfWork::new()),
+            Arc::new(FakeClock::at_utc(
+                Utc.with_ymd_and_hms(2026, 10, 10, 8, 0, 0).unwrap(),
+            )),
+        );
+        let controller = ShortcutController::new(
+            ShortcutAction::Search,
+            Arc::new(UnknownAvailability),
+            settings,
+            Arc::new(|| {}),
+        );
+        assert!(controller.suggestions(&[], 3).is_empty());
     }
 
     #[tokio::test]

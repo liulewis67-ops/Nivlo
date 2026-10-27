@@ -943,6 +943,18 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     setShortcutStatus: (status: ShortcutStatusDto, action: ShortcutActionDto = "quickCreate") => {
       shortcuts[action] = status;
     },
+    suggestShortcuts: (action: ShortcutActionDto) => {
+      calls.push("suggestShortcuts");
+      // 和后端同样的候选与过滤：跳过被占用的与 Nivlo 各动作正在用的。
+      const candidates =
+        action === "search"
+          ? ["Ctrl+Alt+K", "Alt+Shift+Space", "Ctrl+Alt+Shift+Space", "Alt+Shift+K"]
+          : ["Ctrl+Alt+N", "Alt+Shift+N", "Ctrl+Alt+Shift+N", "Ctrl+Shift+Q"];
+      const inUse = Object.values(shortcuts).map((status) => status.accelerator);
+      return Promise.resolve(
+        candidates.filter((c) => !takenShortcuts.has(c) && !inUse.includes(c)).slice(0, 3),
+      );
+    },
     getShortcutStatus: (action: ShortcutActionDto) => {
       calls.push("getShortcutStatus");
       return Promise.resolve(shortcuts[action]);

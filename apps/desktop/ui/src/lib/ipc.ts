@@ -307,6 +307,8 @@ export interface IpcClient {
   openMain(): Promise<void>;
   /** 读取一个动作的全局快捷键的绑定与注册状态；被其他程序占用时 `conflict` 为 `true`。 */
   getShortcutStatus(action: ShortcutActionDto): Promise<ShortcutStatusDto>;
+  /** 快捷键被占用时，几个现在可用的组合（最多 3 个；平台无法判断时为空）。 */
+  suggestShortcuts(action: ShortcutActionDto): Promise<string[]>;
   /**
    * 修改一个动作的全局快捷键并保存（如 `Ctrl+Alt+Q`）。
    * 不合法抛出 `SHORTCUT_INVALID`，被占用（其他程序或 Nivlo 的另一个动作）抛出 `SHORTCUT_CONFLICT`，
@@ -565,6 +567,7 @@ const tauriIpc: IpcClient = {
     await call("open_main", commands.openMain());
   },
   getShortcutStatus: (action) => call("get_shortcut_status", commands.getShortcutStatus(action)),
+  suggestShortcuts: (action) => call("suggest_shortcuts", commands.suggestShortcuts(action)),
   setShortcut: (action, accelerator) =>
     call("set_shortcut", commands.setShortcut(action, accelerator)),
   disableShortcut: (action) => call("disable_shortcut", commands.disableShortcut(action)),
@@ -706,6 +709,7 @@ export const ipc: IpcClient = {
   restoreItems: (previous) => current.restoreItems(previous),
   openMain: () => current.openMain(),
   getShortcutStatus: (action) => current.getShortcutStatus(action),
+  suggestShortcuts: (action) => current.suggestShortcuts(action),
   setShortcut: (action, accelerator) => current.setShortcut(action, accelerator),
   disableShortcut: (action) => current.disableShortcut(action),
   openItemInMain: (id) => current.openItemInMain(id),

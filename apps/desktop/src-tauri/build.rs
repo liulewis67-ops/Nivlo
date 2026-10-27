@@ -78,6 +78,7 @@ const COMMANDS: &[&str] = &[
     "open_main_at",
     "get_shortcut_status",
     "set_shortcut",
+    "suggest_shortcuts",
     "disable_shortcut",
     "take_pending_main_view",
     "quit_app",

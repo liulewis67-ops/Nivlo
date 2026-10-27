@@ -38,6 +38,26 @@ pub async fn get_shortcut_status(
     ))
 }
 
+/// 一个动作的快捷键被占用时，列出几个现在可用的组合（最多 3 个），界面上一键换用。
+///
+/// # Errors
+///
+/// 应用尚未启动完成时返回 `INVALID_INPUT`。
+#[tauri::command]
+#[specta::specta]
+pub async fn suggest_shortcuts(
+    state: State<'_, AppState>,
+    action: ShortcutActionDto,
+) -> Result<Vec<String>, IpcError> {
+    let action = ShortcutAction::from(action);
+    let taken: Vec<String> = ShortcutAction::ALL
+        .into_iter()
+        .filter_map(|each| state.runtime.shortcut(each))
+        .map(|each| each.status().accelerator)
+        .collect();
+    Ok(controller(&state, action)?.suggestions(&taken, 3))
+}
+
 /// 修改一个动作的全局快捷键并保存。
 ///
 /// 新的注册失败时原来的绑定保持不变。

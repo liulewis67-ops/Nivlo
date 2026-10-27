@@ -87,6 +87,39 @@ describe("ShortcutSetting", () => {
     expect(screen.getByLabelText("新的快捷键")).toBeInTheDocument();
   });
 
+  it("被占用时列出现在可用的组合，点一下就换成它（跳过被占用的与另一个动作正在用的）", async () => {
+    const ipc = createMemoryIpc();
+    ipc.takenShortcuts.add("Ctrl+Alt+K");
+    ipc.setShortcutStatus(
+      {
+        accelerator: "Ctrl+Alt+Space",
+        registered: false,
+        conflict: true,
+        defaultAccelerator: "Ctrl+Alt+Space",
+        disabled: false,
+        typesCharacter: false,
+      },
+      "search",
+    );
+    renderWithProviders(<ShortcutSetting action="search" />, ipc);
+
+    expect(await screen.findByText("这些现在可用：")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "改用 Ctrl+Alt+K" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "改用 Alt+Shift+Space" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "全局搜索：Alt+Shift+Space" })).toBeInTheDocument(),
+    );
+  });
+
+  it("没被占用时不去查可用的组合", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<ShortcutSetting action="search" />, ipc);
+    fireEvent.click(await screen.findByRole("button", { name: /全局搜索：/ }));
+    expect(screen.queryByText("这些现在可用：")).not.toBeInTheDocument();
+    expect(ipc.calls).not.toContain("suggestShortcuts");
+  });
+
   it("改过的快捷键可以一键恢复默认；本来就是默认时不显示这个按钮", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<ShortcutSetting />, ipc);

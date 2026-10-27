@@ -688,6 +688,14 @@ export const commands = {
 	 */
 	setShortcut: (action: ShortcutActionDto, accelerator: string) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("set_shortcut", { action, accelerator })),
 	/**
+	 *  一个动作的快捷键被占用时，列出几个现在可用的组合（最多 3 个），界面上一键换用。
+	 * 
+	 *  # Errors
+	 * 
+	 *  应用尚未启动完成时返回 `INVALID_INPUT`。
+	 */
+	suggestShortcuts: (action: ShortcutActionDto) => typedError<string[], IpcError>(__TAURI_INVOKE("suggest_shortcuts", { action })),
+	/**
 	 *  停用一个动作的全局快捷键并保存（重启后也不注册）；再次设置快捷键即重新启用。
 	 * 
 	 *  # Errors
