@@ -8,7 +8,7 @@ export { ContextMenu } from "./ContextMenu";
 export type { ContextMenuProps } from "./ContextMenu";
 export { Input, Textarea } from "./Input";
 export type { InputProps, TextareaProps } from "./Input";
-export { Menu } from "./Menu";
+export { Menu, MenuModalContext } from "./Menu";
 export type { MenuItemSpec, MenuProps } from "./Menu";
 export { Switch } from "./Switch";
 export type { SwitchProps } from "./Switch";

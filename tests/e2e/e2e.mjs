@@ -12,7 +12,7 @@
 // 且已经在真机验收里验证过。每次运行都使用全新的数据目录，互不影响。
 
 import { spawn, execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,12 +38,34 @@ function visibleWindowCount(pid) {
 }
 
 /** 一段 PowerShell 共用的 Win32 声明。 */
-const WIN32 = `Add-Type -Namespace E2E -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, System.IntPtr p); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid); [DllImport("user32.dll")] public static extern bool GetWindowRect(System.IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr h); [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, System.UIntPtr extra); [DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr h, uint msg, System.IntPtr w, System.IntPtr l); public delegate bool EnumProc(System.IntPtr h, System.IntPtr p); public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }'`;
+const WIN32 = `Add-Type -Namespace E2E -Name Native -MemberDefinition '[DllImport("user32.dll")] public static extern System.IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc cb, System.IntPtr p); [DllImport("user32.dll")] public static extern bool IsWindowVisible(System.IntPtr h); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(System.IntPtr h, out uint pid); [DllImport("user32.dll")] public static extern bool GetWindowRect(System.IntPtr h, out RECT r); [DllImport("user32.dll")] public static extern bool SetForegroundWindow(System.IntPtr h); [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, System.UIntPtr extra); [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y); [DllImport("user32.dll")] public static extern bool GetCursorPos(out POINT p); [DllImport("user32.dll")] public static extern void mouse_event(uint flags, int dx, int dy, uint data, System.UIntPtr extra); public struct POINT { public int X; public int Y; } [DllImport("user32.dll")] public static extern bool PostMessage(System.IntPtr h, uint msg, System.IntPtr w, System.IntPtr l); public delegate bool EnumProc(System.IntPtr h, System.IntPtr p); public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }'`;
 
 /** 运行一段带 Win32 声明的 PowerShell，返回去掉首尾空白的输出。 */
 function win32(body) {
-  return execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", `${WIN32}; ${body}`], { encoding: "utf8" }).trim();
+  return execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", `${WIN32}; ${body}`], { encoding: "utf8", timeout: 30000 }).trim();
 }
+
+/** 真实光标的位置（物理像素）。 */
+function cursorPosition() {
+  const [x, y] = win32("[void][E2E.Native]::SetProcessDPIAware(); $p = New-Object E2E.Native+POINT; [void][E2E.Native]::GetCursorPos([ref]$p); \"$($p.X),$($p.Y)\"")
+    .split(",")
+    .map(Number);
+  return [x, y];
+}
+
+/** 把真实光标移到 (x, y)（物理像素），可选再按一下左键。 */
+function realMouse(x, y, click = false) {
+  const down = click ? "; [E2E.Native]::mouse_event(0x2, 0, 0, 0, [System.UIntPtr]::Zero); [E2E.Native]::mouse_event(0x4, 0, 0, 0, [System.UIntPtr]::Zero)" : "";
+  win32(`[void][E2E.Native]::SetProcessDPIAware(); [void][E2E.Native]::SetCursorPos(${Math.round(x)}, ${Math.round(y)})${down}`);
+}
+
+/** 前台窗口所属的进程与标题（诊断用）。 */
+const foregroundOwner = () =>
+  win32("$h = [E2E.Native]::GetForegroundWindow(); $id = 0; [void][E2E.Native]::GetWindowThreadProcessId($h, [ref]$id); $p = Get-Process -Id $id -ErrorAction SilentlyContinue; \"$id $($p.ProcessName) $($p.MainWindowTitle)\"");
+
+/** 把窗口 `handle` 设为前台（先按一下 Alt：系统只允许刚收到输入的进程切换前台）。 */
+const focusWindow = (handle) =>
+  win32(`[E2E.Native]::keybd_event(0x12, 0, 0, [System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x12, 0, 2, [System.UIntPtr]::Zero); [void][E2E.Native]::SetForegroundWindow([System.IntPtr]${handle})`);
 
 /** 当前前台窗口的句柄（数字）。 */
 const foregroundWindow = () => win32("[E2E.Native]::GetForegroundWindow().ToInt64()");
@@ -67,6 +89,18 @@ function focusLargestWindow(pid) {
   );
 }
 
+/** 用 keybd_event 依次按下 `keys`（虚拟键码）再倒序松开；返回松开那一刻的时间（Unix 毫秒）。 */
+function pressHotkey(keys) {
+  const script = [
+    `$keys = ${keys.map((k) => "0x" + k.toString(16)).join(", ")}`,
+    "foreach ($k in $keys) { [E2E.Native]::keybd_event($k, 0, 0, [System.UIntPtr]::Zero) }",
+    "[array]::Reverse($keys)",
+    "foreach ($k in $keys) { [E2E.Native]::keybd_event($k, 0, 2, [System.UIntPtr]::Zero) }",
+    "[DateTimeOffset]::Now.ToUnixTimeMilliseconds()",
+  ].join("; ");
+  return Number(win32(script));
+}
+
 /** 用 SendInput（keybd_event）按下并松开 Ctrl+Alt+Shift+F9——第 10 步把全局搜索绑到了这个组合。 */
 function pressSearchHotkey() {
   const script = [
@@ -78,7 +112,7 @@ function pressSearchHotkey() {
     "[DateTimeOffset]::Now.ToUnixTimeMilliseconds()",
   ].join("; ");
   // 返回松开按键那一刻的时间（Unix 毫秒），计时从这里开始，不受 PowerShell 退出快慢影响。
-  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8" }).trim());
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000 }).trim());
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -97,6 +131,9 @@ async function until(fn, what, ms = 20000, every = 200) {
   throw new Error(`等待超时：${what}${last ? `（${last.message}）` : ""}`);
 }
 
+/** 单个 CDP 请求最多等多久（毫秒）。 */
+const CDP_TIMEOUT_MS = 15000;
+
 async function connect(wsUrl) {
   const ws = new WebSocket(wsUrl);
   await new Promise((r, j) => ((ws.onopen = r), (ws.onerror = j)));
@@ -107,10 +144,18 @@ async function connect(wsUrl) {
     pending.get(d.id)?.(d);
     pending.delete(d.id);
   };
+  // 每个请求都有超时：页面卡住（例如 alert、渲染进程挂起）时报出是哪个请求，而不是整轮测试无声地挂起。
   const send = (method, params = {}) =>
-    new Promise((res) => {
+    new Promise((res, rej) => {
       const id = ++n;
-      pending.set(id, res);
+      const timer = setTimeout(() => {
+        pending.delete(id);
+        rej(new Error(`CDP 请求超时：${method} ${JSON.stringify(params).slice(0, 120)}`));
+      }, CDP_TIMEOUT_MS);
+      pending.set(id, (d) => {
+        clearTimeout(timer);
+        res(d);
+      });
       ws.send(JSON.stringify({ id, method, params }));
     });
   const evaluate = async (expression) => {
@@ -134,7 +179,7 @@ function testInstanceRunning() {
   // PowerShell 的单引号字符串里反斜杠不是转义符（JSON.stringify 的 \\ 会原样留下，永远匹配不上）。
   const quoted = `'${EXE.replaceAll("'", "''")}'`;
   const script = `@(Get-Process -Name nivlo-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${quoted} }).Count`;
-  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8" }).trim()) > 0;
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000 }).trim()) > 0;
 }
 
 async function runOnce(index) {
@@ -151,6 +196,8 @@ async function runOnce(index) {
   const child = spawn(EXE, [], { env, stdio: "ignore" });
   const steps = [];
   const step = async (name, fn) => {
+    // 进度写到 stderr：管道里只看最后的 ✓ / ✗，卡住时日志里能看出停在哪一步。
+    console.error(`  … ${index} ${name}`);
     try {
       await fn();
     } catch (e) {
@@ -343,6 +390,122 @@ async function runOnce(index) {
       });
     }
 
+    // 11.6（--native）Quick Create 的全局快捷键（实施计划 2.6）：其他应用在前台时按下，输入、回车，
+    // 创建后焦点回到之前的应用。改绑到测试专用组合，避免和本机正在用的 Nivlo 冲突。
+    if (NATIVE) {
+      await step("Quick Create 快捷键（原生）", async () => {
+        await main.invoke("set_shortcut", { action: "quickCreate", accelerator: "Ctrl+Alt+Shift+F8" });
+        const before = foregroundWindow();
+        pressHotkey([0x11, 0x12, 0x10, 0x77]);
+        const inputReady = "document.hasFocus() && ['标题', 'Title'].includes(document.activeElement?.getAttribute('aria-label')) && !document.activeElement.disabled";
+        await until(() => floating.evaluate(inputReady), "快捷键呼出的 Quick Create 拿到焦点");
+        const viaHotkey = `e2e-hotkey-${index}`;
+        await floating.send("Input.insertText", { text: viaHotkey });
+        await floating.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+        await floating.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+        await until(async () => (await main.invoke("get_today")).todos.at(-1)?.title === viaHotkey, "快捷键创建的待办出现在 Today 末尾");
+        await until(() => foregroundWindow() === before, "创建后焦点回到之前的应用", 5000);
+      });
+
+      // 11.7（--native）真实鼠标（实施计划 10.2）：悬停展开、点面板标题、点 Today 项的完成框，都不抢焦点。
+      await step("悬浮窗不抢焦点（真实鼠标）", async () => {
+        const original = cursorPosition();
+        try {
+          // 真实用户点悬浮窗时，前台是别的应用；悬浮窗只会把焦点还给「其他进程」的窗口。
+          // 所以先切回测试开始时用户所在的窗口（像用户回到自己的应用一样）。
+          const alive = async (when) => {
+            for (const [name, page] of [["主窗口", main], ["悬浮窗", floating]]) {
+              await page.evaluate("1").catch((e) => {
+                throw new Error(`${when}${name}不响应（前台 ${foregroundOwner()}，USER_FOREGROUND ${USER_FOREGROUND}）：${e.message.slice(0, 60)}`);
+              });
+            }
+          };
+          await alive("切换前台之前");
+          focusWindow(USER_FOREGROUND);
+          await until(() => foregroundWindow() === USER_FOREGROUND, "前台回到测试开始时的应用", 5000);
+          await alive("切换前台之后");
+          const before = foregroundWindow();
+          /** 元素中心的屏幕物理坐标。 */
+          const screenPoint = (selector) =>
+            floating.evaluate(`(() => { const e = ${selector}; if (!e) return null; const r = e.getBoundingClientRect(); const k = window.devicePixelRatio; return [(window.screenX + r.x + r.width / 2) * k, (window.screenY + r.y + r.height / 2) * k]; })()`);
+          /** 真实光标移到元素上，并确认浏览器认为它在悬停（坐标换算错了会在这里发现）。 */
+          const hover = async (selector, what) => {
+            const point = await until(() => screenPoint(selector), `${what}：找到元素`);
+            realMouse(point[0], point[1]);
+            await until(() => floating.evaluate(`(${selector})?.matches(':hover')`), `${what}：光标在元素上`, 5000);
+            return point;
+          };
+          const panel = "document.querySelector(\"[aria-label='今日面板'],[aria-label='Today panel']\")";
+          // 诊断：悬浮窗页面不再响应 CDP 时，记下当时的窗口、主窗口是否还响应、过一会儿会不会恢复，以及应用日志。
+          const panelOpen = await floating.evaluate(`!!${panel}`).catch(async (e) => {
+            const mainAlive = await main.evaluate("1").then(() => "是", (err) => err.message.slice(0, 40));
+            await sleep(10000);
+            const later = await floating.evaluate("1").then(() => "恢复了", (err) => err.message.slice(0, 40));
+            const logs = readdirSync(join(data, "data", "logs")).map((f) => readFileSync(join(data, "data", "logs", f), "utf8")).join("\n");
+            const tail = logs.split("\n").filter((l) => /floating|focus|foreground|WARN|ERROR/.test(l)).slice(-10).join(" | ");
+            throw new Error(`${e.message}；可见窗口 ${visibleWindowCount(child.pid)}，前台 ${foregroundOwner()}，主窗口响应：${mainAlive}，10 秒后悬浮窗：${later}；日志：${tail}`);
+          });
+          if (!panelOpen) {
+            await hover("document.querySelector('button')", "徽标");
+            await until(() => floating.evaluate(`!!${panel}`), "真实悬停展开面板", 5000);
+          }
+          const title = `${panel}?.querySelector('h2')`;
+          const titlePoint = await hover(title, "面板标题");
+          realMouse(titlePoint[0], titlePoint[1], true);
+          await sleep(500);
+          if (foregroundWindow() !== before) {
+            const logs = readdirSync(join(data, "data", "logs")).map((f) => readFileSync(join(data, "data", "logs", f), "utf8")).join("\n");
+            const relevant = logs.split("\n").filter((l) => /floating_focus|foreground/.test(l)).slice(-8).join(" | ");
+            throw new Error(`点面板标题抢走了焦点：现在的前台是 ${foregroundOwner()}（被测进程 ${child.pid}，悬浮窗有焦点：${await floating.evaluate("document.hasFocus()")}；之前的前台是 ${before}）日志：${relevant || "（没有相关日志）"}`);
+          }
+
+          // 用真实鼠标打开「更多操作」菜单：焦点被还回去之后菜单仍然开着，点「推迟到明天」照样生效。
+          const quick = `e2e-quick-${index}`;
+          const more = `[...document.querySelectorAll("button[aria-label]")].find((b) => b.getAttribute("aria-label").includes(${JSON.stringify(quick)}) && /更多操作|More actions/.test(b.getAttribute("aria-label")))`;
+          // 记录点击前后页面收到的事件：菜单被关掉时据此判断是谁关的。
+          const recordEvents = () => {
+            const events = [];
+            const t0 = performance.now();
+            const name = (t) => (t === window ? "window" : t === document ? "document" : (t?.getAttribute?.("role") ?? t?.tagName ?? "?"));
+            const log = (text) => events.push(`${Math.round(performance.now() - t0)} ${text}`);
+            for (const type of ["blur", "focus", "focusin", "focusout", "pointerdown", "pointerup", "keydown", "pointerleave", "visibilitychange"]) {
+              window.addEventListener(type, (e) => log(`${type} ${name(e.target)}`), { capture: true });
+            }
+            let open = false;
+            new MutationObserver(() => {
+              const now = !!document.querySelector("[role=menu]");
+              if (now !== open) log(`menu ${(open = now)}`);
+            }).observe(document.body, { childList: true, subtree: true });
+            window.__e2eEvents = events;
+          };
+          await floating.evaluate(`(${recordEvents})()`);
+          const morePoint = await hover(more, "更多操作按钮");
+          realMouse(morePoint[0], morePoint[1], true);
+          await until(() => floating.evaluate("!!document.querySelector('[role=menu]')"), "菜单打开", 5000);
+          await sleep(500);
+          if (!(await floating.evaluate("!!document.querySelector('[role=menu]')"))) {
+            throw new Error(`焦点还回去之后菜单被关掉了；事件：${await floating.evaluate("window.__e2eEvents.join(' | ')")}`);
+          }
+          if (foregroundWindow() !== before) throw new Error("打开菜单抢走了焦点");
+          const tomorrow = "[...document.querySelectorAll('[role=menuitem]')].find((m) => /推迟到明天|Tomorrow/.test(m.textContent))";
+          const tomorrowPoint = await hover(tomorrow, "「推迟到明天」");
+          realMouse(tomorrowPoint[0], tomorrowPoint[1], true);
+          await until(async () => !(await main.invoke("get_today")).todos.some((i) => i.title === quick), "点菜单项把待办推迟到明天");
+          if (foregroundWindow() !== before) throw new Error("点菜单项抢走了焦点");
+
+          const target = `e2e-hotkey-${index}`;
+          const box = `[...document.querySelectorAll('[role=checkbox]')].find((b) => (b.getAttribute('aria-label') ?? '').includes(${JSON.stringify(target)}))`;
+          const boxPoint = await hover(box, "完成框");
+          realMouse(boxPoint[0], boxPoint[1], true);
+          await until(async () => (await main.invoke("get_today")).completed.some((i) => i.title === target), "点完成框完成了待办");
+          await sleep(300);
+          if (foregroundWindow() !== before) throw new Error("点完成框抢走了焦点");
+        } finally {
+          realMouse(original[0], original[1]);
+        }
+      });
+    }
+
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。
     if (NATIVE) {
       await step("全局搜索快捷键（原生）", async () => {
@@ -378,6 +541,31 @@ async function runOnce(index) {
           await until(() => search.evaluate(`document.hasFocus() && document.activeElement?.value === '' && ${inputFocused}`), "再次出现时输入已清空并聚焦", 20000, 5);
           hotkeyTimings.again.push(Date.now() - againStarted);
           await until(() => visibleWindowCount(child.pid) === shown, "再次出现");
+
+          // Ctrl+D（P1.3）：在搜索框里直接完成选中的待办，窗口不关；提示还在时 Ctrl+Z 撤销。
+          // 走真实的 search.json 权限，缺了 complete_item / reopen_item 会在这里失败。
+          const doneTitle = `e2e-search-done-${index}`;
+          await main.invoke("quick_create", { request: { itemType: "todo", title: doneTitle, scheduled: null } });
+          await search.send("Input.insertText", { text: doneTitle });
+          await until(() => search.evaluate(`[...document.querySelectorAll("[role=option]")].some((o) => o.textContent.includes(${JSON.stringify(doneTitle)}))`), "Ctrl+D：结果出现");
+          /** Ctrl + 字母（CDP 的 modifiers 2 是 Ctrl）。 */
+          const ctrlLetter = async (letter) => {
+            const event = { key: letter, code: `Key${letter.toUpperCase()}`, windowsVirtualKeyCode: letter.toUpperCase().charCodeAt(0), modifiers: 2 };
+            await search.send("Input.dispatchKeyEvent", { type: "rawKeyDown", ...event });
+            await search.send("Input.dispatchKeyEvent", { type: "keyUp", ...event });
+          };
+          const doneStatus = async () => (await main.invoke("search_items", { query: doneTitle })).find((i) => i.title === doneTitle)?.status;
+          await ctrlLetter("d");
+          await until(async () => (await doneStatus()) === "done", "Ctrl+D 完成了待办");
+          await until(() => search.evaluate("document.body.innerText.includes('Ctrl+Z')"), "Ctrl+D 之后出现撤销");
+          if (visibleWindowCount(child.pid) !== shown) throw new Error("Ctrl+D 之后搜索框被关掉了");
+          await ctrlLetter("z");
+          await until(async () => (await doneStatus()) !== "done", "Ctrl+Z 撤销了完成", 5000).catch(async (e) => {
+            const page = await search.evaluate("JSON.stringify({ focus: document.hasFocus(), footer: document.querySelector('footer')?.innerText, input: document.activeElement?.value ?? document.activeElement?.tagName })");
+            throw new Error(`${e.message}；搜索框：${page}；状态：${await doneStatus()}`);
+          });
+          // 选中输入框里的文字，下面的 openFromSearch 输入时直接替换掉。
+          await search.evaluate("document.activeElement.select()");
 
           /** 在搜索框里搜 `title` 并回车，等主窗口的详情面板显示它。 */
           const openFromSearch = async (what) => {
@@ -519,7 +707,7 @@ async function coldMainScenario() {
 /** 进程 `pid` 及其全部子孙进程（WebView2 的浏览器与渲染进程）的工作集之和，MB。 */
 function treeWorkingSetMb(pid) {
   const script = `$all = Get-CimInstance Win32_Process | Select-Object ProcessId, ParentProcessId, WorkingSetSize; $ids = @(${pid}); $added = $true; while ($added) { $added = $false; foreach ($p in $all) { if ($ids -contains $p.ParentProcessId -and -not ($ids -contains $p.ProcessId)) { $ids += $p.ProcessId; $added = $true } } }; [math]::Round((($all | Where-Object { $ids -contains $_.ProcessId } | Measure-Object WorkingSetSize -Sum).Sum) / 1MB)`;
-  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8" }).trim());
+  return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000 }).trim());
 }
 
 /**
@@ -593,6 +781,9 @@ async function prewarmScenario() {
     rmSync(data, { recursive: true, force: true });
   }
 }
+
+/** 测试开始时用户所在的前台窗口（属于别的进程）。 */
+const USER_FOREGROUND = NATIVE ? foregroundWindow() : "0";
 
 if (!existsSync(EXE)) {
   console.error(`找不到 ${EXE}，请先运行 pnpm tauri build --no-bundle`);

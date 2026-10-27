@@ -183,6 +183,7 @@ fn create<R: Runtime>(
         }
     })
     .build()
+    .inspect(super::suppress_bare_alt_menu)
 }
 
 /// 把窗口放到鼠标所在的显示器上、显示、聚焦，并通知页面重置输入。

@@ -72,6 +72,35 @@ pub fn create_floating_window<R: Runtime, M: Manager<R>>(
     // 悬浮窗出现时不能把焦点从用户正在使用的应用抢走（架构文档 §61 风险 3）。
     .focused(false)
     .build()
+    .inspect(suppress_bare_alt_menu)
+}
+
+/// 单独按一下 Alt 不让窗口进入键盘菜单模式（否则所有页面都不再响应，直到按 Esc，看起来像卡死）。
+///
+/// 每个窗口创建后调用一次；子类过程必须装在创建窗口的线程上，所以转到主线程执行。
+/// 失败只记日志：窗口照常可用，只是 Alt 仍会进入菜单模式。
+pub fn suppress_bare_alt_menu<R: Runtime>(window: &WebviewWindow<R>) {
+    #[cfg(target_os = "windows")]
+    {
+        let label = window.label().to_owned();
+        let hwnd = match window.hwnd() {
+            Ok(hwnd) => hwnd.0 as isize,
+            Err(error) => {
+                tracing::warn!(event = "alt_menu_hwnd_unavailable", window = %label, %error, "无法获取窗口句柄");
+                return;
+            }
+        };
+        let result = window.run_on_main_thread(move || {
+            if let Err(error) = nivlo_platform_windows::menu_key::suppress_bare_alt_menu(hwnd) {
+                tracing::warn!(event = "alt_menu_suppress_failed", window = %label, %error, "无法屏蔽单独按 Alt 的菜单模式");
+            }
+        });
+        if let Err(error) = result {
+            tracing::warn!(event = "alt_menu_suppress_failed", %error, "无法屏蔽单独按 Alt 的菜单模式");
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    let _ = window;
 }
 
 /// 创建悬浮窗使用的前台窗口记忆 / 还原：Windows 上用 Win32 实现，其他平台降级为空操作。
@@ -111,7 +140,8 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
             WebviewWindowBuilder::new(app, MAIN_WINDOW_LABEL, WebviewUrl::App("index.html".into()))
                 .title("Nivlo")
                 .inner_size(MAIN_WIDTH, MAIN_HEIGHT)
-                .build()?
+                .build()
+                .inspect(suppress_bare_alt_menu)?
         }
     };
     window.unminimize()?;
@@ -183,6 +213,13 @@ pub fn on_window_event<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
                     x: position.x,
                     y: position.y,
                 });
+            }
+        }
+        (FLOATING_WINDOW_LABEL, WindowEvent::Focused(true)) => {
+            if let Some(state) = window.app_handle().try_state::<AppState>()
+                && let Some(floating) = state.runtime.floating()
+            {
+                floating.on_focused();
             }
         }
         (search::SEARCH_WINDOW_LABEL, WindowEvent::Focused(false)) => {

@@ -1,6 +1,8 @@
 import * as RadixContextMenu from "@radix-ui/react-context-menu";
+import { useContext } from "react";
 import type { ReactElement } from "react";
 import { cx } from "@/lib/cx";
+import { MenuModalContext } from "./Menu";
 import type { MenuItemSpec } from "./Menu";
 
 /** [`ContextMenu`] 的 Props。 */
@@ -20,8 +22,9 @@ export type ContextMenuProps = {
  * @returns 带右键菜单的元素。
  */
 export function ContextMenu({ children, items }: ContextMenuProps) {
+  const modal = useContext(MenuModalContext);
   return (
-    <RadixContextMenu.Root>
+    <RadixContextMenu.Root modal={modal}>
       <RadixContextMenu.Trigger asChild>{children}</RadixContextMenu.Trigger>
       <RadixContextMenu.Portal>
         <RadixContextMenu.Content

@@ -288,6 +288,23 @@ describe("FloatingRoot", () => {
     expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
   });
 
+  it("快速创建时点了别处（窗口 blur）就取消输入，不创建任何条目", async () => {
+    const ipc = createMemoryIpc();
+    await openPanel(ipc);
+    fireEvent.click(screen.getByRole("button", { name: "+ 待办" }));
+    await advance(0);
+    fireEvent.change(screen.getByRole("textbox", { name: "标题" }), { target: { value: "半句话" } });
+
+    act(() => {
+      window.dispatchEvent(new FocusEvent("blur"));
+    });
+    await advance(0);
+
+    expect(screen.queryByRole("textbox", { name: "标题" })).not.toBeInTheDocument();
+    expect(ipc.calls).toContain("endFloatingInput");
+    expect(ipc.items).toHaveLength(0);
+  });
+
   it("三个按钮分别创建待办、笔记与提示", async () => {
     const ipc = createMemoryIpc();
     await openPanel(ipc);

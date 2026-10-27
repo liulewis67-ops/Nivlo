@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { MenuModalContext } from "@/components";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
@@ -10,6 +11,7 @@ import { FloatingBadge } from "./FloatingBadge";
 import { TodayPanel } from "./TodayPanel";
 import { needsPanelWindow } from "./model/floating-machine";
 import { useFloatingMachine } from "./use-floating-machine";
+import { useIgnoreWindowBlur } from "./use-ignore-window-blur";
 
 /** Today 面板的 logical 宽度（px）。 */
 export const PANEL_WIDTH_PX = 300;
@@ -36,6 +38,8 @@ export function FloatingRoot() {
   useTodayQuery();
   // Inbox 数量同理：启动时取一次，之后只由后端事件刷新。
   useInboxCountQuery();
+  // 焦点会被马上还给用户之前的应用：菜单不能因此关闭。
+  useIgnoreWindowBlur();
   const { state, send } = useFloatingMachine();
   const drop = useDropCapture(send);
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
@@ -93,43 +97,46 @@ export function FloatingRoot() {
   useEffect(() => ipc.subscribeFloatingPointerLeft(() => send("pointerLeave")), [send]);
 
   return (
-    <div
-      role="group"
-      aria-label={t("floating.label")}
-      className="h-full w-full"
-      onPointerEnter={() => send("pointerEnter")}
-      // 指针仍在窗口内移动说明它没有离开；补发 pointerEnter 以取消因漏发 pointerleave 而误启动的收起。
-      onPointerMove={() => send("pointerEnter")}
-      onPointerLeave={() => send("pointerLeave")}
-      {...drop.handlers}
-    >
-      {isPanel ? (
-        <TodayPanel
-          layout={layout}
-          quickCreateKind={quickCreateKind}
-          onQuickCreate={startQuickCreate}
-          onQuickCreateKindChange={setQuickCreateKind}
-          onQuickCreateDone={finishQuickCreate}
-          dropActive={drop.hovering}
-          capture={{
-            feedback: drop.feedback,
-            onUndo: drop.undo,
-            onEdit: () => {
-              drop.dismiss();
-              void ipc.openMain();
-            },
-            onDismiss: drop.dismiss,
-            onHoldChange: drop.pauseDismiss,
-            // 快速创建输入框里粘贴的不是文字（文件 / 图片）：收进 Inbox 并结束这次快速创建。
-            onPaste: () => {
-              drop.pasteFromClipboard();
-              if (quickCreateKind !== null) finishQuickCreate();
-            },
-          }}
-        />
-      ) : (
-        <FloatingBadge />
-      )}
-    </div>
+    // 菜单不模态：模态菜单会让页面其余部分不响应指针，面板随之以为指针离开而收起，菜单跟着消失。
+    <MenuModalContext.Provider value={false}>
+      <div
+        role="group"
+        aria-label={t("floating.label")}
+        className="h-full w-full"
+        onPointerEnter={() => send("pointerEnter")}
+        // 指针仍在窗口内移动说明它没有离开；补发 pointerEnter 以取消因漏发 pointerleave 而误启动的收起。
+        onPointerMove={() => send("pointerEnter")}
+        onPointerLeave={() => send("pointerLeave")}
+        {...drop.handlers}
+      >
+        {isPanel ? (
+          <TodayPanel
+            layout={layout}
+            quickCreateKind={quickCreateKind}
+            onQuickCreate={startQuickCreate}
+            onQuickCreateKindChange={setQuickCreateKind}
+            onQuickCreateDone={finishQuickCreate}
+            dropActive={drop.hovering}
+            capture={{
+              feedback: drop.feedback,
+              onUndo: drop.undo,
+              onEdit: () => {
+                drop.dismiss();
+                void ipc.openMain();
+              },
+              onDismiss: drop.dismiss,
+              onHoldChange: drop.pauseDismiss,
+              // 快速创建输入框里粘贴的不是文字（文件 / 图片）：收进 Inbox 并结束这次快速创建。
+              onPaste: () => {
+                drop.pasteFromClipboard();
+                if (quickCreateKind !== null) finishQuickCreate();
+              },
+            }}
+          />
+        ) : (
+          <FloatingBadge />
+        )}
+      </div>
+    </MenuModalContext.Provider>
   );
 }

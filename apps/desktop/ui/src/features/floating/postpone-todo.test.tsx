@@ -98,6 +98,37 @@ describe("推迟", () => {
     expect(screen.getByText("「乙」已推迟到明天")).toBeInTheDocument();
   });
 
+  it("焦点被还给之前的应用（窗口 blur）之后菜单仍然开着，照样能选", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    await openPanel(ipc);
+    await openMenu("乙");
+
+    // 和真机记录到的顺序一致：先是菜单元素失去焦点（relatedTarget 为空），再是窗口 blur。
+    act(() => {
+      const menu = screen.getByRole("menu");
+      menu.dispatchEvent(new FocusEvent("blur", { relatedTarget: null }));
+      menu.dispatchEvent(new FocusEvent("focusout", { bubbles: true, relatedTarget: null }));
+      window.dispatchEvent(new FocusEvent("blur"));
+    });
+    await advance(0);
+
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "推迟到明天" }));
+    await advance(0);
+    expect(ipc.reschedules).toEqual([{ id: "b", target: { kind: "tomorrow" } }]);
+  });
+
+  it("悬浮窗的菜单不模态：打开时页面其余部分仍响应指针（否则面板以为指针离开而收起）", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    await openPanel(ipc);
+    await openMenu("乙");
+
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(document.body.style.pointerEvents).not.toBe("none");
+  });
+
   it("逾期的待办多一个「移到今天」，普通待办没有", async () => {
     const ipc = createMemoryIpc();
     ipc.setToday(VIEW);

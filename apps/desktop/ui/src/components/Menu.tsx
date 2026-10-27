@@ -1,6 +1,14 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { createContext, useContext } from "react";
 import type { ReactElement } from "react";
 import { cx } from "@/lib/cx";
+
+/**
+ * 菜单是否模态（缺省是）。模态菜单打开时会给页面其余部分加上 `pointer-events: none`，
+ * 指针随之被认为离开了原来所在的元素；悬浮窗靠指针离开来收起面板，所以它把菜单设为非模态
+ * （点菜单外照样关闭，只是不屏蔽页面其余部分的指针事件）。`Menu` 与 `ContextMenu` 都遵循它。
+ */
+export const MenuModalContext = createContext(true);
 
 /** 菜单项的描述。 */
 export type MenuItemSpec = {
@@ -34,8 +42,9 @@ export type MenuProps = {
  * @returns 菜单元素。
  */
 export function Menu({ trigger, items }: MenuProps) {
+  const modal = useContext(MenuModalContext);
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root modal={modal}>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content

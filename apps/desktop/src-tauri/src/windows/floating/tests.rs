@@ -593,6 +593,40 @@ async fn end_input_makes_the_window_unfocusable_again_and_gives_focus_back() {
 }
 
 #[tokio::test(start_paused = true)]
+async fn being_activated_outside_input_gives_focus_straight_back() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+
+    f.controller.on_focused();
+    // 不是立刻还：等激活过程走完。
+    assert_eq!(f.foreground.restored.load(Ordering::SeqCst), 0);
+    advance(Duration::from_millis(100)).await;
+
+    assert_eq!(f.foreground.remembered.load(Ordering::SeqCst), 1);
+    assert_eq!(f.foreground.restored.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test(start_paused = true)]
+async fn focus_during_quick_create_input_is_kept() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.begin_input().unwrap();
+    let remembered = f.foreground.remembered.load(Ordering::SeqCst);
+
+    f.controller.on_focused();
+    advance(Duration::from_millis(100)).await;
+
+    assert_eq!(f.foreground.remembered.load(Ordering::SeqCst), remembered);
+    assert_eq!(f.foreground.restored.load(Ordering::SeqCst), 0);
+
+    // 输入结束之后再被激活，又会还回去。
+    f.controller.end_input().unwrap();
+    f.controller.on_focused();
+    advance(Duration::from_millis(100)).await;
+    assert_eq!(f.foreground.restored.load(Ordering::SeqCst), 2);
+}
+
+#[tokio::test(start_paused = true)]
 async fn end_input_without_begin_is_harmless() {
     let f = fixture(single(), (700, 400), &[]).await;
     f.controller.restore().await;

@@ -6,7 +6,7 @@
 //! 也不会每个像素都写一次数据库。具体的吸附与跨显示器 / DPI 计算在
 //! [`nivlo_platform::placement`] 中，这里只负责时序与持久化。
 
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError, Weak};
 use std::time::Duration;
 
@@ -25,6 +25,9 @@ use tokio_util::sync::CancellationToken;
 ///
 /// 太短会在用户短暂停顿时提前吸附，太长则松手后窗口"迟钝"；150ms 是手感与稳定性的折中。
 const SETTLE_DELAY: Duration = Duration::from_millis(150);
+
+/// 悬浮窗被误激活后等多久再把焦点还回去：让这次点击的激活（含 WebView2 的 `SetFocus`）先走完。
+const FOCUS_RETURN_DELAY: Duration = Duration::from_millis(60);
 
 /// 面板展开期间检查"指针是否还在窗口内"的间隔。
 ///
@@ -77,6 +80,11 @@ pub trait FloatingHandle: Send + Sync {
         &self,
     ) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>>;
 
+    /// 悬浮窗变成了前台窗口。不在 Quick Create 输入期间时这是「误激活」：窗口虽然带
+    /// `WS_EX_NOACTIVATE`，但点击落在 WebView2 的子窗口上，WebView2 会自己 `SetFocus`，
+    /// 把悬浮窗拉到前台。这里立即把前台还给用户之前的应用，悬停与点击都不会抢走焦点。
+    fn on_focused(&self);
+
     /// 结束文本输入：悬浮窗恢复为不可聚焦，并把焦点还给用户之前的窗口。可以重复调用。
     ///
     /// # Errors
@@ -114,6 +122,8 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     expected: Mutex<Option<Point>>,
     /// 最近一次保存的位置 JSON，内容没变时不重复写库。
     last_saved: Mutex<Option<String>>,
+    /// 正在 Quick Create 输入：这期间悬浮窗本来就应该拿着焦点，不做「还回去」。
+    input_active: AtomicBool,
 }
 
 /// 获取互斥锁；锁中毒只会发生在其他线程 panic 之后，数据本身仍有效。
@@ -144,6 +154,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
             collapsed: Mutex::new(None),
             expected: Mutex::new(None),
             last_saved: Mutex::new(None),
+            input_active: AtomicBool::new(false),
         })
     }
 
@@ -397,6 +408,8 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
     /// 任何一步失败都把窗口恢复为不可聚焦，避免悬浮窗留在"可被激活"的状态里，
     /// 之后单击就会抢走别的应用的焦点。
     fn begin_input(&self) -> Result<(), PlatformError> {
+        // 先标记再聚焦：聚焦本身会触发 `on_focused`，不能被当成误激活。
+        self.input_active.store(true, Ordering::SeqCst);
         if let Err(error) = self.foreground.remember() {
             tracing::warn!(event = "floating_foreground_remember_failed", %error, "记住前台窗口失败");
         }
@@ -404,16 +417,56 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
             .port
             .set_focusable(true)
             .and_then(|()| self.port.focus());
-        if result.is_err()
-            && let Err(error) = self.port.set_focusable(false)
-        {
-            tracing::warn!(event = "floating_unfocusable_failed", %error, "恢复悬浮窗不可聚焦失败");
+        if result.is_err() {
+            self.input_active.store(false, Ordering::SeqCst);
+            if let Err(error) = self.port.set_focusable(false) {
+                tracing::warn!(event = "floating_unfocusable_failed", %error, "恢复悬浮窗不可聚焦失败");
+            }
         }
         result
     }
 
+    /// 不在输入期间被激活：稍等激活过程走完，再把前台还给用户之前的窗口
+    /// （悬浮窗自己在前台时取钩子记录的那个）。
+    ///
+    /// 不能在激活事件里立刻还：那时系统还在处理这次点击的激活，WebView2 随后的 `SetFocus`
+    /// 会把悬浮窗重新拉回前台（真机 E2E 复现过）。
+    fn on_focused(&self) {
+        if self.input_active.load(Ordering::SeqCst) {
+            return;
+        }
+        let Some(this) = self.me.upgrade() else {
+            return;
+        };
+        let runtime = this.runtime.clone();
+        runtime.spawn(async move {
+            tokio::select! {
+                () = this.shutdown.cancelled() => return,
+                () = tokio::time::sleep(FOCUS_RETURN_DELAY) => {}
+            }
+            // 等待期间进入了 Quick Create 输入：这次激活是用户要的。
+            if this.input_active.load(Ordering::SeqCst) {
+                return;
+            }
+            if let Err(error) = this.foreground.remember() {
+                tracing::warn!(event = "floating_focus_remember_failed", %error, "记住前台窗口失败");
+                return;
+            }
+            match this.foreground.restore() {
+                Ok(()) => tracing::info!(
+                    event = "floating_focus_returned",
+                    "悬浮窗被误激活，焦点已还给之前的应用"
+                ),
+                Err(error) => {
+                    tracing::warn!(event = "floating_focus_return_failed", %error, "无法把焦点还给之前的应用")
+                }
+            }
+        });
+    }
+
     /// 结束文本输入：恢复不可聚焦，再把焦点还给之前的窗口。
     fn end_input(&self) -> Result<(), PlatformError> {
+        self.input_active.store(false, Ordering::SeqCst);
         let result = self.port.set_focusable(false);
         // 还原失败（用户已关闭那个应用、系统拒绝等）不影响悬浮窗本身，只记录。
         if let Err(error) = self.foreground.restore() {
