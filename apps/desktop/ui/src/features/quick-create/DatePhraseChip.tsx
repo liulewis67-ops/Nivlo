@@ -115,6 +115,10 @@ export function DatePhraseChip({ parsed, onDismiss }: DatePhraseChipProps) {
           event.preventDefault();
           onDismiss();
         }}
+        // 键盘（Tab 到这里按 Enter / Space）只会触发 click，不会有 mousedown；`detail === 0` 就是键盘触发的。
+        onClick={(event) => {
+          if (event.detail === 0) onDismiss();
+        }}
         className="flex size-4 shrink-0 items-center justify-center rounded text-muted hover:bg-primary/20 hover:text-text"
       >
         {"✕"}
