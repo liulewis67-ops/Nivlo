@@ -1,10 +1,8 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import i18next from "i18next";
 import { StrictMode } from "react";
+import type { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
-import { FloatingApp } from "@/app/floating/FloatingApp";
-import { MainApp } from "@/app/main/MainApp";
-import { SearchApp } from "@/features/search";
 import { AppProviders } from "@/app/providers/AppProviders";
 import { hydrateLanguage, initI18n } from "@/i18n";
 import { ipc, isRunningInTauri, setIpcClient } from "@/lib/ipc";
@@ -21,15 +19,20 @@ const FLOATING_WINDOW_LABEL = "floating";
 const SEARCH_WINDOW_LABEL = "search";
 
 /**
- * 按窗口 label 选择根组件。
+ * 按窗口 label 加载根组件（各自一个代码块）。
+ *
+ * 三个窗口共用一个入口，但悬浮窗与全局搜索框只需要自己的那一小部分：主窗口的视图（日历、Workflow、
+ * 脚本编辑器……）放在单独的块里，不必下载和解析。实测全局搜索框第一次唤出快约 50 ms，悬浮窗启动快约
+ * 30 ms、堆少约 1 MB（见 `docs/development/perf-baseline.md`）。
  *
  * @param label 窗口 label。
  * @returns 根组件。
  */
-function rootFor(label: string) {
-  if (label === FLOATING_WINDOW_LABEL) return <FloatingApp />;
-  if (label === SEARCH_WINDOW_LABEL) return <SearchApp />;
-  return <MainApp />;
+async function loadRoot(label: string): Promise<ComponentType> {
+  if (label === FLOATING_WINDOW_LABEL)
+    return (await import("@/app/floating/FloatingApp")).FloatingApp;
+  if (label === SEARCH_WINDOW_LABEL) return (await import("@/features/search/SearchApp")).SearchApp;
+  return (await import("@/app/main/MainApp")).MainApp;
 }
 
 /** 从后端读取外观、皮肤、语言与主题，覆盖本地缓存；失败时沿用缓存。 */
@@ -84,6 +87,8 @@ async function bootstrap(): Promise<void> {
     label = new URLSearchParams(window.location.search).get("window") ?? "main";
   }
 
+  const rootPromise = loadRoot(label);
+
   // 主窗口启动时以后端保存的外观 / 皮肤为准（备份恢复后也能还原）；悬浮窗与搜索框靠 storage 事件同步
   // （它们也没有读取偏好的权限）。
   if (label !== FLOATING_WINDOW_LABEL && label !== SEARCH_WINDOW_LABEL) void hydrateUiPrefs();
@@ -95,9 +100,12 @@ async function bootstrap(): Promise<void> {
   if (container === null) {
     throw new Error("缺少 #root 挂载节点");
   }
+  const Root = await rootPromise;
   createRoot(container).render(
     <StrictMode>
-      <AppProviders>{rootFor(label)}</AppProviders>
+      <AppProviders>
+        <Root />
+      </AppProviders>
     </StrictMode>,
   );
 }

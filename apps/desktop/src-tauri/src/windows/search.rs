@@ -8,6 +8,7 @@
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
+use std::time::Instant;
 
 use nivlo_platform::foreground::{ForegroundPort, UnsupportedForeground};
 use tauri::webview::PageLoadEvent;
@@ -161,6 +162,8 @@ fn create<R: Runtime>(
     let handle = app.clone();
     // 只在第一次加载完成时自动显示；之后的重新加载（开发时的整页刷新）不应把窗口弹出来。
     let first_load = AtomicBool::new(show_when_loaded);
+    // 记录第一次唤出的耗时分布（创建窗口与 WebView / 加载页面），每次启动至多一条，用于性能基线。
+    let started = Instant::now();
     WebviewWindowBuilder::new(
         app,
         SEARCH_WINDOW_LABEL,
@@ -180,10 +183,22 @@ fn create<R: Runtime>(
     .on_page_load(move |window, payload| {
         if payload.event() == PageLoadEvent::Finished && first_load.swap(false, Ordering::SeqCst) {
             present(&handle, &window);
+            tracing::info!(
+                event = "search_window_page_loaded",
+                elapsed_ms = started.elapsed().as_millis(),
+                "全局搜索框页面加载完成并已显示"
+            );
         }
     })
     .build()
-    .inspect(super::suppress_bare_alt_menu)
+    .inspect(|window| {
+        tracing::info!(
+            event = "search_window_created",
+            elapsed_ms = started.elapsed().as_millis(),
+            "已创建全局搜索框窗口"
+        );
+        super::suppress_bare_alt_menu(window);
+    })
 }
 
 /// 把窗口放到鼠标所在的显示器上、显示、聚焦，并通知页面重置输入。
