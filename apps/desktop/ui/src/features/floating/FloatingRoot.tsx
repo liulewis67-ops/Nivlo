@@ -104,8 +104,18 @@ export function FloatingRoot() {
         aria-label={t("floating.label")}
         className="h-full w-full"
         onPointerEnter={() => send("pointerEnter")}
+        // 在徽标上按下左键是要点击或拖动：按住期间不因悬停展开，否则面板会在拖动途中弹出、徽标从手下消失。
+        onPointerDown={(event) => {
+          if (event.button === 0) send("pressStarted");
+        }}
+        onPointerUp={() => send("pressEnded")}
+        onPointerCancel={() => send("pressEnded")}
         // 指针仍在窗口内移动说明它没有离开；补发 pointerEnter 以取消因漏发 pointerleave 而误启动的收起。
-        onPointerMove={() => send("pointerEnter")}
+        // 原生窗口拖动结束时页面收不到 pointerup：移动时已经没有按键按着，就当作松开了。
+        onPointerMove={(event) => {
+          if (event.buttons === 0) send("pressEnded");
+          send("pointerEnter");
+        }}
         onPointerLeave={() => send("pointerLeave")}
         {...drop.handlers}
       >

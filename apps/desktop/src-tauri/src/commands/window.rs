@@ -4,11 +4,11 @@ use std::sync::Arc;
 
 use nivlo_application::error::{AppError, ErrorAction, ErrorCode};
 use nivlo_platform::error::PlatformError;
-use tauri::{AppHandle, Runtime, State, WebviewWindow};
+use tauri::{AppHandle, PhysicalPosition, Runtime, State, WebviewWindow};
 use tauri_specta::Event;
 
 use crate::app::AppState;
-use crate::dto::{ExpandFloatingRequest, ExpandedLayoutDto, IpcError};
+use crate::dto::{DragGrabPoint, ExpandFloatingRequest, ExpandedLayoutDto, IpcError};
 use crate::events::MainViewRequestedEvent;
 use crate::windows::floating::FloatingHandle;
 use crate::windows::show_main_window;
@@ -121,18 +121,59 @@ pub async fn quit_app<R: Runtime>(app: AppHandle<R>) {
     app.exit(0);
 }
 
+/// 让窗口内的 `grab`（logical px）正好落在光标 `cursor`（物理像素）下时，窗口左上角应在的位置。
+///
+/// # Arguments
+///
+/// * `cursor` - 光标的屏幕位置（物理像素）。
+/// * `grab` - 按下时在窗口内的位置（logical px）。
+/// * `scale` - 窗口所在显示器的缩放比例。
+fn grab_aligned_position(
+    cursor: (f64, f64),
+    grab: (f64, f64),
+    scale: f64,
+) -> PhysicalPosition<i32> {
+    #[allow(clippy::cast_possible_truncation)]
+    let round = |value: f64| value.round() as i32;
+    PhysicalPosition::new(
+        round(cursor.0 - grab.0 * scale),
+        round(cursor.1 - grab.1 * scale),
+    )
+}
+
 /// 开始拖动悬浮窗（由悬浮窗在检测到"按下并移动超过阈值"之后调用）。
 ///
 /// 把拖动交给操作系统的原生窗口拖动，保证跟手；拖动结束后的吸附与保存由
 /// `FloatingController` 在收到连续的移动事件之后完成。窗口位置始终由 Rust 控制，
 /// 前端不直接使用 window API 移动窗口（前端规范 §9）。
 ///
+/// 系统的拖动以它接手那一刻的光标为基准；那时光标已经移过了判定阈值，还可能在 IPC 期间继续移动。
+/// 给了 `grab`（按下的位置）时，先把窗口挪到「按下的那一点在光标下」再交给系统，徽标不会从光标下滑开。
+///
 /// # Errors
 ///
-/// 系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
+/// `grab` 不合法返回 `INVALID_INPUT`；系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
 #[tauri::command]
 #[specta::specta]
-pub async fn start_floating_drag<R: Runtime>(window: WebviewWindow<R>) -> Result<(), IpcError> {
+pub async fn start_floating_drag<R: Runtime>(
+    window: WebviewWindow<R>,
+    grab: Option<DragGrabPoint>,
+) -> Result<(), IpcError> {
+    if let Some(grab) = grab {
+        let grab = grab.validated()?;
+        // 对齐失败不影响拖动本身：只是回到旧的行为（窗口落后光标几像素）。
+        match (window.cursor_position(), window.scale_factor()) {
+            (Ok(cursor), Ok(scale)) => {
+                let target = grab_aligned_position((cursor.x, cursor.y), grab, scale);
+                if let Err(error) = window.set_position(target) {
+                    tracing::debug!(event = "floating_drag_align_failed", %error, "拖动前对齐窗口失败");
+                }
+            }
+            (Err(error), _) | (_, Err(error)) => {
+                tracing::debug!(event = "floating_drag_align_failed", %error, "拖动前读取光标位置失败");
+            }
+        }
+    }
     window.start_dragging().map_err(|error| {
         tracing::warn!(event = "floating_drag_failed", %error, "开始拖动悬浮窗失败");
         IpcError::from(AppError::new(
@@ -219,4 +260,36 @@ pub async fn begin_floating_input(state: State<'_, AppState>) -> Result<(), IpcE
 #[specta::specta]
 pub async fn end_floating_input(state: State<'_, AppState>) -> Result<(), IpcError> {
     floating_handle(&state)?.end_input().map_err(window_error)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_grabbed_point_ends_up_under_the_cursor() {
+        // 125% 缩放：在徽标 (40, 20) 处按下，光标已经移到 (1500, 300)。
+        let position = grab_aligned_position((1500.0, 300.0), (40.0, 20.0), 1.25);
+        assert_eq!(position, PhysicalPosition::new(1450, 275));
+        // 100% 缩放下就是简单的相减。
+        assert_eq!(
+            grab_aligned_position((100.0, 100.0), (10.0, 10.0), 1.0),
+            PhysicalPosition::new(90, 90)
+        );
+    }
+
+    #[test]
+    fn grab_points_outside_any_window_are_rejected() {
+        assert!(DragGrabPoint { x: 10.0, y: 5.0 }.validated().is_ok());
+        assert!(DragGrabPoint { x: -1.0, y: 5.0 }.validated().is_err());
+        assert!(
+            DragGrabPoint {
+                x: f64::NAN,
+                y: 5.0
+            }
+            .validated()
+            .is_err()
+        );
+        assert!(DragGrabPoint { x: 10.0, y: 1.0e9 }.validated().is_err());
+    }
 }

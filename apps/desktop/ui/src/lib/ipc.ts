@@ -345,8 +345,11 @@ export interface IpcClient {
   /**
    * 请求后端开始拖动悬浮窗（交给操作系统的原生拖动，保证跟手）。
    * 窗口位置始终由 Rust 控制，前端不直接移动窗口。
+   *
+   * @param grab 按下时在窗口内的位置（`clientX` / `clientY`）：后端先把这一点挪回光标下再开始拖动，
+   *   徽标不会因为判定阈值和 IPC 的延迟从光标下滑开。
    */
-  startFloatingDrag(): Promise<void>;
+  startFloatingDrag(grab?: { x: number; y: number }): Promise<void>;
   /**
    * 把悬浮窗展开为 Today 面板（窗口几何命令，不查询任何业务数据）。
    *
@@ -578,8 +581,8 @@ const tauriIpc: IpcClient = {
   subscribeMainViewRequested: (onRequested) =>
     listenAll([() => events.mainViewRequested.listen((event) => onRequested(event.payload.view))]),
   quitApp: () => commands.quitApp(),
-  startFloatingDrag: async () => {
-    await call("start_floating_drag", commands.startFloatingDrag());
+  startFloatingDrag: async (grab) => {
+    await call("start_floating_drag", commands.startFloatingDrag(grab ?? null));
   },
   expandFloating: (width, height) =>
     call("expand_floating", commands.expandFloating({ width, height })),
@@ -712,7 +715,7 @@ export const ipc: IpcClient = {
   takePendingMainView: () => current.takePendingMainView(),
   subscribeMainViewRequested: (onRequested) => current.subscribeMainViewRequested(onRequested),
   quitApp: () => current.quitApp(),
-  startFloatingDrag: () => current.startFloatingDrag(),
+  startFloatingDrag: (grab) => current.startFloatingDrag(grab),
   expandFloating: (width, height) => current.expandFloating(width, height),
   collapseFloating: () => current.collapseFloating(),
   beginFloatingInput: () => current.beginFloatingInput(),

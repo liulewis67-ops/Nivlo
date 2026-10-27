@@ -729,11 +729,19 @@ export const commands = {
 	 *  `FloatingController` 在收到连续的移动事件之后完成。窗口位置始终由 Rust 控制，
 	 *  前端不直接使用 window API 移动窗口（前端规范 §9）。
 	 * 
+	 *  系统的拖动以它接手那一刻的光标为基准；那时光标已经移过了判定阈值，还可能在 IPC 期间继续移动。
+	 *  给了 `grab`（按下的位置）时，先把窗口挪到「按下的那一点在光标下」再交给系统，徽标不会从光标下滑开。
+	 * 
 	 *  # Errors
 	 * 
-	 *  系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
+	 *  `grab` 不合法返回 `INVALID_INPUT`；系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
 	 */
-	startFloatingDrag: () => typedError<null, IpcError>(__TAURI_INVOKE("start_floating_drag")),
+	startFloatingDrag: (grab: {
+	/**  窗口内的横坐标（logical px）。 */
+	x: number | null,
+	/**  窗口内的纵坐标（logical px）。 */
+	y: number | null,
+} | null) => typedError<null, IpcError>(__TAURI_INVOKE("start_floating_drag", { grab })),
 	/**
 	 *  把悬浮窗展开为 Today 面板（Hover 展开时调用）。
 	 * 
@@ -978,6 +986,19 @@ export type DatePointDto = {
 export type DayChangedEvent = {
 	/**  新的本地日期，`YYYY-MM-DD`。 */
 	date: string,
+};
+
+/**
+ *  开始拖动悬浮窗时按下的位置：窗口内的 logical 坐标（页面的 `clientX` / `clientY`）。
+ * 
+ *  拖动要先移动几像素才会开始，再加上一次 IPC，系统接手时光标已经离开了按下的位置；后端据此把
+ *  窗口挪回「按下的那一点正在光标下」，拖动全程徽标不会从光标下滑开。
+ */
+export type DragGrabPoint = {
+	/**  窗口内的横坐标（logical px）。 */
+	x: number | null,
+	/**  窗口内的纵坐标（logical px）。 */
+	y: number | null,
 };
 
 /**  试运行的样例输入。 */

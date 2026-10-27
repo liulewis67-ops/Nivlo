@@ -610,6 +610,45 @@ async function runOnce(index) {
           realMouse(original[0], original[1]);
         }
       });
+
+      // 11.9（--native）拖动徽标并吸附（产品文档 §28「拖动、吸附」）：真实鼠标把收起的徽标拖到离工作区右边
+      // 10px 处松开，窗口贴到右边缘、竖直位置不变。
+      await step("拖动徽标吸附到边缘（真实鼠标）", async () => {
+        const original = cursorPosition();
+        try {
+          /** 悬浮窗与工作区的物理像素几何。 */
+          const geometry = () =>
+            floating.evaluate("(() => { const k = devicePixelRatio; return { x: screenX * k, y: screenY * k, w: outerWidth * k, h: outerHeight * k, right: (screen.availLeft + screen.availWidth) * k, panel: !!document.querySelector(\"[aria-label='今日面板'],[aria-label='Today panel']\") }; })()");
+          /** 指针移到远处，等面板收起回徽标大小（松手时指针停在徽标上，面板会展开），再读几何。 */
+          const collapsed = async (what) => {
+            realMouse(200, 200);
+            return until(async () => {
+              const g = await geometry();
+              return !g.panel && g.w < 200 ? g : null;
+            }, `${what}：面板收起`, 8000);
+          };
+          // 先拖离边缘 300px（远超吸附范围）：徽标落在松手的位置（按下的那一点始终在光标下），不被吸回去。
+          const start = await collapsed("开始之前");
+          const scale = start.w / 88;
+          realDrag([start.x + start.w / 2, start.y + start.h / 2], [start.x + start.w / 2 - 300 * scale, start.y + start.h / 2]);
+          await sleep(800);
+          const before = await collapsed("拖离边缘之后");
+          if (Math.abs(before.x - (start.x - 300 * scale)) > 3 * scale) {
+            throw new Error(`徽标没有落在松手的位置：开始 ${JSON.stringify(start)}，现在 ${JSON.stringify(before)}（应移动 ${300 * scale}px）`);
+          }
+          if (Math.abs(before.x + before.w - before.right) <= 1) throw new Error("拖离 300px 之后仍贴在右边缘");
+          // 再拖到离右边 10px 处：松开后吸附，贴到右边缘、竖直位置不变。
+          const grab = [before.x + before.w / 2, before.y + before.h / 2];
+          realDrag(grab, [grab[0] + (before.right - 10 * scale - (before.x + before.w)), grab[1]]);
+          await sleep(800);
+          const after = await collapsed("拖近边缘之后");
+          if (Math.abs(after.x + after.w - after.right) > 1 || Math.abs(after.y - before.y) > 2 * scale) {
+            throw new Error(`松开后没有贴到工作区右边缘：拖之前 ${JSON.stringify(before)}，现在 ${JSON.stringify(after)}`);
+          }
+        } finally {
+          realMouse(original[0], original[1]);
+        }
+      });
     }
 
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。

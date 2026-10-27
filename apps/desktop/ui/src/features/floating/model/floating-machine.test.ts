@@ -69,6 +69,25 @@ describe("createFloatingMachine", () => {
       expect(machine.getState()).toBe("expanded");
     });
 
+    it("在徽标上按下会取消待执行的展开；按住期间悬停不展开（要拖动徽标）", () => {
+      machine.send("pointerEnter");
+      vi.advanceTimersByTime(HOVER_ENTER_DELAY_MS - 50);
+      machine.send("pressStarted");
+      vi.advanceTimersByTime(5000);
+      machine.send("pointerEnter");
+      vi.advanceTimersByTime(5000);
+      expect(machine.getState()).toBe("collapsed");
+    });
+
+    it("松开之后，指针还在徽标上就照常延迟展开", () => {
+      machine.send("pointerEnter");
+      machine.send("pressStarted");
+      machine.send("pressEnded");
+      machine.send("pointerEnter");
+      vi.advanceTimersByTime(HOVER_ENTER_DELAY_MS);
+      expect(machine.getState()).toBe("expanded");
+    });
+
     it("使用自定义延迟", () => {
       const fast = createFloatingMachine({ enterDelayMs: 10, leaveDelayMs: 20 });
       fast.send("pointerEnter");

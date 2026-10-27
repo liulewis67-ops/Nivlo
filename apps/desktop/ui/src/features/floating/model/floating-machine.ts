@@ -12,7 +12,11 @@ export type FloatingEvent =
   | "dropped"
   /** 需要让面板保持展开（如捕获后的「已创建」反馈）；直到收到 `holdReleased`。 */
   | "holdRequested"
-  | "holdReleased";
+  | "holdReleased"
+  /** 在徽标上按下了左键（要点击或拖动，不是悬停）：取消待执行的展开，按住期间不展开。 */
+  | "pressStarted"
+  /** 左键松开（或指针移动时已经没有按键按着）：恢复悬停展开。 */
+  | "pressEnded";
 
 /** 指针进入后多久展开（毫秒）：太短会在鼠标"路过"时误展开（产品文档 §5.4 建议 200~300ms）。 */
 export const HOVER_ENTER_DELAY_MS = 250;
@@ -67,6 +71,7 @@ export function needsPanelWindow(state: FloatingState): boolean {
  *     └───────── Mouse Leave（延迟 500ms）───┘
  * Expanded ── Quick Add ──→ QuickCreate（输入期间不会因指针离开而收起）
  * Collapsed / Expanded ── Drag Enter ──→ DragHover（立即响应，没有延迟）
+ * Collapsed 上按下左键：取消待执行的展开，按住期间不展开（要拖动徽标，而不是打开面板）
  * ```
  *
  * 纯逻辑，与 React 解耦、可用假计时器完整测试（前端规范 §9）。所有计时器都在状态切换与
@@ -87,6 +92,8 @@ export function createFloatingMachine(options: FloatingMachineOptions = {}): Flo
   let stateBeforeDrag: "collapsed" | "expanded" = "collapsed";
   /** 是否有调用方要求面板保持展开；期间不会因指针离开而收起。 */
   let held = false;
+  /** 徽标上的左键是否按着：按着时是在点击或拖动，悬停不展开。 */
+  let pressed = false;
   let enterTimer: ReturnType<typeof setTimeout> | undefined;
   let leaveTimer: ReturnType<typeof setTimeout> | undefined;
   const listeners = new Set<() => void>();
@@ -137,7 +144,7 @@ export function createFloatingMachine(options: FloatingMachineOptions = {}): Flo
             clearTimeout(leaveTimer);
             leaveTimer = undefined;
           }
-          if (state === "collapsed" && enterTimer === undefined) {
+          if (state === "collapsed" && enterTimer === undefined && !pressed) {
             enterTimer = setTimeout(() => {
               enterTimer = undefined;
               if (state === "collapsed" && pointerInside) transition("expanded");
@@ -174,6 +181,18 @@ export function createFloatingMachine(options: FloatingMachineOptions = {}): Flo
             stateBeforeDrag = state;
             transition("dragHover");
           }
+          return;
+        }
+        case "pressStarted": {
+          pressed = true;
+          if (enterTimer !== undefined) {
+            clearTimeout(enterTimer);
+            enterTimer = undefined;
+          }
+          return;
+        }
+        case "pressEnded": {
+          pressed = false;
           return;
         }
         case "holdRequested": {

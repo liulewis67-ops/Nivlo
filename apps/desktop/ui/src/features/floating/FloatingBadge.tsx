@@ -36,6 +36,8 @@ export function FloatingBadge() {
   const hasSkin = skin.frames.length > 0;
   const trackerRef = useRef(createDragIntentTracker());
   const draggedRef = useRef(false);
+  /** 按下的位置（窗口内坐标）：开始拖动时交给后端，让徽标保持在光标下。 */
+  const grabRef = useRef<{ x: number; y: number } | null>(null);
 
   /**
    * 记录按下位置，开始一次新手势。
@@ -45,6 +47,7 @@ export function FloatingBadge() {
   function handlePointerDown(event: PointerEvent<HTMLButtonElement>): void {
     if (event.button !== 0) return;
     draggedRef.current = false;
+    grabRef.current = { x: event.clientX, y: event.clientY };
     trackerRef.current.press({ x: event.clientX, y: event.clientY });
   }
 
@@ -56,7 +59,7 @@ export function FloatingBadge() {
   function handlePointerMove(event: PointerEvent<HTMLButtonElement>): void {
     if (trackerRef.current.move({ x: event.clientX, y: event.clientY })) {
       draggedRef.current = true;
-      void ipc.startFloatingDrag();
+      void ipc.startFloatingDrag(grabRef.current ?? undefined);
     }
   }
 

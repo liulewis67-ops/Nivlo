@@ -74,6 +74,8 @@ export interface MemoryIpc extends IpcClient, WorkflowMock {
   readonly openMainCalls: number;
   /** `startFloatingDrag` 被调用的次数。 */
   readonly dragStarts: number;
+  /** 最近一次 `startFloatingDrag` 带来的按下位置。 */
+  readonly lastDragGrab: { x: number; y: number } | null;
   /** 按顺序记录的全部方法调用名，用于断言"没有发起某些 IPC"。 */
   readonly calls: readonly string[];
   /** 让下一次 `quickCreate` 抛出的错误，用于测试失败路径；触发后自动清除。 */
@@ -319,6 +321,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   let pendingFailure = options.failNextCreateWith;
   let openMainCalls = 0;
   let dragStarts = 0;
+  let lastDragGrab: { x: number; y: number } | null = null;
   let quickCreateFailure: AppError | undefined;
   let beginInputFailure: AppError | undefined;
   let transitionFailure: AppError | undefined;
@@ -794,6 +797,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       calls.push("getToday");
       return Promise.resolve(today);
     },
+    get lastDragGrab() {
+      return lastDragGrab;
+    },
     get dragStarts() {
       return dragStarts;
     },
@@ -830,8 +836,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       calls.push("collapseFloating");
       return Promise.resolve();
     },
-    startFloatingDrag: () => {
+    startFloatingDrag: (grab?: { x: number; y: number }) => {
       calls.push("startFloatingDrag");
+      lastDragGrab = grab ?? null;
       dragStarts += 1;
       return Promise.resolve();
     },

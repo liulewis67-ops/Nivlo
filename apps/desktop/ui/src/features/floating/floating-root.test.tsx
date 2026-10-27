@@ -69,6 +69,23 @@ describe("FloatingRoot", () => {
     expect(ipc.lastExpand).toEqual({ width: PANEL_WIDTH_PX, height: PANEL_HEIGHT_PX });
   });
 
+  it("在徽标上按住（准备拖动）时不展开；拖动结束、指针再移动后照常展开", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS - 50);
+    fireEvent.pointerDown(root(), { button: 0 });
+    fireEvent.pointerMove(root(), { buttons: 1 });
+    await advance(HOVER_ENTER_DELAY_MS * 4);
+    expect(screen.queryByRole("region", { name: "今日面板" })).not.toBeInTheDocument();
+
+    // 原生拖动结束时收不到 pointerup：下一次移动已经没有按键按着，就当作松开。
+    fireEvent.pointerMove(root(), { buttons: 0 });
+    await advance(HOVER_ENTER_DELAY_MS);
+    expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
+  });
+
   it("Hover 展开与收起期间不再发起业务数据 IPC：Today 与 Inbox 数量只在启动时各取一次，之后只有窗口几何命令", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);

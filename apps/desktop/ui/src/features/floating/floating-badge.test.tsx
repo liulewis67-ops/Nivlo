@@ -35,6 +35,17 @@ describe("FloatingBadge", () => {
     expect(ipc.dragStarts).toBe(1);
   });
 
+  it("开始拖动时把按下的位置交给后端（让徽标保持在光标下），而不是跨过阈值时的位置", () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingBadge />, ipc);
+
+    fireEvent.pointerDown(badge(), { button: 0, clientX: 18, clientY: 9 });
+    fireEvent.pointerMove(badge(), { clientX: 40, clientY: 12 });
+
+    expect(ipc.dragStarts).toBe(1);
+    expect(ipc.lastDragGrab).toEqual({ x: 18, y: 9 });
+  });
+
   it("拖动之后收到的 click 不会打开主窗口", () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingBadge />, ipc);

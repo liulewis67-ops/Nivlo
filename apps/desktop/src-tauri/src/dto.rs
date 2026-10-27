@@ -458,6 +458,36 @@ pub struct ExpandFloatingRequest {
     pub height: f64,
 }
 
+/// 开始拖动悬浮窗时按下的位置：窗口内的 logical 坐标（页面的 `clientX` / `clientY`）。
+///
+/// 拖动要先移动几像素才会开始，再加上一次 IPC，系统接手时光标已经离开了按下的位置；后端据此把
+/// 窗口挪回「按下的那一点正在光标下」，拖动全程徽标不会从光标下滑开。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct DragGrabPoint {
+    /// 窗口内的横坐标（logical px）。
+    pub x: f64,
+    /// 窗口内的纵坐标（logical px）。
+    pub y: f64,
+}
+
+impl DragGrabPoint {
+    /// 校验坐标并返回 `(x, y)`。
+    ///
+    /// # Errors
+    ///
+    /// 坐标不是有限数、为负或超出窗口可能的大小时返回 `INVALID_INPUT`。
+    pub fn validated(self) -> Result<(f64, f64), AppError> {
+        let in_range =
+            |value: f64| value.is_finite() && (0.0..=MAX_PANEL_LOGICAL_PX).contains(&value);
+        if in_range(self.x) && in_range(self.y) {
+            Ok((self.x, self.y))
+        } else {
+            Err(invalid(format!("无效的拖动起点：{}, {}", self.x, self.y)))
+        }
+    }
+}
+
 /// 悬浮窗面板允许请求的最大边长（logical px），防止前端的错误输入把窗口撑到离谱的大小。
 const MAX_PANEL_LOGICAL_PX: f64 = 2000.0;
 
