@@ -209,11 +209,11 @@ Phase 12 Backlog                        → 未排期
 
 | 缺口 | 归属 | 说明 |
 |---|---|---|
-| D-07「隐藏已完成」开关未实现 | 7.5 | 1.6 把开关留给 3.5 设置页，3.5 完成时遗漏。 |
-| 原生侧文案未国际化 | 7.5、D-14 | 托盘菜单（`tray.rs`）、开机自启询问（`autostart.rs`）、恢复对话框（`lifecycle/recovery.rs`）、Scheduler 通知标题（`nivlo-scheduler` `plan.rs`）硬编码中文；语言偏好只存在前端 `localStorage`，Rust 侧无法得知当前语言。7.5 的「中英文切换后无缺失文案」因此未满足。 |
-| 点击通知无法定位 Item | 10.6 | `tauri-plugin-notification` 在桌面端没有点击回调，需要原生 Toast 激活。 |
+| ~~D-07「隐藏已完成」开关未实现~~ | 7.5 | ✅ 2026-10-27 盘点：已实现（设置页开关，`hideCompleted` UI 偏好，`TodayList` 遵循）。 |
+| 原生侧文案未国际化 | 7.5、D-14 | 托盘菜单（`tray.rs`）、开机自启询问（`autostart.rs`）、恢复对话框（`lifecycle/recovery.rs`）、Scheduler 通知标题（`nivlo-scheduler` `plan.rs`）硬编码中文；语言偏好只存在前端 `localStorage`，Rust 侧无法得知当前语言。7.5 的「中英文切换后无缺失文案」因此未满足。✅ 2026-10-27 盘点：已实现——`native_i18n::Lang` 驱动托盘、开机自启询问、恢复对话框；Scheduler 通知按 `Locale` 出中英文（`plan.rs`）。 |
+| ~~点击通知无法定位 Item~~ | 10.6 | ✅ 2026-10-27 盘点：已实现——原生 Toast 激活带 `nivlo://item/<ID>`，`windows::handle_activation` 打开主窗口并定位（真机端到端仍在 B 类清单 4.6 / 4.7）。 |
 | 内网 / 自托管 Jira 只能保存工单号 | 9.3 | HostPolicy 拒绝私网地址（6.4 的已知偏差），由 Jira API 与按 Integration 配置的 Host 解决。 |
-| UI 偏好不在备份内 | D-14 | 语言、主题、悬浮窗外观、皮肤存于 `localStorage`，与 3.5「设置写入 `settings` 表」不一致，7.4 的备份 / 恢复不包含它们。 |
+| UI 偏好不在备份内 | D-14 | 语言、主题、悬浮窗外观、皮肤存于 `localStorage`，与 3.5「设置写入 `settings` 表」不一致，7.4 的备份 / 恢复不包含它们。✅ 2026-10-27 盘点：已解决——UI 偏好经 `get_ui_pref` / `set_ui_pref` 存进 `settings` 表（主窗口启动时以后端为准），随数据库备份。 |
 
 ### D. 技术债与文档卫生
 
