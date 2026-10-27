@@ -296,6 +296,7 @@
       "remaining": "{{count}} left",
       "addLabel": "Add a to-do",
       "addPlaceholder": "Write something to do today, Enter to add",
+      "addedElsewhere": "Added for {{label}}",
       "emptyHint": "Write your first task in the box above and press Enter."
     },
     "complete": "Complete “{{title}}”",

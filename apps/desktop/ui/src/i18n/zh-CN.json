@@ -295,6 +295,7 @@
       "remaining": "还剩 {{count}} 项",
       "addLabel": "添加待办",
       "addPlaceholder": "写下一件今天要做的事，回车添加",
+      "addedElsewhere": "已添加到 {{label}}",
       "emptyHint": "在上面的输入框写下第一件事，按回车就能加进来。"
     },
     "complete": "完成「{{title}}」",

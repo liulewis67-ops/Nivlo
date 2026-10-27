@@ -5,7 +5,9 @@ import { useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components";
-import { normalizeTitle, resolveKey } from "@/features/quick-create";
+import { DatePhraseChip, normalizeTitle, resolveKey, useDatePhrase } from "@/features/quick-create";
+import type { DatePhraseResult } from "@/features/quick-create";
+import { useToastStore } from "@/stores/toast-store";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { useTodayQuery } from "./api";
@@ -23,12 +25,26 @@ export function TodayPage() {
   const { t } = useTranslation();
   const view = useTodayQuery().data;
   const [title, setTitle] = useState("");
+  // 和快速创建同样识别日期短语（「明天下午3点 评审方案」），在输入框下方提示，退格或 ✕ 取消。
+  const datePhrase = useDatePhrase(title, view?.date);
+  const { parsed } = datePhrase;
 
   const create = useMutation({
-    mutationFn: (value: string) => ipc.quickCreate("todo", value),
+    mutationFn: (value: { raw: string; parsed: DatePhraseResult | null }) =>
+      value.parsed === null
+        ? ipc.quickCreate("todo", value.raw)
+        : ipc.quickCreate("todo", value.parsed.title, value.parsed.schedule),
+    onSuccess: (_, value) => {
+      // 排到了别的日子：它不会出现在今天的列表里，告诉用户去了哪里，免得以为没加上。
+      if (value.parsed !== null && value.parsed.schedule.date !== view?.date) {
+        useToastStore
+          .getState()
+          .push("success", t("today.page.addedElsewhere", { label: value.parsed.label }));
+      }
+    },
     // 失败时把用户写的内容放回输入框，不让他重新输入。
     onError: (error, value) => {
-      setTitle((current) => (current === "" ? value : current));
+      setTitle((current) => (current === "" ? value.raw : current));
       reportError(error);
     },
   });
@@ -39,6 +55,7 @@ export function TodayPage() {
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    if (datePhrase.handleBackspace(event)) return;
     const action = resolveKey({
       key: event.key,
       isComposing: event.nativeEvent.isComposing,
@@ -47,8 +64,9 @@ export function TodayPage() {
     if (action === "submit") {
       event.preventDefault();
       // 立即清空输入框，用户可以紧接着输入下一条（连续记录多件事），不必等后端返回。
-      const value = normalizeTitle(title);
+      const value = { raw: normalizeTitle(title), parsed };
       setTitle("");
+      datePhrase.reset();
       create.mutate(value);
     }
   }
@@ -98,6 +116,7 @@ export function TodayPage() {
           onChange={(event) => setTitle(event.target.value)}
           onKeyDown={handleKeyDown}
         />
+        {parsed !== null && <DatePhraseChip parsed={parsed} onDismiss={datePhrase.dismiss} />}
       </header>
       {hasContent ? (
         <div className="min-h-0 flex-1 overflow-y-auto pb-6">

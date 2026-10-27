@@ -146,6 +146,30 @@ describe("MainShell", () => {
     await waitFor(() => expect(input).toHaveValue(""));
   });
 
+  it("输入框识别日期短语：提示识别结果，回车排到那一天并告诉用户去了哪里；退格可以取消识别", async () => {
+    const user = userEvent.setup();
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    renderWithProviders(<MainShell />, ipc);
+    await screen.findByText("写周报");
+    const input = screen.getByRole("textbox", { name: "添加待办" });
+
+    await user.type(input, "买牛奶 明天");
+    expect(screen.getByText(/识别到计划：明天/)).toBeInTheDocument();
+    await user.keyboard("{Enter}");
+
+    await waitFor(() => expect(ipc.items.map((item) => item.title)).toEqual(["买牛奶"]));
+    expect(ipc.items[0]?.scheduled?.date).toBe("2026-10-11");
+    expect(await screen.findByText(/已添加到 明天/)).toBeInTheDocument();
+
+    // 退格先取消识别：标题原样保留，按今天创建。
+    await user.type(input, "交房租 明天");
+    expect(screen.getByText(/识别到计划：明天/)).toBeInTheDocument();
+    await user.keyboard("{Backspace}");
+    expect(screen.queryByText(/识别到计划/)).not.toBeInTheDocument();
+    expect(input).toHaveValue("交房租 明天");
+  });
+
   it("空标题不会提交", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();
