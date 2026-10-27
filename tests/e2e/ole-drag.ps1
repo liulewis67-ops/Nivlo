@@ -1,9 +1,12 @@
-# 真实的 OLE 拖放（和资源管理器拖文件一样：数据对象里是 CF_HDROP 文件列表），供 e2e.mjs --native 使用。
+# 真实的 OLE 拖放，供 e2e.mjs --native 使用。数据对象可以是文件列表（CF_HDROP，资源管理器拖文件）、
+# 纯文本（CF_UNICODETEXT，编辑器里拖选中的文字）或链接（UniformResourceLocatorW + 文本，浏览器拖链接）。
 #
 # 在 (FromX, FromY) 放一个小窗口，真实左键在它上面按下后调用 DoDragDrop；另一个线程用真实光标
 # 把拖动带到 (ToX, ToY) 并松开左键。坐标是物理像素。输出 DoDragDrop 的结果（None 表示目标拒绝）。
 param(
-  [Parameter(Mandatory = $true)][string[]]$Files,
+  [string[]]$Files,
+  [string]$Text,
+  [string]$Url,
   [Parameter(Mandatory = $true)][int]$FromX,
   [Parameter(Mandatory = $true)][int]$FromY,
   [Parameter(Mandatory = $true)][int]$ToX,
@@ -19,10 +22,21 @@ Add-Type -Namespace E2EDrag -Name Mouse -MemberDefinition @'
 '@
 [void][E2EDrag.Mouse]::SetProcessDPIAware()
 
-$list = New-Object System.Collections.Specialized.StringCollection
-foreach ($file in $Files) { [void]$list.Add($file) }
 $data = New-Object System.Windows.Forms.DataObject
-$data.SetFileDropList($list)
+if ($Files) {
+  $list = New-Object System.Collections.Specialized.StringCollection
+  foreach ($file in $Files) { [void]$list.Add($file) }
+  $data.SetFileDropList($list)
+}
+if ($Url) {
+  # 浏览器拖链接时给的格式：以 NUL 结尾的 UTF-16 网址，同时附带纯文本。
+  $bytes = [System.Text.Encoding]::Unicode.GetBytes($Url + [char]0)
+  $data.SetData("UniformResourceLocatorW", (New-Object System.IO.MemoryStream(,$bytes)))
+  $data.SetText($Url, [System.Windows.Forms.TextDataFormat]::UnicodeText)
+}
+if ($Text) {
+  $data.SetText($Text, [System.Windows.Forms.TextDataFormat]::UnicodeText)
+}
 
 $form = New-Object System.Windows.Forms.Form
 $form.FormBorderStyle = 'None'

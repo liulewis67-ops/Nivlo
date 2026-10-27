@@ -568,20 +568,24 @@ async function runOnce(index) {
           // 从悬浮窗左边（放不下就右边）开始拖。
           const from = [target[0] > 400 ? target[0] - 300 : target[0] + 300, target[1]];
           const quote = (text) => `'${text.replaceAll("'", "''")}'`;
-          const result = execFileSync(
-            "powershell",
-            [
-              "-NoProfile",
-              "-NonInteractive",
-              "-STA",
-              "-ExecutionPolicy",
-              "Bypass",
-              "-Command",
-              `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} -Files ${paths.map(quote).join(",")} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])}`,
-            ],
-            { encoding: "utf8", timeout: 30000 },
-          ).trim();
-          if (result === "None" || result === "NotStarted") throw new Error(`拖放没有被接受：${result}`);
+          /** 用 ole-drag.ps1 做一次真实拖放；`payload` 是它的数据参数（如 `-Files 'a','b'`）。 */
+          const oleDrag = (payload) => {
+            const result = execFileSync(
+              "powershell",
+              [
+                "-NoProfile",
+                "-NonInteractive",
+                "-STA",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} ${payload} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])}`,
+              ],
+              { encoding: "utf8", timeout: 30000 },
+            ).trim();
+            if (result === "None" || result === "NotStarted") throw new Error(`拖放没有被接受（${payload}）：${result}`);
+          };
+          oleDrag(`-Files ${paths.map(quote).join(",")}`);
           // 每一项都建成条目，并且附件引用的是磁盘上的真实路径（不是只拿到了文件名）。
           for (const [i, name] of names.entries()) {
             const key = name.split(" ")[0].replace(".txt", "");
@@ -592,6 +596,16 @@ async function runOnce(index) {
               throw new Error(`${name} 的附件路径不对：${JSON.stringify(detail.attachments.map((a) => a.path))}，应为 ${paths[i]}`);
             }
           }
+
+          // 编辑器里拖选中的文字（CF_UNICODETEXT）→ 待办；浏览器拖链接（UniformResourceLocatorW）→ 笔记。
+          const text = `e2eoletext${index} 回复邮件`;
+          oleDrag(`-Text ${quote(text)}`);
+          const todo = await until(async () => (await main.invoke("search_items", { query: `e2eoletext${index}` }))[0], "拖入的文字建成了条目", 10000);
+          if (todo.itemType !== "todo" || todo.title !== text) throw new Error(`拖入的文字应建成同名待办：${JSON.stringify([todo.itemType, todo.title])}`);
+          const url = `https://example.com/e2eolelink${index}`;
+          oleDrag(`-Url ${quote(url)}`);
+          const note = await until(async () => (await main.invoke("search_items", { query: `e2eolelink${index}` }))[0], "拖入的链接建成了条目", 10000);
+          if (note.itemType !== "note") throw new Error(`拖入的链接应建成笔记：${JSON.stringify([note.itemType, note.title])}`);
         } finally {
           realMouse(original[0], original[1]);
         }
