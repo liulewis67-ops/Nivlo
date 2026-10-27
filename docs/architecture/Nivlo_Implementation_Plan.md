@@ -1532,14 +1532,14 @@ Phase 12 Backlog                        → 未排期
   - `WS_EX_NOACTIVATE`、自定义 HitTest、窗口层级；可选：前台全屏应用时自动隐藏悬浮窗。
   - 能力检测与降级：高级能力不可用时退化为普通置顶窗口。
 - **验收标准**：
-  - [x] 在任何交互（Hover、点击 Today 项、拖动排序）下都不抢走其他应用焦点，除 QuickCreate 输入外。（拖动排序未做原生验证，见完成记录）
+  - [x] 在任何交互（Hover、点击 Today 项、拖动排序）下都不抢走其他应用焦点，除 QuickCreate 输入外。
   - [ ] 全屏游戏 / 演示时悬浮窗不遮挡（若实现该选项）。
 - **完成记录**：2026-10-12：未改代码，只做了真机观察。运行中的悬浮窗窗口扩展样式为 `0x08040118`，含 `WS_EX_NOACTIVATE`（`0x08000000`）与 `WS_EX_TOPMOST`，说明默认不可聚焦已生效。**焦点验收没有完成**：我尝试用合成鼠标点击徽标并检查前台窗口，但这台机器上前台是用户自己正在用的程序、光标也是用户的，合成点击既不安全也得不到可靠结论（对照用的探针窗口都没能拿到前台），所以停止了。需要在受控环境（虚拟机或专门的测试机）里做。
-  2026-10-27：**焦点验收完成（拖动排序除外）**。原生 E2E 用测试启动时用户所在的窗口作为前台，真实鼠标（`SetCursorPos` + `mouse_event`，DPI 感知）悬停展开、点面板标题、点「⋯」并选「推迟到明天」、点完成框，每一步之后前台都没变。发现并修复三处：
+  2026-10-27：**焦点验收完成**。原生 E2E 用测试启动时用户所在的窗口作为前台，真实鼠标（`SetCursorPos` + `mouse_event`，DPI 感知）悬停展开、点面板标题、点「⋯」并选「推迟到明天」、点完成框、用真实鼠标拖动排序（按下时悬浮窗被激活、60ms 后前台被还回去，左键仍按着，拖动不会被取消），每一步之后前台都没变。发现并修复三处：
   ① `WS_EX_NOACTIVATE` 挡不住 WebView2：点击落在 WebView2 子窗口上，它自己 `SetFocus` 把悬浮窗拉到前台。`FloatingHandle::on_focused`（悬浮窗 `Focused(true)` 且不在 Quick Create 输入中）延迟 60ms（`FOCUS_RETURN_DELAY`，等 WebView2 自己的激活结束）后把前台还给钩子记录的上一个其他进程窗口。
   ② 前台被还回去时 Radix 菜单因窗口 `blur` 自动关闭：`useIgnoreWindowBlur` 只在有菜单开着时于捕获阶段拦下窗口 `blur`（Quick Create 仍靠它在点别处时取消，有测试）。
   ③ 模态菜单给页面其余部分加 `pointer-events: none`，面板随即收到 `pointerleave`，500ms 后收起、菜单消失（与焦点无关，停住鼠标就会发生）：悬浮窗里通过 `MenuModalContext` 把 `Menu` / `ContextMenu` 设为非模态。
-  顺带发现并修复：在 Nivlo 的窗口里单独按 Alt 会让窗口进入键盘菜单模式，**所有 WebView 都不再响应**直到按 Esc（`nivlo-platform-windows::menu_key` 子类化三个窗口，只吞掉 `lParam == 0` 的 `SC_KEYMENU`，Alt+Space 系统菜单照常）。**未验证**：拖动排序（指针按住拖动期间的焦点）、多显示器、150% 缩放下的真实点击。
+  顺带发现并修复：在 Nivlo 的窗口里单独按 Alt 会让窗口进入键盘菜单模式，**所有 WebView 都不再响应**直到按 Esc（`nivlo-platform-windows::menu_key` 子类化三个窗口，只吞掉 `lParam == 0` 的 `SC_KEYMENU`，Alt+Space 系统菜单照常）。**未验证**：多显示器、150% 缩放下的真实点击。
 
 ### 10.3 DPI 与多显示器热插拔加固
 
