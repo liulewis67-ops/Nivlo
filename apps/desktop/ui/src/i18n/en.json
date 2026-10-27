@@ -429,6 +429,11 @@
     "results": "Search results",
     "keys": "↑↓ select   ↵ open   ⇧↵ copy title   Esc close",
     "copied": "Title copied",
+    "completed": "Completed “{{title}}”",
+    "reopened": "Reopened “{{title}}”",
+    "undo": "Undo Ctrl+Z",
+    "completeHint": "Ctrl+D complete",
+    "reopenHint": "Ctrl+D reopen",
     "open": "Search",
     "group": {
       "todo": "To-dos",

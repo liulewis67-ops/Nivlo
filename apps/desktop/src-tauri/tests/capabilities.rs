@@ -40,14 +40,17 @@ const FLOATING_ALLOWED: &[&str] = &[
 ];
 
 /// 全局搜索框允许使用的全部命令：只读搜索、列出最近的条目（空输入时显示）、项目与标签（结果旁显示）、把结果交给主窗口、
-/// 隐藏自己；唯一的写入是和悬浮窗相同的 `quick_create`（找不到就顺手记成待办）。
-/// 它在任何应用之上弹出，不应拥有修改或删除已有数据的命令。
+/// 隐藏自己。写入只有两类，都和悬浮窗相同：`quick_create`（找不到就顺手记成待办），以及
+/// 完成待办与它的撤销（Ctrl+D，可撤销）。它在任何应用之上弹出，不应拥有编辑、改期、归档或删除的命令。
 const SEARCH_ALLOWED: &[&str] = &[
     "search_items",
     "list_items",
     "list_projects",
     "tags_for_items",
     "quick_create",
+    // Ctrl+D 完成选中的待办；`reopen_item` 是它的撤销（与悬浮窗相同）。
+    "complete_item",
+    "reopen_item",
     "open_item_in_main",
     "open_main_at",
     "hide_search",
@@ -93,7 +96,7 @@ fn main_capability_only_targets_the_main_window() {
 }
 
 #[test]
-fn search_capability_only_targets_the_search_window_and_cannot_modify_existing_data() {
+fn search_capability_only_targets_the_search_window_and_cannot_edit_or_delete() {
     let search = parse(include_str!("../capabilities/search.json"));
     assert_eq!(windows(&search), ["search"]);
     for command in allowed_commands(&search) {

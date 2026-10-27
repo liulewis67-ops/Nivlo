@@ -56,6 +56,17 @@ export function matchCommands(
 /** 「已复制」提示显示多久（毫秒）。 */
 const COPIED_NOTICE_MS = 1500;
 
+/** Ctrl+D 完成 / 重新打开之后，「撤销」留多久（毫秒，与 Today 的撤销 Toast 一致）。 */
+export const DONE_UNDO_MS = 5000;
+
+/** 刚用 Ctrl+D 改过完成状态的条目：底部提示并提供撤销。 */
+type DoneNotice = {
+  /** 改过之后的条目。 */
+  item: ItemDto;
+  /** `true` 是刚完成，`false` 是刚重新打开。 */
+  completed: boolean;
+};
+
 /** 输入为空时列出多少条最近使用（打开或更新）的条目。 */
 export const RECENT_LIMIT = 8;
 
@@ -208,6 +219,8 @@ function TypeGlyph({ type }: { type: ItemTypeDto }) {
  *   找不到就顺手记下，不必换到别的入口；
  * * 提供 `commands` 时，以 `>` 开头的输入只列出匹配的命令，回车执行；
  * * Shift+Enter 复制选中条目的标题（贴到聊天、提交信息里），底部短暂提示「已复制」；
+ * * Ctrl+D 完成选中的待办（已完成的则重新打开），条目留在列表里显示为已完成；底部给出「撤销」，
+ *   提示还在时 Ctrl+Z 也能撤销——找到它、勾掉它，不必打开主窗口；
  * * 挂载时输入框聚焦；重置（清空输入）由调用方用 `key` 重新挂载完成。
  *
  * @param props 关闭与打开回调、外观。
@@ -232,6 +245,18 @@ export function SearchPanel({
   const activeRef = useRef<HTMLLIElement | null>(null);
   /** 刚刚复制了标题：底部短暂提示。 */
   const [copied, setCopied] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  /** 本次打开期间改过完成状态的条目：列表按它显示，不必重新搜索。 */
+  const [patched, setPatched] = useState<ReadonlyMap<string, ItemDto>>(new Map());
+  const [doneNotice, setDoneNotice] = useState<DoneNotice | null>(null);
+  /** 正在切换完成状态：忽略重复触发（按住 Ctrl+D 不会来回切换）。 */
+  const toggling = useRef(false);
+
+  useEffect(() => {
+    if (doneNotice === null) return;
+    const timer = setTimeout(() => setDoneNotice(null), DONE_UNDO_MS);
+    return () => clearTimeout(timer);
+  }, [doneNotice]);
 
   useEffect(() => {
     if (!copied) return;
@@ -289,8 +314,8 @@ export function SearchPanel({
         ? [{ key: "recent", items: recentItems }]
         : []
       : groupByType(search.data ?? []);
-  // 展示顺序（分组后）的扁平列表，键盘选择按它走。
-  const flat = groups.flatMap((group) => group.items);
+  // 展示顺序（分组后）的扁平列表，键盘选择按它走；Ctrl+D 改过的条目用改过之后的样子。
+  const flat = groups.flatMap((group) => group.items).map((item) => patched.get(item.id) ?? item);
   /** 键盘选择的条数：命令模式下是命令，否则是条目。 */
   const count = commandMode ? matches.length : flat.length;
   const activeIndex = count === 0 ? -1 : Math.min(active, count - 1);
@@ -323,6 +348,39 @@ export function SearchPanel({
   /** 用当前搜索词新建待办（正在创建时忽略重复触发）。 */
   function createDraft(): void {
     if (draft !== null && !create.isPending) create.mutate(draft);
+  }
+
+  /**
+   * 切换一条待办的完成状态：完成 ↔ 重新打开。成功后列表就地更新并给出撤销；不是待办时什么也不做。
+   *
+   * @param item 要切换的条目（以当前显示的状态为准）。
+   * @returns 是否切换成功。
+   */
+  async function toggleDone(item: ItemDto): Promise<boolean> {
+    if (item.itemType !== "todo" || toggling.current) return false;
+    toggling.current = true;
+    const completing = item.status !== "done";
+    try {
+      const updated = completing ? await ipc.completeItem(item.id) : await ipc.reopenItem(item.id);
+      setPatched((current) => new Map(current).set(updated.id, updated));
+      setDoneNotice({ item: updated, completed: completing });
+      return true;
+    } catch (error) {
+      reportError(error);
+      return false;
+    } finally {
+      toggling.current = false;
+    }
+  }
+
+  /** 撤销刚才的 Ctrl+D，焦点回到输入框继续搜索。 */
+  function undoDone(): void {
+    if (doneNotice === null) return;
+    const { item } = doneNotice;
+    void toggleDone(item).then((done) => {
+      if (done) setDoneNotice(null);
+    });
+    inputRef.current?.focus();
   }
 
   /** 列表与输入一致，可以直接打开选中项。 */
@@ -370,6 +428,24 @@ export function SearchPanel({
     } else if ((event.key === "PageUp" || event.key === "Home") && event.ctrlKey && count > 0) {
       event.preventDefault();
       setActive(0);
+    } else if (
+      (event.key === "d" || event.key === "D") &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.shiftKey &&
+      !event.altKey
+    ) {
+      // 不论选中的是什么都拦下，免得落到 WebView 的默认行为（如加入收藏）。
+      event.preventDefault();
+      if (activeItem !== undefined) void toggleDone(activeItem);
+    } else if (
+      (event.key === "z" || event.key === "Z") &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.shiftKey &&
+      doneNotice !== null
+    ) {
+      // 撤销提示还在时，Ctrl+Z 撤销的是完成，而不是输入框里的文字。
+      event.preventDefault();
+      undoDone();
     } else if (event.key === "Enter" && commandMode) {
       event.preventDefault();
       activeCommand?.run();
@@ -418,6 +494,7 @@ export function SearchPanel({
           <path d="M10.5 10.5L14 14" />
         </svg>
         <input
+          ref={inputRef}
           autoFocus
           role="combobox"
           aria-expanded={count > 0}
@@ -524,7 +601,8 @@ export function SearchPanel({
                   {group.key === "recent" ? t("search.recent") : t(`search.group.${group.key}`)}
                 </p>
                 <ul role="group" aria-labelledby={`${listId}-group-${group.key}`}>
-                  {group.items.map((item) => {
+                  {group.items.map((original) => {
+                    const item = patched.get(original.id) ?? original;
                     const selected = item.id === activeItem?.id;
                     const snippet = snippetAround(item.content, terms);
                     const meta = itemMeta(
@@ -588,16 +666,39 @@ export function SearchPanel({
         <span>{t("search.keys")}</span>
         <span className="flex items-center gap-3">
           {/* 结果数量兼作读屏播报：元素一直存在、只更新文字（新插入的 live 区域常常不会被播报）。 */}
-          <span role="status" className="tabular-nums empty:hidden">
-            {copied
-              ? t("search.copied")
-              : !showRecent && settled && flat.length > 0
-                ? t("search.count", { count: flat.length })
-                : ""}
+          <span role="status" className="min-w-0 truncate tabular-nums empty:hidden">
+            {doneNotice !== null
+              ? t(doneNotice.completed ? "search.completed" : "search.reopened", {
+                  title: doneNotice.item.title,
+                })
+              : copied
+                ? t("search.copied")
+                : !showRecent && settled && flat.length > 0
+                  ? t("search.count", { count: flat.length })
+                  : ""}
           </span>
-          {draft !== null && flat.length > 0 && <span>{t("search.createHint")}</span>}
-          {browsing && commands !== undefined && <span>{t("search.commandHint")}</span>}
-          {browsing && footerExtra}
+          {doneNotice !== null && (
+            <button
+              type="button"
+              onClick={undoDone}
+              className="shrink-0 rounded px-1 font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              {t("search.undo")}
+            </button>
+          )}
+          {doneNotice === null && !browsing && activeItem?.itemType === "todo" && (
+            <span className="shrink-0">
+              {t(activeItem.status === "done" ? "search.reopenHint" : "search.completeHint")}
+            </span>
+          )}
+          {/* 撤销提示在时右侧只留它，窄窗口里也放得下。 */}
+          {doneNotice === null && draft !== null && flat.length > 0 && (
+            <span>{t("search.createHint")}</span>
+          )}
+          {doneNotice === null && browsing && commands !== undefined && (
+            <span>{t("search.commandHint")}</span>
+          )}
+          {doneNotice === null && browsing && footerExtra}
         </span>
       </footer>
     </div>

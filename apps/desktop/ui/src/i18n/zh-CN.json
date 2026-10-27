@@ -428,6 +428,11 @@
     "results": "搜索结果",
     "keys": "↑↓ 选择　↵ 打开　⇧↵ 复制标题　Esc 关闭",
     "copied": "已复制标题",
+    "completed": "已完成「{{title}}」",
+    "reopened": "已重新打开「{{title}}」",
+    "undo": "撤销 Ctrl+Z",
+    "completeHint": "Ctrl+D 完成",
+    "reopenHint": "Ctrl+D 重新打开",
     "count": "{{count}} 条结果",
     "open": "搜索",
     "group": {

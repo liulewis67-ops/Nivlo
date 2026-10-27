@@ -5,6 +5,7 @@ import { SearchApp } from "./SearchApp";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
+import { AppError } from "@/lib/errors";
 
 /** 创建一条待办。 */
 async function seedTodo(ipc: MemoryIpc, title: string): Promise<string> {
@@ -164,6 +165,94 @@ describe("全局搜索窗口", () => {
     expect(writeText).toHaveBeenCalledWith("修复登录超时");
     expect(await screen.findByText("已复制标题")).toBeInTheDocument();
     expect(ipc.openedItems).toEqual([]);
+  });
+
+  it("Ctrl+D 完成选中的待办：留在列表里显示为已完成，底部提示可撤销，窗口不关闭", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.change(input(), { target: { value: "登录超时" } });
+    const results = await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(screen.getByText("Ctrl+D 完成")).toBeInTheDocument();
+
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+
+    expect(await screen.findByText("已完成「修复登录超时」")).toBeInTheDocument();
+    expect(ipc.items.find((item) => item.id === id)?.status).toBe("done");
+    expect(
+      within(results)
+        .getByRole("option", { name: /修复登录超时/ })
+        .querySelector(".line-through"),
+    ).not.toBeNull();
+    expect(screen.getByRole("button", { name: "撤销 Ctrl+Z" })).toBeInTheDocument();
+    expect(ipc.searchHides).toBe(0);
+    expect(ipc.openedItems).toEqual([]);
+    expect(input()).toHaveValue("登录超时");
+  });
+
+  it("点「撤销」重新打开刚完成的待办，焦点回到输入框", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    fireEvent.click(await screen.findByRole("button", { name: "撤销 Ctrl+Z" }));
+
+    await waitFor(() => expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done"));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "撤销 Ctrl+Z" })).not.toBeInTheDocument(),
+    );
+    expect(input()).toHaveFocus();
+  });
+
+  it("撤销提示还在时 Ctrl+Z 撤销完成；对已完成的待办 Ctrl+D 是重新打开", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    await screen.findByText("已完成「修复登录超时」");
+    expect(screen.queryByText("Ctrl+D 完成")).not.toBeInTheDocument();
+
+    fireEvent.keyDown(input(), { key: "z", ctrlKey: true });
+    await waitFor(() => expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done"));
+    expect(ipc.calls.filter((call) => call === "reopenItem")).toHaveLength(1);
+
+    // 再完成一次，等提示过期之后用 Ctrl+D 重新打开。
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    await screen.findByText("已完成「修复登录超时」");
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    expect(await screen.findByText("已重新打开「修复登录超时」")).toBeInTheDocument();
+    expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done");
+  });
+
+  it("Ctrl+D 对笔记什么也不做；失败时提示错误，列表不变", async () => {
+    const ipc = createMemoryIpc();
+    await ipc.createItem({
+      itemType: "note",
+      title: "会议纪要",
+      content: null,
+      contentFormat: "plain",
+      priority: null,
+      scheduled: null,
+      due: null,
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+    expect(screen.queryByText("Ctrl+D 完成")).not.toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    expect(ipc.calls).not.toContain("completeItem");
+
+    const id = await seedTodo(ipc, "修复登录超时");
+    fireEvent.change(input(), { target: { value: "登录超时" } });
+    await screen.findByRole("listbox", { name: "搜索结果" });
+    ipc.failNextTransitionWith(new AppError("ITEM_NOT_FOUND", "gone"));
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    await waitFor(() => expect(ipc.calls).toContain("completeItem"));
+    expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done");
+    expect(screen.queryByText("已完成「修复登录超时」")).not.toBeInTheDocument();
   });
 
   it("输入 > 列出命令，回车在主窗口打开对应视图", async () => {
