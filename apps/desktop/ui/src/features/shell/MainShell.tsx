@@ -13,7 +13,7 @@ import { ProjectsPage } from "@/features/projects";
 import { CommandPalette, GOTO_VIEWS } from "@/features/search";
 import type { PaletteCommand } from "@/features/search";
 import { SettingsPage } from "@/features/settings";
-import { ShortcutSetting } from "@/features/shortcut";
+import { ShortcutSetting, useShortcutQuery } from "@/features/shortcut";
 import { TodayPage, useTodayQuery } from "@/features/today";
 import { TrashPage } from "@/features/trash";
 import { WorkflowsPage } from "@/features/workflows";
@@ -111,6 +111,7 @@ export function MainShell() {
   });
 
   const notificationsPaused = settings.data?.notificationsPaused ?? false;
+  const searchShortcut = useShortcutQuery("search").data;
   /**
    * Ctrl+K 的命令（输入 `>`）：前往各视图，以及常用的动作——新建笔记（建好直接打开详情），
    * 暂停 / 恢复通知（与设置页、托盘是同一个开关，名称随当前状态变化）。
@@ -276,6 +277,9 @@ export function MainShell() {
               onSelect={() => setView("settings")}
             />
             <ShortcutSetting action="quickCreate" />
+            {/* 全局搜索的快捷键被别的程序占用时才在侧栏出现（自动展开冲突提示与修改框）：否则用户只有打开
+                设置页才会知道全局搜索用不了，也就不知道有这个功能。 */}
+            {searchShortcut?.conflict === true && <ShortcutSetting action="search" />}
             <ThemeMenu />
           </div>
         </aside>

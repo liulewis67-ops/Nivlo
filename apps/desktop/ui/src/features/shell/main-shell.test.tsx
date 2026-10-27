@@ -53,6 +53,29 @@ describe("MainShell", () => {
     );
   });
 
+  it("全局搜索的快捷键被占用时侧栏给出提示和修改框；没被占用时侧栏不出现它", async () => {
+    const ok = createMemoryIpc();
+    const { unmount } = renderWithProviders(<MainShell />, ok);
+    await screen.findByRole("button", { name: /快速创建：/ });
+    expect(screen.queryByRole("button", { name: /全局搜索：/ })).not.toBeInTheDocument();
+    unmount();
+
+    const taken = createMemoryIpc();
+    taken.setShortcutStatus(
+      {
+        accelerator: "Ctrl+Alt+Space",
+        registered: false,
+        conflict: true,
+        defaultAccelerator: "Ctrl+Alt+Space",
+        disabled: false,
+        typesCharacter: false,
+      },
+      "search",
+    );
+    renderWithProviders(<MainShell />, taken);
+    expect(await screen.findByText(/暂时无法用它呼出全局搜索/)).toBeInTheDocument();
+  });
+
   it("切换到别的视图再切回 Today，内容仍在", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();
