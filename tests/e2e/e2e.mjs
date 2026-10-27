@@ -722,6 +722,10 @@ async function coldMainScenario() {
         return pages.length >= 1 ? pages : null;
       }, "第二次启动的悬浮窗页面");
       await until(async () => (await listPages()).length === 1, "启动时只有悬浮窗");
+      // 重启后条目仍在（实施计划 1.5）：上一次是被强制结束的（taskkill /F），Today 里照样有它。
+      const restarted = await connect(floatingPage.webSocketDebuggerUrl);
+      await until(async () => (await restarted.invoke("get_today")).todos.some((i) => i.title === title), "强制结束再启动后 Today 里仍有这条待办");
+      restarted.close();
       pressSearchHotkey();
       const searchPage = await until(async () => (await listPages()).find((x) => x.id !== floatingPage.id), "搜索窗口页面");
       const search = await connect(searchPage.webSocketDebuggerUrl);
