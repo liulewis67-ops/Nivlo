@@ -966,6 +966,56 @@ function treeWorkingSetMb(pid) {
  * （--native）「预先准备全局搜索框」：开启后重启，启动约 10 秒后后台出现隐藏的搜索窗口；
  * 第一次按快捷键的耗时与多占的内存都记下来。
  */
+/**
+ * （--native）主窗口还没创建时用真实鼠标点徽标：主窗口被创建并到前台，而且留在前台。
+ *
+ * 点击会让悬浮窗被激活、安排「把焦点还给之前的应用」；主窗口第一次创建比那个延迟慢，
+ * 打开主窗口必须取消它，否则主窗口出现在之前的应用后面。
+ */
+async function badgeColdMainScenario() {
+  ensureNoForeignInstance();
+  await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
+  const data = mkdtempSync(join(tmpdir(), "nivlo-e2e-badge-"));
+  const env = {
+    ...process.env,
+    NIVLO_DATA_DIR: join(data, "data"),
+    NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
+    WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
+  };
+  const original = cursorPosition();
+  const child = spawn(EXE, [], { env, stdio: "ignore" });
+  try {
+    const [floatingPage] = await until(async () => {
+      const pages = await listPages();
+      return pages.length >= 1 ? pages : null;
+    }, "悬浮窗页面");
+    const floating = await connect(floatingPage.webSocketDebuggerUrl);
+    await until(() => floating.evaluate("document.getElementById('root')?.children.length > 0"), "悬浮窗渲染");
+    await sleep(1500);
+    if ((await listPages()).length !== 1) throw new Error("启动时不应已有主窗口");
+
+    focusWindow(USER_FOREGROUND);
+    await until(() => foregroundWindow() === USER_FOREGROUND, "点击之前前台在别的应用", 5000);
+    const badge = await floating.evaluate(
+      "(() => { const k = devicePixelRatio; const r = document.querySelector('button').getBoundingClientRect(); return [(screenX + r.x + r.width / 2) * k, (screenY + r.y + r.height / 2) * k]; })()",
+    );
+    realMouse(badge[0], badge[1], true);
+    await until(() => foregroundOwner().startsWith(`${child.pid} `), "主窗口被创建并到了前台", 8000).catch((e) => {
+      throw new Error(`${e.message}（现在的前台：${foregroundOwner()}）`);
+    });
+    // 留在前台：延迟的「还焦点」不能在主窗口出现之后把它挤到后面去。
+    await sleep(1500);
+    if (!foregroundOwner().startsWith(`${child.pid} `)) {
+      throw new Error(`主窗口出现后又被挤到后面：现在的前台是 ${foregroundOwner()}`);
+    }
+    floating.close();
+  } finally {
+    realMouse(original[0], original[1]);
+    await stopInstance(child);
+    rmSync(data, { recursive: true, force: true });
+  }
+}
+
 async function prewarmScenario() {
   ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
@@ -1066,6 +1116,15 @@ if (NATIVE) {
   } catch (e) {
     failed += 1;
     console.error(`✗ 主窗口未创建时从全局搜索框回车打开结果：${e.message}`);
+  }
+}
+if (NATIVE) {
+  try {
+    await badgeColdMainScenario();
+    console.log("✓ 主窗口未创建时点徽标：主窗口到前台并留在前台");
+  } catch (e) {
+    failed += 1;
+    console.error(`✗ 主窗口未创建时点徽标：${e.message}`);
   }
 }
 if (NATIVE) {
