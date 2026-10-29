@@ -118,7 +118,8 @@ export function ShortcutSetting({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    // 限宽：设置页里它放在不收缩的右栏，冲突说明等长文字没有上限会把整行撑宽（左边的标题被挤成一列、页面出现横向滚动条）。
+    <div className="flex max-w-72 flex-col gap-2">
       <Button
         variant="ghost"
         size="sm"
