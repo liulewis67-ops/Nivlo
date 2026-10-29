@@ -209,7 +209,31 @@ function testInstanceRunning() {
   return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim()) > 0;
 }
 
+/**
+ * 别处的 Nivlo（用户自己装的、正在用的那个）有没有在运行：路径能读到、但不是被测程序。
+ *
+ * Nivlo 只允许一个实例，测试启动的程序会被转交给已经在运行的那个——测试就会在**用户真实的数据**里
+ * 建条目、改快捷键。发现时直接停下，而不是继续。
+ *
+ * @returns 那个进程的路径；没有时为 `null`。
+ */
+function foreignInstance() {
+  const quoted = `'${EXE.replaceAll("'", "''")}'`;
+  const script = `(Get-Process -Name nivlo-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path -ne ${quoted} } | Select-Object -First 1).Path`;
+  const path = execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim();
+  return path === "" ? null : path;
+}
+
+/** 有别处的 Nivlo 在运行时拒绝启动被测程序（见 [`foreignInstance`]）。 */
+function ensureNoForeignInstance() {
+  const other = foreignInstance();
+  if (other !== null) {
+    throw new Error(`另一个 Nivlo 正在运行（${other}）：测试启动的程序会被转交给它、写进它的数据。请先退出它再运行 E2E。`);
+  }
+}
+
 async function runOnce(index) {
+  ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
   const data = mkdtempSync(join(tmpdir(), "nivlo-e2e-"));
   const dropFile = join(data, "dropped.txt");
@@ -863,6 +887,7 @@ async function stopInstance(child) {
  * 第二次启动时只有悬浮窗，按快捷键、搜索、回车，主窗口被创建出来并显示那一条。
  */
 async function coldMainScenario() {
+  ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
   const data = mkdtempSync(join(tmpdir(), "nivlo-e2e-cold-"));
   const env = {
@@ -942,6 +967,7 @@ function treeWorkingSetMb(pid) {
  * 第一次按快捷键的耗时与多占的内存都记下来。
  */
 async function prewarmScenario() {
+  ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
   const data = mkdtempSync(join(tmpdir(), "nivlo-e2e-prewarm-"));
   const env = {
@@ -1012,6 +1038,12 @@ async function prewarmScenario() {
 /** 测试开始时用户所在的前台窗口（属于别的进程）。 */
 const USER_FOREGROUND = NATIVE ? foregroundWindow() : "0";
 
+try {
+  ensureNoForeignInstance();
+} catch (error) {
+  console.error(error.message);
+  process.exit(2);
+}
 if (!existsSync(EXE)) {
   console.error(`找不到 ${EXE}，请先运行 pnpm tauri build --no-bundle`);
   process.exit(2);
