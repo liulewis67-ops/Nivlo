@@ -12,9 +12,11 @@ pub trait SourceApplicationPort: Send + Sync {
     fn source_application(&self) -> Option<String>;
 }
 
-/// 把可执行文件名（不含扩展名）整理成显示名：常见应用用约定的名字，其余保持原样。
+/// 把可执行文件名（不含扩展名）整理成显示名：常见应用用约定的名字；其余全小写的（`claude`、`obsidian`）
+/// 把首字母大写，其他保持原样（`my-tool` 这样带分隔符的、本来就有大写的不动）。
 ///
-/// 比较不区分大小写，所以 `chrome`、`Chrome`、`CHROME` 都得到 `Chrome`。
+/// 比较不区分大小写，所以 `chrome`、`Chrome`、`CHROME` 都得到 `Chrome`。Workflow 匹配来源应用时也不区分大小写，
+/// 改动显示名不会让已有规则失效。
 #[must_use]
 pub fn friendly_app_name(executable_stem: &str) -> String {
     match executable_stem.to_ascii_lowercase().as_str() {
@@ -31,8 +33,30 @@ pub fn friendly_app_name(executable_stem: &str) -> String {
         "powerpnt" => "PowerPoint".to_owned(),
         "slack" => "Slack".to_owned(),
         "wechat" | "weixin" => "WeChat".to_owned(),
-        _ => executable_stem.to_owned(),
+        "wxwork" => "WeCom".to_owned(),
+        "qq" => "QQ".to_owned(),
+        "dingtalk" => "DingTalk".to_owned(),
+        "feishu" => "Feishu".to_owned(),
+        "lark" => "Lark".to_owned(),
+        "wps" | "et" | "wpp" => "WPS".to_owned(),
+        "ms-teams" | "msteams" | "teams" => "Teams".to_owned(),
+        "windowsterminal" => "Windows Terminal".to_owned(),
+        "notepad" => "Notepad".to_owned(),
+        "onenote" => "OneNote".to_owned(),
+        _ => capitalize_if_lowercase(executable_stem),
     }
+}
+
+/// 全是小写 ASCII 字母的名字把首字母大写（`claude` → `Claude`）；其他的原样返回。
+fn capitalize_if_lowercase(name: &str) -> String {
+    if name.is_empty() || !name.chars().all(|c| c.is_ascii_lowercase()) {
+        return name.to_owned();
+    }
+    let mut chars = name.chars();
+    chars
+        .next()
+        .map(|first| first.to_ascii_uppercase().to_string() + chars.as_str())
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -51,6 +75,27 @@ mod tests {
         ] {
             assert_eq!(friendly_app_name(stem), name, "{stem}");
         }
+    }
+
+    #[test]
+    fn more_common_applications_including_chinese_office_tools() {
+        for (stem, name) in [
+            ("WXWork", "WeCom"),
+            ("QQ", "QQ"),
+            ("DingTalk", "DingTalk"),
+            ("Feishu", "Feishu"),
+            ("wps", "WPS"),
+            ("ms-teams", "Teams"),
+            ("WindowsTerminal", "Windows Terminal"),
+        ] {
+            assert_eq!(friendly_app_name(stem), name, "{stem}");
+        }
+    }
+
+    #[test]
+    fn all_lowercase_unknown_names_are_capitalized() {
+        assert_eq!(friendly_app_name("claude"), "Claude");
+        assert_eq!(friendly_app_name("obsidian"), "Obsidian");
     }
 
     #[test]
