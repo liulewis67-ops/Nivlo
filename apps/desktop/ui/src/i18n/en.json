@@ -297,7 +297,7 @@
       "addLabel": "Add a to-do",
       "addPlaceholder": "Write something to do today, Enter to add",
       "addedElsewhere": "Added for {{label}}",
-      "emptyHint": "Write your first task in the box above and press Enter."
+      "emptyHint": "Write your first task in the box above and press Enter — “tomorrow 3pm review the plan” schedules it for then."
     },
     "complete": "Complete “{{title}}”",
     "reopen": "Reopen “{{title}}”",
