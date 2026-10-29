@@ -343,6 +343,27 @@ async function runOnce(index) {
           .split("\n")
           .filter((l) => l.includes("event=\"notification_sent\"")).length;
       await until(() => sentCount() > 0, "到点后发出提醒通知", 20000, 250);
+
+      // 暂停通知期间到点的提醒不发，也不丢：恢复后补上（托盘与设置里的「暂停通知」）。
+      const before = sentCount();
+      await main.invoke("set_notifications_paused", { paused: true });
+      await main.invoke("create_item", {
+        request: {
+          itemType: "todo",
+          title: `e2e-paused-${index}`,
+          content: null,
+          contentFormat: null,
+          priority: null,
+          scheduled: null,
+          due: null,
+          reminderAt: new Date(Date.now() + 2000).toISOString(),
+          projectId: null,
+        },
+      });
+      await sleep(5000);
+      if (sentCount() !== before) throw new Error("暂停通知期间仍然发出了提醒");
+      await main.invoke("set_notifications_paused", { paused: false });
+      await until(() => sentCount() > before, "恢复通知后补发暂停期间到点的提醒", 20000, 250);
     });
 
     // 7. 拼音首字母：升级迁移 0008 之后，新建的中文标题能用首字母搜到。
