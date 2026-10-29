@@ -20,6 +20,7 @@ import { WorkflowsPage } from "@/features/workflows";
 import { cx } from "@/lib/cx";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
+import { resolveTheme, useThemeStore } from "@/stores/theme-store";
 import { useToastStore } from "@/stores/toast-store";
 import { NavIcon } from "./NavIcons";
 import { parseMainView, useNavStore } from "./nav-store";
@@ -129,6 +130,9 @@ export function MainShell() {
 
   const notificationsPaused = settings.data?.notificationsPaused ?? false;
   const searchShortcut = useShortcutQuery("search").data;
+  const themePreference = useThemeStore((state) => state.preference);
+  /** 「切换主题」切到与当前显示相反的那一个（跟随系统时以系统此刻的明暗为准）。 */
+  const nextTheme = resolveTheme(themePreference) === "dark" ? "light" : "dark";
   /**
    * Ctrl+K 的命令（输入 `>`）：前往各视图，以及常用的动作——新建笔记（建好直接打开详情），
    * 暂停 / 恢复通知（与设置页、托盘是同一个开关，名称随当前状态变化）。
@@ -140,6 +144,12 @@ export function MainShell() {
       keywords: [target],
       run: () => setView(target),
     })),
+    {
+      id: "toggle-theme",
+      label: t("search.switchTheme", { theme: t(`theme.${nextTheme}`) }),
+      keywords: ["theme", "dark", "light"],
+      run: () => useThemeStore.getState().setPreference(nextTheme),
+    },
     {
       id: "shortcuts",
       label: t("shortcuts.title"),

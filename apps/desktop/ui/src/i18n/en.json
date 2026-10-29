@@ -453,6 +453,7 @@
     "noCommand": "No matching commands",
     "goto": "Go to: {{view}}",
     "newNote": "New note",
+    "switchTheme": "Switch to {{theme}} theme",
     "pauseNotifications": "Pause notifications",
     "resumeNotifications": "Resume notifications",
     "notificationsPaused": "Notifications paused; reminders that come due are summarised when you resume",

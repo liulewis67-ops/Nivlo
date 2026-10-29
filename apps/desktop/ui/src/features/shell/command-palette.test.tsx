@@ -297,3 +297,21 @@ describe("键盘快捷键一览", () => {
     expect(await screen.findByRole("dialog", { name: "键盘快捷键" })).toBeInTheDocument();
   });
 });
+
+describe("切换主题命令", () => {
+  it("浅色时显示「切换到深色主题」，执行后变成深色", async () => {
+    useNavStore.setState({ view: "today" });
+    const { useThemeStore } = await import("@/stores/theme-store");
+    useThemeStore.getState().setPreference("light");
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+
+    typeQuery("> 主题");
+    fireEvent.click(screen.getByRole("option", { name: /切换到深色主题/ }));
+
+    expect(useThemeStore.getState().preference).toBe("dark");
+    expect(document.documentElement.dataset["theme"]).toBe("dark");
+    useThemeStore.getState().setPreference("light");
+  });
+});
