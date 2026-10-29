@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use nivlo_application::error::{AppError, ErrorAction, ErrorCode};
 use nivlo_platform::error::PlatformError;
-use tauri::{AppHandle, PhysicalPosition, Runtime, State, WebviewWindow};
+use tauri::{AppHandle, Manager, PhysicalPosition, Runtime, State, WebviewWindow};
 use tauri_specta::Event;
 
 use crate::app::AppState;
@@ -21,6 +21,13 @@ use crate::windows::show_main_window;
 #[tauri::command]
 #[specta::specta]
 pub async fn open_main<R: Runtime>(app: AppHandle<R>) -> Result<(), IpcError> {
+    // 点悬浮窗打开主窗口时，悬浮窗刚被点击激活、正准备把焦点还给之前的应用：取消它，
+    // 否则主窗口创建好之前焦点就被还回去，主窗口出现在别的应用后面。
+    if let Some(state) = app.try_state::<AppState>()
+        && let Some(floating) = state.runtime.floating()
+    {
+        floating.cancel_focus_return();
+    }
     show_main_window(&app).map_err(|error| {
         tracing::error!(event = "open_main_failed", %error, "打开主窗口失败");
         let mut app_error = AppError::new(ErrorCode::WindowUnavailable, error.to_string());

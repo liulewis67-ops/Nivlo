@@ -85,6 +85,12 @@ pub trait FloatingHandle: Send + Sync {
     /// 把悬浮窗拉到前台。这里立即把前台还给用户之前的应用，悬停与点击都不会抢走焦点。
     fn on_focused(&self);
 
+    /// 用户要切到拾序（点徽标、面板里的按钮打开主窗口）：取消尚未执行的「把焦点还回去」。
+    ///
+    /// 主窗口第一次打开要先创建窗口（几百毫秒），比还焦点的延迟长；不取消的话，焦点会先被还给
+    /// 之前的应用，主窗口随后出现在它后面。
+    fn cancel_focus_return(&self);
+
     /// 结束文本输入：悬浮窗恢复为不可聚焦，并把焦点还给用户之前的窗口。可以重复调用。
     ///
     /// # Errors
@@ -124,6 +130,8 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     last_saved: Mutex<Option<String>>,
     /// 正在 Quick Create 输入：这期间悬浮窗本来就应该拿着焦点，不做「还回去」。
     input_active: AtomicBool,
+    /// 「把焦点还回去」的代数：每次激活加一，取消时也加一；延迟到了代数没变才还。
+    focus_return: AtomicU64,
 }
 
 /// 获取互斥锁；锁中毒只会发生在其他线程 panic 之后，数据本身仍有效。
@@ -155,6 +163,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
             expected: Mutex::new(None),
             last_saved: Mutex::new(None),
             input_active: AtomicBool::new(false),
+            focus_return: AtomicU64::new(0),
         })
     }
 
@@ -438,14 +447,17 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
         let Some(this) = self.me.upgrade() else {
             return;
         };
+        let generation = this.focus_return.fetch_add(1, Ordering::SeqCst) + 1;
         let runtime = this.runtime.clone();
         runtime.spawn(async move {
             tokio::select! {
                 () = this.shutdown.cancelled() => return,
                 () = tokio::time::sleep(FOCUS_RETURN_DELAY) => {}
             }
-            // 等待期间进入了 Quick Create 输入：这次激活是用户要的。
-            if this.input_active.load(Ordering::SeqCst) {
+            // 等待期间进入了 Quick Create 输入、或用户要打开主窗口：这次激活是用户要的。
+            if this.input_active.load(Ordering::SeqCst)
+                || this.focus_return.load(Ordering::SeqCst) != generation
+            {
                 return;
             }
             if let Err(error) = this.foreground.remember() {
@@ -462,6 +474,11 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
                 }
             }
         });
+    }
+
+    /// 取消尚未执行的「把焦点还回去」。
+    fn cancel_focus_return(&self) {
+        self.focus_return.fetch_add(1, Ordering::SeqCst);
     }
 
     /// 结束文本输入：恢复不可聚焦，再把焦点还给之前的窗口。

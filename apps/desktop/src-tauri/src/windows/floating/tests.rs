@@ -607,6 +607,24 @@ async fn being_activated_outside_input_gives_focus_straight_back() {
 }
 
 #[tokio::test(start_paused = true)]
+async fn opening_the_main_window_cancels_the_pending_focus_return() {
+    // 点徽标：悬浮窗被激活，紧接着请求打开主窗口。主窗口第一次创建比还焦点的延迟慢，
+    // 不取消的话焦点会先被还给之前的应用，主窗口出现在它后面。
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+
+    f.controller.on_focused();
+    f.controller.cancel_focus_return();
+    advance(Duration::from_millis(100)).await;
+    assert_eq!(f.foreground.restored.load(Ordering::SeqCst), 0);
+
+    // 之后再被误激活（没有打开主窗口）照常还回去。
+    f.controller.on_focused();
+    advance(Duration::from_millis(100)).await;
+    assert_eq!(f.foreground.restored.load(Ordering::SeqCst), 1);
+}
+
+#[tokio::test(start_paused = true)]
 async fn focus_during_quick_create_input_is_kept() {
     let f = fixture(single(), (700, 400), &[]).await;
     f.controller.restore().await;
