@@ -319,6 +319,32 @@ async function runOnce(index) {
       if (!moved.scheduled) throw new Error("排期后没有计划日期");
     });
 
+    // 6.5 提醒按时触发（实施计划 4.6 / 4.7）：几秒后的提醒到点由 Scheduler 发出系统通知（release 构建、真实时钟）。
+    // 只看日志里的 `notification_sent`（不记标题）：通知本身会在桌面上短暂出现。
+    await step("提醒按时触发", async () => {
+      const remindAt = new Date(Date.now() + 4000).toISOString();
+      await main.invoke("create_item", {
+        request: {
+          itemType: "todo",
+          title: `e2e-remind-${index}`,
+          content: null,
+          contentFormat: null,
+          priority: null,
+          scheduled: null,
+          due: null,
+          reminderAt: remindAt,
+          projectId: null,
+        },
+      });
+      const sentCount = () =>
+        readdirSync(join(data, "data", "logs"))
+          .map((f) => readFileSync(join(data, "data", "logs", f), "utf8"))
+          .join("\n")
+          .split("\n")
+          .filter((l) => l.includes("event=\"notification_sent\"")).length;
+      await until(() => sentCount() > 0, "到点后发出提醒通知", 20000, 250);
+    });
+
     // 7. 拼音首字母：升级迁移 0008 之后，新建的中文标题能用首字母搜到。
     let chinese;
     await step("拼音首字母搜索", async () => {

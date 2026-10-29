@@ -138,9 +138,18 @@ impl Scheduler {
 
         if !self.control.is_paused() {
             for notice in compose(now, &result.due, timezone, self.control.locale()) {
-                if let Err(error) = self.notifier.notify(&notice.notification) {
+                match self.notifier.notify(&notice.notification) {
+                    // 只记数量与是否补发，不记标题（日志可能随诊断包导出）。
+                    Ok(()) => tracing::info!(
+                        event = "notification_sent",
+                        triggers = notice.keys.len(),
+                        missed = notice.missed,
+                        "已发送系统通知"
+                    ),
                     // 通知发不出去（用户在系统里关了通知）也记为已触发，否则每次醒来都会重试。
-                    tracing::warn!(event = "notification_failed", %error, "发送系统通知失败");
+                    Err(error) => {
+                        tracing::warn!(event = "notification_failed", %error, "发送系统通知失败");
+                    }
                 }
                 for key in &notice.keys {
                     tx.triggers().record_fired(key, now, notice.missed).await?;
