@@ -3,6 +3,7 @@ import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { useShortcutQuery } from "@/features/shortcut";
+import { trapTab } from "@/lib/focus-trap";
 import type { ShortcutActionDto } from "@/lib/ipc";
 
 /** [`ShortcutsDialog`] 的 Props。 */
@@ -125,6 +126,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
       event.stopPropagation();
       onClose();
     }
+    trapTab(event, dialogRef.current);
   }
 
   return (

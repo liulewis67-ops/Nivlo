@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { trapTab } from "@/lib/focus-trap";
 import { useTranslation } from "react-i18next";
 import { useShortcutQuery } from "@/features/shortcut";
 import { SearchPanel } from "./SearchPanel";
@@ -29,6 +30,7 @@ export type CommandPaletteProps = {
 export function CommandPalette({ onClose, onOpenItem, commands }: CommandPaletteProps) {
   const { t } = useTranslation();
   const previouslyFocused = useRef<Element | null>(document.activeElement);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const global = useShortcutQuery("search").data;
 
   // 关闭时把焦点还给打开之前的元素。
@@ -46,7 +48,15 @@ export function CommandPalette({ onClose, onOpenItem, commands }: CommandPalette
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div role="dialog" aria-modal="true" aria-label={t("search.label")} className="contents">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("search.label")}
+        // Tab 只在面板里循环，不走到背后的页面。
+        onKeyDown={(event) => trapTab(event, dialogRef.current)}
+        className="contents"
+      >
         <SearchPanel
           onClose={onClose}
           onOpenItem={(id) => {

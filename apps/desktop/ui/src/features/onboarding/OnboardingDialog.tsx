@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { useShortcutQuery } from "@/features/shortcut";
 import { cx } from "@/lib/cx";
+import { trapTab } from "@/lib/focus-trap";
 
 /** 引导一共几步。 */
 export const ONBOARDING_STEPS = 4;
@@ -112,6 +113,7 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
   const shortcut = quickCreate?.accelerator ?? "Ctrl+Shift+Space";
   const search = useShortcutQuery("search").data;
   const primaryRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const last = step === ONBOARDING_STEPS - 1;
 
   // 每次换步，焦点回到主按钮，键盘用户可以连续按 Enter。
@@ -136,6 +138,7 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
       event.preventDefault();
       setStep((current) => Math.max(0, current - 1));
     }
+    trapTab(event, dialogRef.current);
   }
 
   const body: ReactNode =
@@ -173,6 +176,7 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
   return (
     <div className="nv-drop-zone fixed inset-0 z-(--nv-z-dialog) flex items-center justify-center bg-text/40 px-4 backdrop-blur-[2px]">
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label={t("onboarding.label")}
