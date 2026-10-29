@@ -335,3 +335,16 @@ describe("隐藏已完成命令", () => {
     useDisplayStore.getState().setHideCompleted(false);
   });
 });
+
+describe("导出诊断信息命令", () => {
+  it("在 Ctrl+K 里也能导出，完成后提示文件位置", async () => {
+    useNavStore.setState({ view: "today" });
+    const ipc = createMemoryIpc();
+    renderWithProviders(<MainShell />, ipc);
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery("> 诊断");
+    fireEvent.click(screen.getByRole("option", { name: /诊断/ }));
+    await waitFor(() => expect(ipc.calls).toContain("exportDiagnostics"));
+  });
+});

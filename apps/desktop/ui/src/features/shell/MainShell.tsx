@@ -160,6 +160,20 @@ export function MainShell() {
       run: () => useDisplayStore.getState().setHideCompleted(!hideCompleted),
     },
     {
+      id: "export-diagnostics",
+      label: t("settings.diagnostics.label"),
+      keywords: ["diagnostics", "logs", "bug", "report"],
+      // 和设置页「导出诊断信息」同一个动作：遇到问题时最需要找到它。
+      run: () => {
+        ipc
+          .exportDiagnostics()
+          .then((path) =>
+            useToastStore.getState().push("success", t("settings.diagnostics.done", { path })),
+          )
+          .catch(reportError);
+      },
+    },
+    {
       id: "shortcuts",
       label: t("shortcuts.title"),
       keywords: ["shortcuts", "keyboard", "help", "?"],
