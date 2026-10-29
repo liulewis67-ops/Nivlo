@@ -452,6 +452,8 @@
     "goto": "前往：{{view}}",
     "newNote": "新建笔记",
     "switchTheme": "切换到{{theme}}主题",
+    "hideCompleted": "隐藏今天已完成的待办",
+    "showCompleted": "显示今天已完成的待办",
     "pauseNotifications": "暂停通知",
     "resumeNotifications": "恢复通知",
     "notificationsPaused": "已暂停通知，到点的提醒会在恢复后汇总",

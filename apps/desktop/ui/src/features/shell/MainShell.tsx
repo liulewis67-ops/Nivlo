@@ -20,6 +20,7 @@ import { WorkflowsPage } from "@/features/workflows";
 import { cx } from "@/lib/cx";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
+import { useDisplayStore } from "@/stores/display-store";
 import { resolveTheme, useThemeStore } from "@/stores/theme-store";
 import { useToastStore } from "@/stores/toast-store";
 import { NavIcon } from "./NavIcons";
@@ -133,6 +134,7 @@ export function MainShell() {
   const themePreference = useThemeStore((state) => state.preference);
   /** 「切换主题」切到与当前显示相反的那一个（跟随系统时以系统此刻的明暗为准）。 */
   const nextTheme = resolveTheme(themePreference) === "dark" ? "light" : "dark";
+  const hideCompleted = useDisplayStore((state) => state.hideCompleted);
   /**
    * Ctrl+K 的命令（输入 `>`）：前往各视图，以及常用的动作——新建笔记（建好直接打开详情），
    * 暂停 / 恢复通知（与设置页、托盘是同一个开关，名称随当前状态变化）。
@@ -149,6 +151,13 @@ export function MainShell() {
       label: t("search.switchTheme", { theme: t(`theme.${nextTheme}`) }),
       keywords: ["theme", "dark", "light"],
       run: () => useThemeStore.getState().setPreference(nextTheme),
+    },
+    {
+      id: "toggle-completed",
+      label: t(hideCompleted ? "search.showCompleted" : "search.hideCompleted"),
+      keywords: ["completed", "done", "hide", "show"],
+      // 与设置页的开关是同一个偏好（悬浮窗同步）。
+      run: () => useDisplayStore.getState().setHideCompleted(!hideCompleted),
     },
     {
       id: "shortcuts",

@@ -454,6 +454,8 @@
     "goto": "Go to: {{view}}",
     "newNote": "New note",
     "switchTheme": "Switch to {{theme}} theme",
+    "hideCompleted": "Hide today’s completed to-dos",
+    "showCompleted": "Show today’s completed to-dos",
     "pauseNotifications": "Pause notifications",
     "resumeNotifications": "Resume notifications",
     "notificationsPaused": "Notifications paused; reminders that come due are summarised when you resume",

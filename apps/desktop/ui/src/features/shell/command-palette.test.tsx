@@ -315,3 +315,23 @@ describe("切换主题命令", () => {
     useThemeStore.getState().setPreference("light");
   });
 });
+
+describe("隐藏已完成命令", () => {
+  it("与设置页同一个偏好：执行后切换，名称随之变化", async () => {
+    useNavStore.setState({ view: "today" });
+    const { useDisplayStore } = await import("@/stores/display-store");
+    useDisplayStore.getState().setHideCompleted(false);
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery("> 已完成");
+    fireEvent.click(screen.getByRole("option", { name: /隐藏今天已完成的待办/ }));
+    expect(useDisplayStore.getState().hideCompleted).toBe(true);
+
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery("> 已完成");
+    expect(screen.getByRole("option", { name: /显示今天已完成的待办/ })).toBeInTheDocument();
+    useDisplayStore.getState().setHideCompleted(false);
+  });
+});
