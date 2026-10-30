@@ -77,7 +77,8 @@ async function bootstrap(): Promise<void> {
   let label: string;
   if (isRunningInTauri()) {
     label = getCurrentWindow().label;
-  } else {
+  } else if (import.meta.env.DEV) {
+    // 浏览器预览只在开发服务器里有：生产构建不带内存 Mock 与演示数据（约 35 KB，安装包里用不到）。
     const { createMemoryIpc } = await import("@/test/ipc-mock");
     const { seedDemoData } = await import("@/test/dev-seed");
     const memory = createMemoryIpc();
@@ -85,6 +86,10 @@ async function bootstrap(): Promise<void> {
     setIpcClient(memory);
     // 预览悬浮窗：http://localhost:1420/?window=floating；全局搜索框：?window=search
     label = new URLSearchParams(window.location.search).get("window") ?? "main";
+  } else {
+    throw new Error(
+      "Nivlo UI must run inside Tauri; use the Vite dev server for a browser preview.",
+    );
   }
 
   const rootPromise = loadRoot(label);
