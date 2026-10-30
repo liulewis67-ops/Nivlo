@@ -124,6 +124,17 @@ describe("InboxPage", () => {
     for (const text of ["一", "二", "三"]) {
       expect(screen.getByRole("checkbox", { name: `选择：${text}` })).toBeChecked();
     }
+    // 工具栏的按钮标出了对应的按键，名称不变。
+    const hinted = screen
+      .getAllByRole("button")
+      .filter((button) => button.hasAttribute("aria-keyshortcuts"))
+      .map((button) => [button.textContent, button.getAttribute("aria-keyshortcuts")]);
+    expect(hinted).toEqual([
+      ["今天T", "T"],
+      ["明天M", "M"],
+      ["删除Del", "Delete"],
+    ]);
+    expect(screen.getAllByRole("button", { name: "今天" }).length).toBeGreaterThan(1);
     fireEvent.keyDown(first, { key: "t" });
     await waitFor(() => expect(ipc.organizations).toHaveLength(1));
     expect(ipc.organizations[0]?.ids).toHaveLength(3);

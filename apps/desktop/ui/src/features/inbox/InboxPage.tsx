@@ -227,11 +227,22 @@ export function InboxPage() {
             </label>
             {selected.size > 0 && (
               <div className="ml-auto flex items-center gap-1">
-                <Button size="sm" onClick={() => run(selectedIds, "today")}>
+                {/* 按钮里标出对应的按键（T / M / Delete），用着用着就记住了。 */}
+                <Button size="sm" aria-keyshortcuts="T" onClick={() => run(selectedIds, "today")}>
                   {t("inbox.action.today")}
+                  <kbd aria-hidden="true" className="ml-1.5 text-[10px] text-muted">
+                    {"T"}
+                  </kbd>
                 </Button>
-                <Button size="sm" onClick={() => run(selectedIds, "tomorrow")}>
+                <Button
+                  size="sm"
+                  aria-keyshortcuts="M"
+                  onClick={() => run(selectedIds, "tomorrow")}
+                >
                   {t("inbox.action.tomorrow")}
+                  <kbd aria-hidden="true" className="ml-1.5 text-[10px] text-muted">
+                    {"M"}
+                  </kbd>
                 </Button>
                 <Button size="sm" onClick={() => run(selectedIds, "later")}>
                   {t("inbox.action.later")}
@@ -258,9 +269,13 @@ export function InboxPage() {
                   size="sm"
                   variant="ghost"
                   className="text-danger"
+                  aria-keyshortcuts="Delete"
                   onClick={() => deleteItems(selectedIds)}
                 >
                   {t("trash.delete")}
+                  <kbd aria-hidden="true" className="ml-1.5 text-[10px] text-muted">
+                    {"Del"}
+                  </kbd>
                 </Button>
               </div>
             )}
