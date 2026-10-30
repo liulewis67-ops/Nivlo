@@ -5,6 +5,7 @@ import { Button, Input, Textarea } from "@/components";
 import { cx } from "@/lib/cx";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
+import { handleMarkdownKeyDown } from "@/lib/markdown-keys";
 import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { useToastStore } from "@/stores/toast-store";
@@ -317,6 +318,12 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
               value={draft.content}
               rows={8}
               onChange={(event) => edit({ content: event.target.value })}
+              // Markdown 时与笔记编辑区一样：Ctrl+B / I、列表续行与缩进。
+              onKeyDown={(event) => {
+                if (draft.contentFormat === "markdown") {
+                  handleMarkdownKeyDown(event, (content) => edit({ content }));
+                }
+              }}
               className="resize-y font-mono text-[13px] leading-relaxed"
             />
             <Segmented

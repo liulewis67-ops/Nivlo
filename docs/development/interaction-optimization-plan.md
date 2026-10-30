@@ -157,6 +157,7 @@ Ctrl+K 与全局搜索框除了条目，还可以列出命令：「打开收集�
 36. ✅ Markdown 笔记 Ctrl+B / Ctrl+I（`lib/markdown-wrap.ts`，再按取消；用 `execCommand("insertText")` 保住 Ctrl+Z，浏览器预览已验证；不支持时直接改草稿）。日历添加框失焦即取消，与项目重命名一致，不改。
 37. ✅ Markdown 笔记的列表续行（`continueMarkdownList`）：行尾按 Enter 续上记号、有序列表加一、任务框换成 `[ ]`，空项按 Enter 结束列表；输入法组字时不处理。浏览器预览验证过续行、结束与 Ctrl+Z。
 38. ✅ 列表项上 Tab / Shift+Tab 缩进 / 取消缩进两个空格（`indentMarkdownList`，多行选区只动其中的列表项）；选区里没有列表项时不拦 Tab，键盘用户不会被困在正文里。
+39. ✅ Markdown 按键移到 `lib/markdown-keys.ts`（`handleMarkdownKeyDown`），详情面板的描述在 Markdown 格式时也用上。
 
 ## 4. 验收标准（用于后续每一项）
 

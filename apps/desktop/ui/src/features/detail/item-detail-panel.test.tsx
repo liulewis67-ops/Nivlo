@@ -159,6 +159,38 @@ describe("ItemDetailPanel", () => {
     expect(ipc.updates).toEqual([{ id, request: { title: "关闭前的修改" } }]);
   });
 
+  it("Markdown 描述里 Ctrl+B 加粗、列表按 Enter 续行；纯文本描述不处理", async () => {
+    const ipc = createMemoryIpc();
+    const item = await ipc.createItem({
+      itemType: "note",
+      title: "会议",
+      content: "要点",
+      contentFormat: "markdown",
+      priority: null,
+      scheduled: null,
+      due: null,
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<ItemDetailPanel id={item.id} onClose={() => undefined} />, ipc);
+    await advance(0);
+    const body = screen.getByLabelText("描述") as HTMLTextAreaElement;
+
+    body.setSelectionRange(0, 2);
+    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
+    expect(body).toHaveValue("**要点**");
+
+    fireEvent.change(body, { target: { value: "- 一" } });
+    body.setSelectionRange(3, 3);
+    fireEvent.keyDown(body, { key: "Enter" });
+    expect(body).toHaveValue("- 一\n- ");
+
+    fireEvent.click(screen.getByRole("button", { name: "纯文本" }));
+    body.setSelectionRange(0, 1);
+    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
+    expect(body).toHaveValue("- 一\n- ");
+  });
+
   it("Esc 关闭", async () => {
     const ipc = createMemoryIpc();
     const id = await seedTodo(ipc);
