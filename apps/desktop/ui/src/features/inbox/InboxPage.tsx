@@ -6,7 +6,7 @@ import { usePasteCapture } from "@/features/capture";
 import { useOpenItem } from "@/features/detail";
 import type { ItemTypeDto } from "@/lib/ipc";
 import { filterWords, matchesAllWords } from "@/lib/text-filter";
-import { isCommandKey } from "@/lib/typing";
+import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { useInboxQuery } from "./api";
 import { InboxRow } from "./InboxRow";
@@ -70,6 +70,25 @@ export function InboxPage() {
   const refocusId = useRef<string | null>(null);
 
   const [filter, setFilter] = useState("");
+  const filterRef = useRef<HTMLInputElement>(null);
+
+  // Ctrl+F（macOS ⌘F）跳到筛选框（与笔记页一致）；筛选框没显示（条目少）时留给页内查找。
+  useEffect(() => {
+    /**
+     * 跳到筛选框的快捷键。
+     *
+     * @param event 键盘事件。
+     */
+    function handleFind(event: globalThis.KeyboardEvent): void {
+      const box = filterRef.current;
+      if (!isCommandKey(event, "f") || box === null || isDialogOpen()) return;
+      event.preventDefault();
+      box.focus();
+      box.select();
+    }
+    window.addEventListener("keydown", handleFind);
+    return () => window.removeEventListener("keydown", handleFind);
+  }, []);
   const words = filterWords(filter);
   const searchTexts = useMemo(
     () => new Map((entries ?? []).map((entry) => [entry.item.id, entrySearchText(entry)])),
@@ -237,6 +256,8 @@ export function InboxPage() {
         {/* 条目多了才出现（筛选中一直显示）：按标题、正文、来源网址 / 文件、来源应用筛选。 */}
         {(count >= INBOX_FILTER_MIN || filter !== "") && (
           <Input
+            ref={filterRef}
+            aria-keyshortcuts="Control+F"
             type="search"
             value={filter}
             onChange={(event) => setFilter(event.target.value)}

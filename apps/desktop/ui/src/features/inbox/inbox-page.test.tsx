@@ -190,6 +190,9 @@ describe("InboxPage", () => {
     act(() => ipc.emitDataChange());
     const filter = await screen.findByRole("searchbox", { name: "筛选收集箱" });
 
+    // Ctrl+F 跳到筛选框。
+    fireEvent.keyDown(document.body, { key: "f", ctrlKey: true });
+    expect(filter).toHaveFocus();
     fireEvent.change(filter, { target: { value: "周报" } });
     const boxes = () =>
       screen.getAllByRole("checkbox").filter((box) => box.hasAttribute("data-inbox-select"));

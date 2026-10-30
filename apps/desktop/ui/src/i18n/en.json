@@ -1037,7 +1037,8 @@
       "clear": "Clear the selection",
       "all": "Select all",
       "delete": "Delete (can be undone)",
-      "open": "Open details (Space selects)"
+      "open": "Open details (Space selects)",
+      "filter": "Jump to the filter (shown for long inboxes)"
     },
     "notes": {
       "move": "Open the previous / next note",
