@@ -412,6 +412,7 @@ export function CalendarPage() {
           UNDO_MS,
           {
             label: t("today.undo"),
+            undo: true,
             onClick: () => {
               ipc
                 .rescheduleItem(payload.item.id, { kind: "exact", scheduled: previous })

@@ -243,6 +243,15 @@ export function MainShell() {
         event.preventDefault();
         setView("settings");
       } else if (
+        command &&
+        event.key.toLowerCase() === "z" &&
+        !isTyping(event) &&
+        document.querySelector('[aria-modal="true"]') === null &&
+        useToastStore.getState().undoLatest()
+      ) {
+        // Ctrl+Z 撤销刚才的整理 / 完成 / 删除（和点提示上的「撤销」一样）；在输入框里仍是撤销输入。
+        event.preventDefault();
+      } else if (
         event.key === "?" &&
         !event.ctrlKey &&
         !event.metaKey &&

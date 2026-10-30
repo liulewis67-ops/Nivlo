@@ -9,6 +9,8 @@ export type ToastAction = {
   label: string;
   /** 点击时调用；调用后 Toast 自动关闭。 */
   onClick: () => void;
+  /** 这是「撤销」：主窗口里按 Ctrl+Z 会执行最新的一条撤销（`undoLatest`）。 */
+  undo?: boolean;
 };
 
 /** 一条 Toast。 */
@@ -34,6 +36,8 @@ type ToastState = {
   push: (kind: ToastKind, message: string, durationMs?: number, action?: ToastAction) => number;
   /** 立即关闭一条 Toast。 */
   dismiss: (id: number) => void;
+  /** 执行最新一条还在显示的「撤销」并关闭它；没有可撤销的返回 `false`。 */
+  undoLatest: () => boolean;
 };
 
 /** 自增 ID 计数器。 */
@@ -67,5 +71,13 @@ export const useToastStore = create<ToastState>((set, get) => ({
       timers.delete(id);
     }
     set((state) => ({ toasts: state.toasts.filter((toast) => toast.id !== id) }));
+  },
+  undoLatest: () => {
+    const undoable = get().toasts.filter((toast) => toast.action?.undo === true);
+    const latest = undoable[undoable.length - 1];
+    if (latest?.action === undefined) return false;
+    get().dismiss(latest.id);
+    latest.action.onClick();
+    return true;
   },
 }));

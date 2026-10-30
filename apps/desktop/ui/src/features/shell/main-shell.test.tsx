@@ -235,6 +235,31 @@ describe("MainShell", () => {
     expect(ipc.calls).not.toContain("quickCreate");
   });
 
+  it("Ctrl+Z 撤销刚完成的待办；在输入框里 Ctrl+Z 不触发", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    renderWithProviders(<MainShell />, ipc);
+    await screen.findByText("写周报");
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "完成「写周报」" }));
+    await waitFor(() =>
+      expect(useToastStore.getState().toasts.some((toast) => toast.action?.undo === true)).toBe(
+        true,
+      ),
+    );
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "添加待办" }), {
+      key: "z",
+      ctrlKey: true,
+    });
+    expect(ipc.calls).not.toContain("reopenItem");
+
+    fireEvent.keyDown(document.body, { key: "z", ctrlKey: true });
+    await waitFor(() => expect(ipc.calls).toContain("reopenItem"));
+    expect(useToastStore.getState().toasts.some((toast) => toast.action?.undo === true)).toBe(
+      false,
+    );
+  });
+
   it("在主窗口完成待办会调用后端；后端数据变化事件会刷新列表（与悬浮窗同步的同一机制）", async () => {
     const ipc = createMemoryIpc();
     ipc.setToday(VIEW);

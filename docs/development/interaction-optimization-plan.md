@@ -138,6 +138,7 @@ Ctrl+K 与全局搜索框除了条目，还可以列出命令：「打开收集�
 17. ✅ 「今天」添加框 Esc 清空（连同识别出的日期）；空时不拦截。
 18. ✅ 发布版拦下浏览器功能键（`lib/browser-keys.ts`）：F5 / Ctrl+R 刷新、Ctrl+P 打印、Ctrl+S 另存、Ctrl+U 源代码；缩放、查找、编辑键不拦，开发时保留 F5。**待真机确认**：WebView2 里 `preventDefault` 确实挡住了刷新与打印（Chromium 的行为如此，未在 Nivlo 里实测）。Tauri 2.12 没有暴露 `SetAreBrowserAcceleratorKeysEnabled`，而且整体关掉会连缩放一起关。
 19. 入口包体检查（2026-10-30）：`index` 约 497 KB，主要是 react-dom、@tauri-apps/api、TanStack Query、i18next 与 Radix 菜单，都是各窗口启动就要用的，不再拆分；生产构建已不带内存 Mock。
+20. ✅ 主窗口 Ctrl+Z：执行最新一条还在显示的「撤销」提示（`ToastAction.undo` 标记撤销类操作，`undoLatest`；安装更新等其他按钮不会被触发）；输入时、对话框打开时不响应。
 
 ## 4. 验收标准（用于后续每一项）
 

@@ -73,6 +73,7 @@ export function useCompleteTodo(): CompleteTodoActions {
       .getState()
       .push("success", t("today.completedToast", { title: item.title }), UNDO_WINDOW_MS, {
         label: t("today.undo"),
+        undo: true,
         onClick: () => void reopenAt(original, position?.index ?? Number.MAX_SAFE_INTEGER),
       });
   }

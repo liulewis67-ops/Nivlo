@@ -23,6 +23,7 @@ const SECTIONS: readonly Section[] = [
       ["Ctrl+K", "shortcuts.main.search"],
       ["Ctrl+1 … 5", "shortcuts.main.views"],
       ["Ctrl+,", "shortcuts.main.settings"],
+      ["Ctrl+Z", "shortcuts.main.undo"],
       ["?", "shortcuts.main.help"],
     ],
   },

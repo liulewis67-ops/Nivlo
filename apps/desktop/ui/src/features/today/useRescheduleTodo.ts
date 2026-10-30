@@ -82,6 +82,7 @@ export function useRescheduleTodo(): RescheduleTodoActions {
       .getState()
       .push("success", t(`today.postpone.toast.${kind}`, { title: item.title }), UNDO_WINDOW_MS, {
         label: t("today.undo"),
+        undo: true,
         onClick: () => void undo(original, position?.index ?? orderBefore.length, orderBefore),
       });
   }

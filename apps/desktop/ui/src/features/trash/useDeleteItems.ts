@@ -47,6 +47,7 @@ export function useDeleteItems(): DeleteActions {
         DELETE_UNDO_MS,
         {
           label: t("today.undo"),
+          undo: true,
           onClick: () => {
             ipc.restoreDeletedItems(ids).catch(reportError);
           },

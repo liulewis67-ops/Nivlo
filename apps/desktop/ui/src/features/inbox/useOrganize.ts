@@ -93,6 +93,7 @@ export function useOrganize(): OrganizeActions {
           ORGANIZE_UNDO_MS,
           {
             label: t("inbox.undo"),
+            undo: true,
             onClick: () => {
               void ipc
                 .restoreItems(outcome.previous)

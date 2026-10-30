@@ -991,7 +991,8 @@
       "search": "Search and commands",
       "help": "Show this sheet",
       "views": "Go to Inbox / Today / Calendar / Notes / Projects",
-      "settings": "Open Settings"
+      "settings": "Open Settings",
+      "undo": "Undo the last action (while its notice shows)"
     },
     "search": {
       "move": "Previous / next result",

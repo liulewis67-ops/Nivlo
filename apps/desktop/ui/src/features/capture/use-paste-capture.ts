@@ -31,6 +31,7 @@ export function usePasteCapture(): () => Promise<void> {
           PASTE_TOAST_MS,
           {
             label: t("capture.undo"),
+            undo: true,
             onClick: () => void ipc.undoCapture(result.undoIds).catch(reportError),
           },
         );

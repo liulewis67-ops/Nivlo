@@ -265,6 +265,7 @@ export function ProjectsPage() {
           .getState()
           .push("success", t("projects.archived", { name: project.name }), ARCHIVE_UNDO_MS, {
             label: t("today.undo"),
+            undo: true,
             onClick: () => {
               ipc.unarchiveProject(project.id).then(resync).catch(reportError);
             },
