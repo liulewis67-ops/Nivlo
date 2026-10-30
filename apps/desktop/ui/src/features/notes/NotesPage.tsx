@@ -4,6 +4,7 @@ import { distanceToNow } from "@/lib/date-format";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
@@ -73,11 +74,18 @@ export function NotesPage() {
           <ul
             aria-label={t("notes.listLabel")}
             className="min-h-0 flex-1 overflow-y-auto px-2 pb-3"
+            // ↑ / ↓ 换到上一篇 / 下一篇，右边的编辑区跟着切换。
+            onKeyDown={(event) => {
+              if (moveFocusWithArrows(event, "[data-note-item]")) {
+                (document.activeElement as HTMLElement | null)?.click();
+              }
+            }}
           >
             {list.map((note) => (
               <li key={note.id}>
                 <button
                   type="button"
+                  data-note-item=""
                   aria-current={note.id === activeId ? "true" : undefined}
                   onClick={() => setSelectedId(note.id)}
                   className={cx(

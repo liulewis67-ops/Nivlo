@@ -62,6 +62,10 @@ const SECTIONS: readonly Section[] = [
       ["Space", "shortcuts.today.reorder"],
     ],
   },
+  {
+    title: "shortcuts.section.notes",
+    rows: [["↑ ↓", "shortcuts.notes.move"]],
+  },
 ];
 
 /**

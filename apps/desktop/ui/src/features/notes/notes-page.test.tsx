@@ -83,6 +83,28 @@ describe("NotesPage", () => {
     expect(screen.getByLabelText("描述")).toHaveValue("第一版");
   });
 
+  it("在列表里按 ↑ / ↓ 换到相邻的笔记，编辑区跟着切换，到头停住", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "旧的笔记", "第一版");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await seedNote(ipc, "新的笔记", "第二版");
+    renderWithProviders(<NotesPage />, ipc);
+
+    const list = await screen.findByRole("list", { name: "笔记列表" });
+    const newer = within(list).getByRole("button", { name: /新的笔记/ });
+    const older = within(list).getByRole("button", { name: /旧的笔记/ });
+    newer.focus();
+    fireEvent.keyDown(newer, { key: "ArrowDown" });
+    expect(older).toHaveFocus();
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("旧的笔记"));
+
+    fireEvent.keyDown(older, { key: "ArrowDown" });
+    expect(older).toHaveFocus();
+    fireEvent.keyDown(older, { key: "ArrowUp" });
+    expect(newer).toHaveFocus();
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("新的笔记"));
+  });
+
   it("编辑后自动保存，并立即在列表里按最新更新重排", async () => {
     const ipc = createMemoryIpc();
     const first = await seedNote(ipc, "先写的", "内容");

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Menu } from "@/components";
 import { usePasteCapture } from "@/features/capture";
 import type { ItemTypeDto } from "@/lib/ipc";
+import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { useInboxQuery } from "./api";
 import { InboxRow } from "./InboxRow";
 import { pruneSelection, selectRange } from "./model/inbox-entry";
@@ -114,19 +115,7 @@ export function InboxPage() {
       return;
     }
     // ↑ / ↓ 在各条的勾选框之间移动（不用 Tab 穿过每一行的按钮）：↓ ↓ 空格 T 就能整理。
-    if (
-      (event.key === "ArrowDown" || event.key === "ArrowUp") &&
-      event.target instanceof HTMLElement &&
-      event.target.hasAttribute("data-inbox-select")
-    ) {
-      const boxes = [...event.currentTarget.querySelectorAll<HTMLElement>("[data-inbox-select]")];
-      const next = boxes[boxes.indexOf(event.target) + (event.key === "ArrowDown" ? 1 : -1)];
-      if (next !== undefined) {
-        event.preventDefault();
-        next.focus();
-      }
-      return;
-    }
+    if (moveFocusWithArrows(event, "[data-inbox-select]")) return;
     if (selected.size === 0 || event.ctrlKey || event.metaKey || event.altKey) return;
     const target = event.target;
     const typing =

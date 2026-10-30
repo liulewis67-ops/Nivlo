@@ -969,7 +969,8 @@
       "search": "搜索框（Ctrl+K 与全局搜索）",
       "quickCreate": "快速创建",
       "today": "今天的列表",
-      "inbox": "收集箱（先勾选条目）"
+      "inbox": "收集箱（先勾选条目）",
+      "notes": "笔记列表"
     },
     "global": {
       "quickCreate": "快速创建",
@@ -1006,6 +1007,9 @@
       "today": "安排到今天",
       "tomorrow": "安排到明天",
       "clear": "取消选择"
+    },
+    "notes": {
+      "move": "换到上一篇 / 下一篇"
     }
   }
 }

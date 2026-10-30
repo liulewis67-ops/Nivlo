@@ -974,7 +974,8 @@
       "search": "Search (Ctrl+K and global search)",
       "quickCreate": "Quick Create",
       "today": "Today list",
-      "inbox": "Inbox (select items first)"
+      "inbox": "Inbox (select items first)",
+      "notes": "Notes list"
     },
     "global": {
       "quickCreate": "Quick Create",
@@ -1011,6 +1012,9 @@
       "today": "Schedule for today",
       "tomorrow": "Schedule for tomorrow",
       "clear": "Clear the selection"
+    },
+    "notes": {
+      "move": "Open the previous / next note"
     }
   }
 }

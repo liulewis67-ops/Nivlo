@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ContextMenu, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
+import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto } from "@/lib/ipc";
 import { ItemTitle } from "./ItemTitle";
@@ -326,22 +327,7 @@ export function SortableTodoList({
         <ul
           aria-label={t("today.section.todos")}
           // 在完成框上按 ↑ / ↓ 移到上一条 / 下一条的完成框（不用 Tab 穿过拖动手柄与菜单按钮）。
-          onKeyDown={(event) => {
-            const target = event.target;
-            if (
-              (event.key !== "ArrowDown" && event.key !== "ArrowUp") ||
-              !(target instanceof HTMLElement) ||
-              target.getAttribute("role") !== "checkbox"
-            ) {
-              return;
-            }
-            const boxes = [...event.currentTarget.querySelectorAll<HTMLElement>("[role=checkbox]")];
-            const next = boxes[boxes.indexOf(target) + (event.key === "ArrowDown" ? 1 : -1)];
-            if (next !== undefined) {
-              event.preventDefault();
-              next.focus();
-            }
-          }}
+          onKeyDown={(event) => moveFocusWithArrows(event, "[role=checkbox]")}
           className="flex flex-col gap-0.5"
         >
           {todos.map((item) => (
