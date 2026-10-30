@@ -6,6 +6,8 @@ import { useOrganize } from "@/features/inbox";
 import { useDeleteItems } from "@/features/trash";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
+import { toggleMarkdownWrap } from "@/lib/markdown-wrap";
+import { isCommandKey } from "@/lib/typing";
 
 /** [`NoteEditor`] 的 Props。 */
 export type NoteEditorProps = {
@@ -71,6 +73,37 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
     );
   }
   const characters = [...draft.content].length;
+
+  /**
+   * Markdown 笔记的正文里 Ctrl+B 加粗、Ctrl+I 斜体（再按一次取消）。
+   * 尽量用浏览器的「插入文字」改正文，这样 Ctrl+Z 还能撤销；不支持时直接改草稿。
+   *
+   * @param event 键盘事件。
+   */
+  function handleBodyKeyDown(event: KeyboardEvent<HTMLTextAreaElement>): void {
+    if (draft?.contentFormat !== "markdown") return;
+    const marker = isCommandKey(event, "b") ? "**" : isCommandKey(event, "i") ? "*" : null;
+    if (marker === null) return;
+    event.preventDefault();
+    const area = event.currentTarget;
+    const { selectionStart: start, selectionEnd: end, value } = area;
+    const next = toggleMarkdownWrap(value, start, end, marker);
+    // 被替换的那一段：加标记时是选区本身，去标记时连同两边的标记。
+    const unwrapping = next.value.length < value.length;
+    const from = unwrapping ? start - marker.length : start;
+    const to = unwrapping ? end + marker.length : end;
+    const inserted = next.value.slice(from, to + next.value.length - value.length);
+    area.setSelectionRange(from, to);
+    const viaBrowser =
+      typeof document.execCommand === "function" &&
+      document.execCommand("insertText", false, inserted);
+    if (viaBrowser) {
+      area.setSelectionRange(next.start, next.end);
+      return;
+    }
+    edit({ content: next.value });
+    requestAnimationFrame(() => area.setSelectionRange(next.start, next.end));
+  }
   return (
     <article aria-label={t("notes.editor")} className="flex h-full flex-col">
       <header className="flex items-center justify-between gap-3 border-b border-border px-8 py-3">
@@ -144,6 +177,7 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
           placeholder={t("detail.contentPlaceholder")}
           value={draft.content}
           onChange={(event) => edit({ content: event.target.value })}
+          onKeyDown={handleBodyKeyDown}
           className="min-h-0 w-full flex-1 resize-none border-transparent bg-transparent px-0 text-[15px] leading-relaxed focus-visible:border-transparent"
         />
       </div>

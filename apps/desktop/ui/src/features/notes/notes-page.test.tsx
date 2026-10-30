@@ -229,6 +229,28 @@ describe("NotesPage", () => {
     expect((await ipc.getItem(ipc.items[0]?.id ?? "")).content).toBe(text);
   });
 
+  it("Markdown 笔记里 Ctrl+B 加粗选中的文字，再按一次取消；纯文本笔记不处理", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "笔记", "写 周报 了");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+
+    body.setSelectionRange(2, 4);
+    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
+    expect(body).toHaveValue("写 **周报** 了");
+    body.setSelectionRange(4, 6);
+    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
+    expect(body).toHaveValue("写 周报 了");
+    body.setSelectionRange(2, 4);
+    fireEvent.keyDown(body, { key: "i", ctrlKey: true });
+    expect(body).toHaveValue("写 *周报* 了");
+
+    fireEvent.click(screen.getByRole("button", { name: "纯文本" }));
+    body.setSelectionRange(0, 1);
+    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
+    expect(body).toHaveValue("写 *周报* 了");
+  });
+
   it("切换格式会保存 content_format", async () => {
     const ipc = createMemoryIpc();
     await ipc.createItem({

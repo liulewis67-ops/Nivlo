@@ -100,6 +100,7 @@ const SECTIONS: readonly Section[] = [
     title: "shortcuts.section.notes",
     rows: [
       ["Ctrl+N", "shortcuts.notes.new"],
+      ["Ctrl+B / I", "shortcuts.notes.format"],
       ["↑ ↓", "shortcuts.notes.move"],
       ["↓ / Enter", "shortcuts.notes.filterOpen"],
       ["Esc", "shortcuts.notes.filterClear"],
