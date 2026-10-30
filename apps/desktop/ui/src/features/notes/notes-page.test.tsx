@@ -255,6 +255,21 @@ describe("NotesPage", () => {
     await waitFor(() => expect(ipc.restorations).toHaveLength(1));
   });
 
+  it("归档后焦点落在列表里接下来的那一篇并打开它", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "留下的", "内容");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await seedNote(ipc, "要归档的", "内容");
+    renderWithProviders(<NotesPage />, ipc);
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("要归档的"));
+
+    const archive = screen.getByRole("button", { name: "归档" });
+    archive.focus();
+    fireEvent.click(archive);
+    await waitFor(() => expect(screen.getByRole("button", { name: /留下的/ })).toHaveFocus());
+    expect(await screen.findByDisplayValue("留下的")).toHaveAccessibleName("标题");
+  });
+
   it("保存失败：内容仍在文本框里，显示原因", async () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "笔记", "内容");

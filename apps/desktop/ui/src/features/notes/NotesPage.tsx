@@ -1,12 +1,12 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input } from "@/components";
 import { useNavStore } from "@/features/shell";
-import { moveFocusWithArrows } from "@/lib/arrow-focus";
+import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
@@ -41,6 +41,8 @@ export function NotesPage() {
   const openNote = useNavStore((state) => state.openNote);
   const [filter, setFilter] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
+  /** 归档 / 删除之后要聚焦的那一篇；列表更新后由下面的 Effect 聚焦。 */
+  const refocusId = useRef<string | null>(null);
 
   const create = useMutation({
     mutationFn: () =>
@@ -63,6 +65,22 @@ export function NotesPage() {
   // 选中的被归档 / 删除后回落到最近更新的那一篇（渲染时推导，不在 Effect 里同步状态）。
   const activeId = list.find((note) => note.id === selectedId)?.id ?? list[0]?.id ?? null;
   const visible = list.filter((note) => noteMatches(note, filter));
+
+  // 归档 / 删除后这篇离开列表、编辑区换成另一篇，焦点会掉到页面上：改为落在列表里接下来的那一篇
+  // （同时打开它），键盘用户可以接着 ↑ ↓。焦点已经在别处时不抢。只操作 DOM，不改状态。
+  useEffect(() => {
+    const id = refocusId.current;
+    if (id === null) return;
+    const button = [
+      ...(listRef.current?.querySelectorAll<HTMLElement>("[data-note-item]") ?? []),
+    ].find((element) => element.dataset.noteId === id);
+    if (button === undefined) return;
+    refocusId.current = null;
+    if (document.activeElement === null || document.activeElement === document.body) {
+      button.focus();
+      button.click();
+    }
+  }, [notes.data]);
 
   /**
    * 筛选框的键盘：↓ / Enter 打开并聚焦第一篇匹配的笔记（之后可以继续用 ↑ ↓），Esc 清空筛选。
@@ -133,6 +151,7 @@ export function NotesPage() {
                 <button
                   type="button"
                   data-note-item=""
+                  data-note-id={note.id}
                   aria-current={note.id === activeId ? "true" : undefined}
                   onClick={() => openNote(note.id)}
                   className={cx(
@@ -177,7 +196,17 @@ export function NotesPage() {
             )}
           </div>
         ) : (
-          <NoteEditor key={activeId} id={activeId} focusTitle={activeId === freshId} />
+          <NoteEditor
+            key={activeId}
+            id={activeId}
+            focusTitle={activeId === freshId}
+            onLeave={() => {
+              refocusId.current = nextRemaining(
+                visible.map((note) => note.id),
+                [activeId],
+              );
+            }}
+          />
         )}
       </div>
     </section>

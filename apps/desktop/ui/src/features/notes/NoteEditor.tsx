@@ -13,6 +13,8 @@ export type NoteEditorProps = {
   id: string;
   /** 刚新建的笔记：标题出现时聚焦并全选，直接打字就替换掉「未命名笔记」。 */
   focusTitle?: boolean;
+  /** 归档或删除这篇之前调用（笔记页借此把焦点放到列表里接下来的那一篇）。 */
+  onLeave?: () => void;
 };
 
 /**
@@ -48,7 +50,7 @@ function enterMovesToBody(event: KeyboardEvent<HTMLInputElement>): void {
  * @param props 笔记 ID；刚新建时聚焦标题。
  * @returns 编辑区。
  */
-export function NoteEditor({ id, focusTitle = false }: NoteEditorProps) {
+export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps) {
   const { t } = useTranslation();
   const { query, draft, status, problem, edit, save } = useItemDraft(id);
   const { organize } = useOrganize();
@@ -96,7 +98,10 @@ export function NoteEditor({ id, focusTitle = false }: NoteEditorProps) {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => void organize([id], "archive", draft.title)}
+            onClick={() => {
+              onLeave?.();
+              void organize([id], "archive", draft.title);
+            }}
           >
             {t("inbox.action.archive")}
           </Button>
@@ -104,7 +109,10 @@ export function NoteEditor({ id, focusTitle = false }: NoteEditorProps) {
             size="sm"
             variant="ghost"
             className="text-danger"
-            onClick={() => void remove([id], draft.title)}
+            onClick={() => {
+              onLeave?.();
+              void remove([id], draft.title);
+            }}
           >
             {t("trash.delete")}
           </Button>
