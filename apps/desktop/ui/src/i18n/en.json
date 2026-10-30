@@ -1050,7 +1050,8 @@
       "page": "Next / previous month or week",
       "today": "Go to today",
       "view": "Month view / week view",
-      "days": "Move between days (↵ adds a to-do there)"
+      "days": "Move between days (↵ adds a to-do there)",
+      "new": "Add a to-do on today"
     },
     "projects": {
       "move": "Move between items; Enter opens one",

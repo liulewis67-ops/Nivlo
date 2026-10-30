@@ -164,6 +164,24 @@ describe("CalendarPage 月视图", () => {
     expect(screen.getByRole("textbox", { name: "新待办" })).toHaveFocus();
   });
 
+  it("Ctrl+N 在今天原地写一条待办；翻到别的月份时在那个月里", async () => {
+    renderWithProviders(<CalendarPage />, createMemoryIpc());
+    await screen.findByRole("heading", { name: "2026年10月" });
+    fireEvent.keyDown(document.body, { key: "n", ctrlKey: true });
+    const input = await screen.findByRole("textbox", { name: "新待办" });
+    expect(input).toHaveFocus();
+    expect(input.closest("[role=gridcell]")).toHaveAccessibleName(/10月10日/);
+    fireEvent.keyDown(input, { key: "Escape" });
+
+    fireEvent.keyDown(document.body, { key: "j" });
+    await screen.findByRole("heading", { name: "2026年11月" });
+    // 标题先变，网格等新的一页数据到了才换：等 11 月的格子出现。
+    await screen.findByRole("gridcell", { name: /11月30日/ });
+    fireEvent.keyDown(document.body, { key: "n", ctrlKey: true });
+    const next = await screen.findByRole("textbox", { name: "新待办" });
+    expect(next.closest("[role=gridcell]")).toHaveAccessibleName(/11月/);
+  });
+
   it("一周起始日设置为周日时，表头与网格跟着变", async () => {
     const ipc = createMemoryIpc();
     await ipc.setWeekStart("sunday");

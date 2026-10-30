@@ -12,7 +12,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
-import { isDialogOpen, isTyping } from "@/lib/typing";
+import { isCommandKey, isDialogOpen, isTyping } from "@/lib/typing";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -354,6 +354,14 @@ export function CalendarPage() {
      * @param event 键盘事件。
      */
     function handleKeyDown(event: globalThis.KeyboardEvent): void {
+      // Ctrl+N：在今天（今天不在这一页时在这一页的锚点日期）原地写一条待办，与其他页的「新建」一致。
+      const range = calendar.data;
+      if (isCommandKey(event, "n") && !isDialogOpen() && range !== undefined) {
+        event.preventDefault();
+        const inRange = today !== null && today >= range.from && today <= range.to;
+        setAdding(inRange ? today : (effectiveAnchor ?? range.from));
+        return;
+      }
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
       if (isTyping(event) || isDialogOpen()) return;
       if (effectiveAnchor === null) return;
@@ -372,7 +380,7 @@ export function CalendarPage() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [view, effectiveAnchor, today]);
+  }, [view, effectiveAnchor, today, calendar.data]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX } }),

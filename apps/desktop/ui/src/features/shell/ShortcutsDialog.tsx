@@ -94,6 +94,7 @@ const SECTIONS: readonly Section[] = [
   {
     title: "shortcuts.section.calendar",
     rows: [
+      ["Ctrl+N", "shortcuts.calendar.new"],
       ["J / K", "shortcuts.calendar.page"],
       ["T", "shortcuts.calendar.today"],
       ["M / W", "shortcuts.calendar.view"],
