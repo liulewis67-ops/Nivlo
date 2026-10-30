@@ -4,9 +4,10 @@
 //!
 //! * **待办**：类型为 Todo、未完成、未归档，且计划日期**不晚于**今天。计划日期早于今天的
 //!   视为"逾期"，自动滚入 Today 并带逾期标记；
-//! * **提示**：类型为 Tip，且计划日期**恰好**是今天；
-//! * **今日已完成**：今天（本地日期）完成的 Todo，以删除线显示在底部，次日不再出现；
-//! * 悬浮窗的数字 = 待办的数量（不含已完成与提示）。
+//! * **提示**：类型为 Tip、未完成，且计划日期**恰好**是今天；
+//! * **今日已完成**：今天（本地日期）完成的 Todo，以及今天的提示里已经勾掉的，以删除线显示在底部，
+//!   次日不再出现；
+//! * 悬浮窗的数字 = 未完成的待办 + 未完成的提示（不含已完成的）。
 //!
 //! 待办的顺序是用户手动排好的 Today Order（`daily_item_order`），而不是 priority / created_at / due
 //! （产品文档 §5.3）；没有手动顺序记录的待办（新加入 Today、逾期滚入的）追加在末尾，
@@ -40,16 +41,16 @@ pub struct TodayView {
     pub date: NaiveDate,
     /// 未完成的待办，已按 Today Order 排序。
     pub todos: Vec<TodayEntry>,
-    /// 今天的提示，按时间排序（全天提示在前）。
+    /// 今天未完成的提示，按时间排序（全天提示在前）。
     pub tips: Vec<TodayEntry>,
-    /// 今天已完成的待办，按完成时间排序。
+    /// 今天已完成的待办与提示，按完成时间排序。
     pub completed: Vec<TodayEntry>,
 }
 
 impl TodayView {
-    /// 今天还剩多少个待办——悬浮窗徽标上显示的数字。
+    /// 今天还剩多少件事（未完成的待办 + 未完成的提示）——悬浮窗徽标上显示的数字。
     pub fn remaining_count(&self) -> usize {
-        self.todos.len()
+        self.todos.len() + self.tips.len()
     }
 }
 
@@ -146,9 +147,14 @@ impl TodayService {
             let is_overdue = item.scheduled().is_some_and(|s| s.date() < date);
             TodayEntry { item, is_overdue }
         };
-        let mut tips: Vec<Item> = tips;
+        // 勾掉的提示和今天完成的待办一起放进「今日已完成」，按完成时间排序。
+        let (done_tips, mut tips): (Vec<Item>, Vec<Item>) =
+            tips.into_iter().partition(Item::is_done);
         // 全天提示（没有具体时间）排在有时间的前面，其余按时间、创建时间排序。
         tips.sort_by_key(|i| (i.scheduled().and_then(|s| s.time()), i.created_at(), i.id()));
+        let mut completed = completed;
+        completed.extend(done_tips);
+        completed.sort_by_key(|i| (i.completed_at(), i.id()));
 
         Ok(TodayView {
             date,

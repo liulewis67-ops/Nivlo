@@ -18,7 +18,7 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 | `ITEM_TITLE_EMPTY` | 标题为空 | Domain | |
 | `ITEM_TITLE_TOO_LONG` | 标题超过 500 个字符 | Domain | |
 | `ITEM_CONTENT_TOO_LONG` | 内容超过 200000 个字符 | Domain | |
-| `ITEM_NOT_COMPLETABLE` | Note / Tip 不能被完成 | Domain | |
+| `ITEM_NOT_COMPLETABLE` | Note 不能被完成 | Domain | |
 | `ITEM_ALREADY_COMPLETED` | Item 已经完成 | Domain | |
 | `ITEM_NOT_COMPLETED` | Item 尚未完成，无法重新打开 | Domain | |
 | `ITEM_ALREADY_ARCHIVED` | Item 已经归档 | Domain | |

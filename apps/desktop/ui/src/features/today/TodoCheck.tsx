@@ -8,15 +8,17 @@ export type TodoCheckProps = {
   label: string;
   /** 点击时调用。 */
   onToggle: () => void;
+  /** 形状：待办是圆角方形，提示是圆形（一眼分清哪些是提示）。 */
+  shape?: "square" | "round";
 };
 
 /**
- * 待办前面的圆角方形勾选框：整个按钮都是点击目标，勾选时播放一个轻微的弹跳。
+ * 待办前面的圆角方形勾选框（提示用圆形）：整个按钮都是点击目标，勾选时播放一个轻微的弹跳。
  *
  * @param props 状态、名称与回调。
  * @returns 勾选按钮。
  */
-export function TodoCheck({ checked, label, onToggle }: TodoCheckProps) {
+export function TodoCheck({ checked, label, onToggle, shape = "square" }: TodoCheckProps) {
   return (
     <button
       type="button"
@@ -25,7 +27,8 @@ export function TodoCheck({ checked, label, onToggle }: TodoCheckProps) {
       aria-label={label}
       onClick={onToggle}
       className={cx(
-        "flex size-4 shrink-0 items-center justify-center rounded-sm border",
+        "flex size-4 shrink-0 items-center justify-center border",
+        shape === "round" ? "rounded-full" : "rounded-sm",
         "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
         checked

@@ -89,4 +89,24 @@ describe("applyPostponed", () => {
   it("不在待办里的 ID 原样返回", () => {
     expect(applyPostponed(VIEW, "zzz")).toBe(VIEW);
   });
+
+  it("勾掉提示：移出提示、进入已完成、计数减一；撤销后回到提示的原位", () => {
+    const tip = (id: string): TodayItemDto => ({ ...todo(id), itemType: "tip" });
+    const view: TodayViewDto = { ...VIEW, remainingCount: 5, tips: [tip("t1"), tip("t2")] };
+
+    const done = applyCompleted(view, "t1");
+    expect(done.tips.map((t) => t.id)).toEqual(["t2"]);
+    expect(done.todos).toEqual(view.todos);
+    expect(done.completed.map((t) => [t.id, t.status])).toEqual([["t1", "done"]]);
+    expect(done.remainingCount).toBe(4);
+
+    const undone = applyReopened(done, tip("t1"), 0);
+    expect(undone.tips.map((t) => [t.id, t.status])).toEqual([
+      ["t1", "open"],
+      ["t2", "open"],
+    ]);
+    expect(undone.todos).toEqual(view.todos);
+    expect(undone.completed).toEqual([]);
+    expect(undone.remainingCount).toBe(5);
+  });
 });

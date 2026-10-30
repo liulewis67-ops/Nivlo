@@ -172,8 +172,34 @@ async fn tips_appear_only_on_their_exact_day_and_all_day_tips_come_first() {
     let view = today(&f).await;
 
     assert_eq!(titles(&view.tips), ["今天服务器维护", "15:00 提交周报"]);
-    // 提示不计入徽标上的数字。
-    assert_eq!(view.remaining_count(), 0);
+    // 未完成的提示也计入徽标上的数字。
+    assert_eq!(view.remaining_count(), 2);
+}
+
+#[tokio::test]
+async fn a_checked_tip_moves_to_completed_and_stops_counting() {
+    let f = utc_fixture();
+    f.uow
+        .seed(make(1, ItemType::Todo, "写周报", Some(date(10, 9)), 0));
+    let mut checked = make(2, ItemType::Tip, "带伞", Some(date(10, 9)), 1);
+    checked
+        .complete(Utc.with_ymd_and_hms(2026, 10, 9, 10, 0, 0).unwrap())
+        .unwrap();
+    f.uow.seed(checked);
+    f.uow
+        .seed(make(3, ItemType::Tip, "服务器维护", Some(date(10, 9)), 2));
+    let mut done_todo = make(4, ItemType::Todo, "回邮件", Some(date(10, 9)), 3);
+    done_todo
+        .complete(Utc.with_ymd_and_hms(2026, 10, 9, 9, 0, 0).unwrap())
+        .unwrap();
+    f.uow.seed(done_todo);
+
+    let view = today(&f).await;
+
+    assert_eq!(titles(&view.tips), ["服务器维护"]);
+    // 勾掉的提示和完成的待办按完成时间排在一起。
+    assert_eq!(titles(&view.completed), ["回邮件", "带伞"]);
+    assert_eq!(view.remaining_count(), 2, "一个待办 + 一个未勾掉的提示");
 }
 
 #[tokio::test]

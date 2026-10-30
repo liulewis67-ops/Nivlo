@@ -278,7 +278,7 @@
   },
   "today": {
     "badge": {
-      "label": "{{count}} to-dos left today"
+      "label": "{{count}} left today"
     },
     "panel": {
       "label": "Today panel",

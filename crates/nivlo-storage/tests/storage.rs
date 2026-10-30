@@ -264,12 +264,12 @@ async fn corrupt_rows_are_reported_not_hidden() {
     let (_dir, path, db) = new_db().await;
     let mut tx = db.begin().await.unwrap();
     tx.items()
-        .insert(&simple(1, ItemType::Tip, "提示", t(8, 0)))
+        .insert(&simple(1, ItemType::Note, "笔记", t(8, 0)))
         .await
         .unwrap();
     tx.commit().await.unwrap();
 
-    // 绕过 Domain 直接写入一个"已完成的 Tip"，模拟被外部工具改坏的数据。
+    // 绕过 Domain 直接写入一个"已完成的 Note"，模拟被外部工具改坏的数据。
     let mut conn = SqliteConnectOptions::new()
         .filename(&path)
         .connect()
@@ -492,7 +492,8 @@ async fn today_service_works_end_to_end_on_sqlite() {
     let view = service.get_today().await.unwrap();
 
     assert_eq!(view.date, NaiveDate::from_ymd_opt(2026, 10, 9).unwrap());
-    assert_eq!(view.remaining_count(), 2);
+    // 两个未完成的待办 + 一个未勾掉的提示。
+    assert_eq!(view.remaining_count(), 3);
     assert_eq!(view.todos[0].item.id(), id(2));
     assert!(view.todos[0].is_overdue);
     assert_eq!(view.completed.len(), 1);

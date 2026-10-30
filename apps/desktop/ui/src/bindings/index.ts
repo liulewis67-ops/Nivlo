@@ -1481,13 +1481,13 @@ export type TodayReorderedEvent = Record<string, never>;
 export type TodayViewDto = {
 	/**  用户本地时区下的今天，`YYYY-MM-DD`。 */
 	date: string,
-	/**  今天还剩多少个待办——悬浮窗徽标上的数字。 */
+	/**  今天还剩多少件事（未完成的待办 + 未完成的提示）——悬浮窗徽标上的数字。 */
 	remainingCount: number,
 	/**  未完成的待办，已按 Today Order 排序。 */
 	todos: TodayItemDto[],
-	/**  今天的提示。 */
+	/**  今天未完成的提示。 */
 	tips: TodayItemDto[],
-	/**  今天已完成的待办。 */
+	/**  今天已完成的待办与提示。 */
 	completed: TodayItemDto[],
 };
 

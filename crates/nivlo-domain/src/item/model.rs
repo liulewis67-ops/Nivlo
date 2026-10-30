@@ -469,11 +469,11 @@ impl Item {
         DomainEvent::ItemTypeChanged { item_id: self.id }
     }
 
-    /// 完成 Todo。
+    /// 完成 Todo 或 Tip。
     ///
     /// # Errors
     ///
-    /// * [`DomainError::NotCompletable`] - Note / Tip 不能完成。
+    /// * [`DomainError::NotCompletable`] - Note 不能完成。
     /// * [`DomainError::Archived`] - 已归档，需先取消归档。
     /// * [`DomainError::AlreadyCompleted`] - 已经完成。
     pub fn complete(&mut self, now: DateTime<Utc>) -> Result<DomainEvent, DomainError> {
@@ -494,7 +494,7 @@ impl Item {
         Ok(DomainEvent::ItemCompleted { item_id: self.id })
     }
 
-    /// 重新打开已完成的 Todo，清除完成时间。
+    /// 重新打开已完成的 Todo / Tip，清除完成时间。
     ///
     /// # Errors
     ///
@@ -811,15 +811,28 @@ mod tests {
     }
 
     #[test]
-    fn tip_and_note_cannot_be_completed() {
-        for item_type in [ItemType::Tip, ItemType::Note] {
-            let mut item = item(item_type);
-            assert_eq!(
-                item.complete(t1()),
-                Err(DomainError::NotCompletable { item_type })
-            );
-            assert!(!item.is_done());
-        }
+    fn note_cannot_be_completed() {
+        let mut note = item(ItemType::Note);
+        assert_eq!(
+            note.complete(t1()),
+            Err(DomainError::NotCompletable {
+                item_type: ItemType::Note
+            })
+        );
+        assert!(!note.is_done());
+    }
+
+    #[test]
+    fn tip_can_be_checked_off_and_reopened() {
+        let mut tip = item(ItemType::Tip);
+        assert_eq!(
+            tip.complete(t1()),
+            Ok(DomainEvent::ItemCompleted { item_id: id() })
+        );
+        assert!(tip.is_done());
+        assert_eq!(tip.completed_at(), Some(t1()));
+        tip.reopen(t1()).unwrap();
+        assert!(!tip.is_done());
     }
 
     #[test]
@@ -996,8 +1009,8 @@ mod tests {
         let json = serde_json::to_string(&todo).unwrap();
         assert_eq!(serde_json::from_str::<Item>(&json).unwrap(), todo);
 
-        // 伪造一个已完成的 Tip：反序列化必须拒绝。
-        let mut value: serde_json::Value = serde_json::to_value(item(ItemType::Tip)).unwrap();
+        // 伪造一个已完成的 Note：反序列化必须拒绝。
+        let mut value: serde_json::Value = serde_json::to_value(item(ItemType::Note)).unwrap();
         value["status"] = "done".into();
         value["completed_at"] = serde_json::to_value(t1()).unwrap();
         assert!(serde_json::from_value::<Item>(value).is_err());

@@ -37,7 +37,7 @@ pub enum DomainError {
         /// 允许的最大字符数。
         max: usize,
     },
-    /// 该类型的 Item 不能被完成（Tip、Note）。
+    /// 该类型的 Item 不能被完成（Note）。
     #[error("{item_type:?} 不能被完成")]
     NotCompletable {
         /// 被拒绝的 Item 类型。

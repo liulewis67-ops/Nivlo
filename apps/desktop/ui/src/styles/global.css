@@ -21,6 +21,7 @@
   --color-danger: var(--nv-danger);
   --color-danger-contrast: var(--nv-danger-contrast);
   --color-success: var(--nv-success);
+  --color-tip: var(--nv-tip);
   --color-focus: var(--nv-focus-ring);
 
   --radius-sm: var(--nv-radius-sm);

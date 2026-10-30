@@ -8,20 +8,17 @@ import { SortableTodoList } from "./SortableTodoList";
 import { TodoCheck } from "./TodoCheck";
 import type { PostponeKind } from "./useRescheduleTodo";
 
-/** 提示条目前的图标。 */
-const TIP_ICON = "💡";
-
 /** [`TodayList`] 的 Props。 */
 export type TodayListProps = {
   /** 后端返回的 Today 视图（已排序）。 */
   view: TodayViewDto;
-  /** 勾选一条待办时调用。 */
+  /** 勾选一条待办或提示时调用。 */
   onComplete: (item: TodayItemDto) => void;
   /** 拖拽 / 键盘排序结束：`activeId` 被放到了 `overId` 的位置。 */
   onMove: (activeId: string, overId: string) => void;
   /** 把一条待办推迟到某个目标。 */
   onPostpone: (item: TodayItemDto, kind: PostponeKind) => void;
-  /** 取消勾选一条今日已完成的待办时调用。 */
+  /** 取消勾选一条今日已完成的待办或提示时调用。 */
   onReopen: (item: TodayItemDto) => void;
   /** 删除一条待办（Delete 键）；不传时 Delete 不起作用（悬浮窗没有删除权限）。 */
   onDelete?: ((item: TodayItemDto) => void) | undefined;
@@ -38,8 +35,31 @@ function timeLabel(item: TodayItemDto): string | null {
   return time === null || time === undefined ? null : time.slice(0, 5);
 }
 
+/** 提示前的小灯泡（线性图标，占待办拖动把手的位置，勾选框与待办上下对齐）。 */
+function TipGlyph() {
+  return (
+    <span aria-hidden="true" className="flex h-5 w-4 shrink-0 items-center justify-center text-tip">
+      <svg
+        viewBox="0 0 16 16"
+        className="size-3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M8 2a4 4 0 0 0-2.3 7.3c.5.4.8.9.8 1.4V11h3v-.3c0-.5.3-1 .8-1.4A4 4 0 0 0 8 2z" />
+        <path d="M6.5 13.2h3" />
+      </svg>
+    </span>
+  );
+}
+
 /**
  * Today 列表：待办（逾期的带标记）、提示、今日已完成（删除线，位于底部）。
+ *
+ * 提示和待办一样可以勾掉：勾掉后移到「今日已完成」，不再计入剩余数量；它用圆形勾选框和灯泡图标
+ * 与待办区分，不能拖动排序（按时间排列）。
  *
  * 只负责展示后端给出的结果，不在前端判断"哪些 Item 属于 Today"或排序（前端规范 §1）。
  * 勾选、取消勾选、拖拽排序与推迟都由回调处理。
@@ -95,11 +115,23 @@ export function TodayList({
         />
       )}
       {view.tips.length > 0 && (
-        <ul aria-label={t("today.section.tips")} className="flex flex-col gap-1">
+        <ul aria-label={t("today.section.tips")} className="flex flex-col gap-0.5">
           {view.tips.map((item) => (
-            <li key={item.id} className="flex items-center gap-2 px-2 text-sm text-muted">
-              <span aria-hidden="true">{TIP_ICON}</span>
-              {timeLabel(item) !== null && <span className="tabular-nums">{timeLabel(item)}</span>}
+            <li
+              key={item.id}
+              data-todo-id={item.id}
+              className="flex items-center gap-1.5 rounded-md py-1.5 pr-1 pl-0.5 text-sm text-text hover:bg-surface-hover"
+            >
+              <TipGlyph />
+              <TodoCheck
+                checked={false}
+                shape="round"
+                label={t("today.complete", { title: item.title })}
+                onToggle={() => onComplete(item)}
+              />
+              {timeLabel(item) !== null && (
+                <span className="shrink-0 text-xs text-muted tabular-nums">{timeLabel(item)}</span>
+              )}
               <ItemTitle id={item.id} title={item.title} />
             </li>
           ))}
@@ -114,6 +146,7 @@ export function TodayList({
             >
               <TodoCheck
                 checked
+                shape={item.itemType === "tip" ? "round" : "square"}
                 label={t("today.reopen", { title: item.title })}
                 onToggle={() => {
                   if (rootRef.current?.contains(document.activeElement) === true) {

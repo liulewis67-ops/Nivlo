@@ -38,14 +38,14 @@ pub enum ItemType {
     Todo,
     /// 笔记：用于记录信息、想法、网页与文件引用，没有完成语义。
     Note,
-    /// 提示：具有时间属性的轻量信息，不需要完成。
+    /// 提示：具有时间属性的轻量信息；可以勾掉（看过 / 处理过），但不是必须。
     Tip,
 }
 
 impl ItemType {
-    /// 该类型是否可以被完成。只有 Todo 可以；Tip 不强行具有 done / undone 语义。
+    /// 该类型是否可以被完成：Todo 与 Tip 可以（Tip 勾掉表示今天已经处理过）；Note 没有完成语义。
     pub fn is_completable(self) -> bool {
-        matches!(self, Self::Todo)
+        matches!(self, Self::Todo | Self::Tip)
     }
 
     /// 该类型是否拥有截止日期（产品文档 §17：只有 Todo）。
@@ -186,8 +186,8 @@ mod tests {
     }
 
     #[test]
-    fn only_todo_is_completable() {
-        assert!(ItemType::Todo.is_completable());
-        assert!(!ItemType::Note.is_completable() && !ItemType::Tip.is_completable());
+    fn todo_and_tip_are_completable_but_not_note() {
+        assert!(ItemType::Todo.is_completable() && ItemType::Tip.is_completable());
+        assert!(!ItemType::Note.is_completable());
     }
 }

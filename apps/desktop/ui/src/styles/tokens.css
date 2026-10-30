@@ -56,6 +56,8 @@
   --nv-danger: #c62828;
   --nv-danger-contrast: #ffffff;
   --nv-success: #2e7d32;
+  /* 提示（灯泡）的强调色。 */
+  --nv-tip: #b45309;
   --nv-focus-ring: #2563eb;
   --nv-shadow-md: 0 4px 16px rgb(15 23 42 / 12%);
   --nv-shadow-lg: 0 12px 32px rgb(15 23 42 / 18%);
@@ -78,6 +80,7 @@
   --nv-danger: #ef6b6b;
   --nv-danger-contrast: #1a0a0a;
   --nv-success: #6fcf7a;
+  --nv-tip: #fbbf24;
   --nv-focus-ring: #7aa3f5;
   --nv-shadow-md: 0 4px 16px rgb(0 0 0 / 45%);
   --nv-shadow-lg: 0 12px 32px rgb(0 0 0 / 55%);

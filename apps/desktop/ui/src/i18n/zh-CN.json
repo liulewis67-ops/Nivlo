@@ -277,7 +277,7 @@
   },
   "today": {
     "badge": {
-      "label": "今天还剩 {{count}} 项待办"
+      "label": "今天还剩 {{count}} 件事"
     },
     "panel": {
       "label": "今日面板",

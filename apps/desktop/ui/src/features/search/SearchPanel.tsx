@@ -225,7 +225,7 @@ function TypeGlyph({ type }: { type: ItemTypeDto }) {
  *   找不到就顺手记下，不必换到别的入口；
  * * 提供 `commands` 时，以 `>` 开头的输入只列出匹配的命令，回车执行；
  * * Shift+Enter 复制选中条目的标题（贴到聊天、提交信息里），底部短暂提示「已复制」；
- * * Ctrl+D 完成选中的待办（已完成的则重新打开），条目留在列表里显示为已完成；底部给出「撤销」，
+ * * Ctrl+D 完成选中的待办或提示（已完成的则重新打开），条目留在列表里显示为已完成；底部给出「撤销」，
  *   提示还在时 Ctrl+Z 也能撤销——找到它、勾掉它，不必打开主窗口；
  * * 挂载时输入框聚焦；重置（清空输入）由调用方用 `key` 重新挂载完成。
  *
@@ -401,13 +401,13 @@ export function SearchPanel({
   }
 
   /**
-   * 切换一条待办的完成状态：完成 ↔ 重新打开。成功后列表就地更新并给出撤销；不是待办时什么也不做。
+   * 切换一条待办或提示的完成状态：完成 ↔ 重新打开。成功后列表就地更新并给出撤销；笔记什么也不做。
    *
    * @param item 要切换的条目（以当前显示的状态为准）。
    * @returns 是否切换成功。
    */
   async function toggleDone(item: ItemDto): Promise<boolean> {
-    if (item.itemType !== "todo" || toggling.current) return false;
+    if (item.itemType === "note" || toggling.current) return false;
     toggling.current = true;
     const completing = item.status !== "done";
     try {
@@ -749,11 +749,14 @@ export function SearchPanel({
               {t("search.undo")}
             </button>
           )}
-          {doneNotice === null && !browsing && activeItem?.itemType === "todo" && (
-            <span className="shrink-0">
-              {t(activeItem.status === "done" ? "search.reopenHint" : "search.completeHint")}
-            </span>
-          )}
+          {doneNotice === null &&
+            !browsing &&
+            activeItem !== undefined &&
+            activeItem.itemType !== "note" && (
+              <span className="shrink-0">
+                {t(activeItem.status === "done" ? "search.reopenHint" : "search.completeHint")}
+              </span>
+            )}
           {/* 撤销提示在时右侧只留它，窄窗口里也放得下。 */}
           {doneNotice === null && draft !== null && flat.length > 0 && (
             <span>{t("search.createHint")}</span>

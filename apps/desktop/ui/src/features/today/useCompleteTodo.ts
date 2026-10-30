@@ -5,21 +5,21 @@ import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
-import { applyCompleted, applyReopened, findTodo } from "./model/today-view";
+import { applyCompleted, applyReopened, findOpen } from "./model/today-view";
 
 /** 完成后「撤销」提示停留的时间（毫秒）。 */
 export const UNDO_WINDOW_MS = 5000;
 
 /** [`useCompleteTodo`] 返回的操作。 */
 export type CompleteTodoActions = {
-  /** 完成一条待办：立即更新界面，失败时回滚并提示；成功后给出可撤销的 Toast。 */
+  /** 完成一条待办或提示：立即更新界面，失败时回滚并提示；成功后给出可撤销的 Toast。 */
   complete: (item: TodayItemDto) => Promise<void>;
-  /** 重新打开一条今日已完成的待办。 */
+  /** 重新打开一条今日已完成的待办或提示。 */
   reopen: (item: TodayItemDto) => Promise<void>;
 };
 
 /**
- * 待办的完成 / 撤销，带 optimistic update（架构文档 §15）。
+ * 待办与提示的完成 / 撤销，带 optimistic update（架构文档 §15）。
  *
  * 流程：取消进行中的 Today 查询 → 记下当前缓存 → 立即改缓存 → 调用 IPC →
  * 失败则恢复缓存并弹出错误 Toast；成功则显示带「撤销」的 Toast。
@@ -51,14 +51,14 @@ export function useCompleteTodo(): CompleteTodoActions {
   }
 
   /**
-   * 完成一条待办：乐观更新 → IPC → 失败回滚；成功后显示可撤销的 Toast。
+   * 完成一条待办或提示：乐观更新 → IPC → 失败回滚；成功后显示可撤销的 Toast。
    *
    * @param item 被完成的条目。
    */
   async function complete(item: TodayItemDto): Promise<void> {
     await queryClient.cancelQueries({ queryKey: key });
     const before = queryClient.getQueryData<TodayViewDto>(key);
-    const position = before === undefined ? null : findTodo(before, item.id);
+    const position = before === undefined ? null : findOpen(before, item.id);
     if (before !== undefined) queryClient.setQueryData(key, applyCompleted(before, item.id));
     try {
       await ipc.completeItem(item.id);

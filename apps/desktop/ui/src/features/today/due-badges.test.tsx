@@ -77,20 +77,24 @@ describe("Today 里的截止与时间标记（悬浮窗与主窗口共用同一�
     expect(within(rowOf("没有截止")).queryByText(/截止$/, { selector: "span.border" })).toBeNull();
   });
 
-  it("Tip 显示 💡 与具体时间", () => {
+  it("Tip 显示圆形完成框与具体时间，勾选时交给 onComplete", () => {
+    const completed: string[] = [];
     renderWithProviders(
       <TodayList
         view={VIEW}
-        onComplete={() => undefined}
+        onComplete={(item) => completed.push(item.id)}
         onMove={() => undefined}
         onPostpone={() => undefined}
         onReopen={() => undefined}
       />,
     );
     const tips = screen.getByRole("list", { name: "提示" });
-    expect(tips).toHaveTextContent("💡");
     expect(tips).toHaveTextContent("15:00");
     expect(tips).toHaveTextContent("提交周报");
+    const box = screen.getByRole("checkbox", { name: "完成「提交周报」" });
+    expect(box).toHaveClass("rounded-full");
+    fireEvent.click(box);
+    expect(completed).toHaveLength(1);
   });
 });
 
@@ -279,7 +283,8 @@ describe("Today 里的键盘移动", () => {
     const box = (title: string) => screen.getByRole("checkbox", { name: `完成「${title}」` });
     const floating = renderWithProviders(<Host deletable={false} />);
     fireEvent.keyDown(box("今天截止"), { key: "Delete" });
-    expect(screen.getAllByRole("checkbox")).toHaveLength(5);
+    // 每条待办和提示各有一个完成框（提示也能勾掉）。
+    expect(screen.getAllByRole("checkbox")).toHaveLength(6);
     floating.unmount();
 
     renderWithProviders(<Host deletable />);

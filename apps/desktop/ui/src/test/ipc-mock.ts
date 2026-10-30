@@ -396,7 +396,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         todos: [...today.todos, entry],
       };
     } else if (item.itemType === "tip") {
-      today = { ...today, tips: [...today.tips, entry] };
+      // 未完成的提示也计入剩余数量（与后端一致）。
+      today = { ...today, remainingCount: today.remainingCount + 1, tips: [...today.tips, entry] };
     }
   }
 
@@ -467,13 +468,13 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       transitionFailure = undefined;
       return Promise.reject(failure);
     }
-    const source = complete ? today.todos : today.completed;
+    const source = complete ? [...today.todos, ...today.tips] : today.completed;
     const found = source.find((entry) => entry.id === id);
     const at = items.findIndex((candidate) => candidate.id === id);
     const stored = items[at];
     if (found === undefined) {
       // 不在 Today 视图里（比如项目视图里的待办）：直接改条目本身。
-      if (stored === undefined || stored.itemType !== "todo") {
+      if (stored === undefined || stored.itemType === "note") {
         return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
       }
       const next: ItemDto = {
@@ -492,17 +493,19 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         completedAt: complete ? new Date().toISOString() : null,
       };
     }
+    // 提示勾掉 / 重新打开时进出的是 `tips`，待办是 `todos`（与后端的 Today 一致）。
+    const list = found.itemType === "tip" ? "tips" : "todos";
     today = complete
       ? {
           ...today,
           remainingCount: today.remainingCount - 1,
-          todos: today.todos.filter((entry) => entry.id !== id),
+          [list]: today[list].filter((entry) => entry.id !== id),
           completed: [...today.completed, { ...found, status: "done" }],
         }
       : {
           ...today,
           remainingCount: today.remainingCount + 1,
-          todos: [...today.todos, { ...found, status: "open" }],
+          [list]: [...today[list], { ...found, status: "open" }],
           completed: today.completed.filter((entry) => entry.id !== id),
         };
     for (const notify of listeners) notify();
@@ -1008,6 +1011,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       searchHides += 1;
       return Promise.resolve();
     },
+    fitSearch: () => Promise.resolve(),
     emitSearchWindowShown: () => {
       for (const notify of searchShownListeners) notify();
     },
@@ -1209,7 +1213,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       for (const id of ids) {
         if (!trashed.has(id)) trashed.set(id, now);
         // 离开 Today 视图。
-        const wasOpen = today.todos.some((entry) => entry.id === id);
+        const wasOpen = [...today.todos, ...today.tips].some((entry) => entry.id === id);
         today = {
           ...today,
           remainingCount: today.remainingCount - (wasOpen ? 1 : 0),

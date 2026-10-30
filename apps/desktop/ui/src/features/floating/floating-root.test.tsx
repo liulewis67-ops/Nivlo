@@ -221,13 +221,13 @@ describe("FloatingRoot", () => {
     ipc.setToday({ ...EMPTY_TODAY, remainingCount: 4 });
     renderWithProviders(<FloatingRoot />, ipc);
     await advance(0);
-    expect(screen.getByRole("button", { name: /今天还剩 4 项待办/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /今天还剩 4 件事/ })).toBeInTheDocument();
 
     ipc.setToday({ ...EMPTY_TODAY, remainingCount: 3 });
     act(() => ipc.emitDataChange());
     await advance(0);
 
-    expect(screen.getByRole("button", { name: /今天还剩 3 项待办/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /今天还剩 3 件事/ })).toBeInTheDocument();
     expect(ipc.calls.filter((call) => call === "getToday")).toHaveLength(2);
   });
 
