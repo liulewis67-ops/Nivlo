@@ -186,6 +186,23 @@ describe("NotesPage", () => {
     await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("旧的笔记"));
   });
 
+  it("Ctrl+F 跳到筛选框；在编辑区里按时留给页内查找", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "周报", "内容");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = await screen.findByLabelText("描述");
+    const filter = screen.getByRole("searchbox", { name: "筛选笔记" });
+
+    body.focus();
+    expect(fireEvent.keyDown(body, { key: "f", ctrlKey: true })).toBe(true);
+    expect(body).toHaveFocus();
+
+    const note = screen.getByRole("button", { name: /周报/ });
+    note.focus();
+    expect(fireEvent.keyDown(note, { key: "f", ctrlKey: true })).toBe(false);
+    expect(filter).toHaveFocus();
+  });
+
   it("编辑后自动保存，并立即在列表里按最新更新重排", async () => {
     const ipc = createMemoryIpc();
     const first = await seedNote(ipc, "先写的", "内容");

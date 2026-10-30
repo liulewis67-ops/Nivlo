@@ -160,6 +160,7 @@ Ctrl+K 与全局搜索框除了条目，还可以列出命令：「打开收集�
 39. ✅ Markdown 按键移到 `lib/markdown-keys.ts`（`handleMarkdownKeyDown`），详情面板的描述在 Markdown 格式时也用上。
 40. ✅ 任务项 Ctrl+Enter 勾选 / 取消（`toggleMarkdownTask`；多行里有没勾的就全勾上，否则全取消）。
 41. ✅ 选中文字粘贴网址变成 Markdown 链接（`linkOnPaste` / `handleMarkdownPaste`；只认单个 http(s) 网址、不跨行、选中的不是网址本身）；浏览器预览验证过粘贴与 Ctrl+Z。
+42. ✅ 笔记页 Ctrl+F 跳到筛选框并全选；焦点在编辑区时不拦，留给 WebView2 的页内查找。
 
 ## 4. 验收标准（用于后续每一项）
 

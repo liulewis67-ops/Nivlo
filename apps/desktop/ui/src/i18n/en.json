@@ -1043,7 +1043,8 @@
       "new": "New note",
       "format": "Bold / italic in Markdown notes (press again to remove)",
       "indent": "Indent / outdent list items (Enter continues the list)",
-      "task": "Tick / untick a task item (- [ ])"
+      "task": "Tick / untick a task item (- [ ])",
+      "filter": "Jump to the filter (find in page while editing)"
     },
     "calendar": {
       "page": "Next / previous month or week",

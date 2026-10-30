@@ -42,6 +42,7 @@ export function NotesPage() {
   const openNote = useNavStore((state) => state.openNote);
   const [filter, setFilter] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
+  const filterRef = useRef<HTMLInputElement>(null);
   /** 归档 / 删除之后要聚焦的那一篇；列表更新后由下面的 Effect 聚焦。 */
   const refocusId = useRef<string | null>(null);
 
@@ -62,7 +63,8 @@ export function NotesPage() {
     onError: reportError,
   });
 
-  // Ctrl+N（macOS ⌘N）新建一篇笔记（笔记应用的常见约定），在输入时也有效；有对话框打开时不响应。
+  // Ctrl+N（macOS ⌘N）新建一篇笔记（笔记应用的常见约定），在输入时也有效；Ctrl+F 跳到筛选框。
+  // 有对话框打开时都不响应。
   const createNote = create.mutate;
   const creating = create.isPending;
   useEffect(() => {
@@ -72,9 +74,20 @@ export function NotesPage() {
      * @param event 键盘事件。
      */
     function handleKeyDown(event: globalThis.KeyboardEvent): void {
-      if (!isCommandKey(event, "n") || isDialogOpen()) return;
-      event.preventDefault();
-      if (!creating) createNote();
+      if (isDialogOpen()) return;
+      if (isCommandKey(event, "n")) {
+        event.preventDefault();
+        if (!creating) createNote();
+        return;
+      }
+      // Ctrl+F 跳到筛选框（列表上方）；在编辑区里时留给页内查找，方便在正文里找字。
+      const filterBox = filterRef.current;
+      const inEditor = document.activeElement?.closest("article") != null;
+      if (isCommandKey(event, "f") && filterBox !== null && !inEditor) {
+        event.preventDefault();
+        filterBox.focus();
+        filterBox.select();
+      }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -138,6 +151,8 @@ export function NotesPage() {
         {list.length > 0 && (
           <div className="px-3 pb-2">
             <Input
+              ref={filterRef}
+              aria-keyshortcuts="Control+F"
               type="search"
               value={filter}
               onChange={(event) => setFilter(event.target.value)}
