@@ -54,6 +54,7 @@ export function ProjectItemRow({ item }: ProjectItemRowProps) {
       ) : (
         <button
           type="button"
+          data-project-item=""
           onClick={() => openItem(item.id)}
           className={cx(
             "min-w-0 flex-1 truncate text-left text-sm",

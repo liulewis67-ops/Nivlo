@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
+import { OpenItemContext } from "@/features/detail";
 import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
@@ -82,6 +83,31 @@ describe("ProjectsPage", () => {
       "已完成高",
     ]);
     expect(screen.queryByText("别的项目的事")).not.toBeInTheDocument();
+  });
+
+  it("条目列表里按 ↑ / ↓ 在标题之间移动，回车打开详情", async () => {
+    const ipc = createMemoryIpc();
+    const project = ipc.seedProject("P");
+    await seedTodo(ipc, "第一条", { projectId: project.id, priority: "high" });
+    await seedTodo(ipc, "第二条", { projectId: project.id });
+    const opened: string[] = [];
+    renderWithProviders(
+      <OpenItemContext.Provider value={(id) => opened.push(id)}>
+        <ProjectsPage />
+      </OpenItemContext.Provider>,
+      ipc,
+    );
+    const first = await screen.findByRole("button", { name: "第一条" });
+    const second = screen.getByRole("button", { name: "第二条" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "ArrowDown" });
+    expect(second).toHaveFocus();
+    fireEvent.keyDown(second, { key: "ArrowDown" });
+    expect(second).toHaveFocus();
+    fireEvent.keyDown(second, { key: "ArrowUp" });
+    expect(first).toHaveFocus();
+    fireEvent.click(first);
+    expect(opened).toHaveLength(1);
   });
 
   it("勾选待办会完成它", async () => {

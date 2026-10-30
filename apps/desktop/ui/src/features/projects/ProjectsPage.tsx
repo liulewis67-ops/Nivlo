@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Input, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
 import { useProjectsQuery, useTagsQuery } from "@/features/organize";
+import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { ProjectDto, TagSummaryDto } from "@/lib/ipc";
@@ -483,6 +484,8 @@ export function ProjectsPage() {
               <ul
                 aria-label={t("projects.items")}
                 className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
+                // ↑ / ↓ 在各条的标题之间移动（笔记和提示没有勾选框，标题每行都有），Enter 打开详情。
+                onKeyDown={(event) => moveFocusWithArrows(event, "[data-project-item]")}
               >
                 {items.map((item) => (
                   <ProjectItemRow key={item.id} item={item} />

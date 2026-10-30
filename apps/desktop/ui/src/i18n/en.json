@@ -978,7 +978,8 @@
       "today": "Today list",
       "inbox": "Inbox (select items first)",
       "notes": "Notes list",
-      "calendar": "Calendar"
+      "calendar": "Calendar",
+      "projects": "Projects and tags"
     },
     "global": {
       "quickCreate": "Quick Create",
@@ -1027,6 +1028,9 @@
       "page": "Next / previous month or week",
       "today": "Go to today",
       "view": "Month view / week view"
+    },
+    "projects": {
+      "move": "Move between items; Enter opens one"
     }
   }
 }

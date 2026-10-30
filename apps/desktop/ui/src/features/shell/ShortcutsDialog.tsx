@@ -65,6 +65,10 @@ const SECTIONS: readonly Section[] = [
     ],
   },
   {
+    title: "shortcuts.section.projects",
+    rows: [["↑ ↓", "shortcuts.projects.move"]],
+  },
+  {
     title: "shortcuts.section.calendar",
     rows: [
       ["J / K", "shortcuts.calendar.page"],
