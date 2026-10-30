@@ -15,6 +15,7 @@ import { SearchPanel } from "./SearchPanel";
  * * 页面失去焦点时（后端随即隐藏窗口）也先重置，下次出现时不会闪一下上次的结果；
  * * 回车 / 点击：交给主窗口打开详情（后端同时隐藏搜索框）；Esc：隐藏并把焦点还给之前的应用；
  * * 输入 `>` 列出「前往：…」命令，回车在主窗口打开那个视图（后端同时隐藏搜索框）；
+ * * 窗口高度跟随内容（`fit_search`）：结果少时窗口就矮，不留一大片空白；
  * * Ctrl+Enter：把搜索词记成待办，随即隐藏、焦点回到之前的应用（和悬浮窗的 Quick Create 一样不打断手头的事）。
  *
  * @returns 填满窗口的搜索面板。
@@ -31,6 +32,8 @@ export function SearchApp() {
     setSession((current) => current + 1);
   }, [queryClient]);
 
+  const fit = useCallback((height: number) => void ipc.fitSearch(height), []);
+
   useEffect(() => ipc.subscribeSearchWindowShown(reset), [reset]);
   useEffect(() => {
     window.addEventListener("blur", reset);
@@ -42,6 +45,7 @@ export function SearchApp() {
       <SearchPanel
         key={session}
         variant="window"
+        onContentHeight={fit}
         emptyHint={t("search.windowHint")}
         onClose={() => void ipc.hideSearch()}
         onCreated={() => void ipc.hideSearch()}

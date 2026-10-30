@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
@@ -99,6 +99,11 @@ export type SearchPanelProps = {
    * 输入为空时底部提示这个用法。
    */
   commands?: readonly PaletteCommand[] | undefined;
+  /**
+   * 内容的自然高度（CSS px）变化时调用：独立的全局搜索窗口据此调整窗口高度，结果少时不留空白。
+   * 窗口比内容矮时列表在窗口内滚动，量出的仍是不滚动时需要的高度。
+   */
+  onContentHeight?: (height: number) => void;
 };
 
 /** 从搜索词新建待办的草稿。 */
@@ -235,6 +240,7 @@ export function SearchPanel({
   footerExtra,
   onCreated,
   commands,
+  onContentHeight,
 }: SearchPanelProps) {
   const { t } = useTranslation();
   const listId = useId();
@@ -252,6 +258,34 @@ export function SearchPanel({
   const [doneNotice, setDoneNotice] = useState<DoneNotice | null>(null);
   /** 正在切换完成状态：忽略重复触发（按住 Ctrl+D 不会来回切换）。 */
   const toggling = useRef(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // 量出内容的自然高度：面板高度减去滚动区可见高度（= 输入框 + 底部提示），再加上列表内容的实际高度。
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    const scroll = scrollRef.current;
+    const content = contentRef.current;
+    if (onContentHeight === undefined || panel === null || scroll === null || content === null) {
+      return;
+    }
+    let last = -1;
+    /** 量一次，高度变了才通知（ResizeObserver 回调很频繁）。 */
+    const measure = () => {
+      const height = Math.ceil(panel.offsetHeight - scroll.clientHeight + content.offsetHeight);
+      if (height !== last) {
+        last = height;
+        onContentHeight(height);
+      }
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(content);
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, [onContentHeight]);
 
   useEffect(() => {
     if (doneNotice === null) return;
@@ -486,6 +520,7 @@ export function SearchPanel({
   const isWindow = variant === "window";
   return (
     <div
+      ref={panelRef}
       onKeyDown={handleKeyDown}
       className={cx(
         "flex flex-col overflow-hidden bg-surface",
@@ -495,12 +530,15 @@ export function SearchPanel({
       )}
     >
       <div
-        className={cx("flex items-center gap-3 border-b border-border", isWindow ? "px-5" : "px-4")}
+        className={cx(
+          "flex shrink-0 items-center gap-3 border-b",
+          isWindow ? "border-border/70 px-5" : "border-border px-4",
+        )}
       >
         <svg
           viewBox="0 0 16 16"
           aria-hidden="true"
-          className={cx("shrink-0 text-muted", isWindow ? "size-5" : "size-4")}
+          className={cx("shrink-0", isWindow ? "size-5 text-primary" : "size-4 text-muted")}
           fill="none"
           stroke="currentColor"
           strokeWidth="1.5"
@@ -528,8 +566,8 @@ export function SearchPanel({
             openWhenReady.current = false;
           }}
           className={cx(
-            "min-w-0 flex-1 bg-transparent text-text placeholder:text-muted focus-visible:outline-none",
-            isWindow ? "h-14 text-lg" : "h-12 text-base",
+            "min-w-0 flex-1 bg-transparent text-text placeholder:text-muted/80 focus-visible:outline-none",
+            isWindow ? "h-14 text-[17px]" : "h-12 text-base",
           )}
         />
         {text !== "" && search.isFetching && (
@@ -538,147 +576,156 @@ export function SearchPanel({
             className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary"
           />
         )}
-        <kbd className="shrink-0 rounded border border-border px-1.5 py-0.5 text-[11px] text-muted">
+        <kbd className="shrink-0 rounded-md bg-surface-hover px-1.5 py-0.5 font-sans text-[11px] text-muted">
           {"Esc"}
         </kbd>
       </div>
-      <div className="nv-scroll-hover min-h-0 flex-1 overflow-y-auto">
-        {showRecent && recentItems.length === 0 && !recent.isLoading && (
-          <p className="px-6 py-8 text-center text-sm text-muted">
-            {emptyHint ?? t("search.hint")}
-          </p>
-        )}
-        {!browsing && settled && flat.length === 0 && (
-          <div className="flex flex-col items-center gap-3 px-6 py-8">
-            <p role="status" className="text-center text-sm text-muted">
-              {t("search.empty", { query: debounced })}
+      <div ref={scrollRef} className="nv-scroll-hover min-h-0 flex-1 overflow-y-auto">
+        <div ref={contentRef}>
+          {showRecent && recentItems.length === 0 && !recent.isLoading && (
+            <p className="px-6 py-8 text-center text-sm text-muted">
+              {emptyHint ?? t("search.hint")}
             </p>
-            {draft !== null && (
-              <Button size="sm" disabled={create.isPending} onClick={createDraft}>
-                <span className="truncate">{t("search.create", { title: draft.title })}</span>
-                {draft.label !== null && <span className="text-muted">{draft.label}</span>}
-                <kbd className="rounded border border-border px-1 text-[11px] text-muted">
-                  {"Ctrl+↵"}
-                </kbd>
-              </Button>
-            )}
-          </div>
-        )}
-        {commandMode && matches.length === 0 && (
-          <p role="status" className="px-6 py-8 text-center text-sm text-muted">
-            {t("search.noCommand")}
-          </p>
-        )}
-        {commandMode && matches.length > 0 && (
-          <ul id={listId} role="listbox" aria-label={t("search.commands")} className="p-2">
-            {matches.map((command, index) => {
-              const selected = index === activeIndex;
-              return (
-                <li
-                  key={command.id}
-                  id={`${listId}-cmd-${command.id}`}
-                  ref={selected ? activeRef : undefined}
-                  role="option"
-                  aria-selected={selected}
-                  onMouseMove={() => setActive(index)}
-                  onClick={() => runCommand(command)}
-                  className={cx(
-                    "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2",
-                    selected ? "bg-primary/10" : "hover:bg-surface-hover",
-                  )}
-                >
-                  <span aria-hidden="true" className="w-4 shrink-0 text-center text-muted">
-                    {COMMAND_PREFIX}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-sm text-text">{command.label}</span>
-                  {selected && (
-                    <kbd className="shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
-                      {"↵"}
-                    </kbd>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-        {flat.length > 0 && (
-          <ul
-            id={listId}
-            role="listbox"
-            aria-label={showRecent ? t("search.recent") : t("search.results")}
-            className={cx("p-2", isWindow && "nv-list-in")}
-          >
-            {groups.map((group) => (
-              <li key={group.key} role="presentation">
-                <p
-                  id={`${listId}-group-${group.key}`}
-                  className="px-2 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted"
-                >
-                  {group.key === "recent" ? t("search.recent") : t(`search.group.${group.key}`)}
-                </p>
-                <ul role="group" aria-labelledby={`${listId}-group-${group.key}`}>
-                  {group.items.map((original) => {
-                    const item = patched.get(original.id) ?? original;
-                    const selected = item.id === activeItem?.id;
-                    const snippet = snippetAround(item.content, terms);
-                    const meta = itemMeta(
-                      item,
-                      today,
-                      (id) => projectNames.get(id),
-                      tagNames.get(item.id),
-                    );
-                    return (
-                      <li
-                        key={item.id}
-                        id={`${listId}-${item.id}`}
-                        ref={selected ? activeRef : undefined}
-                        role="option"
-                        aria-selected={selected}
-                        onMouseMove={() => setActive(flat.indexOf(item))}
-                        onClick={() => onOpenItem(item.id)}
-                        className={cx(
-                          "flex cursor-pointer items-start gap-3 rounded-md px-3 py-2",
-                          selected ? "bg-primary/10" : "hover:bg-surface-hover",
-                        )}
-                      >
-                        <span className="pt-0.5">
-                          <TypeGlyph type={item.itemType} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span
-                            className={cx(
-                              "block truncate text-sm text-text",
-                              item.status === "done" && "text-muted line-through",
-                            )}
-                          >
-                            <Marked segments={highlight(item.title, terms)} />
+          )}
+          {!browsing && settled && flat.length === 0 && (
+            <div className="flex flex-col items-center gap-3 px-6 py-8">
+              <p role="status" className="text-center text-sm text-muted">
+                {t("search.empty", { query: debounced })}
+              </p>
+              {draft !== null && (
+                <Button size="sm" disabled={create.isPending} onClick={createDraft}>
+                  <span className="truncate">{t("search.create", { title: draft.title })}</span>
+                  {draft.label !== null && <span className="text-muted">{draft.label}</span>}
+                  <kbd className="rounded border border-border px-1 text-[11px] text-muted">
+                    {"Ctrl+↵"}
+                  </kbd>
+                </Button>
+              )}
+            </div>
+          )}
+          {commandMode && matches.length === 0 && (
+            <p role="status" className="px-6 py-8 text-center text-sm text-muted">
+              {t("search.noCommand")}
+            </p>
+          )}
+          {commandMode && matches.length > 0 && (
+            <ul id={listId} role="listbox" aria-label={t("search.commands")} className="p-2">
+              {matches.map((command, index) => {
+                const selected = index === activeIndex;
+                return (
+                  <li
+                    key={command.id}
+                    id={`${listId}-cmd-${command.id}`}
+                    ref={selected ? activeRef : undefined}
+                    role="option"
+                    aria-selected={selected}
+                    onMouseMove={() => setActive(index)}
+                    onClick={() => runCommand(command)}
+                    className={cx(
+                      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2",
+                      selected ? "bg-primary/10" : "hover:bg-surface-hover",
+                    )}
+                  >
+                    <span aria-hidden="true" className="w-4 shrink-0 text-center text-muted">
+                      {COMMAND_PREFIX}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-text">
+                      {command.label}
+                    </span>
+                    {selected && (
+                      <kbd className="shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
+                        {"↵"}
+                      </kbd>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {flat.length > 0 && (
+            <ul
+              id={listId}
+              role="listbox"
+              aria-label={showRecent ? t("search.recent") : t("search.results")}
+              className={cx("p-2", isWindow && "nv-list-in")}
+            >
+              {groups.map((group) => (
+                <li key={group.key} role="presentation">
+                  <p
+                    id={`${listId}-group-${group.key}`}
+                    className="px-2 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted"
+                  >
+                    {group.key === "recent" ? t("search.recent") : t(`search.group.${group.key}`)}
+                  </p>
+                  <ul role="group" aria-labelledby={`${listId}-group-${group.key}`}>
+                    {group.items.map((original) => {
+                      const item = patched.get(original.id) ?? original;
+                      const selected = item.id === activeItem?.id;
+                      const snippet = snippetAround(item.content, terms);
+                      const meta = itemMeta(
+                        item,
+                        today,
+                        (id) => projectNames.get(id),
+                        tagNames.get(item.id),
+                      );
+                      return (
+                        <li
+                          key={item.id}
+                          id={`${listId}-${item.id}`}
+                          ref={selected ? activeRef : undefined}
+                          role="option"
+                          aria-selected={selected}
+                          onMouseMove={() => setActive(flat.indexOf(item))}
+                          onClick={() => onOpenItem(item.id)}
+                          className={cx(
+                            "flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2",
+                            selected ? "bg-primary/10" : "hover:bg-surface-hover",
+                          )}
+                        >
+                          <span className="pt-0.5">
+                            <TypeGlyph type={item.itemType} />
                           </span>
-                          {snippet !== "" && (
-                            <span className="mt-0.5 block truncate text-xs text-muted">
-                              <Marked segments={highlight(snippet, terms)} />
+                          <span className="min-w-0 flex-1">
+                            <span
+                              className={cx(
+                                "block truncate text-sm text-text",
+                                item.status === "done" && "text-muted line-through",
+                              )}
+                            >
+                              <Marked segments={highlight(item.title, terms)} />
+                            </span>
+                            {snippet !== "" && (
+                              <span className="mt-0.5 block truncate text-xs text-muted">
+                                <Marked segments={highlight(snippet, terms)} />
+                              </span>
+                            )}
+                          </span>
+                          {meta.length > 0 && (
+                            <span className="mt-0.5 max-w-[40%] shrink-0 truncate text-xs text-muted">
+                              {meta.join(" · ")}
                             </span>
                           )}
-                        </span>
-                        {meta.length > 0 && (
-                          <span className="mt-0.5 max-w-[40%] shrink-0 truncate text-xs text-muted">
-                            {meta.join(" · ")}
-                          </span>
-                        )}
-                        {selected && (
-                          <kbd className="mt-0.5 shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
-                            {"↵"}
-                          </kbd>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        )}
+                          {selected && (
+                            <kbd className="mt-0.5 shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
+                              {"↵"}
+                            </kbd>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-      <footer className="flex items-center justify-between gap-3 border-t border-border px-4 py-2 text-xs text-muted">
+      <footer
+        className={cx(
+          "flex shrink-0 items-center justify-between gap-3 border-t px-4 py-2 text-xs text-muted",
+          isWindow ? "border-border/70 bg-surface-hover/40" : "border-border",
+        )}
+      >
         <span>{t("search.keys")}</span>
         <span className="flex items-center gap-3">
           {/* 结果数量兼作读屏播报：元素一直存在、只更新文字（新插入的 live 区域常常不会被播报）。 */}

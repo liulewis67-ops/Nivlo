@@ -152,6 +152,7 @@ macro_rules! bindings_builder {
                 $crate::commands::window::end_floating_input,
                 $crate::commands::window::open_item_in_main::<$runtime>,
                 $crate::commands::window::hide_search::<$runtime>,
+                $crate::commands::window::fit_search::<$runtime>,
             ])
             .events($crate::tauri_specta::collect_events![
                 $crate::events::ItemCreatedEvent,

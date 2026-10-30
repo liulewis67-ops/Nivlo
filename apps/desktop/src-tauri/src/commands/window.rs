@@ -106,6 +106,13 @@ pub async fn hide_search<R: Runtime>(app: AppHandle<R>) {
     crate::windows::search::dismiss(&app, true);
 }
 
+/// 全局搜索框：按内容的自然高度（logical px）调整窗口高度，结果少时窗口变矮；后端会限制在允许的范围内。
+#[tauri::command]
+#[specta::specta]
+pub async fn fit_search<R: Runtime>(app: AppHandle<R>, height: f64) {
+    crate::windows::search::fit(&app, height);
+}
+
 /// 取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。
 ///
 /// # Errors

@@ -1011,6 +1011,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     emitSearchWindowShown: () => {
       for (const notify of searchShownListeners) notify();
     },
+    fitSearch: () => Promise.resolve(),
     subscribeSearchWindowShown: (onShown: () => void) => {
       searchShownListeners.add(onShown);
       return () => {

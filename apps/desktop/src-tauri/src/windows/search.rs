@@ -4,7 +4,9 @@
 //! * **出现在鼠标所在的显示器**：水平居中、靠上（工作区高度的 [`TOP_RATIO`] 处），完整位于工作区内；
 //! * **再按一次快捷键 / Esc / 点到别处** 都会隐藏；Esc 关闭时把焦点还给之前正在使用的窗口，
 //!   失去焦点（用户已经点了别的窗口）时只隐藏，不抢回焦点；
-//! * 窗口的 IPC 权限只有搜索、打开结果与隐藏自己（`capabilities/search.json`）。
+//! * **高度跟随内容**：页面量出内容的自然高度后请求调整（[`fit`]），结果少时窗口就矮，
+//!   不留一大片空白；最高 [`SEARCH_HEIGHT`]，超出时列表在窗口内滚动；顶边不动；
+//! * 窗口的 IPC 权限只有搜索、打开结果、调整自己的高度与隐藏自己（`capabilities/search.json`）。
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
@@ -13,7 +15,8 @@ use std::time::Instant;
 use nivlo_platform::foreground::{ForegroundPort, UnsupportedForeground};
 use tauri::webview::PageLoadEvent;
 use tauri::{
-    AppHandle, Manager, PhysicalPosition, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    AppHandle, LogicalSize, Manager, PhysicalPosition, Runtime, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder,
 };
 use tauri_specta::Event;
 
@@ -25,8 +28,22 @@ pub const SEARCH_WINDOW_LABEL: &str = "search";
 /// 搜索窗口的宽度（logical px）。
 pub const SEARCH_WIDTH: f64 = 640.0;
 
-/// 搜索窗口的高度（logical px）：输入框 + 约 7 条结果 + 底部提示。
+/// 搜索窗口的最大高度（logical px）：输入框 + 约 7 条结果 + 底部提示。也是创建时的高度，
+/// 页面量出内容高度后再收矮（见 [`fit`]）。
 pub const SEARCH_HEIGHT: f64 = 440.0;
+
+/// 搜索窗口的最小高度（logical px）：只剩输入框一行。
+pub const SEARCH_MIN_HEIGHT: f64 = 56.0;
+
+/// 把页面请求的高度限制在 [`SEARCH_MIN_HEIGHT`]..=[`SEARCH_HEIGHT`] 之内；不是有限数时用最大高度。
+#[must_use]
+pub fn fit_height(requested: f64) -> f64 {
+    if requested.is_finite() {
+        requested.clamp(SEARCH_MIN_HEIGHT, SEARCH_HEIGHT)
+    } else {
+        SEARCH_HEIGHT
+    }
+}
 
 /// 窗口顶边位于工作区高度的这个比例处（和常见的启动器一样偏上，视线不用下移）。
 pub const TOP_RATIO: f64 = 0.18;
@@ -134,6 +151,17 @@ pub fn release_prewarmed<R: Runtime>(app: &AppHandle<R>) {
     }
     if let Err(error) = window.destroy() {
         tracing::warn!(event = "search_window_release_failed", %error, "释放搜索窗口失败");
+    }
+}
+
+/// 按页面量出的内容高度（logical px）调整搜索窗口的高度，宽度与左上角不变；窗口还没创建时什么都不做。
+pub fn fit<R: Runtime>(app: &AppHandle<R>, height: f64) {
+    let Some(window) = app.get_webview_window(SEARCH_WINDOW_LABEL) else {
+        return;
+    };
+    let size = LogicalSize::new(SEARCH_WIDTH, fit_height(height));
+    if let Err(error) = window.set_size(size) {
+        tracing::debug!(event = "search_window_fit_failed", %error, "调整搜索窗口高度失败");
     }
 }
 
@@ -289,6 +317,15 @@ mod tests {
         let (x, y) = search_origin(area, 1.5);
         assert_eq!(x, -2560 + (2560 - 960) / 2);
         assert_eq!(y, 100 + (1400.0 * TOP_RATIO).round() as i32);
+    }
+
+    #[test]
+    fn fit_height_is_clamped_to_the_bar_and_the_maximum() {
+        assert_eq!(fit_height(200.0), 200.0);
+        assert_eq!(fit_height(10.0), SEARCH_MIN_HEIGHT, "至少留下输入框");
+        assert_eq!(fit_height(5000.0), SEARCH_HEIGHT, "不超过最大高度");
+        assert_eq!(fit_height(f64::NAN), SEARCH_HEIGHT);
+        assert_eq!(fit_height(f64::INFINITY), SEARCH_HEIGHT);
     }
 
     #[test]

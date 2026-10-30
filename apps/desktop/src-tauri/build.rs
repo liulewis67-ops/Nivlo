@@ -85,6 +85,7 @@ const COMMANDS: &[&str] = &[
     "start_floating_drag",
     "open_item_in_main",
     "hide_search",
+    "fit_search",
     "expand_floating",
     "collapse_floating",
     "begin_floating_input",

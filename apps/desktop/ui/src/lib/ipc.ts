@@ -321,6 +321,8 @@ export interface IpcClient {
   openItemInMain(id: string): Promise<void>;
   /** 全局搜索框：隐藏自己，焦点还给之前正在使用的窗口。 */
   hideSearch(): Promise<void>;
+  /** 全局搜索框：按内容的自然高度（CSS px）调整窗口高度；后端限制在允许的范围内。 */
+  fitSearch(height: number): Promise<void>;
   /**
    * 订阅「全局搜索框刚被显示」事件（每次按下全局快捷键）。
    *
@@ -575,6 +577,7 @@ const tauriIpc: IpcClient = {
     await call("open_item_in_main", commands.openItemInMain(id));
   },
   hideSearch: () => commands.hideSearch(),
+  fitSearch: (height) => commands.fitSearch(height),
   subscribeSearchWindowShown: (onShown) =>
     listenAll([() => events.searchWindowShown.listen(() => onShown())]),
   openMainAt: async (view) => {
@@ -714,6 +717,7 @@ export const ipc: IpcClient = {
   disableShortcut: (action) => current.disableShortcut(action),
   openItemInMain: (id) => current.openItemInMain(id),
   hideSearch: () => current.hideSearch(),
+  fitSearch: (height) => current.fitSearch(height),
   subscribeSearchWindowShown: (onShown) => current.subscribeSearchWindowShown(onShown),
   openMainAt: (view) => current.openMainAt(view),
   takePendingMainView: () => current.takePendingMainView(),

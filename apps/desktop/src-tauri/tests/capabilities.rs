@@ -54,6 +54,8 @@ const SEARCH_ALLOWED: &[&str] = &[
     "open_item_in_main",
     "open_main_at",
     "hide_search",
+    // 窗口高度跟随内容（后端限制范围，只作用于搜索窗口自己）。
+    "fit_search",
 ];
 
 /// 解析一个 Capability 文件。

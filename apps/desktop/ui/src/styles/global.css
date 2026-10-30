@@ -63,10 +63,16 @@ html[data-window="floating"] body {
   scrollbar-color: var(--nv-scrollbar-thumb) transparent;
 }
 
-/* 统一键盘焦点样式，各 WebView 默认的焦点环不一致。 */
-:focus-visible {
-  outline: 2px solid var(--nv-focus-ring);
-  outline-offset: 2px;
+/*
+ * 统一键盘焦点样式，各 WebView 默认的焦点环不一致。
+ * 放在 base 层：不分层的样式会压过所有 Tailwind 工具类，组件里的 `focus-visible:outline-none`
+ * 就失效了（全局搜索框的输入框外面会多出一个蓝框）。
+ */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--nv-focus-ring);
+    outline-offset: 2px;
+  }
 }
 
 /* 统一滚动条外观（WebView2 / WebKit 均支持），避免系统默认滚动条破坏一致性。 */

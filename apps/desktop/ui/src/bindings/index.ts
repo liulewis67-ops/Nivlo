@@ -799,6 +799,8 @@ export const commands = {
 	openItemInMain: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_item_in_main", { id })),
 	/**  隐藏全局搜索框（Esc）：焦点还给打开搜索之前正在使用的窗口。 */
 	hideSearch: () => __TAURI_INVOKE<void>("hide_search"),
+	/**  全局搜索框：按内容的自然高度（logical px）调整窗口高度，结果少时窗口变矮；后端会限制在允许的范围内。 */
+	fitSearch: (height: number | null) => __TAURI_INVOKE<void>("fit_search", { height }),
 };
 
 /** Events */
