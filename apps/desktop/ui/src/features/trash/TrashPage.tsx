@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, ConfirmButton } from "@/components";
+import { nextRemaining } from "@/lib/arrow-focus";
 import { ipc } from "@/lib/ipc";
 import type { TrashEntryDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
@@ -25,7 +27,8 @@ export function daysLeft(entry: TrashEntryDto, now: Date = new Date()): number {
  *
  * * 恢复：条目回到原来的样子（计划日期、项目、标签都在）；
  * * 彻底删除与清空是不可恢复的，需要在 3 秒内再点一次确认；
- * * 每一项显示删除了多久、还剩几天自动清除。
+ * * 每一项显示删除了多久、还剩几天自动清除；
+ * * 恢复或彻底删除一项后，焦点落在下一项的同一个按钮上，连续处理只要接着按。
  *
  * @returns 回收站页面。
  */
@@ -37,6 +40,39 @@ export function TrashPage() {
     staleTime: Infinity,
   });
   const entries = trash.data ?? [];
+  const listRef = useRef<HTMLUListElement>(null);
+  /** 处理完一项后要聚焦的那一项与按钮（0 恢复、1 彻底删除）；列表刷新后由下面的 Effect 聚焦。 */
+  const refocus = useRef<{ id: string; button: number } | null>(null);
+
+  /**
+   * 记下处理完这一项后焦点该去哪儿（只在焦点就在列表里时）。
+   *
+   * @param id 要处理的那一项。
+   * @param button 按的是第几个按钮。
+   */
+  function rememberNext(id: string, button: number): void {
+    if (listRef.current?.contains(document.activeElement) !== true) return;
+    const next = nextRemaining(
+      entries.map((entry) => entry.item.id),
+      [id],
+    );
+    refocus.current = next === null ? null : { id: next, button };
+  }
+
+  // 列表刷新（那一项已离开）后聚焦记下的按钮；焦点已经在别处时不抢。只操作 DOM，不改状态。
+  useEffect(() => {
+    const target = refocus.current;
+    if (target === null) return;
+    const row = [...(listRef.current?.querySelectorAll<HTMLElement>("[data-trash-id]") ?? [])].find(
+      (element) => element.dataset.trashId === target.id,
+    );
+    const button = row?.querySelectorAll<HTMLElement>("button")[target.button];
+    if (button === undefined) return;
+    refocus.current = null;
+    if (document.activeElement === null || document.activeElement === document.body) {
+      button.focus();
+    }
+  }, [trash.data]);
 
   /**
    * 恢复一项。
@@ -44,6 +80,7 @@ export function TrashPage() {
    * @param entry 回收站里的一项。
    */
   function restore(entry: TrashEntryDto): void {
+    rememberNext(entry.item.id, 0);
     ipc
       .restoreDeletedItems([entry.item.id])
       .then(() =>
@@ -58,6 +95,7 @@ export function TrashPage() {
    * @param entry 回收站里的一项。
    */
   function purge(entry: TrashEntryDto): void {
+    rememberNext(entry.item.id, 1);
     ipc.purgeItems([entry.item.id]).catch(reportError);
   }
 
@@ -95,12 +133,17 @@ export function TrashPage() {
           <p className="max-w-sm text-sm text-muted">{t("trash.emptyHint")}</p>
         </div>
       ) : (
-        <ul aria-label={t("trash.list")} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <ul
+          ref={listRef}
+          aria-label={t("trash.list")}
+          className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
+        >
           {entries.map((entry) => {
             const left = daysLeft(entry);
             return (
               <li
                 key={entry.item.id}
+                data-trash-id={entry.item.id}
                 className="group flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) hover:bg-surface-hover"
               >
                 <div className="min-w-0 flex-1">

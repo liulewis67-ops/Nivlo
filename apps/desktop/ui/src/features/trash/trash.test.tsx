@@ -75,6 +75,28 @@ describe("回收站", () => {
     ).toBe(1);
   });
 
+  it("恢复或彻底删除一项后，焦点落在下一项的同一个按钮上", async () => {
+    const ipc = createMemoryIpc();
+    for (const title of ["甲", "乙", "丙"]) {
+      await ipc.deleteItems([await seed(ipc, "todo", title)]);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    renderWithProviders(<TrashPage />, ipc);
+    // 最近删除的在前：丙、乙、甲。
+    const restore = await screen.findByRole("button", { name: "恢复「丙」" });
+    restore.focus();
+    fireEvent.click(restore);
+    await waitFor(() => expect(screen.getByRole("button", { name: "恢复「乙」" })).toHaveFocus());
+
+    const purge = screen.getByRole("button", { name: "永久删除「乙」" });
+    purge.focus();
+    fireEvent.click(purge);
+    fireEvent.click(purge);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "永久删除「甲」" })).toHaveFocus(),
+    );
+  });
+
   it("彻底删除需要再点一次确认；第一次点击什么都不会发生", async () => {
     const ipc = createMemoryIpc();
     const id = await seed(ipc, "note", "要彻底删除的");
