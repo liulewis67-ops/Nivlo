@@ -85,6 +85,7 @@ const SECTIONS: readonly Section[] = [
   {
     title: "shortcuts.section.notes",
     rows: [
+      ["Ctrl+N", "shortcuts.notes.new"],
       ["↑ ↓", "shortcuts.notes.move"],
       ["↓ / Enter", "shortcuts.notes.filterOpen"],
       ["Esc", "shortcuts.notes.filterClear"],

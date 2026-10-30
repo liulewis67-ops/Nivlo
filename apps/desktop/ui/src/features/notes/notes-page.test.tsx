@@ -86,6 +86,18 @@ describe("NotesPage", () => {
     expect(ipc.items[0]).toMatchObject({ itemType: "note", contentFormat: "markdown" });
   });
 
+  it("Ctrl+N 新建一篇并选中标题；在正文里按也行", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "已有的", "内容");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = await screen.findByLabelText("描述");
+
+    fireEvent.keyDown(body, { key: "n", ctrlKey: true });
+    await waitFor(() => expect(ipc.items).toHaveLength(2));
+    const title = await screen.findByDisplayValue("未命名笔记");
+    await waitFor(() => expect(title).toHaveFocus());
+  });
+
   it("按最近更新排序，默认打开最近更新的一篇，点击切换", async () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "旧的笔记", "第一版");

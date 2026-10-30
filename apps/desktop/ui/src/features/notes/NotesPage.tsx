@@ -19,7 +19,7 @@ import { NoteEditor } from "./NoteEditor";
  * 主窗口的 Notes 视图（实施计划 3.2、产品文档 §17「快速记录、基本编辑」）：
  * 左边是最近更新的笔记，右边是编辑区。
  *
- * * 「+ 新笔记」立刻创建一篇并打开，标题已选中，直接打字即可（先创建，再整理）；
+ * * 「+ 新笔记」（或 Ctrl+N）立刻创建一篇并打开，标题已选中，直接打字即可（先创建，再整理）；
  * * 编辑区自动保存（同详情面板，保存失败不丢内容）；
  * * 归档带可撤销的提示；
  * * 没有选中时默认打开最近更新的那一篇，一篇都没有时引导用户新建；
@@ -60,6 +60,26 @@ export function NotesPage() {
     onSuccess: (note) => openNote(note.id, true),
     onError: reportError,
   });
+
+  // Ctrl+N（macOS ⌘N）新建一篇笔记（笔记应用的常见约定），在输入时也有效；有对话框打开时不响应。
+  const createNote = create.mutate;
+  const creating = create.isPending;
+  useEffect(() => {
+    /**
+     * 新建笔记的快捷键。
+     *
+     * @param event 键盘事件。
+     */
+    function handleKeyDown(event: globalThis.KeyboardEvent): void {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      if (event.key.toLowerCase() !== "n") return;
+      if (document.querySelector('[aria-modal="true"]') !== null) return;
+      event.preventDefault();
+      if (!creating) createNote();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [createNote, creating]);
 
   const list = notes.data ?? [];
   // 选中的被归档 / 删除后回落到最近更新的那一篇（渲染时推导，不在 Effect 里同步状态）。
@@ -110,6 +130,7 @@ export function NotesPage() {
             size="sm"
             variant="primary"
             disabled={create.isPending}
+            aria-keyshortcuts="Control+N"
             onClick={() => create.mutate()}
           >
             {t("notes.new")}

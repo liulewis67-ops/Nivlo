@@ -1030,7 +1030,8 @@
     "notes": {
       "move": "Open the previous / next note",
       "filterOpen": "In the filter: open the first match",
-      "filterClear": "In the filter: clear it"
+      "filterClear": "In the filter: clear it",
+      "new": "New note"
     },
     "calendar": {
       "page": "Next / previous month or week",
