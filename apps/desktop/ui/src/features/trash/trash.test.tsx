@@ -97,6 +97,23 @@ describe("回收站", () => {
     );
   });
 
+  it("↑ / ↓ 移到上一项 / 下一项的同一个按钮", async () => {
+    const ipc = createMemoryIpc();
+    for (const title of ["甲", "乙"]) {
+      await ipc.deleteItems([await seed(ipc, "todo", title)]);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    renderWithProviders(<TrashPage />, ipc);
+    const purgeFirst = await screen.findByRole("button", { name: "永久删除「乙」" });
+    purgeFirst.focus();
+    fireEvent.keyDown(purgeFirst, { key: "ArrowDown" });
+    expect(screen.getByRole("button", { name: "永久删除「甲」" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("button", { name: "永久删除「甲」" }), { key: "ArrowDown" });
+    expect(screen.getByRole("button", { name: "永久删除「甲」" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("button", { name: "永久删除「甲」" }), { key: "ArrowUp" });
+    expect(purgeFirst).toHaveFocus();
+  });
+
   it("彻底删除需要再点一次确认；第一次点击什么都不会发生", async () => {
     const ipc = createMemoryIpc();
     const id = await seed(ipc, "note", "要彻底删除的");

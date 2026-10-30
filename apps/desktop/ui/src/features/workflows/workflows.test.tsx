@@ -87,6 +87,20 @@ describe("Workflow 管理页", () => {
     expect(screen.queryByRole("button", { name: "保存" })).not.toBeInTheDocument();
   });
 
+  it("规则列表里按 ↑ / ↓ 在规则之间移动，不自动打开", async () => {
+    renderWithProviders(<WorkflowsPage />, createMemoryIpc());
+    const builtin = await screen.findByRole("list", { name: "内置" });
+    const names = within(builtin)
+      .getAllByRole("button")
+      .filter((button) => button.hasAttribute("data-workflow-item"));
+    names[0]?.focus();
+    fireEvent.keyDown(names[0] as HTMLElement, { key: "ArrowDown" });
+    expect(names[1]).toHaveFocus();
+    expect(names[1]).not.toHaveAttribute("aria-current");
+    fireEvent.keyDown(names[1] as HTMLElement, { key: "ArrowUp" });
+    expect(names[0]).toHaveFocus();
+  });
+
   it("复制内置规则 → 改成带 read 标签的待办 → 保存；试运行不写入任何数据", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<WorkflowsPage />, ipc);

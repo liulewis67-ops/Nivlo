@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
+import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { WorkflowDto, WorkflowImportPreviewDto } from "@/lib/ipc";
@@ -57,6 +58,7 @@ function WorkflowRow({ workflow, selected, onSelect, onToggle, onPriority }: Wor
       />
       <button
         type="button"
+        data-workflow-item=""
         aria-current={selected ? "true" : undefined}
         onClick={onSelect}
         // 名称与说明在窄栏里常被截断：指针移上去看全文。
@@ -249,7 +251,11 @@ export function WorkflowsPage() {
         <RunInspector />
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(20rem,26rem)_1fr]">
-          <div className="min-h-0 overflow-y-auto border-r border-border px-3 py-3">
+          <div
+            className="min-h-0 overflow-y-auto border-r border-border px-3 py-3"
+            // ↑ / ↓ 在规则之间移动（跨过「内置 / 我的」分组），Enter 打开；不自动打开，免得丢掉正在编辑的内容。
+            onKeyDown={(event) => moveFocusWithArrows(event, "[data-workflow-item]")}
+          >
             <p className="px-2 pb-3 text-xs text-muted">{t("workflows.intro")}</p>
             {[
               { key: "builtin", rows: builtin },

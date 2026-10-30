@@ -137,6 +137,20 @@ export function TrashPage() {
           ref={listRef}
           aria-label={t("trash.list")}
           className="min-h-0 flex-1 overflow-y-auto px-4 py-3"
+          // ↑ / ↓ 移到上一项 / 下一项的同一个按钮（恢复或彻底删除），连续处理时不用 Tab 来回。
+          onKeyDown={(event) => {
+            if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+            const target = event.target;
+            const row = target instanceof HTMLElement ? target.closest("li") : null;
+            if (row === null || !(target instanceof HTMLElement)) return;
+            const column = [...row.querySelectorAll("button")].indexOf(target as HTMLButtonElement);
+            const sibling =
+              event.key === "ArrowDown" ? row.nextElementSibling : row.previousElementSibling;
+            const next = sibling?.querySelectorAll<HTMLElement>("button")[column];
+            if (column < 0 || next === undefined) return;
+            event.preventDefault();
+            next.focus();
+          }}
         >
           {entries.map((entry) => {
             const left = daysLeft(entry);
