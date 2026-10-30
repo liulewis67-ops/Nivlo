@@ -49,6 +49,8 @@ type NavButtonProps = {
   count: number | null;
   /** 点击回调。 */
   onSelect: () => void;
+  /** 切到这个视图的快捷键（如 `Control+2`），供读屏读出；没有时省略。 */
+  shortcut?: string | undefined;
 };
 
 /**
@@ -57,12 +59,13 @@ type NavButtonProps = {
  * @param props 视图、选中状态与角标。
  * @returns 导航按钮。
  */
-function NavButton({ view, isActive, count, onSelect }: NavButtonProps) {
+function NavButton({ view, isActive, count, onSelect, shortcut }: NavButtonProps) {
   const { t } = useTranslation();
   return (
     <button
       type="button"
       aria-current={isActive ? "page" : undefined}
+      aria-keyshortcuts={shortcut}
       onClick={onSelect}
       className={cx(
         "flex h-9 w-full items-center gap-2.5 rounded-md px-2.5 text-sm",
@@ -220,7 +223,7 @@ export function MainShell() {
         ]),
   ];
 
-  // Ctrl+K（macOS 上 ⌘K）打开 / 关闭搜索面板。
+  // Ctrl+K（macOS 上 ⌘K）打开 / 关闭搜索面板；Ctrl+1…5 切到侧栏上方的各个视图，Ctrl+, 打开设置。
   useEffect(() => {
     /**
      * 全局快捷键：窗口里任何位置都生效，包括输入框。
@@ -228,9 +231,17 @@ export function MainShell() {
      * @param event 键盘事件。
      */
     function handleKeyDown(event: KeyboardEvent): void {
+      const command = (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
+      const position = Number.parseInt(event.key, 10);
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setSearching((open) => !open);
+      } else if (command && position >= 1 && position <= NAV_VIEWS.length) {
+        event.preventDefault();
+        setView(NAV_VIEWS[position - 1] as MainView);
+      } else if (command && event.key === ",") {
+        event.preventDefault();
+        setView("settings");
       } else if (
         event.key === "?" &&
         !event.ctrlKey &&
@@ -245,7 +256,7 @@ export function MainShell() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [setView]);
 
   // 悬浮窗请求打开某个视图：窗口刚创建时从后端取走待处理的请求，已经在运行时由事件通知。
   useEffect(() => {
@@ -301,10 +312,11 @@ export function MainShell() {
             <kbd className="rounded border border-border px-1.5 text-[11px]">{"Ctrl K"}</kbd>
           </button>
           <nav aria-label={t("shell.nav.label")} className="flex flex-col gap-1">
-            {[...NAV_VIEWS, ...DEV_VIEWS].map((item) => (
+            {[...NAV_VIEWS, ...DEV_VIEWS].map((item, index) => (
               <NavButton
                 key={item}
                 view={item}
+                shortcut={index < NAV_VIEWS.length ? `Control+${index + 1}` : undefined}
                 isActive={view === item}
                 count={item === "today" ? remaining : item === "inbox" ? inboxCount : null}
                 onSelect={() => setView(item)}
@@ -326,6 +338,7 @@ export function MainShell() {
             />
             <NavButton
               view="settings"
+              shortcut="Control+,"
               isActive={view === "settings"}
               count={null}
               onSelect={() => setView("settings")}

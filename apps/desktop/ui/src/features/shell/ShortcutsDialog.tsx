@@ -21,6 +21,8 @@ const SECTIONS: readonly Section[] = [
     title: "shortcuts.section.main",
     rows: [
       ["Ctrl+K", "shortcuts.main.search"],
+      ["Ctrl+1 … 5", "shortcuts.main.views"],
+      ["Ctrl+,", "shortcuts.main.settings"],
       ["?", "shortcuts.main.help"],
     ],
   },

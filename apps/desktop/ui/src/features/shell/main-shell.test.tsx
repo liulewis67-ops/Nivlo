@@ -95,6 +95,32 @@ describe("MainShell", () => {
     expect(await screen.findByText("写周报")).toBeInTheDocument();
   });
 
+  it("Ctrl+1…5 切到侧栏上方的各个视图，Ctrl+, 打开设置；在输入框里也生效", async () => {
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    await screen.findByRole("region", { name: "今天" });
+
+    fireEvent.keyDown(window, { key: "1", ctrlKey: true });
+    expect(useNavStore.getState().view).toBe("inbox");
+    fireEvent.keyDown(window, { key: "4", ctrlKey: true });
+    expect(useNavStore.getState().view).toBe("notes");
+    fireEvent.keyDown(window, { key: ",", ctrlKey: true });
+    expect(useNavStore.getState().view).toBe("settings");
+    // 超出范围、带 Shift 或没按 Ctrl 的数字不切换。
+    fireEvent.keyDown(window, { key: "9", ctrlKey: true });
+    fireEvent.keyDown(window, { key: "2", ctrlKey: true, shiftKey: true });
+    fireEvent.keyDown(window, { key: "2" });
+    expect(useNavStore.getState().view).toBe("settings");
+
+    fireEvent.keyDown(window, { key: "2", ctrlKey: true });
+    const input = await screen.findByRole("textbox", { name: "添加待办" });
+    fireEvent.keyDown(input, { key: "3", ctrlKey: true });
+    expect(useNavStore.getState().view).toBe("calendar");
+    expect(screen.getByRole("button", { name: /^今天/ })).toHaveAttribute(
+      "aria-keyshortcuts",
+      "Control+2",
+    );
+  });
+
   it("Inbox 视图列出捕获的内容，侧栏角标显示待整理数量", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();
