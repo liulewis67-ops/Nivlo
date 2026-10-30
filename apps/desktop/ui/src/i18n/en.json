@@ -1069,7 +1069,8 @@
       "new": "New rule"
     },
     "trash": {
-      "move": "Move to the same button on the next / previous entry"
+      "move": "Move to the same button on the next / previous entry",
+      "filter": "Jump to the filter (shown for a long trash)"
     }
   }
 }

@@ -3,7 +3,7 @@ import { differenceInCalendarDays, parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, ConfirmButton, Input } from "@/components";
+import { Button, ConfirmButton, FilterInput } from "@/components";
 import { nextRemaining } from "@/lib/arrow-focus";
 import { filterWords, matchesAllWords } from "@/lib/text-filter";
 import { ipc } from "@/lib/ipc";
@@ -140,25 +140,16 @@ export function TrashPage() {
       </header>
       {(entries.length >= TRASH_FILTER_MIN || filter !== "") && (
         <div className="px-6 pt-3">
-          <Input
-            type="search"
+          <FilterInput
             value={filter}
-            onChange={(event) => setFilter(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape" && filter !== "") {
-                event.preventDefault();
-                event.stopPropagation();
-                setFilter("");
-              } else if (event.key === "ArrowDown") {
-                const first = listRef.current?.querySelector<HTMLElement>("button");
-                if (first === null || first === undefined) return;
-                event.preventDefault();
-                first.focus();
-              }
+            onValueChange={setFilter}
+            label={t("trash.filter")}
+            onMoveDown={() => {
+              const first = listRef.current?.querySelector<HTMLElement>("button");
+              first?.focus();
+              return first !== null && first !== undefined;
             }}
-            aria-label={t("trash.filter")}
-            placeholder={t("trash.filter")}
-            className="h-8"
+            findShortcut
           />
         </div>
       )}

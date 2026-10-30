@@ -91,7 +91,10 @@ const SECTIONS: readonly Section[] = [
   },
   {
     title: "shortcuts.section.trash",
-    rows: [["↑ ↓", "shortcuts.trash.move"]],
+    rows: [
+      ["Ctrl+F", "shortcuts.trash.filter"],
+      ["↑ ↓", "shortcuts.trash.move"],
+    ],
   },
   {
     title: "shortcuts.section.calendar",

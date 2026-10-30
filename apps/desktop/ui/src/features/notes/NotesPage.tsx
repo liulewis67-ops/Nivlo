@@ -4,9 +4,8 @@ import { distanceToNow } from "@/lib/date-format";
 import { filterWords } from "@/lib/text-filter";
 import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Input } from "@/components";
+import { Button, FilterInput } from "@/components";
 import { useNavStore } from "@/features/shell";
 import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
@@ -16,6 +15,15 @@ import { reportError } from "@/lib/report-error";
 import { noteSearchText } from "./model/note-filter";
 import { noteSnippet } from "./model/note-snippet";
 import { NoteEditor } from "./NoteEditor";
+
+/**
+ * 焦点不在笔记编辑区里（Ctrl+F 跳到筛选框的条件）。
+ *
+ * @returns 不在编辑区时为 `true`。
+ */
+function notInEditor(): boolean {
+  return document.activeElement?.closest("article") == null;
+}
 
 /**
  * 主窗口的 Notes 视图（实施计划 3.2、产品文档 §17「快速记录、基本编辑」）：
@@ -43,7 +51,6 @@ export function NotesPage() {
   const openNote = useNavStore((state) => state.openNote);
   const [filter, setFilter] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
-  const filterRef = useRef<HTMLInputElement>(null);
   /** 归档 / 删除之后要聚焦的那一篇；列表更新后由下面的 Effect 聚焦。 */
   const refocusId = useRef<string | null>(null);
 
@@ -80,14 +87,6 @@ export function NotesPage() {
         event.preventDefault();
         if (!creating) createNote();
         return;
-      }
-      // Ctrl+F 跳到筛选框（列表上方）；在编辑区里时留给页内查找，方便在正文里找字。
-      const filterBox = filterRef.current;
-      const inEditor = document.activeElement?.closest("article") != null;
-      if (isCommandKey(event, "f") && filterBox !== null && !inEditor) {
-        event.preventDefault();
-        filterBox.focus();
-        filterBox.select();
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -147,28 +146,22 @@ export function NotesPage() {
   }, [notes.data]);
 
   /**
-   * 筛选框的键盘：↓ / Enter 打开并聚焦第一篇匹配的笔记（之后可以继续用 ↑ ↓），Esc 清空筛选。
+   * 筛选框里按 ↓ / Enter：打开并聚焦第一篇匹配的笔记（之后可以继续用 ↑ ↓）。
    *
-   * @param event 键盘事件。
+   * @returns 有匹配的笔记时为 `true`。
    */
-  function handleFilterKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-    if (event.key === "Escape" && filter !== "") {
-      event.preventDefault();
-      event.stopPropagation();
-      setFilter("");
-    } else if (event.key === "ArrowDown" || event.key === "Enter") {
-      // 按当前输入（不是延后的那份）找第一篇：刚打完字就按 Enter 时，列表可能还没跟上。
-      const current = filterWords(filter);
-      const first = list.find((note) => {
-        const text = searchTexts.get(note.id) ?? "";
-        return current.every((word) => text.includes(word));
-      });
-      if (first === undefined) return;
-      event.preventDefault();
-      openNote(first.id);
-      pendingFocus.current = first.id;
-      focusPending();
-    }
+  function openFirstMatch(): boolean {
+    // 按当前输入（不是延后的那份）找第一篇：刚打完字就按 Enter 时，列表可能还没跟上。
+    const current = filterWords(filter);
+    const first = list.find((note) => {
+      const text = searchTexts.get(note.id) ?? "";
+      return current.every((word) => text.includes(word));
+    });
+    if (first === undefined) return false;
+    openNote(first.id);
+    pendingFocus.current = first.id;
+    focusPending();
+    return true;
   }
 
   return (
@@ -188,16 +181,13 @@ export function NotesPage() {
         </header>
         {list.length > 0 && (
           <div className="px-3 pb-2">
-            <Input
-              ref={filterRef}
-              aria-keyshortcuts="Control+F"
-              type="search"
+            <FilterInput
               value={filter}
-              onChange={(event) => setFilter(event.target.value)}
-              onKeyDown={handleFilterKeyDown}
-              aria-label={t("notes.filter")}
-              placeholder={t("notes.filter")}
-              className="h-8"
+              onValueChange={setFilter}
+              label={t("notes.filter")}
+              onMoveDown={openFirstMatch}
+              // 在编辑区里时 Ctrl+F 留给页内查找，方便在正文里找字。
+              findShortcut={notInEditor}
             />
           </div>
         )}

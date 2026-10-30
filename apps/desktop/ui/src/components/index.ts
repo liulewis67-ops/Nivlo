@@ -6,6 +6,8 @@ export { Checkbox } from "./Checkbox";
 export type { CheckboxProps } from "./Checkbox";
 export { ContextMenu } from "./ContextMenu";
 export type { ContextMenuProps } from "./ContextMenu";
+export { FilterInput } from "./FilterInput";
+export type { FilterInputProps } from "./FilterInput";
 export { Input, Textarea } from "./Input";
 export type { InputProps, TextareaProps } from "./Input";
 export { Menu, MenuModalContext } from "./Menu";
