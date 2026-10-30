@@ -43,6 +43,8 @@ describe("首次运行引导", () => {
     expect(dialog).toHaveTextContent("Ctrl+Shift+Space");
     // 同时介绍全局搜索的快捷键。
     expect(dialog).toHaveTextContent("在任何应用里按：Ctrl+Alt+Space");
+    // 也告诉用户按 ? 能看到所有快捷键。
+    expect(dialog).toHaveTextContent("想看所有键盘快捷键，在主窗口里按?");
     expect(screen.queryByRole("button", { name: "跳过" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "开始使用" }));

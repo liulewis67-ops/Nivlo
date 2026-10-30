@@ -168,6 +168,12 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
             </kbd>
           </span>
         )}
+        <span className="mt-2 block">
+          {t("onboarding.step3.cheatSheet")}
+          <kbd className="mx-1 rounded border border-border bg-bg px-1.5 py-0.5 text-xs text-text">
+            {"?"}
+          </kbd>
+        </span>
       </>
     ) : (
       t(`onboarding.step${step}.body`)

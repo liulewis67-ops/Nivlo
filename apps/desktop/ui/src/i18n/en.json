@@ -776,7 +776,8 @@
       "body": "Write “tomorrow 3pm review the plan” and Nivlo recognizes the date and time, letting you confirm before adding. In any app, press the shortcut to jot something down right away:",
       "search": "To find something you saved, press this in any app:",
       "taken": "{{shortcut}} is currently taken by another program, so it won’t respond. You can pick another one at the bottom left of the main window.",
-      "searchTaken": "The global search shortcut {{shortcut}} is taken by another program. Pick another one at the bottom left of the main window to search what you saved from any app."
+      "searchTaken": "The global search shortcut {{shortcut}} is taken by another program. Pick another one at the bottom left of the main window to search what you saved from any app.",
+      "cheatSheet": "To see every keyboard shortcut, press this in the main window:"
     }
   },
   "workflows": {
