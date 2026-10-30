@@ -85,6 +85,27 @@ describe("ProjectsPage", () => {
     expect(screen.queryByText("别的项目的事")).not.toBeInTheDocument();
   });
 
+  it("侧栏里按 ↑ / ↓ 在项目之间移动并打开它", async () => {
+    const ipc = createMemoryIpc();
+    const first = ipc.seedProject("甲项目");
+    const second = ipc.seedProject("乙项目");
+    await seedTodo(ipc, "甲的事", { projectId: first.id });
+    await seedTodo(ipc, "乙的事", { projectId: second.id });
+    renderWithProviders(<ProjectsPage />, ipc);
+    const sidebar = await screen.findByRole("navigation");
+    const rows = () =>
+      within(sidebar)
+        .getAllByRole("button")
+        .filter((button) => button.hasAttribute("data-sidebar-item"));
+    await waitFor(() => expect(rows().length).toBeGreaterThanOrEqual(2));
+    const [top, next] = rows();
+    top?.focus();
+    fireEvent.click(top as HTMLElement);
+    fireEvent.keyDown(top as HTMLElement, { key: "ArrowDown" });
+    expect(next).toHaveFocus();
+    expect(next).toHaveAttribute("aria-current", "true");
+  });
+
   it("条目列表里按 ↑ / ↓ 在标题之间移动，回车打开详情", async () => {
     const ipc = createMemoryIpc();
     const project = ipc.seedProject("P");

@@ -66,6 +66,7 @@ function SidebarRow({
     >
       <button
         type="button"
+        data-sidebar-item=""
         aria-current={selected ? "true" : undefined}
         onClick={onSelect}
         className="flex min-w-0 flex-1 items-center justify-between gap-2 px-3 py-2 text-left"
@@ -298,7 +299,16 @@ export function ProjectsPage() {
   return (
     <section aria-label={t("projects.label")} className="flex h-full min-w-0">
       <div className="flex w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-surface">
-        <nav aria-label={t("projects.sidebar")} className="flex flex-col gap-4 px-2 py-3">
+        <nav
+          aria-label={t("projects.sidebar")}
+          className="flex flex-col gap-4 px-2 py-3"
+          // ↑ / ↓ 在项目与标签之间移动并打开它（项目列表的最后一个接着是第一个标签）。
+          onKeyDown={(event) => {
+            if (moveFocusWithArrows(event, "[data-sidebar-item]")) {
+              (document.activeElement as HTMLElement | null)?.click();
+            }
+          }}
+        >
           <div>
             <header className="flex items-center justify-between px-2 pb-1">
               <h1 className="text-xs font-semibold tracking-wide text-muted">

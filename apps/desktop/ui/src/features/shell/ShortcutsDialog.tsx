@@ -73,7 +73,10 @@ const SECTIONS: readonly Section[] = [
   },
   {
     title: "shortcuts.section.projects",
-    rows: [["↑ ↓", "shortcuts.projects.move"]],
+    rows: [
+      ["↑ ↓", "shortcuts.projects.sidebar"],
+      ["↑ ↓", "shortcuts.projects.move"],
+    ],
   },
   {
     title: "shortcuts.section.calendar",

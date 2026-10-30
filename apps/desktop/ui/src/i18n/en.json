@@ -1041,7 +1041,8 @@
       "days": "Move between days (↵ adds a to-do there)"
     },
     "projects": {
-      "move": "Move between items; Enter opens one"
+      "move": "Move between items; Enter opens one",
+      "sidebar": "In the sidebar: previous / next project or tag"
     }
   }
 }
