@@ -234,39 +234,91 @@ html[data-theme="dark"][data-accent="amber"] {
   --nv-focus-ring: #fcd34d;
 }
 
-/* 悬浮窗容器：整体不透明度由用户设置；通透质感 = 半透明底色 + 主色高光 + 内描边。 */
+/*
+ * 悬浮窗容器：整体不透明度由用户设置。
+ *
+ * 悬浮窗是和内容一样大的透明窗口，形状以外的像素必须完全透明：任何画到形状外面的东西
+ * （外阴影、放大动效）都会被窗口的矩形边界截断，露出一个"矩形框"。所以立体感全部用
+ * 形状内部的手段表达：顶部高光 + 底部暗边 + 发丝内描边 + 自上而下的轻微渐变。
+ */
 .nv-float {
+  --nv-float-tint: transparent;
+  --nv-float-edge: color-mix(in srgb, var(--nv-text) 12%, transparent);
+  --nv-float-highlight: color-mix(in srgb, white 70%, transparent);
+  --nv-float-lowlight: color-mix(in srgb, var(--nv-text) 6%, transparent);
   opacity: var(--nv-float-opacity);
   border-radius: var(--nv-float-radius);
-  background: var(--nv-surface);
-  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
+    linear-gradient(180deg, color-mix(in srgb, white 55%, var(--nv-surface)), var(--nv-surface) 60%);
   box-shadow:
-    var(--nv-shadow-lg),
-    inset 0 0 0 1px color-mix(in srgb, var(--nv-text) 8%, transparent);
+    inset 0 1px 0 var(--nv-float-highlight),
+    inset 0 -1px 0 var(--nv-float-lowlight),
+    inset 0 0 0 1px var(--nv-float-edge);
 }
 
+html[data-theme="dark"] .nv-float {
+  --nv-float-edge: color-mix(in srgb, white 14%, transparent);
+  --nv-float-highlight: color-mix(in srgb, white 12%, transparent);
+  --nv-float-lowlight: rgb(0 0 0 / 30%);
+  background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
+    linear-gradient(180deg, color-mix(in srgb, white 6%, var(--nv-surface)), var(--nv-surface) 60%);
+}
+
+/* 通透质感：半透明底色 + 主色高光。透明窗口里 backdrop-filter 模糊不到桌面，所以不用它。 */
 html[data-surface="glass"] .nv-float {
   background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
     linear-gradient(
       145deg,
-      color-mix(in srgb, var(--nv-primary) 10%, transparent),
+      color-mix(in srgb, var(--nv-primary) 12%, transparent),
       transparent 55%
     ),
-    color-mix(in srgb, var(--nv-surface) 86%, transparent);
-  backdrop-filter: blur(18px) saturate(1.4);
+    linear-gradient(180deg, color-mix(in srgb, white 30%, transparent), transparent 60%),
+    color-mix(in srgb, var(--nv-surface) 82%, transparent);
+}
+html[data-theme="dark"][data-surface="glass"] .nv-float {
+  background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--nv-primary) 16%, transparent),
+      transparent 55%
+    ),
+    color-mix(in srgb, var(--nv-surface) 82%, transparent);
 }
 
+/*
+ * 收起态徽标铺满整个窗口：悬停不能放大（放大会被窗口边界截成方角），
+ * 改为主色轻染 + 内描边加深；按下只缩小，不会越界。
+ */
 .nv-badge {
-  transition: transform var(--nv-duration-fast) var(--nv-ease-standard);
+  transition:
+    transform var(--nv-duration-fast) var(--nv-ease-standard),
+    box-shadow var(--nv-duration-fast) var(--nv-ease-standard);
 }
 .nv-badge:hover {
-  transform: scale(1.05);
+  --nv-float-edge: color-mix(in srgb, var(--nv-primary) 35%, transparent);
+  --nv-float-tint: color-mix(in srgb, var(--nv-primary) 8%, transparent);
 }
 .nv-badge:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+}
+/* 键盘焦点：默认 outline 有 offset，会画到窗口外被截断，徽标上改为内描边。 */
+.nv-badge:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--nv-focus-ring);
 }
 .nv-badge-dot {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--nv-primary) 25%, transparent);
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, white 45%, var(--nv-primary)),
+    var(--nv-primary) 70%
+  );
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--nv-primary) 18%, transparent),
+    0 1px 2px color-mix(in srgb, var(--nv-primary) 40%, transparent);
 }
 
 /* 自定义皮肤：像素风最近邻缩放 + 附加动效。 */
