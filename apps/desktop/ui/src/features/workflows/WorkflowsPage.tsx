@@ -60,8 +60,12 @@ function WorkflowRow({ workflow, selected, onSelect, onToggle, onPriority }: Wor
         aria-current={selected ? "true" : undefined}
         onClick={onSelect}
         // 名称与说明在窄栏里常被截断：指针移上去看全文。
-        title={description === "" ? name : `${name}
-${description}`}
+        title={
+          description === ""
+            ? name
+            : `${name}
+${description}`
+        }
         className="min-w-0 flex-1 text-left"
       >
         <span className="block truncate text-sm font-medium text-text">{name}</span>
