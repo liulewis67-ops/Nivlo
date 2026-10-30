@@ -126,3 +126,30 @@ export function indentMarkdownList(
     end: Math.max(first, end + shiftEnd),
   };
 }
+
+/** 一行任务项：缩进、记号与空白、任务框里的那个字符。 */
+const TASK_ITEM = /^(\s*(?:[-*+]|\d+\.)\s+\[)([ xX])(\].*)$/;
+
+/**
+ * Ctrl+Enter：勾选 / 取消勾选选区涉及的任务项（`- [ ]` ↔ `- [x]`）。
+ * 选区涉及的行里有未勾选的就全部勾上，否则全部取消；一个任务项都没有时返回 `null`。
+ *
+ * @param value 全文。
+ * @param start 选区起点。
+ * @param end 选区终点。
+ * @returns 新的全文与选区（长度不变，选区不动）；不处理时为 `null`。
+ */
+export function toggleMarkdownTask(value: string, start: number, end: number): WrapResult | null {
+  const first = value.lastIndexOf("\n", start - 1) + 1;
+  const lastBreak = value.indexOf("\n", end);
+  const last = lastBreak === -1 ? value.length : lastBreak;
+  const lines = value.slice(first, last).split("\n");
+  const tasks = lines.map((line) => TASK_ITEM.exec(line));
+  if (tasks.every((task) => task === null)) return null;
+  const check = tasks.some((task) => task !== null && task[2] === " ");
+  const changed = lines.map((line, index) => {
+    const task = tasks[index];
+    return task === null || task === undefined ? line : `${task[1]}${check ? "x" : " "}${task[3]}`;
+  });
+  return { value: value.slice(0, first) + changed.join("\n") + value.slice(last), start, end };
+}

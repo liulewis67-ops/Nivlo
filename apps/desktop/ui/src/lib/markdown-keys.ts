@@ -1,5 +1,10 @@
 import type { KeyboardEvent } from "react";
-import { continueMarkdownList, indentMarkdownList, toggleMarkdownWrap } from "./markdown-wrap";
+import {
+  continueMarkdownList,
+  indentMarkdownList,
+  toggleMarkdownTask,
+  toggleMarkdownWrap,
+} from "./markdown-wrap";
 import type { WrapResult } from "./markdown-wrap";
 import { isCommandKey } from "./typing";
 
@@ -8,7 +13,8 @@ import { isCommandKey } from "./typing";
  *
  * * Ctrl+B 加粗、Ctrl+I 斜体，再按一次取消；
  * * 在列表项末尾按 Enter 续上记号，空的一项按 Enter 结束列表（输入法组字时的 Enter 不处理）；
- * * 列表项上 Tab / Shift+Tab 缩进 / 取消缩进；不在列表里时照常移走焦点。
+ * * 列表项上 Tab / Shift+Tab 缩进 / 取消缩进；不在列表里时照常移走焦点；
+ * * 任务项上 Ctrl+Enter 勾选 / 取消勾选。
  *
  * 调用方只在内容格式是 Markdown 时调用。
  *
@@ -30,11 +36,13 @@ export function handleMarkdownKeyDown(
   const next =
     marker !== null
       ? toggleMarkdownWrap(value, start, end, marker)
-      : plainEnter
-        ? continueMarkdownList(value, start, end)
-        : tab
-          ? indentMarkdownList(value, start, end, event.shiftKey)
-          : null;
+      : isCommandKey(event, "enter")
+        ? toggleMarkdownTask(value, start, end)
+        : plainEnter
+          ? continueMarkdownList(value, start, end)
+          : tab
+            ? indentMarkdownList(value, start, end, event.shiftKey)
+            : null;
   if (next === null) return false;
   event.preventDefault();
   applyEdit(area, next, setContent);

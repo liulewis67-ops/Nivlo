@@ -158,6 +158,7 @@ Ctrl+K 与全局搜索框除了条目，还可以列出命令：「打开收集�
 37. ✅ Markdown 笔记的列表续行（`continueMarkdownList`）：行尾按 Enter 续上记号、有序列表加一、任务框换成 `[ ]`，空项按 Enter 结束列表；输入法组字时不处理。浏览器预览验证过续行、结束与 Ctrl+Z。
 38. ✅ 列表项上 Tab / Shift+Tab 缩进 / 取消缩进两个空格（`indentMarkdownList`，多行选区只动其中的列表项）；选区里没有列表项时不拦 Tab，键盘用户不会被困在正文里。
 39. ✅ Markdown 按键移到 `lib/markdown-keys.ts`（`handleMarkdownKeyDown`），详情面板的描述在 Markdown 格式时也用上。
+40. ✅ 任务项 Ctrl+Enter 勾选 / 取消（`toggleMarkdownTask`；多行里有没勾的就全勾上，否则全取消）。
 
 ## 4. 验收标准（用于后续每一项）
 

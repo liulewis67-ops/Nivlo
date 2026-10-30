@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { continueMarkdownList, indentMarkdownList, toggleMarkdownWrap } from "./markdown-wrap";
+import {
+  continueMarkdownList,
+  indentMarkdownList,
+  toggleMarkdownTask,
+  toggleMarkdownWrap,
+} from "./markdown-wrap";
 
 describe("toggleMarkdownWrap", () => {
   it("给选中的文字加上标记，选区仍框住原来的文字", () => {
@@ -82,5 +87,23 @@ describe("indentMarkdownList", () => {
 
   it("不在列表里时返回 null，Tab 照常移走焦点", () => {
     expect(indentMarkdownList("普通的一行", 2, 2, false)).toBeNull();
+  });
+});
+
+describe("toggleMarkdownTask", () => {
+  it("勾选光标所在的任务项，再按一次取消", () => {
+    expect(toggleMarkdownTask("- [ ] 买牛奶", 8, 8)?.value).toBe("- [x] 买牛奶");
+    expect(toggleMarkdownTask("- [x] 买牛奶", 8, 8)?.value).toBe("- [ ] 买牛奶");
+    expect(toggleMarkdownTask("1. [X] 第一", 3, 3)?.value).toBe("1. [ ] 第一");
+  });
+
+  it("多行里有没勾的就全部勾上；不是任务项的行不动", () => {
+    expect(toggleMarkdownTask("- [x] 一\n说明\n- [ ] 二", 0, 16)?.value).toBe(
+      "- [x] 一\n说明\n- [x] 二",
+    );
+  });
+
+  it("没有任务项时返回 null", () => {
+    expect(toggleMarkdownTask("- 普通列表", 2, 2)).toBeNull();
   });
 });

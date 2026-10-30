@@ -282,6 +282,18 @@ describe("NotesPage", () => {
     expect(body).toHaveValue("说明\n- 子项");
   });
 
+  it("任务项上 Ctrl+Enter 勾选，再按一次取消", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "清单", "- [ ] 买牛奶");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+    body.setSelectionRange(7, 7);
+    fireEvent.keyDown(body, { key: "Enter", ctrlKey: true });
+    expect(body).toHaveValue("- [x] 买牛奶");
+    fireEvent.keyDown(body, { key: "Enter", ctrlKey: true });
+    expect(body).toHaveValue("- [ ] 买牛奶");
+  });
+
   it("切换格式会保存 content_format", async () => {
     const ipc = createMemoryIpc();
     await ipc.createItem({
