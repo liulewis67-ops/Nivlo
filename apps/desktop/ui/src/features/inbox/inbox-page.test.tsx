@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { AppError } from "@/lib/errors";
+import { OpenItemContext } from "@/features/detail";
 import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
@@ -159,6 +160,22 @@ describe("InboxPage", () => {
     expect(ipc.calls).toContain("deleteItems");
     expect(bottom).toHaveFocus();
     expect(useToastStore.getState().toasts.at(-1)?.action?.undo).toBe(true);
+  });
+
+  it("勾选框上按 Enter 打开详情，不会勾选", async () => {
+    const ipc = createMemoryIpc();
+    await capture(ipc, "一");
+    const opened: string[] = [];
+    renderWithProviders(
+      <OpenItemContext.Provider value={(id) => opened.push(id)}>
+        <InboxPage />
+      </OpenItemContext.Provider>,
+      ipc,
+    );
+    const box = await screen.findByRole("checkbox", { name: "选择：一" });
+    fireEvent.keyDown(box, { key: "Enter" });
+    expect(opened).toEqual([ipc.items[0]?.id]);
+    expect(box).not.toBeChecked();
   });
 
   it("在勾选框上按 ↑ / ↓ 移到上一条 / 下一条的勾选框", async () => {

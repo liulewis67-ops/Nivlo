@@ -3,6 +3,7 @@ import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Menu } from "@/components";
 import { usePasteCapture } from "@/features/capture";
+import { useOpenItem } from "@/features/detail";
 import type { ItemTypeDto } from "@/lib/ipc";
 import { isCommandKey } from "@/lib/typing";
 import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
@@ -32,6 +33,7 @@ export function InboxPage() {
   const { organize } = useOrganize();
   const { remove } = useDeleteItems();
   const paste = usePasteCapture();
+  const openItem = useOpenItem();
 
   // Ctrl+V（macOS 为 Cmd+V）：焦点不在输入框里时，把剪贴板收进 Inbox。
   // 只响应用户按下的粘贴快捷键，没有任何监听剪贴板的行为。
@@ -139,6 +141,22 @@ export function InboxPage() {
     }
     // ↑ / ↓ 在各条的勾选框之间移动（不用 Tab 穿过每一行的按钮）：↓ ↓ 空格 T 就能整理。
     if (moveFocusWithArrows(event, "[data-inbox-select]")) return;
+    // 勾选框上按 Enter 打开详情（和「今天」一致；勾选用空格）。
+    const box = event.target;
+    if (
+      event.key === "Enter" &&
+      openItem !== null &&
+      box instanceof HTMLElement &&
+      box.dataset.itemId !== undefined &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      openItem(box.dataset.itemId);
+      return;
+    }
     const target = event.target;
     const typing =
       target instanceof HTMLElement &&

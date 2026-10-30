@@ -1034,7 +1034,8 @@
       "tomorrow": "Schedule for tomorrow",
       "clear": "Clear the selection",
       "all": "Select all",
-      "delete": "Delete (can be undone)"
+      "delete": "Delete (can be undone)",
+      "open": "Open details (Space selects)"
     },
     "notes": {
       "move": "Open the previous / next note",
