@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
+import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -62,9 +63,7 @@ export function TodayPage() {
      * @param event 键盘事件。
      */
     function handleKeyDown(event: globalThis.KeyboardEvent): void {
-      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
-      if (event.key.toLowerCase() !== "n") return;
-      if (document.querySelector('[aria-modal="true"]') !== null) return;
+      if (!isCommandKey(event, "n") || isDialogOpen()) return;
       event.preventDefault();
       inputRef.current?.focus();
     }

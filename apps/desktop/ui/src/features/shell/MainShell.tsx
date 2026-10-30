@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
-import { isTyping } from "@/lib/typing";
+import { isCommandKey, isDialogOpen, isTyping } from "@/lib/typing";
 import { CalendarPage } from "@/features/calendar";
 import { DevConsole } from "@/features/dev-console";
 import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
@@ -251,10 +251,9 @@ export function MainShell() {
         event.preventDefault();
         setView("settings");
       } else if (
-        command &&
-        event.key.toLowerCase() === "z" &&
+        isCommandKey(event, "z") &&
         !isTyping(event) &&
-        document.querySelector('[aria-modal="true"]') === null &&
+        !isDialogOpen() &&
         useToastStore.getState().undoLatest()
       ) {
         // Ctrl+Z 撤销刚才的整理 / 完成 / 删除（和点提示上的「撤销」一样）；在输入框里仍是撤销输入。

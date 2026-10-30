@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Menu } from "@/components";
 import { usePasteCapture } from "@/features/capture";
 import type { ItemTypeDto } from "@/lib/ipc";
+import { isCommandKey } from "@/lib/typing";
 import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { useInboxQuery } from "./api";
 import { InboxRow } from "./InboxRow";
@@ -146,13 +147,7 @@ export function InboxPage() {
         (target instanceof HTMLInputElement && target.type !== "checkbox"));
     if (typing) return;
     // Ctrl+A（macOS ⌘A）选中全部条目，而不是选中页面上的文字。
-    if (
-      (event.ctrlKey || event.metaKey) &&
-      !event.altKey &&
-      !event.shiftKey &&
-      event.key.toLowerCase() === "a" &&
-      order.length > 0
-    ) {
+    if (isCommandKey(event, "a") && order.length > 0) {
       event.preventDefault();
       setSelected(new Set(order));
       return;

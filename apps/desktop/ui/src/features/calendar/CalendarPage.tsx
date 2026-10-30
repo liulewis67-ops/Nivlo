@@ -12,7 +12,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
-import { isTyping } from "@/lib/typing";
+import { isDialogOpen, isTyping } from "@/lib/typing";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -327,7 +327,7 @@ export function CalendarPage() {
      */
     function handleKeyDown(event: globalThis.KeyboardEvent): void {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
-      if (isTyping(event) || document.querySelector('[aria-modal="true"]') !== null) return;
+      if (isTyping(event) || isDialogOpen()) return;
       if (effectiveAnchor === null) return;
       const key = event.key.toLowerCase();
       if (key === "j" || key === "k") {
