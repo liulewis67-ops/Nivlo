@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { AppProviders } from "@/app/providers/AppProviders";
 import { hydrateLanguage, initI18n } from "@/i18n";
 import { ipc, isRunningInTauri, setIpcClient } from "@/lib/ipc";
+import { blockBrowserReflexKeys } from "@/lib/browser-keys";
 import { initAppearance, useAppearanceStore } from "@/stores/appearance-store";
 import { initDisplay, useDisplayStore } from "@/stores/display-store";
 import { initSkin, useSkinStore } from "@/stores/skin-store";
@@ -77,6 +78,9 @@ async function bootstrap(): Promise<void> {
   let label: string;
   if (isRunningInTauri()) {
     label = getCurrentWindow().label;
+    // 发布版里 F5 / Ctrl+R 会把整个界面刷新掉（丢掉没保存的输入），Ctrl+P / Ctrl+S 弹出浏览器的打印与另存；
+    // 开发时保留 F5 刷新。
+    if (!import.meta.env.DEV) blockBrowserReflexKeys(window);
   } else if (import.meta.env.DEV) {
     // 浏览器预览只在开发服务器里有：生产构建不带内存 Mock 与演示数据（约 35 KB，安装包里用不到）。
     const { createMemoryIpc } = await import("@/test/ipc-mock");
