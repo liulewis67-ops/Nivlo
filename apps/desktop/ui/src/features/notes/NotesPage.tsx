@@ -18,7 +18,7 @@ import { NoteEditor } from "./NoteEditor";
  * 主窗口的 Notes 视图（实施计划 3.2、产品文档 §17「快速记录、基本编辑」）：
  * 左边是最近更新的笔记，右边是编辑区。
  *
- * * 「+ 新笔记」立刻创建一篇并打开，先写下来再说（先创建，再整理）；
+ * * 「+ 新笔记」立刻创建一篇并打开，标题已选中，直接打字即可（先创建，再整理）；
  * * 编辑区自动保存（同详情面板，保存失败不丢内容）；
  * * 归档带可撤销的提示；
  * * 没有选中时默认打开最近更新的那一篇，一篇都没有时引导用户新建；
@@ -35,6 +35,8 @@ export function NotesPage() {
     staleTime: Infinity,
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // 刚新建的那一篇：打开时聚焦标题；换到别的笔记后就不再算。
+  const [freshId, setFreshId] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -51,7 +53,10 @@ export function NotesPage() {
         reminderAt: null,
         projectId: null,
       }),
-    onSuccess: (note) => setSelectedId(note.id),
+    onSuccess: (note) => {
+      setSelectedId(note.id);
+      setFreshId(note.id);
+    },
     onError: reportError,
   });
 
@@ -130,7 +135,10 @@ export function NotesPage() {
                   type="button"
                   data-note-item=""
                   aria-current={note.id === activeId ? "true" : undefined}
-                  onClick={() => setSelectedId(note.id)}
+                  onClick={() => {
+                    setSelectedId(note.id);
+                    if (note.id !== freshId) setFreshId(null);
+                  }}
                   className={cx(
                     "flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left",
                     "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
@@ -173,7 +181,7 @@ export function NotesPage() {
             )}
           </div>
         ) : (
-          <NoteEditor key={activeId} id={activeId} />
+          <NoteEditor key={activeId} id={activeId} focusTitle={activeId === freshId} />
         )}
       </div>
     </section>

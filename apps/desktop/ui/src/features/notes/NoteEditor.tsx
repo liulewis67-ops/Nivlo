@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Textarea } from "@/components";
 import { useItemDraft } from "@/features/detail";
@@ -10,7 +11,32 @@ import { toAppError } from "@/lib/errors";
 export type NoteEditorProps = {
   /** 笔记（`note` 类型的 Item）的 ID；切换到另一篇时请用 `key` 重新挂载，未保存的修改会先被保存。 */
   id: string;
+  /** 刚新建的笔记：标题出现时聚焦并全选，直接打字就替换掉「未命名笔记」。 */
+  focusTitle?: boolean;
 };
+
+/**
+ * 标题框挂载时聚焦并全选（作为 ref 回调；函数固定不变，所以只在挂载时调用一次）。
+ *
+ * @param input 标题框；卸载时为 `null`。
+ */
+function focusAndSelect(input: HTMLInputElement | null): void {
+  input?.focus();
+  input?.select();
+}
+
+/**
+ * 在标题里按 Enter 跳到正文（输入法组字时的 Enter 不算）。
+ *
+ * @param event 键盘事件。
+ */
+function enterMovesToBody(event: KeyboardEvent<HTMLInputElement>): void {
+  if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+  const body = event.currentTarget.parentElement?.querySelector("textarea");
+  if (body === null || body === undefined) return;
+  event.preventDefault();
+  body.focus();
+}
 
 /**
  * 笔记编辑区：大标题输入、整页的正文输入、格式切换，自动保存（和详情面板共用同一套逻辑）。
@@ -19,10 +45,10 @@ export type NoteEditorProps = {
  * 保存只发送变化的字段，并且停止输入 700ms 后才发。
  * 保存失败时内容仍在文本框里，顶部显示原因与「重试」。
  *
- * @param props 笔记 ID。
+ * @param props 笔记 ID；刚新建时聚焦标题。
  * @returns 编辑区。
  */
-export function NoteEditor({ id }: NoteEditorProps) {
+export function NoteEditor({ id, focusTitle = false }: NoteEditorProps) {
   const { t } = useTranslation();
   const { query, draft, status, problem, edit, save } = useItemDraft(id);
   const { organize } = useOrganize();
@@ -97,10 +123,12 @@ export function NoteEditor({ id }: NoteEditorProps) {
       )}
       <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col gap-3 px-8 py-6">
         <input
+          ref={focusTitle ? focusAndSelect : undefined}
           aria-label={t("detail.field.title")}
           value={draft.title}
           placeholder={t("notes.untitled")}
           onChange={(event) => edit({ title: event.target.value })}
+          onKeyDown={enterMovesToBody}
           className="w-full bg-transparent text-2xl font-semibold text-text placeholder:text-muted focus-visible:outline-none"
         />
         <Textarea

@@ -71,6 +71,12 @@ describe("NotesPage", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "+ 新笔记" })[0] as HTMLElement);
     const title = await screen.findByLabelText("标题");
     expect(title).toHaveValue("未命名笔记");
+    // 标题已聚焦并全选，直接打字就替换掉占位标题；Enter 跳到正文。
+    expect(title).toHaveFocus();
+    const input = title as HTMLInputElement;
+    expect([input.selectionStart, input.selectionEnd]).toEqual([0, "未命名笔记".length]);
+    fireEvent.keyDown(title, { key: "Enter" });
+    expect(screen.getByLabelText("描述")).toHaveFocus();
     expect(ipc.items).toHaveLength(1);
     expect(ipc.items[0]).toMatchObject({ itemType: "note", contentFormat: "markdown" });
   });
@@ -94,6 +100,8 @@ describe("NotesPage", () => {
     fireEvent.click(within(list).getByRole("button", { name: /旧的笔记/ }));
     await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("旧的笔记"));
     expect(screen.getByLabelText("描述")).toHaveValue("第一版");
+    // 打开已有的笔记不抢焦点。
+    expect(screen.getByLabelText("标题")).not.toHaveFocus();
   });
 
   it("在列表里按 ↑ / ↓ 换到相邻的笔记，编辑区跟着切换，到头停住", async () => {
