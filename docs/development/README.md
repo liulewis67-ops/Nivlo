@@ -43,6 +43,7 @@ pnpm tauri dev
 | `pnpm tauri dev` | 启动桌面应用（Vite + Rust） |
 | `pnpm dev:ui` | 仅启动 Vite（纯 UI 调试） |
 | `pnpm lint` / `pnpm typecheck` / `pnpm test` / `pnpm format:check` | 前端质量门禁 |
+| `pnpm check:ui`（没有 pnpm 时在 `apps/desktop/ui` 里 `npm run check`） | 依次跑完上面四项（格式 → 类型 → Lint → 测试），提交前一条命令搞定 |
 | `cargo fmt --all --check` | Rust 格式检查 |
 | `cargo clippy --workspace --all-targets -- -D warnings` | Rust Lint |
 | `cargo test --workspace` | Rust 测试 |

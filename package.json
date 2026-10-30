@@ -16,6 +16,7 @@
     "format:check": "pnpm --filter @nivlo/desktop-ui format:check",
     "typecheck": "pnpm --filter @nivlo/desktop-ui typecheck",
     "test": "pnpm --filter @nivlo/desktop-ui test",
+    "check:ui": "pnpm --filter @nivlo/desktop-ui check",
     "gen:bindings": "cargo run -p nivlo-desktop --example gen_bindings",
     "e2e": "node tests/e2e/e2e.mjs",
     "visual": "node scripts/visual/visual.mjs",
