@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
 import { isCommandKey, isDialogOpen } from "@/lib/typing";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input } from "@/components";
@@ -12,7 +12,7 @@ import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
-import { noteMatches } from "./model/note-filter";
+import { filterWords, noteSearchText } from "./model/note-filter";
 import { noteSnippet } from "./model/note-snippet";
 import { NoteEditor } from "./NoteEditor";
 
@@ -96,7 +96,19 @@ export function NotesPage() {
   const list = notes.data ?? [];
   // 选中的被归档 / 删除后回落到最近更新的那一篇（渲染时推导，不在 Effect 里同步状态）。
   const activeId = list.find((note) => note.id === selectedId)?.id ?? list[0]?.id ?? null;
-  const visible = list.filter((note) => noteMatches(note, filter));
+  // 每篇的小写全文只在列表变化时算一次：上千篇长文时，逐字输入也不用每次把全部内容重新转小写。
+  const searchTexts = useMemo(
+    () => new Map((notes.data ?? []).map((note) => [note.id, noteSearchText(note)])),
+    [notes.data],
+  );
+  const words = filterWords(filter);
+  const visible =
+    words.length === 0
+      ? list
+      : list.filter((note) => {
+          const text = searchTexts.get(note.id) ?? "";
+          return words.every((word) => text.includes(word));
+        });
 
   // 归档 / 删除后这篇离开列表、编辑区换成另一篇，焦点会掉到页面上：改为落在列表里接下来的那一篇
   // （同时打开它），键盘用户可以接着 ↑ ↓。焦点已经在别处时不抢。只操作 DOM，不改状态。
