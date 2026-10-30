@@ -1,7 +1,8 @@
-import type { KeyboardEvent } from "react";
+import type { ClipboardEvent, KeyboardEvent } from "react";
 import {
   continueMarkdownList,
   indentMarkdownList,
+  linkOnPaste,
   toggleMarkdownTask,
   toggleMarkdownWrap,
 } from "./markdown-wrap";
@@ -43,6 +44,30 @@ export function handleMarkdownKeyDown(
           : tab
             ? indentMarkdownList(value, start, end, event.shiftKey)
             : null;
+  if (next === null) return false;
+  event.preventDefault();
+  applyEdit(area, next, setContent);
+  return true;
+}
+
+/**
+ * Markdown 正文里粘贴：选中文字后粘贴一个网址，变成 `[文字](网址)`；其余情况按普通粘贴。
+ *
+ * @param event 粘贴事件。
+ * @param setContent 浏览器不支持「插入文字」时直接改内容的回调。
+ * @returns 处理了这次粘贴时为 `true`。
+ */
+export function handleMarkdownPaste(
+  event: ClipboardEvent<HTMLTextAreaElement>,
+  setContent: (content: string) => void,
+): boolean {
+  const area = event.currentTarget;
+  const next = linkOnPaste(
+    area.value,
+    area.selectionStart,
+    area.selectionEnd,
+    event.clipboardData.getData("text/plain"),
+  );
   if (next === null) return false;
   event.preventDefault();
   applyEdit(area, next, setContent);

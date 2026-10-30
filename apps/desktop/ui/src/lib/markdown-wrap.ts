@@ -153,3 +153,30 @@ export function toggleMarkdownTask(value: string, start: number, end: number): W
   });
   return { value: value.slice(0, first) + changed.join("\n") + value.slice(last), start, end };
 }
+
+/**
+ * 选中文字后粘贴一个网址：变成 Markdown 链接 `[文字](网址)`，而不是用网址替换掉文字。
+ * 没有选中文字、粘贴的不是单个 http(s) 网址，或选中的本身就是网址时返回 `null`，按普通粘贴处理。
+ *
+ * @param value 全文。
+ * @param start 选区起点。
+ * @param end 选区终点。
+ * @param pasted 剪贴板里的文字。
+ * @returns 新的全文与光标位置（在链接之后）；不处理时为 `null`。
+ */
+export function linkOnPaste(
+  value: string,
+  start: number,
+  end: number,
+  pasted: string,
+): WrapResult | null {
+  const url = pasted.trim();
+  const selected = value.slice(start, end);
+  if (start === end || !/^https?:\/\/\S+$/i.test(url) || /^https?:\/\//i.test(selected)) {
+    return null;
+  }
+  if (selected.includes("\n")) return null;
+  const link = `[${selected}](${url})`;
+  const caret = start + link.length;
+  return { value: value.slice(0, start) + link + value.slice(end), start: caret, end: caret };
+}

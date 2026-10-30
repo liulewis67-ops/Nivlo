@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   continueMarkdownList,
   indentMarkdownList,
+  linkOnPaste,
   toggleMarkdownTask,
   toggleMarkdownWrap,
 } from "./markdown-wrap";
@@ -105,5 +106,23 @@ describe("toggleMarkdownTask", () => {
 
   it("没有任务项时返回 null", () => {
     expect(toggleMarkdownTask("- 普通列表", 2, 2)).toBeNull();
+  });
+});
+
+describe("linkOnPaste", () => {
+  it("选中文字粘贴网址变成链接，光标在链接之后", () => {
+    expect(linkOnPaste("看 文档 吧", 2, 4, " https://example.com/a ")).toEqual({
+      value: "看 [文档](https://example.com/a) 吧",
+      start: 29,
+      end: 29,
+    });
+  });
+
+  it("没选中、不是网址、选中的本身是网址或跨行时按普通粘贴", () => {
+    expect(linkOnPaste("文档", 1, 1, "https://example.com")).toBeNull();
+    expect(linkOnPaste("文档", 0, 2, "随便一段话")).toBeNull();
+    expect(linkOnPaste("文档", 0, 2, "https://a.com https://b.com")).toBeNull();
+    expect(linkOnPaste("https://old.com", 0, 15, "https://new.com")).toBeNull();
+    expect(linkOnPaste("一\n二", 0, 3, "https://example.com")).toBeNull();
   });
 });

@@ -294,6 +294,18 @@ describe("NotesPage", () => {
     expect(body).toHaveValue("- [ ] 买牛奶");
   });
 
+  it("选中文字后粘贴网址变成 Markdown 链接", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "笔记", "看 文档 吧");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+    body.setSelectionRange(2, 4);
+    fireEvent.paste(body, {
+      clipboardData: { getData: () => "https://example.com/doc" },
+    });
+    expect(body).toHaveValue("看 [文档](https://example.com/doc) 吧");
+  });
+
   it("切换格式会保存 content_format", async () => {
     const ipc = createMemoryIpc();
     await ipc.createItem({

@@ -6,7 +6,7 @@ import { useOrganize } from "@/features/inbox";
 import { useDeleteItems } from "@/features/trash";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
-import { handleMarkdownKeyDown } from "@/lib/markdown-keys";
+import { handleMarkdownKeyDown, handleMarkdownPaste } from "@/lib/markdown-keys";
 
 /** [`NoteEditor`] 的 Props。 */
 export type NoteEditorProps = {
@@ -149,6 +149,11 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
           onKeyDown={(event) => {
             if (draft.contentFormat === "markdown") {
               handleMarkdownKeyDown(event, (content) => edit({ content }));
+            }
+          }}
+          onPaste={(event) => {
+            if (draft.contentFormat === "markdown") {
+              handleMarkdownPaste(event, (content) => edit({ content }));
             }
           }}
           className="min-h-0 w-full flex-1 resize-none border-transparent bg-transparent px-0 text-[15px] leading-relaxed focus-visible:border-transparent"

@@ -5,7 +5,7 @@ import { Button, Input, Textarea } from "@/components";
 import { cx } from "@/lib/cx";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
-import { handleMarkdownKeyDown } from "@/lib/markdown-keys";
+import { handleMarkdownKeyDown, handleMarkdownPaste } from "@/lib/markdown-keys";
 import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { useToastStore } from "@/stores/toast-store";
@@ -322,6 +322,11 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
               onKeyDown={(event) => {
                 if (draft.contentFormat === "markdown") {
                   handleMarkdownKeyDown(event, (content) => edit({ content }));
+                }
+              }}
+              onPaste={(event) => {
+                if (draft.contentFormat === "markdown") {
+                  handleMarkdownPaste(event, (content) => edit({ content }));
                 }
               }}
               className="resize-y font-mono text-[13px] leading-relaxed"
