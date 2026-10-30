@@ -251,6 +251,20 @@ describe("NotesPage", () => {
     expect(body).toHaveValue("写 *周报* 了");
   });
 
+  it("Markdown 笔记的列表里按 Enter 续上记号，空的一项按 Enter 结束列表", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "清单", "- 买牛奶");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+
+    body.setSelectionRange(5, 5);
+    fireEvent.keyDown(body, { key: "Enter" });
+    expect(body).toHaveValue("- 买牛奶\n- ");
+    body.setSelectionRange(8, 8);
+    fireEvent.keyDown(body, { key: "Enter" });
+    expect(body).toHaveValue("- 买牛奶\n");
+  });
+
   it("切换格式会保存 content_format", async () => {
     const ipc = createMemoryIpc();
     await ipc.createItem({

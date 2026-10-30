@@ -6,7 +6,8 @@ import { useOrganize } from "@/features/inbox";
 import { useDeleteItems } from "@/features/trash";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
-import { toggleMarkdownWrap } from "@/lib/markdown-wrap";
+import { continueMarkdownList, toggleMarkdownWrap } from "@/lib/markdown-wrap";
+import type { WrapResult } from "@/lib/markdown-wrap";
 import { isCommandKey } from "@/lib/typing";
 
 /** [`NoteEditor`] 的 Props。 */
@@ -75,28 +76,59 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
   const characters = [...draft.content].length;
 
   /**
-   * Markdown 笔记的正文里 Ctrl+B 加粗、Ctrl+I 斜体（再按一次取消）。
-   * 尽量用浏览器的「插入文字」改正文，这样 Ctrl+Z 还能撤销；不支持时直接改草稿。
+   * Markdown 笔记的正文：Ctrl+B 加粗、Ctrl+I 斜体（再按一次取消）；在列表项末尾按 Enter 续上记号，
+   * 空的一项按 Enter 结束列表。输入法组字时的 Enter 不处理。
    *
    * @param event 键盘事件。
    */
   function handleBodyKeyDown(event: KeyboardEvent<HTMLTextAreaElement>): void {
     if (draft?.contentFormat !== "markdown") return;
-    const marker = isCommandKey(event, "b") ? "**" : isCommandKey(event, "i") ? "*" : null;
-    if (marker === null) return;
-    event.preventDefault();
     const area = event.currentTarget;
     const { selectionStart: start, selectionEnd: end, value } = area;
-    const next = toggleMarkdownWrap(value, start, end, marker);
-    // 被替换的那一段：加标记时是选区本身，去标记时连同两边的标记。
-    const unwrapping = next.value.length < value.length;
-    const from = unwrapping ? start - marker.length : start;
-    const to = unwrapping ? end + marker.length : end;
-    const inserted = next.value.slice(from, to + next.value.length - value.length);
-    area.setSelectionRange(from, to);
+    const marker = isCommandKey(event, "b") ? "**" : isCommandKey(event, "i") ? "*" : null;
+    const plainEnter =
+      event.key === "Enter" &&
+      !event.nativeEvent.isComposing &&
+      !event.shiftKey &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey;
+    const next =
+      marker !== null
+        ? toggleMarkdownWrap(value, start, end, marker)
+        : plainEnter
+          ? continueMarkdownList(value, start, end)
+          : null;
+    if (next === null) return;
+    event.preventDefault();
+    applyBodyEdit(area, next);
+  }
+
+  /**
+   * 把正文改成 `next`：尽量用浏览器的「插入文字」只替换变化的那一段，这样 Ctrl+Z 还能撤销；
+   * 不支持时直接改草稿。
+   *
+   * @param area 正文文本框。
+   * @param next 新的全文与选区。
+   */
+  function applyBodyEdit(area: HTMLTextAreaElement, next: WrapResult): void {
+    const before = area.value;
+    let from = 0;
+    while (from < before.length && from < next.value.length && before[from] === next.value[from]) {
+      from += 1;
+    }
+    let tail = 0;
+    while (
+      tail < before.length - from &&
+      tail < next.value.length - from &&
+      before[before.length - 1 - tail] === next.value[next.value.length - 1 - tail]
+    ) {
+      tail += 1;
+    }
+    area.setSelectionRange(from, before.length - tail);
     const viaBrowser =
       typeof document.execCommand === "function" &&
-      document.execCommand("insertText", false, inserted);
+      document.execCommand("insertText", false, next.value.slice(from, next.value.length - tail));
     if (viaBrowser) {
       area.setSelectionRange(next.start, next.end);
       return;
