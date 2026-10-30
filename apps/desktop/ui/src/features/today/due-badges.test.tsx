@@ -195,4 +195,32 @@ describe("Today 里的键盘移动", () => {
     fireEvent.click(box("没有截止"));
     expect(box("下周截止")).toHaveFocus();
   });
+
+  it("取消勾选已完成的一条后，焦点落在它回到待办列表后的完成框", () => {
+    const done: TodayItemDto = { ...todo("z", "做完的", null), status: "done" };
+    /** 取消勾选即回到待办列表，和真实的乐观更新一样。 */
+    function Host() {
+      const [view, setView] = useState<TodayViewDto>({ ...VIEW, completed: [done] });
+      return (
+        <TodayList
+          view={view}
+          onComplete={() => undefined}
+          onMove={() => undefined}
+          onPostpone={() => undefined}
+          onReopen={(item) =>
+            setView((current) => ({
+              ...current,
+              todos: [...current.todos, { ...item, status: "open" }],
+              completed: current.completed.filter((other) => other.id !== item.id),
+            }))
+          }
+        />
+      );
+    }
+    renderWithProviders(<Host />);
+    const reopen = screen.getByRole("checkbox", { name: "重新打开「做完的」" });
+    reopen.focus();
+    fireEvent.click(reopen);
+    expect(screen.getByRole("checkbox", { name: "完成「做完的」" })).toHaveFocus();
+  });
 });

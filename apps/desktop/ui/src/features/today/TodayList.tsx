@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
@@ -48,11 +49,32 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
   const { t } = useTranslation();
   const hideCompleted = useDisplayStore((state) => state.hideCompleted);
   const completed = hideCompleted ? [] : view.completed;
+  const rootRef = useRef<HTMLDivElement>(null);
+  /** 刚取消勾选、等它回到待办列表后要聚焦的那一条。 */
+  const reopenedId = useRef<string | null>(null);
+
+  // 取消勾选后那一条从「已完成」回到待办列表，原来的勾选框随之消失、焦点掉到页面上：
+  // 改为聚焦它回到待办列表后的完成框（再按一次空格又能完成）。焦点已在别处时不抢。
+  useEffect(() => {
+    const id = reopenedId.current;
+    if (id === null) return;
+    const row = [...(rootRef.current?.querySelectorAll<HTMLElement>("[data-todo-id]") ?? [])].find(
+      (element) => element.dataset.todoId === id,
+    );
+    const box = row?.querySelector<HTMLElement>("[role=checkbox]");
+    if (box === null || box === undefined) return;
+    reopenedId.current = null;
+    if (document.activeElement === null || document.activeElement === document.body) box.focus();
+  }, [view]);
+
   if (view.todos.length === 0 && view.tips.length === 0 && completed.length === 0) {
     return null;
   }
   return (
-    <div className="nv-scroll-hover flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+    <div
+      ref={rootRef}
+      className="nv-scroll-hover flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3"
+    >
       {view.todos.length > 0 && (
         <SortableTodoList
           todos={view.todos}
@@ -83,7 +105,12 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
               <TodoCheck
                 checked
                 label={t("today.reopen", { title: item.title })}
-                onToggle={() => onReopen(item)}
+                onToggle={() => {
+                  if (rootRef.current?.contains(document.activeElement) === true) {
+                    reopenedId.current = item.id;
+                  }
+                  onReopen(item);
+                }}
               />
               <ItemTitle id={item.id} title={item.title} />
             </li>
