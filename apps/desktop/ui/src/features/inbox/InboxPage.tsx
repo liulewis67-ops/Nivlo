@@ -110,8 +110,22 @@ export function InboxPage() {
   }
 
   /**
-   * 键盘整理：↑ / ↓ 在条目之间移动，Ctrl+A 全选，选中条目后按 T 安排到今天、M 安排到明天
-   * （和点按钮一样，带撤销）；Escape 清除选择。
+   * 删除一批条目（移进回收站，带撤销）；焦点同样落到接下来的那一行。
+   *
+   * @param ids 要删除的 Item ID。
+   * @param title 单条时的标题，用于提示文案。
+   */
+  function deleteItems(ids: string[], title?: string): void {
+    if (sectionRef.current?.contains(document.activeElement) === true) {
+      refocusId.current = nextRemaining(order, ids);
+    }
+    setSelected(new Set());
+    void remove(ids, title);
+  }
+
+  /**
+   * 键盘整理：↑ / ↓ 在条目之间移动，Ctrl+A 全选，选中条目后按 T 安排到今天、M 安排到明天、
+   * Delete 删除（和点按钮一样，带撤销）；Escape 清除选择。
    * 在文字输入框里不响应（勾选框除外：选中条目就是在它上面按空格）。
    *
    * @param event 键盘事件。
@@ -144,6 +158,11 @@ export function InboxPage() {
       return;
     }
     if (selected.size === 0 || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key === "Delete") {
+      event.preventDefault();
+      deleteItems(selectedIds);
+      return;
+    }
     const key = event.key.toLowerCase();
     const kind: OrganizeKind | null = key === "t" ? "today" : key === "m" ? "tomorrow" : null;
     if (kind === null) return;
@@ -239,10 +258,7 @@ export function InboxPage() {
                   size="sm"
                   variant="ghost"
                   className="text-danger"
-                  onClick={() => {
-                    setSelected(new Set());
-                    void remove(selectedIds);
-                  }}
+                  onClick={() => deleteItems(selectedIds)}
                 >
                   {t("trash.delete")}
                 </Button>
@@ -261,10 +277,7 @@ export function InboxPage() {
                 selected={selected.has(entry.item.id)}
                 onToggle={(range) => toggle(entry.item.id, range)}
                 onOrganize={(kind) => run([entry.item.id], kind)}
-                onDelete={() => {
-                  setSelected(new Set());
-                  void remove([entry.item.id], entry.item.title);
-                }}
+                onDelete={() => deleteItems([entry.item.id], entry.item.title)}
               />
             ))}
           </ul>

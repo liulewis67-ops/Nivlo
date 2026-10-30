@@ -56,6 +56,7 @@ const SECTIONS: readonly Section[] = [
       ["Ctrl+A", "shortcuts.inbox.all"],
       ["T", "shortcuts.inbox.today"],
       ["M", "shortcuts.inbox.tomorrow"],
+      ["Delete", "shortcuts.inbox.delete"],
       ["Esc", "shortcuts.inbox.clear"],
     ],
   },

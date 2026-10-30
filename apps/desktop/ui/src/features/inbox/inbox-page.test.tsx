@@ -129,6 +129,27 @@ describe("InboxPage", () => {
     expect(ipc.organizations[0]?.ids).toHaveLength(3);
   });
 
+  it("勾选后按 Delete 移进回收站（带撤销），焦点落在下一条", async () => {
+    const ipc = createMemoryIpc();
+    for (const text of ["一", "二"]) await capture(ipc, text);
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("一");
+    const boxes = () =>
+      screen.getAllByRole("checkbox").filter((box) => box.hasAttribute("data-inbox-select"));
+    const [top, bottom] = boxes();
+    // 没勾选时 Delete 不起作用。
+    fireEvent.keyDown(top as HTMLElement, { key: "Delete" });
+    expect(ipc.calls).not.toContain("deleteItems");
+
+    top?.focus();
+    fireEvent.click(top as HTMLElement);
+    fireEvent.keyDown(top as HTMLElement, { key: "Delete" });
+    await waitFor(() => expect(boxes()).toHaveLength(1));
+    expect(ipc.calls).toContain("deleteItems");
+    expect(bottom).toHaveFocus();
+    expect(useToastStore.getState().toasts.at(-1)?.action?.undo).toBe(true);
+  });
+
   it("在勾选框上按 ↑ / ↓ 移到上一条 / 下一条的勾选框", async () => {
     const ipc = createMemoryIpc();
     for (const text of ["一", "二", "三"]) await capture(ipc, text);
