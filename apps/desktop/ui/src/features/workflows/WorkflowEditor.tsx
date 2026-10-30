@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, ConfirmButton, Input, Switch, Textarea } from "@/components";
 import { useToastStore } from "@/stores/toast-store";
@@ -42,6 +42,8 @@ export type WorkflowEditorProps = {
   onDeleted: () => void;
   /** 关闭编辑区。 */
   onClose: () => void;
+  /** 有没有没保存的修改；变化时调用（页面借此在换走之前提醒）。 */
+  onDirtyChange?: ((dirty: boolean) => void) | undefined;
 };
 
 /** 表单一行的标签 + 控件布局。 */
@@ -73,6 +75,7 @@ export function WorkflowEditor({
   onConfirmed,
   onDeleted,
   onClose,
+  onDirtyChange,
 }: WorkflowEditorProps) {
   const { t } = useTranslation();
   const [text, setText] = useState(workflow.definitionJson);
@@ -83,6 +86,9 @@ export function WorkflowEditor({
   const definition = useMemo(() => parseDefinition(text), [text]);
   const form = useMemo(() => (definition === null ? null : toForm(definition)), [definition]);
   const dirty = text !== workflow.definitionJson;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
   const formAvailable = form !== null;
   const showForm = mode === "form" && formAvailable;
 

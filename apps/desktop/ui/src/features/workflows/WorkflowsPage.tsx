@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
@@ -119,6 +119,29 @@ export function WorkflowsPage() {
   const [importPreview, setImportPreview] = useState<WorkflowImportPreviewDto | null>(null);
   /** 每次保存 / 复制后递增，让编辑区用最新的定义重新开始。 */
   const [generation, setGeneration] = useState(0);
+  /** 编辑区有没有没保存的修改（编辑区上报）。 */
+  const unsaved = useRef(false);
+  /** 有没保存的修改时被拦下的那个操作：用户选「放弃修改」后才执行。 */
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null);
+
+  const trackDirty = useCallback((dirty: boolean) => {
+    unsaved.current = dirty;
+    // 修改都撤回了（或已保存）时，之前的提醒也不再需要。
+    if (!dirty) setPendingLeave(null);
+  }, []);
+
+  /**
+   * 换走编辑区之前的检查：有没保存的修改时先提醒，不直接丢掉。
+   *
+   * @param action 要执行的操作（切换规则、新建、导入、切到「最近执行」）。
+   */
+  function leaveEditor(action: () => void): void {
+    if (unsaved.current) {
+      setPendingLeave(() => action);
+      return;
+    }
+    action();
+  }
   const workflows = useQuery({
     queryKey: queryKeys.workflows(),
     queryFn: () => ipc.listWorkflows(),
@@ -224,7 +247,7 @@ export function WorkflowsPage() {
                 type="button"
                 role="tab"
                 aria-selected={tab === item}
-                onClick={() => setTab(item)}
+                onClick={() => (item === tab ? undefined : leaveEditor(() => setTab(item)))}
                 className={cx(
                   "rounded-md px-3 py-1 text-sm",
                   "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
@@ -239,14 +262,40 @@ export function WorkflowsPage() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={startImport}>
+          <Button size="sm" variant="secondary" onClick={() => leaveEditor(startImport)}>
             {t("workflows.import.button")}
           </Button>
-          <Button size="sm" onClick={create}>
+          <Button size="sm" onClick={() => leaveEditor(create)}>
             {t("workflows.new")}
           </Button>
         </div>
       </header>
+      {pendingLeave !== null && (
+        <div
+          role="alert"
+          className="mx-6 mt-3 flex items-center justify-between gap-3 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-text"
+        >
+          <p>{t("workflows.leave.message")}</p>
+          <div className="flex shrink-0 gap-2">
+            <Button size="sm" onClick={() => setPendingLeave(null)}>
+              {t("workflows.leave.keep")}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-danger"
+              onClick={() => {
+                const action = pendingLeave;
+                unsaved.current = false;
+                setPendingLeave(null);
+                action();
+              }}
+            >
+              {t("workflows.leave.discard")}
+            </Button>
+          </div>
+        </div>
+      )}
       {tab === "runs" ? (
         <RunInspector />
       ) : (
@@ -274,10 +323,12 @@ export function WorkflowsPage() {
                         key={workflow.id}
                         workflow={workflow}
                         selected={selected?.id === workflow.id}
-                        onSelect={() => {
-                          setDraft(null);
-                          setSelectedId(workflow.id);
-                        }}
+                        onSelect={() =>
+                          leaveEditor(() => {
+                            setDraft(null);
+                            setSelectedId(workflow.id);
+                          })
+                        }
                         onToggle={(enabled) => toggle(workflow, enabled)}
                         onPriority={(delta) => changePriority(workflow, delta)}
                       />
@@ -307,6 +358,7 @@ export function WorkflowsPage() {
                 key={`${selected.id}:${generation}`}
                 workflow={selected}
                 isNew={draft !== null}
+                onDirtyChange={trackDirty}
                 onSaved={(saved) => opened(saved, t("workflows.saved", { name: saved.name }))}
                 onConfirmed={() => {
                   setGeneration((n) => n + 1);

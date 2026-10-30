@@ -954,6 +954,11 @@
     },
     "action": {
       "openIntegrationSettings": "打开设置，连接 {{name}}"
+    },
+    "leave": {
+      "message": "这条规则还有没保存的修改。",
+      "keep": "继续编辑",
+      "discard": "放弃修改"
     }
   },
   "dateFormat": {

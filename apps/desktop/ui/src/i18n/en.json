@@ -959,6 +959,11 @@
     },
     "action": {
       "openIntegrationSettings": "Open settings to connect {{name}}"
+    },
+    "leave": {
+      "message": "This rule has unsaved changes.",
+      "keep": "Keep editing",
+      "discard": "Discard changes"
     }
   },
   "dateFormat": {

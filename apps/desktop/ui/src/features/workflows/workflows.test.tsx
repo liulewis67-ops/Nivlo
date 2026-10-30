@@ -87,6 +87,30 @@ describe("Workflow 管理页", () => {
     expect(screen.queryByRole("button", { name: "保存" })).not.toBeInTheDocument();
   });
 
+  it("有没保存的修改时换到别的规则会先提醒：继续编辑留在原处，放弃修改才换走", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: /^网页链接/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "复制" }));
+    await screen.findByRole("list", { name: "我的" });
+    const original = () =>
+      within(screen.getByRole("list", { name: "内置" })).getByRole("button", { name: /^网页链接/ });
+    await userEvent.selectOptions(await screen.findByLabelText("创建"), "todo");
+
+    await userEvent.click(original());
+    expect(await screen.findByRole("alert")).toHaveTextContent("这条规则还有没保存的修改");
+    // 还在编辑副本：修改没丢。
+    expect(screen.getByLabelText("创建")).toHaveValue("todo");
+
+    await userEvent.click(screen.getByRole("button", { name: "继续编辑" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("创建")).toHaveValue("todo");
+
+    await userEvent.click(original());
+    await userEvent.click(await screen.findByRole("button", { name: "放弃修改" }));
+    expect(await screen.findByText(/内置规则不能直接修改/)).toBeInTheDocument();
+  });
+
   it("规则列表里按 ↑ / ↓ 在规则之间移动，不自动打开", async () => {
     renderWithProviders(<WorkflowsPage />, createMemoryIpc());
     const builtin = await screen.findByRole("list", { name: "内置" });
