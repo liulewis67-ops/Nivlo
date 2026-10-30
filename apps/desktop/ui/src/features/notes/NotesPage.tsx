@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
 import { isCommandKey, isDialogOpen } from "@/lib/typing";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input } from "@/components";
@@ -101,7 +101,26 @@ export function NotesPage() {
     () => new Map((notes.data ?? []).map((note) => [note.id, noteSearchText(note)])),
     [notes.data],
   );
-  const words = filterWords(filter);
+  // 列表按「延后」的筛选词渲染：筛选框跟手，上千行的列表在空闲时跟上。
+  const deferredFilter = useDeferredValue(filter);
+  /** 从筛选框打开的那一篇：列表跟上、它的那一行出现后再把焦点移过去。 */
+  const pendingFocus = useRef<string | null>(null);
+
+  /** 等着聚焦的那一行已经在列表里时聚焦它。 */
+  function focusPending(): void {
+    const id = pendingFocus.current;
+    if (id === null) return;
+    const button = [
+      ...(listRef.current?.querySelectorAll<HTMLElement>("[data-note-item]") ?? []),
+    ].find((element) => element.dataset.noteId === id);
+    if (button === undefined) return;
+    pendingFocus.current = null;
+    button.focus();
+  }
+
+  // 延后的列表渲染完之后，补上从筛选框打开时没能立刻做的聚焦。只操作 DOM，不改状态。
+  useEffect(focusPending, [deferredFilter]);
+  const words = filterWords(deferredFilter);
   const visible =
     words.length === 0
       ? list
@@ -137,11 +156,17 @@ export function NotesPage() {
       event.stopPropagation();
       setFilter("");
     } else if (event.key === "ArrowDown" || event.key === "Enter") {
-      const first = listRef.current?.querySelector<HTMLElement>("[data-note-item]");
-      if (first === null || first === undefined) return;
+      // 按当前输入（不是延后的那份）找第一篇：刚打完字就按 Enter 时，列表可能还没跟上。
+      const current = filterWords(filter);
+      const first = list.find((note) => {
+        const text = searchTexts.get(note.id) ?? "";
+        return current.every((word) => text.includes(word));
+      });
+      if (first === undefined) return;
       event.preventDefault();
-      first.focus();
-      first.click();
+      openNote(first.id);
+      pendingFocus.current = first.id;
+      focusPending();
     }
   }
 
