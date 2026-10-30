@@ -22,6 +22,8 @@ pub enum ErrorCode {
     ItemTitleTooLong,
     /// 内容过长。
     ItemContentTooLong,
+    /// 简述过长。
+    ItemBriefTooLong,
     /// 该类型的 Item 不能完成。
     ItemNotCompletable,
     /// Item 已经完成。
@@ -94,6 +96,7 @@ impl ErrorCode {
         Self::ItemTitleEmpty,
         Self::ItemTitleTooLong,
         Self::ItemContentTooLong,
+        Self::ItemBriefTooLong,
         Self::ItemNotCompletable,
         Self::ItemAlreadyCompleted,
         Self::ItemNotCompleted,
@@ -135,6 +138,7 @@ impl ErrorCode {
             Self::ItemTitleEmpty => "ITEM_TITLE_EMPTY",
             Self::ItemTitleTooLong => "ITEM_TITLE_TOO_LONG",
             Self::ItemContentTooLong => "ITEM_CONTENT_TOO_LONG",
+            Self::ItemBriefTooLong => "ITEM_BRIEF_TOO_LONG",
             Self::ItemNotCompletable => "ITEM_NOT_COMPLETABLE",
             Self::ItemAlreadyCompleted => "ITEM_ALREADY_COMPLETED",
             Self::ItemNotCompleted => "ITEM_NOT_COMPLETED",
@@ -221,6 +225,7 @@ impl From<DomainError> for AppError {
             DomainError::EmptyTitle => ErrorCode::ItemTitleEmpty,
             DomainError::TitleTooLong { .. } => ErrorCode::ItemTitleTooLong,
             DomainError::ContentTooLong { .. } => ErrorCode::ItemContentTooLong,
+            DomainError::BriefTooLong { .. } => ErrorCode::ItemBriefTooLong,
             DomainError::EmptyName { .. } => ErrorCode::NameEmpty,
             DomainError::NameTooLong { .. } => ErrorCode::NameTooLong,
             DomainError::NotCompletable { .. } => ErrorCode::ItemNotCompletable,

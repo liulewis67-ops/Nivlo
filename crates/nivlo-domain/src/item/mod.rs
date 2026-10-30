@@ -5,5 +5,5 @@ mod model;
 mod values;
 
 pub use kinds::{ContentFormat, ItemStatus, ItemType, Priority};
-pub use model::{Item, ItemSnapshot, MAX_CONTENT_CHARS, NewItem};
+pub use model::{Item, ItemSnapshot, MAX_BRIEF_CHARS, MAX_CONTENT_CHARS, NewItem};
 pub use values::{DatePoint, MAX_TITLE_CHARS, Title};

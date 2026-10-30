@@ -15,6 +15,7 @@ function todo(id: string, title: string): TodayItemDto {
     id,
     itemType: "todo",
     title,
+    brief: null,
     status: "open",
     priority: "none",
     scheduled: { date: "2026-10-10", time: null },

@@ -90,6 +90,7 @@
       "saved": "Saved"
     },
     "contentPlaceholder": "Write something… (Markdown supported)",
+    "briefPlaceholder": "One line that adds to the title",
     "format": {
       "plain": "Plain text",
       "markdown": "Markdown"
@@ -103,6 +104,7 @@
     "field": {
       "type": "Type",
       "title": "Title",
+      "brief": "Brief",
       "content": "Description",
       "format": "Format",
       "scheduled": "Scheduled",
@@ -355,6 +357,7 @@
     "ITEM_TITLE_EMPTY": "The title can't be empty.",
     "ITEM_TITLE_TOO_LONG": "The title is too long.",
     "ITEM_CONTENT_TOO_LONG": "The content is too long.",
+    "ITEM_BRIEF_TOO_LONG": "The brief is too long (200 characters at most).",
     "ITEM_NOT_COMPLETABLE": "Notes and tips can't be completed.",
     "ITEM_ALREADY_COMPLETED": "This to-do is already completed.",
     "ITEM_NOT_COMPLETED": "This to-do isn't completed yet.",

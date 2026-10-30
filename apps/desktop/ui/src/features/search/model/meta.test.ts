@@ -11,6 +11,7 @@ function item(overrides: Partial<ItemDto> = {}): ItemDto {
     id: "1",
     itemType: "todo",
     title: "t",
+    brief: null,
     content: null,
     contentFormat: "plain",
     status: "open",

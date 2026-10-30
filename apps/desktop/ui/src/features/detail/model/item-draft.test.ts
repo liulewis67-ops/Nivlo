@@ -7,6 +7,7 @@ const TODO: ItemDto = {
   id: "1",
   itemType: "todo",
   title: "写周报",
+  brief: null,
   content: "要点",
   contentFormat: "plain",
   status: "open",
@@ -55,6 +56,17 @@ describe("buildPatch", () => {
       content: { kind: "clear" },
       scheduled: { kind: "clear" },
       due: { kind: "clear" },
+    });
+  });
+
+  it("简述：设置得到「设置」，清空得到「清除」", () => {
+    expect(buildPatch(TODO, { ...toDraft(TODO), brief: "汇总本周进展" })).toEqual({
+      brief: { kind: "set", value: "汇总本周进展" },
+    });
+    const withBrief = { ...TODO, brief: "汇总本周进展" };
+    expect(toDraft(withBrief).brief).toBe("汇总本周进展");
+    expect(buildPatch(withBrief, { ...toDraft(withBrief), brief: " " })).toEqual({
+      brief: { kind: "clear" },
     });
   });
 

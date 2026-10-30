@@ -180,6 +180,7 @@ fn item_json(entry: &Entry) -> Value {
         "id": item.id().to_string(),
         "type": item.item_type().as_str(),
         "title": item.title().as_str(),
+        "brief": item.brief(),
         "content": item.content(),
         "contentFormat": item.content_format().as_str(),
         "status": item.status().as_str(),
@@ -312,6 +313,9 @@ fn item_markdown(entry: &Entry, front_matter: bool) -> String {
         item.title().as_str()
     ));
     out.push_str(&format!("_{}_\n\n", meta_line(entry)));
+    if let Some(brief) = item.brief() {
+        out.push_str(&format!("> {brief}\n\n"));
+    }
     if let Some(content) = item.content() {
         out.push_str(content.trim_end());
         out.push_str("\n\n");

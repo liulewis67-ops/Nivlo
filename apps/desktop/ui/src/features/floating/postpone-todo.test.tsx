@@ -15,6 +15,7 @@ function todo(id: string, title: string, isOverdue = false): TodayItemDto {
     id,
     itemType: "todo",
     title,
+    brief: null,
     status: "open",
     priority: "none",
     scheduled: { date: isOverdue ? "2026-10-08" : "2026-10-10", time: null },

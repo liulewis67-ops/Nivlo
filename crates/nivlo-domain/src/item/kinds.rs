@@ -58,6 +58,11 @@ impl ItemType {
         matches!(self, Self::Todo)
     }
 
+    /// 该类型是否拥有简述（标题之外的一句话概要）。Todo 与 Tip 有；Note 的正文本身就是内容。
+    pub fn supports_brief(self) -> bool {
+        matches!(self, Self::Todo | Self::Tip)
+    }
+
     /// 该类型是否可以设置提醒。Todo 与 Tip 可以（Tip 需要"在某个时间让我知道"）。
     pub fn supports_reminder(self) -> bool {
         matches!(self, Self::Todo | Self::Tip)

@@ -132,7 +132,7 @@ export function TodayList({
               {timeLabel(item) !== null && (
                 <span className="shrink-0 text-xs text-muted tabular-nums">{timeLabel(item)}</span>
               )}
-              <ItemTitle id={item.id} title={item.title} />
+              <ItemTitle id={item.id} title={item.title} brief={item.brief} />
             </li>
           ))}
         </ul>

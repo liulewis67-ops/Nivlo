@@ -968,6 +968,8 @@ export type CreateItemRequest = {
 	itemType: ItemTypeDto,
 	/**  标题。 */
 	title: string,
+	/**  简述（仅 Todo 与 Tip）；缺省为没有简述。 */
+	brief?: string | null,
 	/**  内容。 */
 	content: string | null,
 	/**  内容格式；缺省为纯文本。 */
@@ -1134,6 +1136,8 @@ export type ItemDto = {
 	itemType: ItemTypeDto,
 	/**  标题。 */
 	title: string,
+	/**  简述（仅 Todo 与 Tip）：标题之外的一句话概要。 */
+	brief: string | null,
 	/**  内容。 */
 	content: string | null,
 	/**  内容格式。 */
@@ -1462,6 +1466,8 @@ export type TodayItemDto = {
 	itemType: ItemTypeDto,
 	/**  标题。 */
 	title: string,
+	/**  简述（仅 Todo 与 Tip），列表里接在标题后面显示。 */
+	brief: string | null,
 	/**  状态。 */
 	status: ItemStatusDto,
 	/**  优先级。 */
@@ -1517,6 +1523,8 @@ export type UpdateItemRequest = {
 	itemType?: ItemTypeDto | null,
 	/**  新标题。 */
 	title?: string | null,
+	/**  简述的修改。 */
+	brief?: PatchDto<string>,
 	/**  内容的修改。 */
 	content?: PatchDto<string>,
 	/**  内容格式。 */

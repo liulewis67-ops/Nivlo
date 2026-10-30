@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO items (\n                id, type, title, brief, content, content_format, status, priority,\n                scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 19
+    },
+    "nullable": []
+  },
+  "hash": "de05ed2cd6ce549173c19eef45839e1c6613f3c2422c7677ca89ba11e409ab89"
+}

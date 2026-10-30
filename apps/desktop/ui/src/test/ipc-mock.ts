@@ -383,6 +383,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       id: item.id,
       itemType: item.itemType,
       title: item.title,
+      brief: item.brief,
       status: item.status,
       priority: item.priority,
       scheduled: item.scheduled,
@@ -415,6 +416,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       id: crypto.randomUUID(),
       itemType: request.itemType,
       title,
+      brief: request.brief?.trim() || null,
       content: request.content,
       contentFormat: request.contentFormat ?? "plain",
       status: "open",
@@ -441,6 +443,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       id: entry.id,
       itemType: "todo",
       title: entry.title,
+      brief: entry.brief,
       content: null,
       contentFormat: "plain",
       status,
@@ -906,6 +909,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         ...(request.priority === undefined || request.priority === null
           ? {}
           : { priority: request.priority }),
+        brief: applyPatch(request.brief, current.brief),
         content: applyPatch(request.content, current.content),
         scheduled: applyPatch(request.scheduled, current.scheduled),
         due: applyPatch(request.due, current.due),
@@ -914,6 +918,15 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         updatedAt: new Date().toISOString(),
       };
       items[at] = next;
+      // 与后端一致：Today 读的是同一条 Item，标题与简述的修改在 Today 里也看得到。
+      const sync = (entry: TodayItemDto): TodayItemDto =>
+        entry.id === id ? { ...entry, title: next.title, brief: next.brief } : entry;
+      today = {
+        ...today,
+        todos: today.todos.map(sync),
+        tips: today.tips.map(sync),
+        completed: today.completed.map(sync),
+      };
       for (const notify of listeners) notify();
       return Promise.resolve(next);
     },
@@ -1015,7 +1028,6 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     emitSearchWindowShown: () => {
       for (const notify of searchShownListeners) notify();
     },
-    fitSearch: () => Promise.resolve(),
     subscribeSearchWindowShown: (onShown: () => void) => {
       searchShownListeners.add(onShown);
       return () => {
@@ -1292,6 +1304,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         .map((item) => {
           const title = item.title.toLowerCase();
           const text = `${title}
+${(item.brief ?? "").toLowerCase()}
 ${(item.content ?? "").toLowerCase()}`;
           return {
             item,

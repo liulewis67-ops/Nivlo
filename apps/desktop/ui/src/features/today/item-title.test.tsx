@@ -20,6 +20,18 @@ describe("ItemTitle", () => {
     expect(element).toHaveAttribute("title", title);
   });
 
+  it("简述接在标题后面，被截断时提示里也有简述", () => {
+    render(<ItemTitle id="a" title="服务器维护" brief="周六凌晨两点停机" />);
+    const brief = screen.getByText("周六凌晨两点停机");
+    const element = brief.parentElement as HTMLElement;
+    expect(element).toHaveTextContent("服务器维护周六凌晨两点停机");
+    sizeOf(element, 420, 230);
+
+    fireEvent.mouseEnter(element);
+
+    expect(element).toHaveAttribute("title", "服务器维护\n周六凌晨两点停机");
+  });
+
   it("放得下的标题不出多余的提示", () => {
     render(<ItemTitle id="a" title="预约体检" />);
     const element = screen.getByText("预约体检");

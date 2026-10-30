@@ -178,7 +178,7 @@ function SortableTodo({ item, today, onComplete, onPostpone }: SortableTodoProps
             {item.scheduled.time.slice(0, 5)}
           </span>
         )}
-        <ItemTitle id={item.id} title={item.title} />
+        <ItemTitle id={item.id} title={item.title} brief={item.brief} />
         {due !== null && (
           <span
             className={cx(

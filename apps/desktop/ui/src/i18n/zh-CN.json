@@ -89,6 +89,7 @@
       "saved": "已保存"
     },
     "contentPlaceholder": "写点什么…（支持 Markdown）",
+    "briefPlaceholder": "一句话补充标题",
     "format": {
       "plain": "纯文本",
       "markdown": "Markdown"
@@ -102,6 +103,7 @@
     "field": {
       "type": "类型",
       "title": "标题",
+      "brief": "简述",
       "content": "描述",
       "format": "格式",
       "scheduled": "计划日期",
@@ -354,6 +356,7 @@
     "ITEM_TITLE_EMPTY": "标题不能为空。",
     "ITEM_TITLE_TOO_LONG": "标题太长了。",
     "ITEM_CONTENT_TOO_LONG": "内容太长了。",
+    "ITEM_BRIEF_TOO_LONG": "简述太长了（最多 200 个字）。",
     "ITEM_NOT_COMPLETABLE": "笔记和提示不能被完成。",
     "ITEM_ALREADY_COMPLETED": "这个待办已经完成了。",
     "ITEM_NOT_COMPLETED": "这个待办还没有完成。",

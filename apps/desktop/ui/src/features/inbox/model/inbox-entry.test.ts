@@ -8,6 +8,7 @@ function entry(partial: Partial<InboxEntryDto>): InboxEntryDto {
     id: "1",
     itemType: "note",
     title: "t",
+    brief: null,
     content: null,
     contentFormat: "plain",
     status: "open",

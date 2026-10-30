@@ -41,6 +41,8 @@ pub struct UpdateItemInput {
     pub item_type: Option<ItemType>,
     /// 新标题。
     pub title: Option<String>,
+    /// 简述的修改。
+    pub brief: Patch<String>,
     /// 内容的修改。
     pub content: Patch<String>,
     /// 新的内容格式。
@@ -62,6 +64,7 @@ impl UpdateItemInput {
     pub fn is_empty(&self) -> bool {
         self.item_type.is_none()
             && self.title.is_none()
+            && !self.brief.is_change()
             && !self.content.is_change()
             && self.content_format.is_none()
             && self.priority.is_none()

@@ -470,3 +470,26 @@ async fn migrate_backfills_initials_for_rows_written_before_the_column_existed()
     db.migrate().await.unwrap();
     assert_eq!(titles(&db, "bzzb").await, ["整理本周周报"]);
 }
+
+#[tokio::test]
+async fn brief_is_searchable_and_follows_edits() {
+    let (_dir, db) = new_db().await;
+    let mut new = NewItem::new(ItemType::Tip, "服务器维护");
+    new.brief = Some("周六凌晨两点停机".to_owned());
+    let (mut tip, _) = Item::create(id(1), new, t(0)).unwrap();
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&tip).await.unwrap();
+    tx.commit().await.unwrap();
+
+    // 长词走 FTS，短词走 LIKE。
+    assert_eq!(titles(&db, "凌晨两点").await, ["服务器维护"]);
+    assert_eq!(titles(&db, "停机").await, ["服务器维护"]);
+
+    tip.set_brief(Some("改到周日".to_owned()), t(1)).unwrap();
+    let mut tx = db.begin().await.unwrap();
+    tx.items().update(&tip).await.unwrap();
+    tx.commit().await.unwrap();
+
+    assert!(titles(&db, "凌晨两点").await.is_empty());
+    assert_eq!(titles(&db, "改到周日").await, ["服务器维护"]);
+}

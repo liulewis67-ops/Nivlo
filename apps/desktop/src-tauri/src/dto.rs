@@ -276,6 +276,8 @@ pub struct ItemDto {
     pub item_type: ItemTypeDto,
     /// 标题。
     pub title: String,
+    /// 简述（仅 Todo 与 Tip）：标题之外的一句话概要。
+    pub brief: Option<String>,
     /// 内容。
     pub content: Option<String>,
     /// 内容格式。
@@ -311,6 +313,7 @@ impl From<&Item> for ItemDto {
             id: item.id().to_string(),
             item_type: item.item_type().into(),
             title: item.title().to_string(),
+            brief: item.brief().map(str::to_owned),
             content: item.content().map(str::to_owned),
             content_format: item.content_format().into(),
             status: item.status().into(),
@@ -336,6 +339,9 @@ pub struct CreateItemRequest {
     pub item_type: ItemTypeDto,
     /// 标题。
     pub title: String,
+    /// 简述（仅 Todo 与 Tip）；缺省为没有简述。
+    #[serde(default)]
+    pub brief: Option<String>,
     /// 内容。
     pub content: Option<String>,
     /// 内容格式；缺省为纯文本。
@@ -358,6 +364,7 @@ impl TryFrom<CreateItemRequest> for NewItem {
     /// DTO → Application 输入；日期、时间点或 ID 格式不对时返回 `INVALID_INPUT`。
     fn try_from(request: CreateItemRequest) -> Result<Self, Self::Error> {
         let mut new = NewItem::new(request.item_type.into(), request.title);
+        new.brief = request.brief;
         new.content = request.content;
         if let Some(format) = request.content_format {
             new.content_format = format.into();
@@ -389,6 +396,8 @@ pub struct TodayItemDto {
     pub item_type: ItemTypeDto,
     /// 标题。
     pub title: String,
+    /// 简述（仅 Todo 与 Tip），列表里接在标题后面显示。
+    pub brief: Option<String>,
     /// 状态。
     pub status: ItemStatusDto,
     /// 优先级。
@@ -409,6 +418,7 @@ impl From<&TodayEntry> for TodayItemDto {
             id: item.id().to_string(),
             item_type: item.item_type().into(),
             title: item.title().to_string(),
+            brief: item.brief().map(str::to_owned),
             status: item.status().into(),
             priority: item.priority().into(),
             scheduled: item.scheduled().map(Into::into),
@@ -663,6 +673,8 @@ pub struct UpdateItemRequest {
     pub item_type: Option<ItemTypeDto>,
     /// 新标题。
     pub title: Option<String>,
+    /// 简述的修改。
+    pub brief: PatchDto<String>,
     /// 内容的修改。
     pub content: PatchDto<String>,
     /// 内容格式。
@@ -699,6 +711,7 @@ impl TryFrom<UpdateItemRequest> for UpdateItemInput {
         Ok(Self {
             item_type: request.item_type.map(Into::into),
             title: request.title,
+            brief: patch(request.brief, Ok)?,
             content: patch(request.content, Ok)?,
             content_format: request.content_format.map(Into::into),
             priority: request.priority.map(Into::into),
@@ -1364,6 +1377,7 @@ mod tests {
         let request = CreateItemRequest {
             item_type: ItemTypeDto::Todo,
             title: "写周报".into(),
+            brief: Some("汇总本周进展".into()),
             content: None,
             content_format: Some(ContentFormatDto::Markdown),
             priority: Some(PriorityDto::High),
@@ -1379,6 +1393,7 @@ mod tests {
         assert_eq!(new.item_type, ItemType::Todo);
         assert_eq!(new.priority, Priority::High);
         assert_eq!(new.content_format, ContentFormat::Markdown);
+        assert_eq!(new.brief.as_deref(), Some("汇总本周进展"));
         assert_eq!(
             new.reminder_at,
             Some(Utc.with_ymd_and_hms(2026, 10, 11, 17, 0, 0).unwrap())

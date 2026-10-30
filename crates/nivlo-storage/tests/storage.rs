@@ -50,11 +50,11 @@ async fn migrates_from_empty_and_is_idempotent() {
     assert_eq!(db.schema_version().await.unwrap(), None);
 
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(8));
+    assert_eq!(db.schema_version().await.unwrap(), Some(9));
 
     // 再次运行不报错，版本不变。
     db.migrate().await.unwrap();
-    assert_eq!(db.schema_version().await.unwrap(), Some(8));
+    assert_eq!(db.schema_version().await.unwrap(), Some(9));
 }
 
 #[tokio::test]
@@ -99,6 +99,7 @@ async fn item_round_trips_with_all_fields() {
 
     let mut new = NewItem::new(ItemType::Todo, "修复登录超时");
     new.content = Some("复现步骤……".to_owned());
+    new.brief = Some("登录 30 秒后掉线".to_owned());
     new.content_format = ContentFormat::Markdown;
     new.priority = Priority::High;
     new.scheduled = Some(DatePoint::at(
@@ -918,7 +919,7 @@ async fn a_snapshot_is_a_consistent_independent_copy_that_verifies() {
 
     let snapshot = dir.path().join("snapshot.db");
     db.snapshot_to(&snapshot).await.unwrap();
-    assert_eq!(Database::verify_file(&snapshot).await.unwrap(), Some(8));
+    assert_eq!(Database::verify_file(&snapshot).await.unwrap(), Some(9));
 
     // 快照之后原库继续变化，不影响快照。
     let mut tx = db.begin().await.unwrap();

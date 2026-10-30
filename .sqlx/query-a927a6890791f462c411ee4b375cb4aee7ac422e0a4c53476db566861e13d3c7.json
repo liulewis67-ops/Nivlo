@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, type AS item_type, title, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items WHERE id = ?",
+  "query": "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,\n                    scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                    project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n             FROM items\n             WHERE type = 'todo' AND status = 'open' AND archived_at IS NULL AND deleted_at IS NULL\n               AND scheduled_date IS NOT NULL AND scheduled_date <= ?\n             ORDER BY scheduled_date ASC, created_at ASC, id ASC",
   "describe": {
     "columns": [
       {
@@ -19,78 +19,83 @@
         "type_info": "Text"
       },
       {
-        "name": "content",
+        "name": "brief",
         "ordinal": 3,
         "type_info": "Text"
       },
       {
-        "name": "content_format",
+        "name": "content",
         "ordinal": 4,
         "type_info": "Text"
       },
       {
-        "name": "status",
+        "name": "content_format",
         "ordinal": 5,
         "type_info": "Text"
       },
       {
-        "name": "priority",
+        "name": "status",
         "ordinal": 6,
         "type_info": "Text"
       },
       {
-        "name": "scheduled_date",
+        "name": "priority",
         "ordinal": 7,
         "type_info": "Text"
       },
       {
-        "name": "scheduled_time",
+        "name": "scheduled_date",
         "ordinal": 8,
         "type_info": "Text"
       },
       {
-        "name": "due_date",
+        "name": "scheduled_time",
         "ordinal": 9,
         "type_info": "Text"
       },
       {
-        "name": "due_time",
+        "name": "due_date",
         "ordinal": 10,
         "type_info": "Text"
       },
       {
-        "name": "reminder_at",
+        "name": "due_time",
         "ordinal": 11,
         "type_info": "Text"
       },
       {
-        "name": "project_id",
+        "name": "reminder_at",
         "ordinal": 12,
         "type_info": "Text"
       },
       {
-        "name": "in_inbox",
+        "name": "project_id",
         "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "in_inbox",
+        "ordinal": 14,
         "type_info": "Integer"
       },
       {
         "name": "created_at",
-        "ordinal": 14,
-        "type_info": "Text"
-      },
-      {
-        "name": "updated_at",
         "ordinal": 15,
         "type_info": "Text"
       },
       {
-        "name": "completed_at",
+        "name": "updated_at",
         "ordinal": 16,
         "type_info": "Text"
       },
       {
-        "name": "archived_at",
+        "name": "completed_at",
         "ordinal": 17,
+        "type_info": "Text"
+      },
+      {
+        "name": "archived_at",
+        "ordinal": 18,
         "type_info": "Text"
       }
     ],
@@ -101,6 +106,7 @@
       false,
       false,
       false,
+      true,
       true,
       false,
       false,
@@ -118,5 +124,5 @@
       true
     ]
   },
-  "hash": "97eb85a86a5eb62549fcf70c4cbb7b468b6dadc66f107dd8bee5899da0b93bee"
+  "hash": "a927a6890791f462c411ee4b375cb4aee7ac422e0a4c53476db566861e13d3c7"
 }

@@ -112,7 +112,7 @@ function Field({ label, children }: FieldProps) {
 }
 
 /**
- * Item 详情面板（实施计划 3.1）：标题、描述（Markdown 纯文本）、类型、计划 / 截止日期、优先级与来源。
+ * Item 详情面板（实施计划 3.1）：标题、简述（Todo / Tip）、描述（Markdown 纯文本）、类型、计划 / 截止日期、优先级与来源。
  *
  * * **自动保存**：停止输入 [`AUTOSAVE_DELAY_MS`] 毫秒后保存，只发送真正变化的字段；
  *   关闭面板或切换条目时先把未保存的修改保存掉；
@@ -269,6 +269,16 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
               onChange={(event) => edit({ title: event.target.value })}
             />
           </Field>
+          {kind !== "note" && (
+            <Field label={t("detail.field.brief")}>
+              <Input
+                aria-label={t("detail.field.brief")}
+                placeholder={t("detail.briefPlaceholder")}
+                value={draft.brief}
+                onChange={(event) => edit({ brief: event.target.value })}
+              />
+            </Field>
+          )}
           {kind !== "note" && (
             <Field label={t("detail.field.reminder")}>
               <Input

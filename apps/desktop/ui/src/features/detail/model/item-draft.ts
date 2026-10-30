@@ -20,6 +20,8 @@ export type ItemDraft = {
   itemType: ItemTypeDto;
   /** 标题。 */
   title: string;
+  /** 简述（仅 Todo 与 Tip）；空串表示没有。 */
+  brief: string;
   /** 内容（描述）；空串表示没有。 */
   content: string;
   /** 内容格式。 */
@@ -62,6 +64,7 @@ export function toDraft(item: ItemDto): ItemDraft {
   return {
     itemType: item.itemType,
     title: item.title,
+    brief: item.brief ?? "",
     content: item.content ?? "",
     contentFormat: item.contentFormat,
     priority: item.priority,
@@ -106,6 +109,10 @@ export function buildPatch(item: ItemDto, draft: ItemDraft): UpdateItemRequest |
   const patch: UpdateItemRequest = {};
   if (draft.itemType !== before.itemType) patch.itemType = draft.itemType;
   if (draft.title !== before.title) patch.title = draft.title;
+  if (draft.brief !== before.brief) {
+    patch.brief =
+      draft.brief.trim() === "" ? { kind: "clear" } : { kind: "set", value: draft.brief };
+  }
   if (draft.content !== before.content) {
     patch.content =
       draft.content.trim() === "" ? { kind: "clear" } : { kind: "set", value: draft.content };

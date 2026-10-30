@@ -8,6 +8,7 @@ function withDue(date: string | null): TodayItemDto {
     id: "a",
     itemType: "todo",
     title: "t",
+    brief: null,
     status: "open",
     priority: "none",
     scheduled: null,

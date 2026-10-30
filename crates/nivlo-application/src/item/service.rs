@@ -170,6 +170,9 @@ impl ItemService {
         if let Some(title) = &input.title {
             record(item.rename(title, now)?);
         }
+        if input.brief.is_change() {
+            record(item.set_brief(input.brief.apply(item.brief().map(str::to_owned)), now)?);
+        }
         if input.content.is_change() || input.content_format.is_some() {
             let content = input.content.apply(item.content().map(str::to_owned));
             let format = input

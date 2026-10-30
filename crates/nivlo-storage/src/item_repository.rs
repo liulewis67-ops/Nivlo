@@ -46,6 +46,8 @@ struct ItemRow {
     item_type: String,
     /// 标题。
     title: String,
+    /// 简述。
+    brief: Option<String>,
     /// 内容。
     content: Option<String>,
     /// 内容格式。
@@ -96,6 +98,7 @@ fn row_to_item(row: ItemRow) -> Result<Item, StorageError> {
             .map_err(|e| StorageError::Corrupt(e.to_string()))?,
         item_type: row.item_type.parse().map_err(corrupt)?,
         title: row.title,
+        brief: row.brief,
         content: row.content,
         content_format: row.content_format.parse().map_err(corrupt)?,
         status: row.status.parse().map_err(corrupt)?,
@@ -221,13 +224,14 @@ impl ItemRepository for SqliteTransaction {
         let archived_at = s.archived_at.map(format_timestamp);
         sqlx::query!(
             "INSERT INTO items (
-                id, type, title, content, content_format, status, priority,
+                id, type, title, brief, content, content_format, status, priority,
                 scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                 project_id, in_inbox, created_at, updated_at, completed_at, archived_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             id,
             item_type,
             s.title,
+            s.brief,
             s.content,
             content_format,
             status,
@@ -296,13 +300,15 @@ impl ItemRepository for SqliteTransaction {
         // created_at 创建后不可变，因此不在 SET 列表中。
         let result = sqlx::query!(
             "UPDATE items SET
-                type = ?, title = ?, content = ?, content_format = ?, status = ?, priority = ?,
+                type = ?, title = ?, brief = ?, content = ?, content_format = ?, status = ?,
+                priority = ?,
                 scheduled_date = ?, scheduled_time = ?, due_date = ?, due_time = ?,
                 reminder_at = ?, project_id = ?, in_inbox = ?, updated_at = ?, completed_at = ?,
                 archived_at = ?
             WHERE id = ?",
             item_type,
             s.title,
+            s.brief,
             s.content,
             content_format,
             status,
@@ -333,7 +339,7 @@ impl ItemRepository for SqliteTransaction {
         let id = id.to_string();
         let row = sqlx::query_as!(
             ItemRow,
-            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+            "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items WHERE id = ?",
@@ -355,7 +361,7 @@ impl ItemRepository for SqliteTransaction {
         // 计划日期相同的按创建时间、ID 排序，保证结果稳定。
         let rows = sqlx::query_as!(
             ItemRow,
-            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+            "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
@@ -375,7 +381,7 @@ impl ItemRepository for SqliteTransaction {
         let date = format_date(date);
         let rows = sqlx::query_as!(
             ItemRow,
-            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+            "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
@@ -400,7 +406,7 @@ impl ItemRepository for SqliteTransaction {
         // 时间戳是固定宽度的 UTC 文本，字符串比较即时间比较。
         let rows = sqlx::query_as!(
             ItemRow,
-            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+            "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
@@ -434,7 +440,7 @@ impl ItemRepository for SqliteTransaction {
         // created_at 为固定宽度文本，排序即时间序；id（UUIDv7）作为同一毫秒内的稳定次序。
         let rows = sqlx::query_as!(
             ItemRow,
-            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+            "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
@@ -481,7 +487,7 @@ impl ItemRepository for SqliteTransaction {
         let to = format_date(to);
         let rows = sqlx::query_as!(
             ItemRow,
-            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+            "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
@@ -503,7 +509,7 @@ impl ItemRepository for SqliteTransaction {
         let limit = i64::from(limit);
         let rows = sqlx::query_as!(
             ItemRow,
-            "SELECT id, type AS item_type, title, content, content_format, status, priority,
+            "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                     scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                     project_id, in_inbox, created_at, updated_at, completed_at, archived_at
              FROM items
@@ -543,7 +549,7 @@ impl ItemRepository for SqliteTransaction {
             sqlx::query_as!(
                 ItemRow,
                 "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",
-                        items.content, items.content_format AS \"content_format!\",
+                        items.brief, items.content, items.content_format AS \"content_format!\",
                         items.status AS \"status!\", items.priority AS \"priority!\",
                         items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,
                         items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",
@@ -574,7 +580,7 @@ impl ItemRepository for SqliteTransaction {
             sqlx::query_as!(
                 ItemRow,
                 "SELECT items.id AS \"id!\", items.type AS \"item_type!\", items.title AS \"title!\",
-                        items.content, items.content_format AS \"content_format!\",
+                        items.brief, items.content, items.content_format AS \"content_format!\",
                         items.status AS \"status!\", items.priority AS \"priority!\",
                         items.scheduled_date, items.scheduled_time, items.due_date, items.due_time,
                         items.reminder_at, items.project_id, items.in_inbox AS \"in_inbox!\",
@@ -607,7 +613,7 @@ impl ItemRepository for SqliteTransaction {
             let pattern = like_pattern(&initials);
             let extra = sqlx::query_as!(
                 ItemRow,
-                "SELECT id, type AS item_type, title, content, content_format, status, priority,
+                "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,
                         scheduled_date, scheduled_time, due_date, due_time, reminder_at,
                         project_id, in_inbox, created_at, updated_at, completed_at, archived_at
                  FROM items

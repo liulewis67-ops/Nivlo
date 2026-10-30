@@ -15,6 +15,9 @@ use crate::id::{ItemId, ProjectId};
 /// 内容（描述 / 正文）允许的最大字符数。
 pub const MAX_CONTENT_CHARS: usize = 200_000;
 
+/// 简述允许的最大字符数：一句话补充标题，不是第二份描述。
+pub const MAX_BRIEF_CHARS: usize = 200;
+
 /// 创建 Item 所需的输入。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NewItem {
@@ -22,6 +25,8 @@ pub struct NewItem {
     pub item_type: ItemType,
     /// 原始标题，创建时会被校验并去除首尾空白。
     pub title: String,
+    /// 简述（仅 Todo 与 Tip）；空白简述会被规范化为 `None`。
+    pub brief: Option<String>,
     /// 内容；空白内容会被规范化为 `None`。
     pub content: Option<String>,
     /// 内容格式。
@@ -46,6 +51,7 @@ impl NewItem {
         Self {
             item_type,
             title: title.into(),
+            brief: None,
             content: None,
             content_format: ContentFormat::default(),
             priority: Priority::None,
@@ -69,6 +75,9 @@ pub struct ItemSnapshot {
     pub item_type: ItemType,
     /// 标题。
     pub title: String,
+    /// 简述；旧版本导出的快照没有这个字段。
+    #[serde(default)]
+    pub brief: Option<String>,
     /// 内容。
     pub content: Option<String>,
     /// 内容格式。
@@ -111,6 +120,8 @@ pub struct Item {
     item_type: ItemType,
     /// 已校验的标题。
     title: Title,
+    /// 简述；永远不是空白字符串，仅 Todo 与 Tip 可有。
+    brief: Option<String>,
     /// 内容；永远不是空白字符串。
     content: Option<String>,
     /// 内容格式。
@@ -152,6 +163,34 @@ fn normalize_content(content: Option<String>) -> Result<Option<String>, DomainEr
     }
 }
 
+/// 规范化简述：只占一行（换行与连续空白折成一个空格）、空白视为没有简述，并校验长度。
+fn normalize_brief(brief: Option<String>) -> Result<Option<String>, DomainError> {
+    let Some(text) = brief else {
+        return Ok(None);
+    };
+    let line = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    if line.is_empty() {
+        return Ok(None);
+    }
+    if line.chars().count() > MAX_BRIEF_CHARS {
+        return Err(DomainError::BriefTooLong {
+            max: MAX_BRIEF_CHARS,
+        });
+    }
+    Ok(Some(line))
+}
+
+/// 校验简述是否适用于该类型；清除（`None`）永远允许。
+fn check_brief_applicable(item_type: ItemType, brief: Option<&str>) -> Result<(), DomainError> {
+    if brief.is_some() && !item_type.supports_brief() {
+        return Err(DomainError::FieldNotApplicable {
+            field: "brief",
+            item_type,
+        });
+    }
+    Ok(())
+}
+
 /// 校验类型与字段的适用关系：不适用的字段只允许处于"未设置"状态。
 fn check_applicable(
     item_type: ItemType,
@@ -189,21 +228,24 @@ impl Item {
     /// # Errors
     ///
     /// * [`DomainError::EmptyTitle`] / [`DomainError::TitleTooLong`] - 标题不合法。
-    /// * [`DomainError::ContentTooLong`] - 内容过长。
+    /// * [`DomainError::ContentTooLong`] / [`DomainError::BriefTooLong`] - 内容或简述过长。
     /// * [`DomainError::FieldNotApplicable`] - 给 Note / Tip 设置了不适用的优先级、截止日期，
-    ///   或给 Note 设置了提醒。
+    ///   或给 Note 设置了提醒、简述。
     pub fn create(
         id: ItemId,
         new: NewItem,
         now: DateTime<Utc>,
     ) -> Result<(Self, DomainEvent), DomainError> {
         let title = Title::new(&new.title)?;
+        let brief = normalize_brief(new.brief)?;
         let content = normalize_content(new.content)?;
         check_applicable(new.item_type, new.priority, new.due, new.reminder_at)?;
+        check_brief_applicable(new.item_type, brief.as_deref())?;
         let item = Self {
             id,
             item_type: new.item_type,
             title,
+            brief,
             content,
             content_format: new.content_format,
             status: ItemStatus::Open,
@@ -231,6 +273,7 @@ impl Item {
     /// （多为 [`DomainError::InvalidSnapshot`]）。
     pub fn restore(snapshot: ItemSnapshot) -> Result<Self, DomainError> {
         let title = Title::new(&snapshot.title)?;
+        let brief = normalize_brief(snapshot.brief)?;
         let content = normalize_content(snapshot.content)?;
         let scheduled = DatePoint::from_parts(
             snapshot.scheduled_date,
@@ -245,6 +288,8 @@ impl Item {
             snapshot.reminder_at,
         )
         .map_err(|e| DomainError::InvalidSnapshot(e.to_string()))?;
+        check_brief_applicable(snapshot.item_type, brief.as_deref())
+            .map_err(|e| DomainError::InvalidSnapshot(e.to_string()))?;
 
         let done = snapshot.status == ItemStatus::Done;
         if done && !snapshot.item_type.is_completable() {
@@ -263,6 +308,7 @@ impl Item {
             id: snapshot.id,
             item_type: snapshot.item_type,
             title,
+            brief,
             content,
             content_format: snapshot.content_format,
             status: snapshot.status,
@@ -285,6 +331,7 @@ impl Item {
             id: self.id,
             item_type: self.item_type,
             title: self.title.as_str().to_owned(),
+            brief: self.brief.clone(),
             content: self.content.clone(),
             content_format: self.content_format,
             status: self.status,
@@ -310,6 +357,25 @@ impl Item {
     /// 标题不合法时返回 [`DomainError::EmptyTitle`] 或 [`DomainError::TitleTooLong`]，Item 不变。
     pub fn rename(&mut self, title: &str, now: DateTime<Utc>) -> Result<DomainEvent, DomainError> {
         self.title = Title::new(title)?;
+        Ok(self.touch(now))
+    }
+
+    /// 修改（或清除）简述；空白简述会清空简述。
+    ///
+    /// # Errors
+    ///
+    /// * [`DomainError::BriefTooLong`] - 简述超长。
+    /// * [`DomainError::FieldNotApplicable`] - 给 Note 设置简述。
+    ///
+    /// 出错时 Item 不变。
+    pub fn set_brief(
+        &mut self,
+        brief: Option<String>,
+        now: DateTime<Utc>,
+    ) -> Result<DomainEvent, DomainError> {
+        let brief = normalize_brief(brief)?;
+        check_brief_applicable(self.item_type, brief.as_deref())?;
+        self.brief = brief;
         Ok(self.touch(now))
     }
 
@@ -442,7 +508,7 @@ impl Item {
     /// 转换 Item 类型，并清理新类型不再适用的状态。
     ///
     /// * 离开 Todo：清除完成状态、截止日期、优先级。
-    /// * 变成 Note：额外清除提醒。
+    /// * 变成 Note：额外清除提醒与简述。
     /// * 变成 Todo：无需清理，Note 内容与计划日期原样保留。
     ///
     /// 类型不变时是空操作，但仍返回事件以保持调用方逻辑简单。
@@ -456,6 +522,9 @@ impl Item {
             }
             if !new_type.supports_reminder() {
                 self.reminder_at = None;
+            }
+            if !new_type.supports_brief() {
+                self.brief = None;
             }
             if !new_type.is_completable() {
                 self.status = ItemStatus::Open;
@@ -562,6 +631,11 @@ impl Item {
     /// 标题。
     pub fn title(&self) -> &Title {
         &self.title
+    }
+
+    /// 简述；没有简述时为 `None`。
+    pub fn brief(&self) -> Option<&str> {
+        self.brief.as_deref()
     }
 
     /// 内容；没有内容时为 `None`。
@@ -793,6 +867,52 @@ mod tests {
     }
 
     #[test]
+    fn brief_is_one_trimmed_line_and_blank_means_none() {
+        let mut new = NewItem::new(ItemType::Todo, "写周报");
+        new.brief = Some("  汇总 本周\n进展  ".to_owned());
+        let (mut todo, _) = Item::create(id(), new, t0()).unwrap();
+        assert_eq!(todo.brief(), Some("汇总 本周 进展"));
+
+        todo.set_brief(Some(" \n ".to_owned()), t1()).unwrap();
+        assert_eq!(todo.brief(), None);
+        assert_eq!(todo.updated_at(), t1());
+    }
+
+    #[test]
+    fn too_long_brief_is_rejected_and_leaves_item_unchanged() {
+        let mut tip = item(ItemType::Tip);
+        tip.set_brief(Some("短".to_owned()), t0()).unwrap();
+        assert_eq!(
+            tip.set_brief(Some("长".repeat(MAX_BRIEF_CHARS + 1)), t1()),
+            Err(DomainError::BriefTooLong {
+                max: MAX_BRIEF_CHARS
+            })
+        );
+        assert_eq!(tip.brief(), Some("短"));
+        assert!(
+            tip.set_brief(Some("长".repeat(MAX_BRIEF_CHARS)), t1())
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn note_has_no_brief_and_converting_to_note_clears_it() {
+        let mut note = item(ItemType::Note);
+        assert!(matches!(
+            note.set_brief(Some("概要".to_owned()), t1()),
+            Err(DomainError::FieldNotApplicable { field: "brief", .. })
+        ));
+        assert!(note.set_brief(None, t1()).is_ok());
+
+        let mut todo = item(ItemType::Todo);
+        todo.set_brief(Some("概要".to_owned()), t0()).unwrap();
+        todo.change_type(ItemType::Tip, t1());
+        assert_eq!(todo.brief(), Some("概要"));
+        todo.change_type(ItemType::Note, t1());
+        assert_eq!(todo.brief(), None);
+    }
+
+    #[test]
     fn todo_can_be_completed_and_reopened() {
         let mut todo = item(ItemType::Todo);
         let event = todo.complete(t1()).unwrap();
@@ -997,6 +1117,7 @@ mod tests {
         todo.set_scheduled(Some(DatePoint::at(date, time)), t0());
         todo.set_due(Some(DatePoint::all_day(date)), t0()).unwrap();
         todo.set_priority(Priority::Medium, t0()).unwrap();
+        todo.set_brief(Some("概要".to_owned()), t0()).unwrap();
         todo.complete(t1()).unwrap();
 
         let restored = Item::restore(todo.snapshot()).unwrap();
@@ -1045,6 +1166,13 @@ mod tests {
         note_with_due.due_date = NaiveDate::from_ymd_opt(2026, 10, 12);
         assert!(matches!(
             Item::restore(note_with_due),
+            Err(DomainError::InvalidSnapshot(_))
+        ));
+
+        let mut note_with_brief = item(ItemType::Note).snapshot();
+        note_with_brief.brief = Some("概要".to_owned());
+        assert!(matches!(
+            Item::restore(note_with_brief),
             Err(DomainError::InvalidSnapshot(_))
         ));
 

@@ -159,6 +159,22 @@ describe("ItemDetailPanel", () => {
     expect(ipc.updates).toEqual([{ id, request: { title: "关闭前的修改" } }]);
   });
 
+  it("Todo 有简述，自动保存；转成笔记后不再显示", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    fireEvent.change(screen.getByLabelText("简述"), { target: { value: "汇总本周进展" } });
+    await advance(AUTOSAVE_DELAY_MS);
+    expect(ipc.updates).toEqual([
+      { id, request: { brief: { kind: "set", value: "汇总本周进展" } } },
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "笔记" }));
+    expect(screen.queryByLabelText("简述")).toBeNull();
+  });
+
   it("Markdown 描述里 Ctrl+B 加粗、列表按 Enter 续行；纯文本描述不处理", async () => {
     const ipc = createMemoryIpc();
     const item = await ipc.createItem({

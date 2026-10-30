@@ -23,6 +23,12 @@ pub enum DomainError {
         /// 允许的最大字符数。
         max: usize,
     },
+    /// 简述超过长度上限。
+    #[error("简述过长：最多 {max} 个字符")]
+    BriefTooLong {
+        /// 允许的最大字符数。
+        max: usize,
+    },
     /// Project / Tag 等名称去除首尾空白后为空。
     #[error("{kind}名称不能为空")]
     EmptyName {

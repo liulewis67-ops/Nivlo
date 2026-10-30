@@ -452,7 +452,11 @@ impl ItemRepository for FakeTransaction {
                 continue;
             }
             let title = item.title().as_str().to_lowercase();
-            let mut haystack = format!("{title}\n{}", item.content().unwrap_or("").to_lowercase());
+            let mut haystack = format!(
+                "{title}\n{}\n{}",
+                item.brief().unwrap_or("").to_lowercase(),
+                item.content().unwrap_or("").to_lowercase()
+            );
             for source in self
                 .working
                 .sources
