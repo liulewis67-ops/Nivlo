@@ -86,6 +86,32 @@ describe("InboxPage", () => {
     expect(ipc.organizations[0]?.action).toEqual({ kind: "archive" });
   });
 
+  it("键盘整理：勾选后按 T 安排到今天、按 M 安排到明天（和按钮一样可撤销）；没勾选时按键不起作用", async () => {
+    const ipc = createMemoryIpc();
+    for (const text of ["一", "二"]) await capture(ipc, text);
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("一");
+
+    const first = screen.getByRole("checkbox", { name: "选择：一" });
+    fireEvent.keyDown(first, { key: "t" });
+    expect(ipc.organizations).toHaveLength(0);
+
+    fireEvent.click(first);
+    fireEvent.keyDown(first, { key: "t" });
+    await waitFor(() => expect(ipc.organizations).toHaveLength(1));
+    expect(ipc.organizations[0]?.action).toEqual({ kind: "schedule", target: { kind: "today" } });
+    expect(undoToast()).toBeDefined();
+
+    const second = screen.getByRole("checkbox", { name: "选择：二" });
+    fireEvent.click(second);
+    fireEvent.keyDown(second, { key: "M" });
+    await waitFor(() => expect(ipc.organizations).toHaveLength(2));
+    expect(ipc.organizations[1]?.action).toEqual({
+      kind: "schedule",
+      target: { kind: "tomorrow" },
+    });
+  });
+
   it("勾选多条后批量整理：一次调用，整批离开", async () => {
     const ipc = createMemoryIpc();
     for (const text of ["一", "二", "三"]) await capture(ipc, text);

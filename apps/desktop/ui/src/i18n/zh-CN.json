@@ -968,7 +968,8 @@
       "main": "主窗口",
       "search": "搜索框（Ctrl+K 与全局搜索）",
       "quickCreate": "快速创建",
-      "today": "今天的列表"
+      "today": "今天的列表",
+      "inbox": "收集箱（先勾选条目）"
     },
     "global": {
       "quickCreate": "快速创建",
@@ -998,6 +999,11 @@
     },
     "today": {
       "reorder": "拿起 / 放下待办，配合 ↑ ↓ 调整顺序"
+    },
+    "inbox": {
+      "today": "安排到今天",
+      "tomorrow": "安排到明天",
+      "clear": "取消选择"
     }
   }
 }

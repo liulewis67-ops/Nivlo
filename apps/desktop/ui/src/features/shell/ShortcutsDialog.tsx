@@ -47,6 +47,14 @@ const SECTIONS: readonly Section[] = [
     ],
   },
   {
+    title: "shortcuts.section.inbox",
+    rows: [
+      ["T", "shortcuts.inbox.today"],
+      ["M", "shortcuts.inbox.tomorrow"],
+      ["Esc", "shortcuts.inbox.clear"],
+    ],
+  },
+  {
     title: "shortcuts.section.today",
     rows: [["Space", "shortcuts.today.reorder"]],
   },

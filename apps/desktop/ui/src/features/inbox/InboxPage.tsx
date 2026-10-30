@@ -101,7 +101,8 @@ export function InboxPage() {
   }
 
   /**
-   * Escape 清除选择。
+   * 键盘整理：选中条目后按 T 安排到今天、M 安排到明天（和点按钮一样，带撤销）；Escape 清除选择。
+   * 在文字输入框里不响应（勾选框除外：选中条目就是在它上面按空格）。
    *
    * @param event 键盘事件。
    */
@@ -109,7 +110,21 @@ export function InboxPage() {
     if (event.key === "Escape" && selected.size > 0) {
       event.stopPropagation();
       setSelected(new Set());
+      return;
     }
+    if (selected.size === 0 || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    const typing =
+      target instanceof HTMLElement &&
+      (target.isContentEditable ||
+        target.tagName === "TEXTAREA" ||
+        (target instanceof HTMLInputElement && target.type !== "checkbox"));
+    if (typing) return;
+    const key = event.key.toLowerCase();
+    const kind: OrganizeKind | null = key === "t" ? "today" : key === "m" ? "tomorrow" : null;
+    if (kind === null) return;
+    event.preventDefault();
+    run(selectedIds, kind);
   }
 
   const count = entries?.length ?? 0;
