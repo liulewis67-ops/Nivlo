@@ -1,6 +1,7 @@
 //! AltGr 检测（真实的 Windows 键盘布局）。
 //!
-//! 测试会临时加载德语与美式布局（`KLF_NOTELLSHELL`，不通知任务栏），只在加载前本来没有时卸载。
+//! 测试会临时加载德语与美式布局（`KLF_NOTELLSHELL`，不通知任务栏），只在加载前本来没有时卸载；
+//! 布局是进程共享的，各测试用 `LAYOUTS` 锁依次进行。
 
 #![cfg(windows)]
 #![allow(
@@ -16,8 +17,16 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
 };
 use windows::core::w;
 
+/// 加载 / 卸载布局是整个进程共享的：几个测试并行时，一个测试可能卸载掉另一个正在用的布局
+/// （两个测试都加载德语布局，先记下「加载前没有」的那个用完就卸载）。所以一次只让一个测试碰布局。
+static LAYOUTS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// 加载布局，执行 `f`，如果是本测试加载的就卸载。
 fn with_layout(id: windows::core::PCWSTR, f: impl FnOnce(HKL)) {
+    // 前一个测试断言失败时锁会中毒，但布局已经卸载，照常继续即可。
+    let _guard = LAYOUTS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     // SAFETY: GetKeyboardLayoutList 先问数量再取列表，缓冲区长度与数量一致。
     let before: Vec<HKL> = unsafe {
         let n = GetKeyboardLayoutList(None);

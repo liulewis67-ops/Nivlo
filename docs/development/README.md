@@ -43,11 +43,13 @@ pnpm tauri dev
 | `pnpm tauri dev` | 启动桌面应用（Vite + Rust） |
 | `pnpm dev:ui` | 仅启动 Vite（纯 UI 调试） |
 | `pnpm lint` / `pnpm typecheck` / `pnpm test` / `pnpm format:check` | 前端质量门禁 |
-| `pnpm check:ui`（没有 pnpm 时在 `apps/desktop/ui` 里 `npm run check`） | 依次跑完上面四项（格式 → 类型 → Lint → 测试），提交前一条命令搞定 |
+| `npm run check:ui` | 依次跑完上面四项前端检查（格式 → 类型 → Lint → 测试） |
 | `cargo fmt --all --check` | Rust 格式检查 |
 | `cargo clippy --workspace --all-targets -- -D warnings` | Rust Lint |
 | `cargo test --workspace` | Rust 测试 |
 | `RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps` | 文档注释检查 |
+| `npm run check:rust` | 依次跑 Rust 格式、Clippy、测试，以及时钟用法、依赖方向、文档链接三个脚本（`-j 2`：内存紧的机器并行太多会因页面文件不足失败） |
+| `npm run check` | 前端 + Rust 全部检查，提交前跑一次 |
 | `node scripts/check-deps/check-deps.mjs` | 依赖方向检查 |
 
 提交前请在本地跑完上表中的检查，CI 执行同样的命令。
