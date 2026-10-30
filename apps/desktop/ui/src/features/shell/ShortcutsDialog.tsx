@@ -183,26 +183,29 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
         aria-modal="true"
         aria-label={t("shortcuts.title")}
         onKeyDown={handleKeyDown}
-        className="nv-panel-in flex max-h-[min(36rem,85vh)] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-surface p-6 shadow-lg focus-visible:outline-none"
+        className="nv-panel-in flex max-h-[min(44rem,85vh)] w-full max-w-lg flex-col sm:max-w-3xl gap-4 overflow-y-auto rounded-xl border border-border bg-surface p-6 shadow-lg focus-visible:outline-none"
       >
         <h2 className="text-lg font-semibold text-text">{t("shortcuts.title")}</h2>
-        <section aria-label={t("shortcuts.section.global")}>
-          <h3 className="mb-1 text-xs font-semibold tracking-wide text-muted">
-            {t("shortcuts.section.global")}
-          </h3>
-          <GlobalRow action="quickCreate" />
-          <GlobalRow action="search" />
-        </section>
-        {SECTIONS.map((section) => (
-          <section key={section.title} aria-label={t(section.title)}>
+        {/* 分组较多：窗口够宽时排成两栏（每组不拆开），一屏基本看得全。 */}
+        <div className="gap-x-8 sm:columns-2 [&>section]:mb-4 [&>section]:break-inside-avoid">
+          <section aria-label={t("shortcuts.section.global")}>
             <h3 className="mb-1 text-xs font-semibold tracking-wide text-muted">
-              {t(section.title)}
+              {t("shortcuts.section.global")}
             </h3>
-            {section.rows.map(([keys, label]) => (
-              <Row key={label} keys={keys} label={t(label)} />
-            ))}
+            <GlobalRow action="quickCreate" />
+            <GlobalRow action="search" />
           </section>
-        ))}
+          {SECTIONS.map((section) => (
+            <section key={section.title} aria-label={t(section.title)}>
+              <h3 className="mb-1 text-xs font-semibold tracking-wide text-muted">
+                {t(section.title)}
+              </h3>
+              {section.rows.map(([keys, label]) => (
+                <Row key={label} keys={keys} label={t(label)} />
+              ))}
+            </section>
+          ))}
+        </div>
         <div className="flex justify-end">
           <Button size="sm" onClick={onClose}>
             {t("shortcuts.close")}
