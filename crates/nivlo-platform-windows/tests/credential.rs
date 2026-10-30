@@ -17,15 +17,17 @@ impl Drop for Cleanup<'_> {
     }
 }
 
-fn unique_key() -> CredentialKey {
+/// 每个测试自己的凭据名：带上测试名与进程号。同一进程里的测试是并行的，共用一个名字时，
+/// 一个测试的清理会删掉另一个刚写入的凭据，「没有写入」的断言也会看到别人的值。
+fn unique_key(test: &str) -> CredentialKey {
     let suffix = std::process::id();
-    CredentialKey::new("nivlo-test", &format!("credential-test-{suffix}")).unwrap()
+    CredentialKey::new("nivlo-test", &format!("credential-test-{test}-{suffix}")).unwrap()
 }
 
 #[test]
 fn write_overwrite_read_and_delete() {
     let store = WindowsCredentials::new();
-    let key = unique_key();
+    let key = unique_key("roundtrip");
     let _cleanup = Cleanup(&store, &key);
 
     assert_eq!(store.get(&key).unwrap(), None);
@@ -51,7 +53,7 @@ fn write_overwrite_read_and_delete() {
 #[test]
 fn oversized_secrets_are_rejected_without_writing() {
     let store = WindowsCredentials::new();
-    let key = unique_key();
+    let key = unique_key("oversized");
     let _cleanup = Cleanup(&store, &key);
     assert!(store.set(&key, &Secret::new("x".repeat(5000))).is_err());
     assert_eq!(store.get(&key).unwrap(), None);
