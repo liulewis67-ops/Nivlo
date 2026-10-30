@@ -196,6 +196,23 @@ describe("MainShell", () => {
     expect(input).toHaveValue("交房租 明天");
   });
 
+  it("添加框里按 ↓ 到第一条待办的完成框，在第一条上按 ↑ 回到添加框", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    renderWithProviders(<MainShell />, ipc);
+    const input = await screen.findByRole("textbox", { name: "添加待办" });
+    const first = await screen.findByRole("checkbox", { name: "完成「写周报」" });
+
+    input.focus();
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    expect(first).toHaveFocus();
+    fireEvent.keyDown(first, { key: "ArrowDown" });
+    expect(screen.getByRole("checkbox", { name: "完成「回邮件」" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("checkbox", { name: "完成「回邮件」" }), { key: "ArrowUp" });
+    fireEvent.keyDown(first, { key: "ArrowUp" });
+    expect(input).toHaveFocus();
+  });
+
   it("空标题不会提交", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();

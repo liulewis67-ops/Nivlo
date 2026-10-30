@@ -1011,7 +1011,8 @@
     },
     "today": {
       "move": "Move between to-dos",
-      "reorder": "Pick up / drop a to-do; ↑ ↓ to move it"
+      "reorder": "Pick up / drop a to-do; ↑ ↓ to move it",
+      "fromInput": "In the add box: jump into the list (↑ on the first to-do comes back)"
     },
     "inbox": {
       "move": "Move between items",

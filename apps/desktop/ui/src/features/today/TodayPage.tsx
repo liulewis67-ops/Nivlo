@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components";
@@ -49,13 +49,24 @@ export function TodayPage() {
     },
   });
 
+  const sectionRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   /**
-   * 处理按键：Enter 创建待办（输入法组合期间与空标题不提交）。
+   * 处理按键：Enter 创建待办（输入法组合期间与空标题不提交）；↓ 移到第一条待办的完成框。
    *
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     if (datePhrase.handleBackspace(event)) return;
+    if (event.key === "ArrowDown" && !event.nativeEvent.isComposing) {
+      const first = sectionRef.current?.querySelector<HTMLElement>("[role=checkbox]");
+      if (first !== null && first !== undefined) {
+        event.preventDefault();
+        first.focus();
+      }
+      return;
+    }
     const action = resolveKey({
       key: event.key,
       isComposing: event.nativeEvent.isComposing,
@@ -79,7 +90,19 @@ export function TodayPage() {
     (view.todos.length > 0 || view.tips.length > 0 || view.completed.length > 0);
 
   return (
-    <section aria-label={t("today.page.label")} className="relative flex h-full flex-col">
+    <section
+      ref={sectionRef}
+      aria-label={t("today.page.label")}
+      className="relative flex h-full flex-col"
+      // 在第一条的完成框上再按 ↑ 回到添加框（列表里的 ↑ ↓ 到头就不处理，冒泡到这里）。
+      onKeyDown={(event) => {
+        if (event.key !== "ArrowUp" || !(event.target instanceof HTMLElement)) return;
+        const first = sectionRef.current?.querySelector("[role=checkbox]");
+        if (event.target !== first) return;
+        event.preventDefault();
+        inputRef.current?.focus();
+      }}
+    >
       <header className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-8 pt-7 pb-4">
         <div className="flex items-baseline justify-between gap-4">
           <h1 className="text-2xl font-semibold text-text">{t("today.panel.title")}</h1>
@@ -110,6 +133,7 @@ export function TodayPage() {
           </span>
         </div>
         <Input
+          ref={inputRef}
           aria-label={t("today.page.addLabel")}
           placeholder={t("today.page.addPlaceholder")}
           value={title}
