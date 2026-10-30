@@ -234,7 +234,9 @@
     "empty": {
       "title": "Your Inbox is empty",
       "hint": "Drop links, text or images on the floating badge. They land here first, so you can sort them when you have time."
-    }
+    },
+    "filter": "Filter the inbox",
+    "noMatch": "No matching items."
   },
   "capture": {
     "drop": {

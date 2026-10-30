@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
+import { filterWords } from "@/lib/text-filter";
 import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
@@ -12,7 +13,7 @@ import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
-import { filterWords, noteSearchText } from "./model/note-filter";
+import { noteSearchText } from "./model/note-filter";
 import { noteSnippet } from "./model/note-snippet";
 import { NoteEditor } from "./NoteEditor";
 

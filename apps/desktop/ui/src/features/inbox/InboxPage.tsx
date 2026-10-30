@@ -1,21 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Menu } from "@/components";
+import { Button, Input, Menu } from "@/components";
 import { usePasteCapture } from "@/features/capture";
 import { useOpenItem } from "@/features/detail";
 import type { ItemTypeDto } from "@/lib/ipc";
+import { filterWords, matchesAllWords } from "@/lib/text-filter";
 import { isCommandKey } from "@/lib/typing";
 import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { useInboxQuery } from "./api";
 import { InboxRow } from "./InboxRow";
-import { pruneSelection, selectRange } from "./model/inbox-entry";
+import { entrySearchText, pruneSelection, selectRange } from "./model/inbox-entry";
 import { useOrganize } from "./useOrganize";
 import { useDeleteItems } from "@/features/trash";
 import type { OrganizeKind } from "./useOrganize";
 
 /** 批量「转换类型」菜单里的类型。 */
 const CONVERT_KINDS: ItemTypeDto[] = ["todo", "note", "tip"];
+
+/** 收集箱里有这么多条时才显示筛选框。 */
+export const INBOX_FILTER_MIN = 10;
 
 /**
  * 主窗口的 Inbox 视图（实施计划 2.7、产品文档 §8）：捕获来的东西先落在这里，一两下整理走。
@@ -65,7 +69,20 @@ export function InboxPage() {
   /** 整理之后要聚焦的那一行（整理前焦点在列表里时才有）；列表更新后由下面的 Effect 聚焦。 */
   const refocusId = useRef<string | null>(null);
 
-  const order = entries?.map((entry) => entry.item.id) ?? [];
+  const [filter, setFilter] = useState("");
+  const words = filterWords(filter);
+  const searchTexts = useMemo(
+    () => new Map((entries ?? []).map((entry) => [entry.item.id, entrySearchText(entry)])),
+    [entries],
+  );
+  // 筛选时只显示、只选择、只整理匹配的条目：看不见的不会被一起整理掉。
+  const shown =
+    words.length === 0
+      ? (entries ?? [])
+      : (entries ?? []).filter((entry) =>
+          matchesAllWords(searchTexts.get(entry.item.id) ?? "", words),
+        );
+  const order = shown.map((entry) => entry.item.id);
   // 条目被整理走（或在别处变化）后，已经不在列表里的选中项不再算数（渲染时推导，不在 Effect 里同步状态）。
   const selected = pruneSelection(picked, order);
 
@@ -217,6 +234,29 @@ export function InboxPage() {
             </Button>
           </div>
         </div>
+        {/* 条目多了才出现（筛选中一直显示）：按标题、正文、来源网址 / 文件、来源应用筛选。 */}
+        {(count >= INBOX_FILTER_MIN || filter !== "") && (
+          <Input
+            type="search"
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && filter !== "") {
+                event.preventDefault();
+                event.stopPropagation();
+                setFilter("");
+              } else if (event.key === "ArrowDown") {
+                const first = sectionRef.current?.querySelector<HTMLElement>("[data-inbox-select]");
+                if (first === null || first === undefined) return;
+                event.preventDefault();
+                first.focus();
+              }
+            }}
+            aria-label={t("inbox.filter")}
+            placeholder={t("inbox.filter")}
+            className="h-8"
+          />
+        )}
         {count > 0 && (
           <div
             className="flex min-h-9 items-center gap-2"
@@ -226,10 +266,10 @@ export function InboxPage() {
             <label className="flex cursor-pointer items-center gap-2 pl-3 text-sm text-muted">
               <input
                 type="checkbox"
-                checked={selected.size === count}
+                checked={order.length > 0 && selected.size === order.length}
                 ref={(node) => {
                   if (node !== null)
-                    node.indeterminate = selected.size > 0 && selected.size < count;
+                    node.indeterminate = selected.size > 0 && selected.size < order.length;
                 }}
                 onChange={toggleAll}
                 className="size-4 cursor-pointer accent-primary"
@@ -297,8 +337,13 @@ export function InboxPage() {
       </header>
       {count > 0 && entries !== undefined ? (
         <div className="min-h-0 flex-1 overflow-y-auto pb-6">
+          {shown.length === 0 && (
+            <p role="status" className="px-8 py-6 text-center text-sm text-muted">
+              {t("inbox.noMatch")}
+            </p>
+          )}
           <ul className="mx-auto w-full max-w-3xl px-5">
-            {entries.map((entry) => (
+            {shown.map((entry) => (
               <InboxRow
                 key={entry.item.id}
                 entry={entry}

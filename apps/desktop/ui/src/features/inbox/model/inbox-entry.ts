@@ -109,3 +109,22 @@ export function pruneSelection(
   const kept = [...selected].filter((id) => present.has(id));
   return kept.length === selected.size ? selected : new Set(kept);
 }
+
+/**
+ * 一条收集的内容用来筛选的文字：标题、正文、来源网址 / 文件路径、来源应用，转小写。
+ *
+ * @param entry 收集箱里的一条。
+ * @returns 小写的文字。
+ */
+export function entrySearchText(entry: InboxEntryDto): string {
+  const source = entry.sources[0];
+  return [
+    entry.item.title,
+    entry.item.content ?? "",
+    source?.sourceUrl ?? "",
+    source?.sourcePath ?? "",
+    source?.sourceApp ?? "",
+  ]
+    .join("\n")
+    .toLocaleLowerCase();
+}

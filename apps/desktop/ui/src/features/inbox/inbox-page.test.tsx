@@ -178,6 +178,37 @@ describe("InboxPage", () => {
     expect(box).not.toBeChecked();
   });
 
+  it("条目多时出现筛选框：只显示、只整理匹配的条目；Esc 清空，条目少了就收起", async () => {
+    const ipc = createMemoryIpc();
+    for (let index = 0; index < 8; index += 1) await capture(ipc, `杂项 ${index}`);
+    await capture(ipc, "周报草稿");
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("周报草稿");
+    // 9 条：还不显示筛选框。
+    expect(screen.queryByRole("searchbox", { name: "筛选收集箱" })).not.toBeInTheDocument();
+    await capture(ipc, "周报定稿");
+    act(() => ipc.emitDataChange());
+    const filter = await screen.findByRole("searchbox", { name: "筛选收集箱" });
+
+    fireEvent.change(filter, { target: { value: "周报" } });
+    const boxes = () =>
+      screen.getAllByRole("checkbox").filter((box) => box.hasAttribute("data-inbox-select"));
+    expect(boxes()).toHaveLength(2);
+
+    // Ctrl+A 与 T 只作用于看得见的两条。
+    fireEvent.keyDown(boxes()[0] as HTMLElement, { key: "a", ctrlKey: true });
+    fireEvent.keyDown(boxes()[0] as HTMLElement, { key: "t" });
+    await waitFor(() => expect(ipc.organizations).toHaveLength(1));
+    expect(ipc.organizations[0]?.ids).toHaveLength(2);
+
+    fireEvent.change(filter, { target: { value: "没有这个词" } });
+    expect(screen.getByText("没有匹配的条目。")).toHaveAttribute("role", "status");
+    fireEvent.keyDown(filter, { key: "Escape" });
+    // 整理掉两条后只剩 8 条：清空筛选后筛选框收起，全部条目回来。
+    expect(screen.queryByRole("searchbox", { name: "筛选收集箱" })).not.toBeInTheDocument();
+    expect(boxes()).toHaveLength(8);
+  });
+
   it("在勾选框上按 ↑ / ↓ 移到上一条 / 下一条的勾选框", async () => {
     const ipc = createMemoryIpc();
     for (const text of ["一", "二", "三"]) await capture(ipc, text);

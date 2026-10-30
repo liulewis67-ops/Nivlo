@@ -1,12 +1,4 @@
-/**
- * 筛选框里的文字拆成筛选词（转小写，按空白分开，去掉空词）。
- *
- * @param query 筛选框里的文字。
- * @returns 筛选词；为空时表示不筛选。
- */
-export function filterWords(query: string): string[] {
-  return query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
-}
+import { filterWords } from "@/lib/text-filter";
 
 /**
  * 一篇笔记用来筛选的文字：标题与内容，转小写。列表加载后算一次，输入时不再重复转换长文。
