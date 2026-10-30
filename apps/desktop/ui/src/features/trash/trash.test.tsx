@@ -114,6 +114,27 @@ describe("回收站", () => {
     expect(purgeFirst).toHaveFocus();
   });
 
+  it("项多时出现筛选框，按标题筛选；Esc 清空", async () => {
+    const ipc = createMemoryIpc();
+    for (let index = 0; index < 9; index += 1) {
+      await ipc.deleteItems([await seed(ipc, "todo", `旧待办 ${index}`)]);
+    }
+    await ipc.deleteItems([await seed(ipc, "note", "要找回的周报")]);
+    renderWithProviders(<TrashPage />, ipc);
+    const filter = await screen.findByRole("searchbox", { name: "按标题筛选回收站" });
+
+    fireEvent.change(filter, { target: { value: "周报" } });
+    const list = screen.getByRole("list", { name: "回收站里的条目" });
+    expect(within(list).getAllByRole("button", { name: /^恢复/ })).toHaveLength(1);
+    fireEvent.keyDown(filter, { key: "ArrowDown" });
+    expect(screen.getByRole("button", { name: "恢复「要找回的周报」" })).toHaveFocus();
+
+    fireEvent.change(filter, { target: { value: "没有这个词" } });
+    expect(screen.getByText("没有匹配的项。")).toBeInTheDocument();
+    fireEvent.keyDown(filter, { key: "Escape" });
+    expect(within(list).getAllByRole("button", { name: /^恢复/ })).toHaveLength(10);
+  });
+
   it("彻底删除需要再点一次确认；第一次点击什么都不会发生", async () => {
     const ipc = createMemoryIpc();
     const id = await seed(ipc, "note", "要彻底删除的");

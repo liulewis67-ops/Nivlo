@@ -494,7 +494,9 @@
     "deleted": "Deleted “{{title}}” — you can get it back from the trash",
     "deletedMany": "Deleted {{count}} items — you can get them back from the trash",
     "daysLeft_one": "{{count}} day until auto-removal",
-    "daysLeft_other": "{{count}} days until auto-removal"
+    "daysLeft_other": "{{count}} days until auto-removal",
+    "filter": "Filter the trash by title",
+    "noMatch": "No matching entries."
   },
   "settings": {
     "label": "Settings",

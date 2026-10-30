@@ -1,15 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { differenceInCalendarDays, parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, ConfirmButton } from "@/components";
+import { Button, ConfirmButton, Input } from "@/components";
 import { nextRemaining } from "@/lib/arrow-focus";
+import { filterWords, matchesAllWords } from "@/lib/text-filter";
 import { ipc } from "@/lib/ipc";
 import type { TrashEntryDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
+
+/** 回收站里有这么多项时才显示筛选框。 */
+export const TRASH_FILTER_MIN = 10;
 
 /**
  * 距离自动永久清除还剩几天（按日历天数，最少 0）。
@@ -40,6 +44,13 @@ export function TrashPage() {
     staleTime: Infinity,
   });
   const entries = trash.data ?? [];
+  const [filter, setFilter] = useState("");
+  const words = filterWords(filter);
+  // 按标题筛选：回收站最多留 30 天的东西，找回某一条时不用一路往下翻。
+  const shown =
+    words.length === 0
+      ? entries
+      : entries.filter((entry) => matchesAllWords(entry.item.title.toLocaleLowerCase(), words));
   const listRef = useRef<HTMLUListElement>(null);
   /** 处理完一项后要聚焦的那一项与按钮（0 恢复、1 彻底删除）；列表刷新后由下面的 Effect 聚焦。 */
   const refocus = useRef<{ id: string; button: number } | null>(null);
@@ -53,7 +64,7 @@ export function TrashPage() {
   function rememberNext(id: string, button: number): void {
     if (listRef.current?.contains(document.activeElement) !== true) return;
     const next = nextRemaining(
-      entries.map((entry) => entry.item.id),
+      shown.map((entry) => entry.item.id),
       [id],
     );
     refocus.current = next === null ? null : { id: next, button };
@@ -127,6 +138,30 @@ export function TrashPage() {
           />
         )}
       </header>
+      {(entries.length >= TRASH_FILTER_MIN || filter !== "") && (
+        <div className="px-6 pt-3">
+          <Input
+            type="search"
+            value={filter}
+            onChange={(event) => setFilter(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && filter !== "") {
+                event.preventDefault();
+                event.stopPropagation();
+                setFilter("");
+              } else if (event.key === "ArrowDown") {
+                const first = listRef.current?.querySelector<HTMLElement>("button");
+                if (first === null || first === undefined) return;
+                event.preventDefault();
+                first.focus();
+              }
+            }}
+            aria-label={t("trash.filter")}
+            placeholder={t("trash.filter")}
+            className="h-8"
+          />
+        </div>
+      )}
       {trash.data === undefined ? null : entries.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 px-8 text-center">
           <p className="text-base font-medium text-text">{t("trash.emptyTitle")}</p>
@@ -152,7 +187,12 @@ export function TrashPage() {
             next.focus();
           }}
         >
-          {entries.map((entry) => {
+          {shown.length === 0 && (
+            <li role="status" className="px-2 py-6 text-center text-sm text-muted">
+              {t("trash.noMatch")}
+            </li>
+          )}
+          {shown.map((entry) => {
             const left = daysLeft(entry);
             return (
               <li

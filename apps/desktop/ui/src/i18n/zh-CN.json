@@ -491,7 +491,9 @@
     "emptied": "已清空回收站（{{count}} 项）",
     "delete": "删除",
     "deleted": "已删除「{{title}}」，可在回收站找回",
-    "deletedMany": "已删除 {{count}} 项，可在回收站找回"
+    "deletedMany": "已删除 {{count}} 项，可在回收站找回",
+    "filter": "按标题筛选回收站",
+    "noMatch": "没有匹配的项。"
   },
   "settings": {
     "label": "设置",
