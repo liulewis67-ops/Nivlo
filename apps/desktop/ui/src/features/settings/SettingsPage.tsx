@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
 import { isLanguage, setLanguage } from "@/i18n";
 import { ShortcutSetting } from "@/features/shortcut";
+import { useNavStore } from "@/features/shell";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { AppSettingsDto, LaterRuleDto, RestoreStagedDto, WeekStartDto } from "@/lib/ipc";
@@ -97,8 +98,8 @@ const ACCENT_SWATCH: Record<(typeof ACCENTS)[number], string> = {
   amber: "#d97706",
 };
 
-/** 页首跳转链接：分组的锚点 ID 与标题的翻译键，顺序与页面上一致。 */
-const SECTION_LINKS: readonly (readonly [string, string])[] = [
+/** 设置分组：锚点 ID 与标题的翻译键，顺序与页面上一致（页首跳转链接与 Ctrl+K 的「设置：…」命令共用）。 */
+export const SETTINGS_SECTIONS: readonly (readonly [string, string])[] = [
   ["settings-general", "settings.section.general"],
   ["settings-floating", "settings.section.floating"],
   ["settings-shortcuts", "settings.section.shortcuts"],
@@ -224,6 +225,14 @@ export function SettingsPage() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
   });
 
+  // Ctrl+K「设置：…」打开时滚到那一组，然后清掉请求（再打开设置页时从头显示）。
+  const requestedSection = useNavStore((state) => state.settingsSection);
+  useEffect(() => {
+    if (requestedSection === null) return;
+    document.getElementById(requestedSection)?.scrollIntoView({ block: "start" });
+    useNavStore.getState().openSettings(null);
+  }, [requestedSection]);
+
   const current = settings.data;
   return (
     <div className="h-full overflow-y-auto">
@@ -235,7 +244,7 @@ export function SettingsPage() {
         <h1 className="text-2xl font-semibold text-text">{t("settings.title")}</h1>
         {/* 设置分组较多：页首列出各组，点一下滚到那里。 */}
         <nav aria-label={t("settings.jump")} className="-mt-3 flex flex-wrap gap-x-3 gap-y-1">
-          {SECTION_LINKS.map(([id, key]) => (
+          {SETTINGS_SECTIONS.map(([id, key]) => (
             <button
               key={id}
               type="button"

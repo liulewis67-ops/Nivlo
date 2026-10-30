@@ -151,7 +151,8 @@ describe("全局搜索（Ctrl+K）", () => {
     expect(within(commands).getByRole("option", { name: /前往：收集箱/ })).toBeInTheDocument();
 
     typeQuery("> 设置");
-    expect(within(commands).getAllByRole("option")).toHaveLength(1);
+    // 「前往：设置」排在「设置：…」各分组之前，回车执行它。
+    expect(within(commands).getAllByRole("option")[0]).toHaveAccessibleName(/前往：设置/);
     fireEvent.keyDown(screen.getByLabelText("搜索关键词"), { key: "Enter" });
     expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
     expect(useNavStore.getState().view).toBe("settings");
@@ -290,6 +291,24 @@ describe("键盘快捷键一览", () => {
     expect(screen.queryByRole("dialog", { name: "键盘快捷键" })).not.toBeInTheDocument();
   });
 
+  it("「设置：快捷键」打开设置页并滚到那一组", async () => {
+    const scrolled: string[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this.id);
+    };
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery("> 设置 快捷键");
+    fireEvent.keyDown(screen.getByLabelText("搜索关键词"), { key: "Enter" });
+
+    expect(useNavStore.getState().view).toBe("settings");
+    await waitFor(() => expect(scrolled).toContain("settings-shortcuts"));
+    expect(useNavStore.getState().settingsSection).toBeNull();
+    Element.prototype.scrollIntoView = original;
+  });
+
   it("Ctrl+K 的命令也能打开", async () => {
     renderWithProviders(<MainShell />, createMemoryIpc());
     pressCtrlK();
@@ -346,7 +365,7 @@ describe("导出诊断信息命令", () => {
     pressCtrlK();
     await screen.findByRole("dialog", { name: "搜索" });
     typeQuery("> 诊断");
-    fireEvent.click(screen.getByRole("option", { name: /诊断/ }));
+    fireEvent.click(screen.getByRole("option", { name: /导出诊断信息/ }));
     await waitFor(() => expect(ipc.calls).toContain("exportDiagnostics"));
   });
 });

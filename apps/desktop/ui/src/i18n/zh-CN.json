@@ -467,7 +467,8 @@
       "due": "截止 {{date}}"
     },
     "windowHint": "输入关键词或拼音首字母，搜索标题、正文和来源；回车在主窗口中打开。",
-    "globalTip": "在任何应用里搜索"
+    "globalTip": "在任何应用里搜索",
+    "settingsGroup": "设置：{{group}}"
   },
   "trash": {
     "label": "回收站",

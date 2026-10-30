@@ -21,6 +21,11 @@ if (typeof window.matchMedia !== "function") {
     }) as MediaQueryList;
 }
 
+// jsdom 没有 scrollIntoView（设置页的分组跳转用到）。
+if (typeof Element.prototype.scrollIntoView !== "function") {
+  Element.prototype.scrollIntoView = () => undefined;
+}
+
 afterEach(() => {
   cleanup();
 });

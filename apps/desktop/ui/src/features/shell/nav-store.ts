@@ -46,6 +46,10 @@ type NavState = {
   freshNoteId: string | null;
   /** 切到 Notes 视图并打开一篇笔记；`fresh` 表示刚新建。 */
   openNote: (id: string, fresh?: boolean) => void;
+  /** 设置页要滚到的分组（锚点 ID）；设置页滚过去后清空。 */
+  settingsSection: string | null;
+  /** 打开设置页并滚到某个分组（Ctrl+K 的「设置：…」命令）；`null` 表示清空。 */
+  openSettings: (section: string | null) => void;
 };
 
 /**
@@ -60,6 +64,11 @@ export const useNavStore = create<NavState>((set) => ({
     set((state) => ({ view, freshNoteId: view === "notes" ? state.freshNoteId : null })),
   noteId: null,
   freshNoteId: null,
+  settingsSection: null,
+  openSettings: (section) =>
+    set(
+      section === null ? { settingsSection: null } : { view: "settings", settingsSection: section },
+    ),
   openNote: (id, fresh = false) =>
     set((state) => ({
       view: "notes",

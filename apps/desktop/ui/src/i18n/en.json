@@ -469,7 +469,8 @@
       "due": "Due {{date}}"
     },
     "windowHint": "Type keywords to search titles, content and sources. Enter opens it in the main window.",
-    "globalTip": "Search from any app"
+    "globalTip": "Search from any app",
+    "settingsGroup": "Settings: {{group}}"
   },
   "trash": {
     "label": "Trash",

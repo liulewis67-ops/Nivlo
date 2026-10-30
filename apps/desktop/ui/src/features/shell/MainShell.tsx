@@ -9,7 +9,7 @@ import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
 import { InboxPage, useInboxCountQuery } from "@/features/inbox";
 import { NotesPage } from "@/features/notes";
 import { OnboardingDialog } from "@/features/onboarding";
-import { useUpdateCheckOnStart } from "@/features/settings";
+import { useUpdateCheckOnStart, SETTINGS_SECTIONS } from "@/features/settings";
 import { ProjectsPage } from "@/features/projects";
 import { CommandPalette, GOTO_VIEWS } from "@/features/search";
 import type { PaletteCommand } from "@/features/search";
@@ -104,6 +104,7 @@ export function MainShell() {
   const view = useNavStore((state) => state.view);
   const setView = useNavStore((state) => state.setView);
   const openNote = useNavStore((state) => state.openNote);
+  const openSettings = useNavStore((state) => state.openSettings);
   const remaining = useTodayQuery().data?.remainingCount ?? null;
   const inboxCount = useInboxCountQuery().data ?? null;
   /** 详情面板里正在编辑的条目；`null` 表示面板关闭。 */
@@ -221,6 +222,13 @@ export function MainShell() {
             },
           },
         ]),
+    // 「设置：快捷键」等：直接打开设置页的某一组；排在最后，免得「快捷键」先命中设置分组而不是快捷键一览。
+    ...SETTINGS_SECTIONS.map(([section, key]) => ({
+      id: `goto-${section}`,
+      label: t("search.settingsGroup", { group: t(key) }),
+      keywords: ["settings", section.replace("settings-", "")],
+      run: () => openSettings(section),
+    })),
   ];
 
   // Ctrl+K（macOS 上 ⌘K）打开 / 关闭搜索面板；Ctrl+1…5 切到侧栏上方的各个视图，Ctrl+, 打开设置。
