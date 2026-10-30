@@ -182,6 +182,15 @@ describe("CalendarPage 月视图", () => {
     expect(next.closest("[role=gridcell]")).toHaveAccessibleName(/11月/);
   });
 
+  it("翻页后新一页加载完之前，网格标为忙（仍是上一页），到了再恢复", async () => {
+    renderWithProviders(<CalendarPage />, createMemoryIpc());
+    await screen.findByRole("heading", { name: "2026年10月" });
+    fireEvent.keyDown(document.body, { key: "j" });
+    expect(screen.getByRole("grid")).toHaveAttribute("aria-busy", "true");
+    await screen.findByRole("gridcell", { name: /11月30日/ });
+    expect(screen.getByRole("grid")).toHaveAttribute("aria-busy", "false");
+  });
+
   it("一周起始日设置为周日时，表头与网格跟着变", async () => {
     const ipc = createMemoryIpc();
     await ipc.setWeekStart("sunday");

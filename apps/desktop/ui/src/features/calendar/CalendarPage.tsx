@@ -356,7 +356,13 @@ export function CalendarPage() {
     function handleKeyDown(event: globalThis.KeyboardEvent): void {
       // Ctrl+N：在今天（今天不在这一页时在这一页的锚点日期）原地写一条待办，与其他页的「新建」一致。
       const range = calendar.data;
-      if (isCommandKey(event, "n") && !isDialogOpen() && range !== undefined) {
+      // 翻页后新一页还在加载时，网格仍是上一页：先不响应，免得写到看不见的那天。
+      if (
+        isCommandKey(event, "n") &&
+        !isDialogOpen() &&
+        range !== undefined &&
+        !calendar.isPlaceholderData
+      ) {
         event.preventDefault();
         const inRange = today !== null && today >= range.from && today <= range.to;
         setAdding(inRange ? today : (effectiveAnchor ?? range.from));
@@ -380,7 +386,7 @@ export function CalendarPage() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [view, effectiveAnchor, today, calendar.data]);
+  }, [view, effectiveAnchor, today, calendar.data, calendar.isPlaceholderData]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX } }),
@@ -553,8 +559,14 @@ export function CalendarPage() {
             <div
               role="grid"
               aria-label={title}
+              // 翻页后新一页的数据到之前，网格还是上一页：调淡并标为忙，免得和新标题对不上。
+              aria-busy={calendar.isPlaceholderData}
               onKeyDown={moveBetweenDays}
-              className="flex min-h-0 min-w-0 flex-1 flex-col"
+              className={cx(
+                "flex min-h-0 min-w-0 flex-1 flex-col",
+                "transition-opacity duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
+                calendar.isPlaceholderData && "pointer-events-none opacity-50",
+              )}
             >
               <div role="row" className="grid grid-cols-7 border-b border-border bg-surface">
                 {weekdayLabels(data.from).map((label) => (
