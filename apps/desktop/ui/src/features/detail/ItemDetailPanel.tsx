@@ -132,6 +132,7 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   const item = detail?.item;
   const { remove } = useDeleteItems();
   const panelRef = useRef<HTMLElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   // 打开时把焦点移进面板；关闭时还给打开它的那一行。焦点已经在面板里（如点了里面的字段）时不动；
   // 关闭时焦点已经去了别处（点了另一行），或那一行已经不在（删除了）时也不抢。
@@ -153,7 +154,7 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   }, [id]);
 
   /**
-   * Esc 关闭面板（在输入框里也一样：自动保存会在卸载时完成）。
+   * Esc 关闭面板（在输入框里也一样：自动保存会在卸载时完成）；刚打开时的第一下 Tab 进到标题。
    *
    * @param event 键盘事件。
    */
@@ -161,6 +162,15 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
     if (event.key === "Escape") {
       event.stopPropagation();
       onClose();
+    } else if (
+      event.key === "Tab" &&
+      !event.shiftKey &&
+      event.target === panelRef.current &&
+      titleRef.current !== null
+    ) {
+      // 刚打开时焦点在面板本身：第一下 Tab 进到标题，而不是页首的「删除」，免得 Tab、Enter 误删。
+      event.preventDefault();
+      titleRef.current.focus();
     }
   }
 
@@ -253,6 +263,7 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
           </Field>
           <Field label={t("detail.field.title")}>
             <Input
+              ref={titleRef}
               aria-label={t("detail.field.title")}
               value={draft.title}
               onChange={(event) => edit({ title: event.target.value })}

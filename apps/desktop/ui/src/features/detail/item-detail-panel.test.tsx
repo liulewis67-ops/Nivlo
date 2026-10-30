@@ -232,6 +232,10 @@ describe("ItemDetailPanel", () => {
     const panel = screen.getByRole("complementary", { name: "条目详情" });
     expect(panel).toHaveFocus();
 
+    // 第一下 Tab 进到标题，而不是「删除」。
+    fireEvent.keyDown(panel, { key: "Tab" });
+    expect(screen.getByLabelText("标题")).toHaveFocus();
+    panel.focus();
     fireEvent.keyDown(panel, { key: "Escape" });
     expect(screen.queryByRole("complementary", { name: "条目详情" })).not.toBeInTheDocument();
     expect(row).toHaveFocus();
