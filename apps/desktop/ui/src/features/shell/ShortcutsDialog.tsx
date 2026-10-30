@@ -66,6 +66,7 @@ const SECTIONS: readonly Section[] = [
       ["↑ ↓", "shortcuts.today.move"],
       ["Ctrl+N", "shortcuts.today.add"],
       ["↓", "shortcuts.today.fromInput"],
+      ["↵", "shortcuts.today.open"],
       ["M", "shortcuts.today.tomorrow"],
       ["Delete", "shortcuts.today.delete"],
       ["Space", "shortcuts.today.reorder"],

@@ -1025,7 +1025,8 @@
       "fromInput": "In the add box: jump into the list (↑ on the first to-do comes back)",
       "tomorrow": "Move to tomorrow (can be undone)",
       "delete": "Delete (can be undone)",
-      "add": "Jump to the add box"
+      "add": "Jump to the add box",
+      "open": "Open details (Space completes)"
     },
     "inbox": {
       "move": "Move between items",

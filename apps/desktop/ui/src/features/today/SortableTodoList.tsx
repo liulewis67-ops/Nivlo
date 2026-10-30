@@ -21,6 +21,7 @@ import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ContextMenu, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
+import { useOpenItem } from "@/features/detail";
 import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto } from "@/lib/ipc";
@@ -270,6 +271,7 @@ export function SortableTodoList({
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
   const listRef = useRef<HTMLUListElement>(null);
+  const openItem = useOpenItem();
   /** 完成之后要聚焦的那一行（完成前焦点在列表里时才有）；列表更新后由下面的 Effect 聚焦。 */
   const refocusId = useRef<string | null>(null);
 
@@ -300,21 +302,27 @@ export function SortableTodoList({
 
   /**
    * 列表上的按键：↑ / ↓ 在完成框之间移动；在某一条的完成框上按 M 推迟到明天（和菜单里的「明天」一样，带撤销），
-   * 按 Delete 删除（有删除回调时，同样带撤销）。
+   * 按 Delete 删除（有删除回调时，同样带撤销），按 Enter 打开详情（主窗口里）。
    *
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLUListElement>): void {
     if (moveFocusWithArrows(event, "[role=checkbox]")) return;
     const deleting = event.key === "Delete" && onDelete !== undefined;
+    // Enter 打开详情（主窗口里）：完成框是按钮，原本 Enter 也会勾选，容易误完成；勾选只用空格。
+    const opening = event.key === "Enter" && openItem !== null;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
-    if (event.key.toLowerCase() !== "m" && !deleting) return;
+    if (event.key.toLowerCase() !== "m" && !deleting && !opening) return;
     const target = event.target;
     if (!(target instanceof HTMLElement) || target.getAttribute("role") !== "checkbox") return;
     const id = target.closest<HTMLElement>("[data-todo-id]")?.dataset.todoId;
     const item = todos.find((todo) => todo.id === id);
     if (item === undefined) return;
     event.preventDefault();
+    if (opening) {
+      openItem(item.id);
+      return;
+    }
     rememberNext(item);
     if (deleting) onDelete(item);
     else onPostpone(item, "tomorrow");

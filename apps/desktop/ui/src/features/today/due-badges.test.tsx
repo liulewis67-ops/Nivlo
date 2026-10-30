@@ -2,6 +2,7 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
+import { OpenItemContext } from "@/features/detail";
 import { renderWithProviders } from "@/test/render";
 import { TodayList } from "./TodayList";
 
@@ -194,6 +195,28 @@ describe("Today 里的键盘移动", () => {
     box("没有截止").focus();
     fireEvent.click(box("没有截止"));
     expect(box("下周截止")).toHaveFocus();
+  });
+
+  it("主窗口里在完成框上按 Enter 打开详情，不会勾选", () => {
+    const opened: string[] = [];
+    const completed: string[] = [];
+    renderWithProviders(
+      <OpenItemContext.Provider value={(id) => opened.push(id)}>
+        <TodayList
+          view={VIEW}
+          onComplete={(item) => completed.push(item.id)}
+          onMove={() => undefined}
+          onPostpone={() => undefined}
+          onReopen={() => undefined}
+        />
+      </OpenItemContext.Provider>,
+    );
+    const box = screen.getByRole("checkbox", { name: "完成「今天截止」" });
+    box.focus();
+    const enter = fireEvent.keyDown(box, { key: "Enter" });
+    expect(enter).toBe(false);
+    expect(opened).toEqual(["b"]);
+    expect(completed).toEqual([]);
   });
 
   it("在完成框上按 M 推迟到明天，焦点落在下一条", () => {
