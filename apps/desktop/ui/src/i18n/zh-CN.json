@@ -1036,7 +1036,8 @@
       "filterOpen": "在筛选框里：打开第一篇匹配的笔记",
       "filterClear": "在筛选框里：清空筛选",
       "new": "新建一篇笔记",
-      "format": "Markdown 笔记里加粗 / 斜体（再按取消）"
+      "format": "Markdown 笔记里加粗 / 斜体（再按取消）",
+      "indent": "列表项缩进 / 取消缩进（Enter 续上记号）"
     },
     "calendar": {
       "page": "下一段 / 上一段（月或周）",

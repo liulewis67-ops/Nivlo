@@ -265,6 +265,23 @@ describe("NotesPage", () => {
     expect(body).toHaveValue("- 买牛奶\n");
   });
 
+  it("列表项上 Tab 缩进、Shift+Tab 取消；不在列表里时 Tab 不拦", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "清单", "说明\n- 子项");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+
+    body.setSelectionRange(7, 7);
+    expect(fireEvent.keyDown(body, { key: "Tab" })).toBe(false);
+    expect(body).toHaveValue("说明\n  - 子项");
+    fireEvent.keyDown(body, { key: "Tab", shiftKey: true });
+    expect(body).toHaveValue("说明\n- 子项");
+
+    body.setSelectionRange(1, 1);
+    expect(fireEvent.keyDown(body, { key: "Tab" })).toBe(true);
+    expect(body).toHaveValue("说明\n- 子项");
+  });
+
   it("切换格式会保存 content_format", async () => {
     const ipc = createMemoryIpc();
     await ipc.createItem({

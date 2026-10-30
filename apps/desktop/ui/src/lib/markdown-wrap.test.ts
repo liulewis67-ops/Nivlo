@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { continueMarkdownList, toggleMarkdownWrap } from "./markdown-wrap";
+import { continueMarkdownList, indentMarkdownList, toggleMarkdownWrap } from "./markdown-wrap";
 
 describe("toggleMarkdownWrap", () => {
   it("给选中的文字加上标记，选区仍框住原来的文字", () => {
@@ -57,5 +57,30 @@ describe("continueMarkdownList", () => {
       start: 6,
       end: 6,
     });
+  });
+});
+
+describe("indentMarkdownList", () => {
+  it("Tab 缩进光标所在的列表项，光标跟着移动", () => {
+    expect(indentMarkdownList("- 一\n- 二", 7, 7, false)).toEqual({
+      value: "- 一\n  - 二",
+      start: 9,
+      end: 9,
+    });
+  });
+
+  it("Shift+Tab 取消缩进，最多两个空格，没有缩进时不变", () => {
+    expect(indentMarkdownList("  - 二", 4, 4, true)).toEqual({ value: "- 二", start: 2, end: 2 });
+    expect(indentMarkdownList("- 二", 2, 2, true)).toEqual({ value: "- 二", start: 2, end: 2 });
+  });
+
+  it("选中多行时只动其中的列表项", () => {
+    expect(indentMarkdownList("标题\n- 一\n- 二", 0, 10, false)?.value).toBe(
+      "标题\n  - 一\n  - 二",
+    );
+  });
+
+  it("不在列表里时返回 null，Tab 照常移走焦点", () => {
+    expect(indentMarkdownList("普通的一行", 2, 2, false)).toBeNull();
   });
 });

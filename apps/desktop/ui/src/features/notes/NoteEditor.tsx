@@ -6,7 +6,7 @@ import { useOrganize } from "@/features/inbox";
 import { useDeleteItems } from "@/features/trash";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
-import { continueMarkdownList, toggleMarkdownWrap } from "@/lib/markdown-wrap";
+import { continueMarkdownList, indentMarkdownList, toggleMarkdownWrap } from "@/lib/markdown-wrap";
 import type { WrapResult } from "@/lib/markdown-wrap";
 import { isCommandKey } from "@/lib/typing";
 
@@ -77,7 +77,7 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
 
   /**
    * Markdown 笔记的正文：Ctrl+B 加粗、Ctrl+I 斜体（再按一次取消）；在列表项末尾按 Enter 续上记号，
-   * 空的一项按 Enter 结束列表。输入法组字时的 Enter 不处理。
+   * 空的一项按 Enter 结束列表；列表项上 Tab / Shift+Tab 缩进 / 取消缩进。输入法组字时的 Enter 不处理。
    *
    * @param event 键盘事件。
    */
@@ -93,12 +93,16 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
       !event.ctrlKey &&
       !event.metaKey &&
       !event.altKey;
+    // Tab / Shift+Tab 只在列表项上缩进；不在列表里时照常移走焦点。
+    const tab = event.key === "Tab" && !event.ctrlKey && !event.metaKey && !event.altKey;
     const next =
       marker !== null
         ? toggleMarkdownWrap(value, start, end, marker)
         : plainEnter
           ? continueMarkdownList(value, start, end)
-          : null;
+          : tab
+            ? indentMarkdownList(value, start, end, event.shiftKey)
+            : null;
     if (next === null) return;
     event.preventDefault();
     applyBodyEdit(area, next);

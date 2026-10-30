@@ -1041,7 +1041,8 @@
       "filterOpen": "In the filter: open the first match",
       "filterClear": "In the filter: clear it",
       "new": "New note",
-      "format": "Bold / italic in Markdown notes (press again to remove)"
+      "format": "Bold / italic in Markdown notes (press again to remove)",
+      "indent": "Indent / outdent list items (Enter continues the list)"
     },
     "calendar": {
       "page": "Next / previous month or week",

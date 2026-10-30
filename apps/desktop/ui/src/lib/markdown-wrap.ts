@@ -58,11 +58,7 @@ const LIST_ITEM = /^(\s*)([-*+]|\d+\.)(\s+)(\[[ xX]\]\s+)?(.*)$/;
  * @param end 选区终点。
  * @returns 新的全文与光标位置；不需要特殊处理时为 `null`。
  */
-export function continueMarkdownList(
-  value: string,
-  start: number,
-  end: number,
-): WrapResult | null {
+export function continueMarkdownList(value: string, start: number, end: number): WrapResult | null {
   if (start !== end) return null;
   const lineStart = value.lastIndexOf("\n", start - 1) + 1;
   const lineEnd = value.indexOf("\n", start);
@@ -84,4 +80,49 @@ export function continueMarkdownList(
   const prefix = `\n${indent}${nextMarker}${gap}${task === undefined ? "" : "[ ] "}`;
   const caret = start + prefix.length;
   return { value: value.slice(0, start) + prefix + value.slice(start), start: caret, end: caret };
+}
+
+/** 列表缩进一级用的空格。 */
+const LIST_INDENT = "  ";
+
+/**
+ * Markdown 列表里按 Tab / Shift+Tab：给选区涉及的列表项整行缩进 / 取消缩进一级（两个空格）。
+ *
+ * 选区涉及的行里一个列表项都没有时返回 `null`，Tab 照常把焦点移走，键盘用户不会被困在正文里。
+ *
+ * @param value 全文。
+ * @param start 选区起点。
+ * @param end 选区终点。
+ * @param outdent 是否取消缩进（Shift+Tab）。
+ * @returns 新的全文与选区；不处理时为 `null`。
+ */
+export function indentMarkdownList(
+  value: string,
+  start: number,
+  end: number,
+  outdent: boolean,
+): WrapResult | null {
+  const first = value.lastIndexOf("\n", start - 1) + 1;
+  const lastBreak = value.indexOf("\n", end);
+  const last = lastBreak === -1 ? value.length : lastBreak;
+  const lines = value.slice(first, last).split("\n");
+  if (!lines.some((line) => LIST_ITEM.test(line))) return null;
+  let shiftStart = 0;
+  let shiftEnd = 0;
+  let offset = first;
+  const changed = lines.map((line, index) => {
+    const lineStart = offset;
+    offset += line.length + 1;
+    if (!LIST_ITEM.test(line)) return line;
+    const delta = outdent ? -Math.min(LIST_INDENT.length, /^ */.exec(line)?.[0].length ?? 0) : 2;
+    if (index === 0 && start >= lineStart) shiftStart = delta;
+    if (end >= lineStart) shiftEnd += delta;
+    // 注意 outdent 时 delta 可能是 -0：按「是否取消缩进」分支，而不是看正负。
+    return outdent ? line.slice(-delta) : LIST_INDENT + line;
+  });
+  return {
+    value: value.slice(0, first) + changed.join("\n") + value.slice(last),
+    start: Math.max(first, start + shiftStart),
+    end: Math.max(first, end + shiftEnd),
+  };
 }
