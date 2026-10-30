@@ -1,4 +1,4 @@
-import type { TodayViewDto } from "@/lib/ipc";
+import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
 import { TodayList } from "./TodayList";
 import { useCompleteTodo } from "./useCompleteTodo";
 import { useReorderToday } from "./useReorderToday";
@@ -8,6 +8,8 @@ import { useRescheduleTodo } from "./useRescheduleTodo";
 export type TodayBoardProps = {
   /** 后端返回的 Today 视图（已排序）。 */
   view: TodayViewDto;
+  /** 删除一条待办（Delete 键）；只有主窗口传（悬浮窗没有删除权限）。 */
+  onDelete?: ((item: TodayItemDto) => void) | undefined;
 };
 
 /**
@@ -19,7 +21,7 @@ export type TodayBoardProps = {
  * @param props 后端返回的 Today 视图。
  * @returns 列表元素；没有任何内容时返回 `null`，由调用方显示空状态。
  */
-export function TodayBoard({ view }: TodayBoardProps) {
+export function TodayBoard({ view, onDelete }: TodayBoardProps) {
   const { complete, reopen } = useCompleteTodo();
   const move = useReorderToday();
   const { postpone } = useRescheduleTodo();
@@ -30,6 +32,7 @@ export function TodayBoard({ view }: TodayBoardProps) {
       onMove={(activeId, overId) => void move(activeId, overId)}
       onPostpone={(item, kind) => void postpone(item, kind)}
       onReopen={(item) => void reopen(item)}
+      onDelete={onDelete}
     />
   );
 }

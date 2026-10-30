@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "@/components";
 import { DatePhraseChip, normalizeTitle, resolveKey, useDatePhrase } from "@/features/quick-create";
 import type { DatePhraseResult } from "@/features/quick-create";
+import { useDeleteItems } from "@/features/trash";
 import { useToastStore } from "@/stores/toast-store";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
@@ -49,6 +50,7 @@ export function TodayPage() {
     },
   });
 
+  const { remove } = useDeleteItems();
   const sectionRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -153,7 +155,7 @@ export function TodayPage() {
       {hasContent ? (
         <div className="min-h-0 flex-1 overflow-y-auto pb-6">
           <div className="mx-auto w-full max-w-3xl px-5">
-            <TodayBoard view={view} />
+            <TodayBoard view={view} onDelete={(item) => void remove([item.id], item.title)} />
           </div>
         </div>
       ) : (

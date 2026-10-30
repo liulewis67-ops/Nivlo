@@ -23,6 +23,8 @@ export type TodayListProps = {
   onPostpone: (item: TodayItemDto, kind: PostponeKind) => void;
   /** 取消勾选一条今日已完成的待办时调用。 */
   onReopen: (item: TodayItemDto) => void;
+  /** 删除一条待办（Delete 键）；不传时 Delete 不起作用（悬浮窗没有删除权限）。 */
+  onDelete?: ((item: TodayItemDto) => void) | undefined;
 };
 
 /**
@@ -45,7 +47,14 @@ function timeLabel(item: TodayItemDto): string | null {
  * @param props 后端返回的 Today 视图与完成 / 重新打开回调。
  * @returns 列表元素；没有任何内容时返回 `null`，由调用方显示空状态。
  */
-export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: TodayListProps) {
+export function TodayList({
+  view,
+  onComplete,
+  onMove,
+  onPostpone,
+  onReopen,
+  onDelete,
+}: TodayListProps) {
   const { t } = useTranslation();
   const hideCompleted = useDisplayStore((state) => state.hideCompleted);
   const completed = hideCompleted ? [] : view.completed;
@@ -82,6 +91,7 @@ export function TodayList({ view, onComplete, onMove, onPostpone, onReopen }: To
           onComplete={onComplete}
           onMove={onMove}
           onPostpone={onPostpone}
+          onDelete={onDelete}
         />
       )}
       {view.tips.length > 0 && (

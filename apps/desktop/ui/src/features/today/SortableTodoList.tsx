@@ -74,6 +74,8 @@ export type SortableTodoListProps = {
   onMove: (activeId: string, overId: string) => void;
   /** 把一条待办推迟到某个目标（菜单或拖到底部区域）。 */
   onPostpone: (item: TodayItemDto, kind: PostponeKind) => void;
+  /** 删除一条待办（Delete 键）；不传时 Delete 不起作用（悬浮窗没有删除权限）。 */
+  onDelete?: ((item: TodayItemDto) => void) | undefined;
 };
 
 /** [`SortableTodo`] 的 Props。 */
@@ -263,6 +265,7 @@ export function SortableTodoList({
   onComplete,
   onMove,
   onPostpone,
+  onDelete,
 }: SortableTodoListProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
@@ -296,13 +299,16 @@ export function SortableTodoList({
   }
 
   /**
-   * 列表上的按键：↑ / ↓ 在完成框之间移动；在某一条的完成框上按 M 推迟到明天（和菜单里的「明天」一样，带撤销）。
+   * 列表上的按键：↑ / ↓ 在完成框之间移动；在某一条的完成框上按 M 推迟到明天（和菜单里的「明天」一样，带撤销），
+   * 按 Delete 删除（有删除回调时，同样带撤销）。
    *
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLUListElement>): void {
     if (moveFocusWithArrows(event, "[role=checkbox]")) return;
-    if (event.key.toLowerCase() !== "m" || event.ctrlKey || event.metaKey || event.altKey) return;
+    const deleting = event.key === "Delete" && onDelete !== undefined;
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.key.toLowerCase() !== "m" && !deleting) return;
     const target = event.target;
     if (!(target instanceof HTMLElement) || target.getAttribute("role") !== "checkbox") return;
     const id = target.closest<HTMLElement>("[data-todo-id]")?.dataset.todoId;
@@ -310,7 +316,8 @@ export function SortableTodoList({
     if (item === undefined) return;
     event.preventDefault();
     rememberNext(item);
-    onPostpone(item, "tomorrow");
+    if (deleting) onDelete(item);
+    else onPostpone(item, "tomorrow");
   }
 
   // 列表更新（完成的行已离开）后把焦点放到记下的那一行。只操作 DOM，不改状态。

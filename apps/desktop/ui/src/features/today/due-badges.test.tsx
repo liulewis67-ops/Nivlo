@@ -227,6 +227,45 @@ describe("Today 里的键盘移动", () => {
     expect(box("明天截止")).toHaveFocus();
   });
 
+  it("在完成框上按 Delete 删除（只在给了删除回调时），焦点落在下一条", () => {
+    const deleted: string[] = [];
+    /** 删除即从列表移走；`deletable` 为假时模拟悬浮窗（不给删除回调）。 */
+    function Host({ deletable }: { deletable: boolean }) {
+      const [view, setView] = useState(VIEW);
+      return (
+        <TodayList
+          view={view}
+          onComplete={() => undefined}
+          onMove={() => undefined}
+          onPostpone={() => undefined}
+          onReopen={() => undefined}
+          onDelete={
+            deletable
+              ? (item) => {
+                  deleted.push(item.id);
+                  setView((current) => ({
+                    ...current,
+                    todos: current.todos.filter((todo) => todo.id !== item.id),
+                  }));
+                }
+              : undefined
+          }
+        />
+      );
+    }
+    const box = (title: string) => screen.getByRole("checkbox", { name: `完成「${title}」` });
+    const floating = renderWithProviders(<Host deletable={false} />);
+    fireEvent.keyDown(box("今天截止"), { key: "Delete" });
+    expect(screen.getAllByRole("checkbox")).toHaveLength(5);
+    floating.unmount();
+
+    renderWithProviders(<Host deletable />);
+    box("今天截止").focus();
+    fireEvent.keyDown(box("今天截止"), { key: "Delete" });
+    expect(deleted).toEqual(["b"]);
+    expect(box("明天截止")).toHaveFocus();
+  });
+
   it("取消勾选已完成的一条后，焦点落在它回到待办列表后的完成框", () => {
     const done: TodayItemDto = { ...todo("z", "做完的", null), status: "done" };
     /** 取消勾选即回到待办列表，和真实的乐观更新一样。 */
