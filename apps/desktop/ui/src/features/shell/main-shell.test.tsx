@@ -213,6 +213,17 @@ describe("MainShell", () => {
     expect(input).toHaveFocus();
   });
 
+  it("添加框里按 Esc 清空写了一半的内容和识别出的日期", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    renderWithProviders(<MainShell />, ipc);
+    const input = await screen.findByRole("textbox", { name: "添加待办" });
+    fireEvent.change(input, { target: { value: "明天 买牛奶" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(input).toHaveValue("");
+    expect(ipc.items).toHaveLength(0);
+  });
+
   it("空标题不会提交", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();

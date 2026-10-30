@@ -53,7 +53,7 @@ export function TodayPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   /**
-   * 处理按键：Enter 创建待办（输入法组合期间与空标题不提交）；↓ 移到第一条待办的完成框。
+   * 处理按键：Enter 创建待办（输入法组合期间与空标题不提交），Esc 清空；↓ 移到第一条待办的完成框。
    *
    * @param event 键盘事件。
    */
@@ -72,6 +72,14 @@ export function TodayPage() {
       isComposing: event.nativeEvent.isComposing,
       title,
     });
+    if (action === "cancel" && title !== "") {
+      // Esc 清空写了一半的内容（连同识别出的日期）；空的时候不拦，交给页面。
+      event.preventDefault();
+      event.stopPropagation();
+      setTitle("");
+      datePhrase.reset();
+      return;
+    }
     if (action === "submit") {
       event.preventDefault();
       // 立即清空输入框，用户可以紧接着输入下一条（连续记录多件事），不必等后端返回。
