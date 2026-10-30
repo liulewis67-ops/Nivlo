@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { InboxEntryDto, ItemDto } from "@/lib/ipc";
-import { baseName, pruneSelection, selectRange, shortenUrl, summarizeEntry } from "./inbox-entry";
+import {
+  baseName,
+  nextRemaining,
+  pruneSelection,
+  selectRange,
+  shortenUrl,
+  summarizeEntry,
+} from "./inbox-entry";
 
 /** 构造一条 Inbox 条目，只覆盖测试关心的部分。 */
 function entry(partial: Partial<InboxEntryDto>): InboxEntryDto {
@@ -152,5 +159,22 @@ describe("pruneSelection", () => {
   it("没有变化时返回同一个集合", () => {
     const selected = new Set(["a"]);
     expect(pruneSelection(selected, ["a", "b"])).toBe(selected);
+  });
+});
+
+describe("nextRemaining", () => {
+  const order = ["a", "b", "c", "d"];
+
+  it("取最后一个被整理的条目后面第一条留下的", () => {
+    expect(nextRemaining(order, ["b"])).toBe("c");
+    expect(nextRemaining(order, ["a", "c"])).toBe("d");
+    expect(nextRemaining(order, ["b", "c"])).toBe("d");
+  });
+
+  it("后面没有了就取前面最近的一条；全部整理掉时为 null", () => {
+    expect(nextRemaining(order, ["d"])).toBe("c");
+    expect(nextRemaining(order, ["c", "d"])).toBe("b");
+    expect(nextRemaining(order, order)).toBeNull();
+    expect(nextRemaining([], [])).toBeNull();
   });
 });

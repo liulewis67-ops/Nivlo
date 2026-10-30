@@ -109,3 +109,23 @@ export function pruneSelection(
   const kept = [...selected].filter((id) => present.has(id));
   return kept.length === selected.size ? selected : new Set(kept);
 }
+
+/**
+ * 整理掉一批条目之后，焦点该落在哪一行：最后一个被整理的条目后面第一条留下的；后面没有就取前面最近的一条。
+ *
+ * @param order 列表里的 ID 顺序。
+ * @param removed 被整理的 ID。
+ * @returns 留下的那一行的 ID；全部被整理时为 `null`。
+ */
+export function nextRemaining(order: readonly string[], removed: readonly string[]): string | null {
+  const gone = new Set(removed);
+  const last = Math.max(...order.map((id, index) => (gone.has(id) ? index : -1)));
+  const after = order.slice(last + 1).find((id) => !gone.has(id));
+  if (after !== undefined) return after;
+  return (
+    order
+      .slice(0, Math.max(last, 0))
+      .reverse()
+      .find((id) => !gone.has(id)) ?? null
+  );
+}

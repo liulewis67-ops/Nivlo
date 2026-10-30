@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Menu } from "@/components";
@@ -7,7 +7,7 @@ import type { ItemTypeDto } from "@/lib/ipc";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { useInboxQuery } from "./api";
 import { InboxRow } from "./InboxRow";
-import { pruneSelection, selectRange } from "./model/inbox-entry";
+import { nextRemaining, pruneSelection, selectRange } from "./model/inbox-entry";
 import { useOrganize } from "./useOrganize";
 import { useDeleteItems } from "@/features/trash";
 import type { OrganizeKind } from "./useOrganize";
@@ -58,6 +58,9 @@ export function InboxPage() {
   }, [paste]);
   const [picked, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  /** 整理之后要聚焦的那一行（整理前焦点在列表里时才有）；列表更新后由下面的 Effect 聚焦。 */
+  const refocusId = useRef<string | null>(null);
 
   const order = entries?.map((entry) => entry.item.id) ?? [];
   // 条目被整理走（或在别处变化）后，已经不在列表里的选中项不再算数（渲染时推导，不在 Effect 里同步状态）。
@@ -96,6 +99,11 @@ export function InboxPage() {
    * @param kind 整理种类。
    */
   function run(ids: string[], kind: OrganizeKind): void {
+    // 被整理的行会立刻消失，焦点随之丢到页面上：改为落在后面紧接着的一行（没有就是前面一行），
+    // 键盘整理可以接着 ↓ 空格 T，不用重新找位置。
+    if (sectionRef.current?.contains(document.activeElement) === true) {
+      refocusId.current = nextRemaining(order, ids);
+    }
     const only = ids.length === 1 ? entries?.find((e) => e.item.id === ids[0]) : undefined;
     setSelected(new Set());
     void organize(ids, kind, only?.item.title);
@@ -131,11 +139,24 @@ export function InboxPage() {
     run(selectedIds, kind);
   }
 
+  // 列表更新（整理的行已移除）后把焦点放到记下的那一行。只操作 DOM，不改状态。
+  useEffect(() => {
+    const id = refocusId.current;
+    if (id === null) return;
+    const box = [
+      ...(sectionRef.current?.querySelectorAll<HTMLElement>("[data-inbox-select]") ?? []),
+    ].find((element) => element.dataset.itemId === id);
+    if (box === undefined) return;
+    refocusId.current = null;
+    box.focus();
+  }, [entries]);
+
   const count = entries?.length ?? 0;
   const selectedIds = order.filter((id) => selected.has(id));
 
   return (
     <section
+      ref={sectionRef}
       aria-label={t("inbox.page.label")}
       onKeyDown={handleKeyDown}
       className="flex h-full flex-col"

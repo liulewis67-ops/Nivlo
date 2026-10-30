@@ -131,6 +131,27 @@ describe("InboxPage", () => {
     expect(boxes[0]).toHaveFocus();
   });
 
+  it("键盘整理后焦点落在下一条的勾选框（最后一条时落在上一条），可以接着整理", async () => {
+    const ipc = createMemoryIpc();
+    for (const text of ["一", "二", "三"]) await capture(ipc, text);
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("一");
+    const boxes = () =>
+      screen.getAllByRole("checkbox").filter((box) => box.hasAttribute("data-inbox-select"));
+    const [top, middle, bottom] = boxes();
+
+    middle?.focus();
+    fireEvent.click(middle as HTMLElement);
+    fireEvent.keyDown(middle as HTMLElement, { key: "t" });
+    await waitFor(() => expect(boxes()).toHaveLength(2));
+    expect(bottom).toHaveFocus();
+
+    fireEvent.click(bottom as HTMLElement);
+    fireEvent.keyDown(bottom as HTMLElement, { key: "m" });
+    await waitFor(() => expect(boxes()).toHaveLength(1));
+    expect(top).toHaveFocus();
+  });
+
   it("勾选多条后批量整理：一次调用，整批离开", async () => {
     const ipc = createMemoryIpc();
     for (const text of ["一", "二", "三"]) await capture(ipc, text);
