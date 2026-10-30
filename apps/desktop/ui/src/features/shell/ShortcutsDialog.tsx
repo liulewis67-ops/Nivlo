@@ -75,13 +75,17 @@ const SECTIONS: readonly Section[] = [
   {
     title: "shortcuts.section.projects",
     rows: [
+      ["Ctrl+N", "shortcuts.projects.new"],
       ["↑ ↓", "shortcuts.projects.sidebar"],
       ["↑ ↓", "shortcuts.projects.move"],
     ],
   },
   {
     title: "shortcuts.section.workflows",
-    rows: [["↑ ↓", "shortcuts.workflows.move"]],
+    rows: [
+      ["Ctrl+N", "shortcuts.workflows.new"],
+      ["↑ ↓", "shortcuts.workflows.move"],
+    ],
   },
   {
     title: "shortcuts.section.trash",

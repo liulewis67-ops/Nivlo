@@ -131,6 +131,13 @@ describe("ProjectsPage", () => {
     expect(opened).toHaveLength(1);
   });
 
+  it("Ctrl+N 打开新建项目的输入框", async () => {
+    renderWithProviders(<ProjectsPage />, createMemoryIpc());
+    await screen.findByRole("navigation");
+    fireEvent.keyDown(document.body, { key: "n", ctrlKey: true });
+    expect(await screen.findByLabelText("新项目名称")).toHaveFocus();
+  });
+
   it("勾选待办会完成它", async () => {
     const ipc = createMemoryIpc();
     const project = ipc.seedProject("P");

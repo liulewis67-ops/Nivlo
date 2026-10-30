@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
 import { useNavStore } from "@/features/shell";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
+import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { WorkflowDto, WorkflowImportPreviewDto } from "@/lib/ipc";
@@ -231,6 +232,22 @@ export function WorkflowsPage() {
     setSelectedId(null);
     setTab("rules");
   }
+
+  // Ctrl+N（macOS ⌘N）新建规则（有没保存的修改时先提醒），与「今天」「笔记」一致；有对话框打开时不响应。
+  useEffect(() => {
+    /**
+     * 「新建」快捷键。
+     *
+     * @param event 键盘事件。
+     */
+    function handleKeyDown(event: globalThis.KeyboardEvent): void {
+      if (!isCommandKey(event, "n") || isDialogOpen()) return;
+      event.preventDefault();
+      leaveEditor(create);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   /**
    * 保存 / 复制之后：刷新列表并选中结果。

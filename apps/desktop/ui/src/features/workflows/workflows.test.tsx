@@ -128,6 +128,13 @@ describe("Workflow 管理页", () => {
     expect(await screen.findByText(/内置规则不能直接修改/)).toBeInTheDocument();
   });
 
+  it("Ctrl+N 新建一条规则草稿", async () => {
+    renderWithProviders(<WorkflowsPage />, createMemoryIpc());
+    await screen.findByRole("list", { name: "内置" });
+    fireEvent.keyDown(document.body, { key: "n", ctrlKey: true });
+    expect(await screen.findByRole("button", { name: "保存" })).toBeInTheDocument();
+  });
+
   it("规则列表里按 ↑ / ↓ 在规则之间移动，不自动打开", async () => {
     renderWithProviders(<WorkflowsPage />, createMemoryIpc());
     const builtin = await screen.findByRole("list", { name: "内置" });

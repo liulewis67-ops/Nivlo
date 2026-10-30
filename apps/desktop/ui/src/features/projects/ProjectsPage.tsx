@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
 import { useProjectsQuery, useTagsQuery } from "@/features/organize";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
+import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { ProjectDto, TagSummaryDto } from "@/lib/ipc";
@@ -167,6 +168,22 @@ export function ProjectsPage() {
   const tags = tagsQuery.data ?? [];
   const [picked, setPicked] = useState<Selection | null>(null);
   const [creating, setCreating] = useState(false);
+
+  // Ctrl+N（macOS ⌘N）新建项目，与「今天」「笔记」一致；有对话框打开时不响应。
+  useEffect(() => {
+    /**
+     * 「新建」快捷键。
+     *
+     * @param event 键盘事件。
+     */
+    function handleKeyDown(event: globalThis.KeyboardEvent): void {
+      if (!isCommandKey(event, "n") || isDialogOpen()) return;
+      event.preventDefault();
+      setCreating(true);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const [renaming, setRenaming] = useState<Renaming | null>(null);
   const [merging, setMerging] = useState<{ from: TagSummaryDto; into: string } | null>(null);
 

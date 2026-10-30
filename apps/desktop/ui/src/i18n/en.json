@@ -1054,10 +1054,12 @@
     },
     "projects": {
       "move": "Move between items; Enter opens one",
-      "sidebar": "In the sidebar: previous / next project or tag"
+      "sidebar": "In the sidebar: previous / next project or tag",
+      "new": "New project"
     },
     "workflows": {
-      "move": "Move between rules (↵ opens one)"
+      "move": "Move between rules (↵ opens one)",
+      "new": "New rule"
     },
     "trash": {
       "move": "Move to the same button on the next / previous entry"
