@@ -11,11 +11,22 @@ export const SNIPPET_MAX_CHARS = 80;
  */
 export function noteSnippet(content: string | null): string {
   if (content === null) return "";
-  const firstLine =
-    content
-      .split("\n")
-      .map((line) => line.replace(/^[#>*\-+\s]+/, "").trim())
-      .find((line) => line.length > 0) ?? "";
+  // 逐行往下找，找到第一段有内容的就停：列表每次渲染都会算摘要，长文不必整篇拆行再清理。
+  let firstLine = "";
+  let from = 0;
+  while (from <= content.length) {
+    const end = content.indexOf("\n", from);
+    const line = content
+      .slice(from, end === -1 ? content.length : end)
+      .replace(/^[#>*\-+\s]+/, "")
+      .trim();
+    if (line.length > 0) {
+      firstLine = line;
+      break;
+    }
+    if (end === -1) break;
+    from = end + 1;
+  }
   const chars = [...firstLine];
   return chars.length <= SNIPPET_MAX_CHARS
     ? firstLine
