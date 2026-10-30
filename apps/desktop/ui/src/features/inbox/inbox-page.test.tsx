@@ -112,6 +112,25 @@ describe("InboxPage", () => {
     });
   });
 
+  it("在勾选框上按 ↑ / ↓ 移到上一条 / 下一条的勾选框", async () => {
+    const ipc = createMemoryIpc();
+    for (const text of ["一", "二", "三"]) await capture(ipc, text);
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("一");
+    const boxes = screen
+      .getAllByRole("checkbox")
+      .filter((box) => box.hasAttribute("data-inbox-select"));
+    boxes[0]?.focus();
+
+    fireEvent.keyDown(boxes[0] as HTMLElement, { key: "ArrowDown" });
+    expect(boxes[1]).toHaveFocus();
+    fireEvent.keyDown(boxes[1] as HTMLElement, { key: "ArrowUp" });
+    expect(boxes[0]).toHaveFocus();
+    // 第一条再往上：停在原地。
+    fireEvent.keyDown(boxes[0] as HTMLElement, { key: "ArrowUp" });
+    expect(boxes[0]).toHaveFocus();
+  });
+
   it("勾选多条后批量整理：一次调用，整批离开", async () => {
     const ipc = createMemoryIpc();
     for (const text of ["一", "二", "三"]) await capture(ipc, text);

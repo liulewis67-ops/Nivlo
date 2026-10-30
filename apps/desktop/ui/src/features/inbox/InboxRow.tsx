@@ -68,6 +68,7 @@ export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: In
     >
       <input
         type="checkbox"
+        data-inbox-select=""
         aria-label={t("inbox.select", { title: item.title })}
         checked={selected}
         onChange={() => undefined}

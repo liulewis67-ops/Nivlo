@@ -1006,6 +1006,7 @@
       "reorder": "Pick up / drop a to-do; ↑ ↓ to move it"
     },
     "inbox": {
+      "move": "Move between items",
       "today": "Schedule for today",
       "tomorrow": "Schedule for tomorrow",
       "clear": "Clear the selection"

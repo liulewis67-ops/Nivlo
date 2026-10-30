@@ -101,7 +101,8 @@ export function InboxPage() {
   }
 
   /**
-   * 键盘整理：选中条目后按 T 安排到今天、M 安排到明天（和点按钮一样，带撤销）；Escape 清除选择。
+   * 键盘整理：↑ / ↓ 在条目之间移动，选中条目后按 T 安排到今天、M 安排到明天（和点按钮一样，带撤销）；
+   * Escape 清除选择。
    * 在文字输入框里不响应（勾选框除外：选中条目就是在它上面按空格）。
    *
    * @param event 键盘事件。
@@ -110,6 +111,20 @@ export function InboxPage() {
     if (event.key === "Escape" && selected.size > 0) {
       event.stopPropagation();
       setSelected(new Set());
+      return;
+    }
+    // ↑ / ↓ 在各条的勾选框之间移动（不用 Tab 穿过每一行的按钮）：↓ ↓ 空格 T 就能整理。
+    if (
+      (event.key === "ArrowDown" || event.key === "ArrowUp") &&
+      event.target instanceof HTMLElement &&
+      event.target.hasAttribute("data-inbox-select")
+    ) {
+      const boxes = [...event.currentTarget.querySelectorAll<HTMLElement>("[data-inbox-select]")];
+      const next = boxes[boxes.indexOf(event.target) + (event.key === "ArrowDown" ? 1 : -1)];
+      if (next !== undefined) {
+        event.preventDefault();
+        next.focus();
+      }
       return;
     }
     if (selected.size === 0 || event.ctrlKey || event.metaKey || event.altKey) return;

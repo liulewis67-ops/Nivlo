@@ -49,6 +49,7 @@ const SECTIONS: readonly Section[] = [
   {
     title: "shortcuts.section.inbox",
     rows: [
+      ["↑ ↓", "shortcuts.inbox.move"],
       ["T", "shortcuts.inbox.today"],
       ["M", "shortcuts.inbox.tomorrow"],
       ["Esc", "shortcuts.inbox.clear"],
