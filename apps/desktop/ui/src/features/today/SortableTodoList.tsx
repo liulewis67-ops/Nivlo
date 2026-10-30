@@ -17,6 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { ContextMenu, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
@@ -270,19 +271,46 @@ export function SortableTodoList({
   const refocusId = useRef<string | null>(null);
 
   /**
-   * 完成一条：完成的行会离开列表，焦点随之丢到页面上；改为落在下一条（没有就是上一条）的完成框，
-   * 键盘用户可以接着 ↓ 空格。
+   * 一条要离开列表（完成、推迟）：焦点在列表里时记下接下来的那一条，列表更新后聚焦它的完成框，
+   * 免得焦点丢到页面上，键盘用户可以接着 ↓ 空格。
    *
-   * @param item 完成的待办。
+   * @param item 要离开的待办。
    */
-  function complete(item: TodayItemDto): void {
+  function rememberNext(item: TodayItemDto): void {
     if (listRef.current?.contains(document.activeElement) === true) {
       refocusId.current = nextRemaining(
         todos.map((todo) => todo.id),
         [item.id],
       );
     }
+  }
+
+  /**
+   * 完成一条。
+   *
+   * @param item 完成的待办。
+   */
+  function complete(item: TodayItemDto): void {
+    rememberNext(item);
     onComplete(item);
+  }
+
+  /**
+   * 列表上的按键：↑ / ↓ 在完成框之间移动；在某一条的完成框上按 M 推迟到明天（和菜单里的「明天」一样，带撤销）。
+   *
+   * @param event 键盘事件。
+   */
+  function handleKeyDown(event: KeyboardEvent<HTMLUListElement>): void {
+    if (moveFocusWithArrows(event, "[role=checkbox]")) return;
+    if (event.key.toLowerCase() !== "m" || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || target.getAttribute("role") !== "checkbox") return;
+    const id = target.closest<HTMLElement>("[data-todo-id]")?.dataset.todoId;
+    const item = todos.find((todo) => todo.id === id);
+    if (item === undefined) return;
+    event.preventDefault();
+    rememberNext(item);
+    onPostpone(item, "tomorrow");
   }
 
   // 列表更新（完成的行已离开）后把焦点放到记下的那一行。只操作 DOM，不改状态。
@@ -361,7 +389,7 @@ export function SortableTodoList({
           ref={listRef}
           aria-label={t("today.section.todos")}
           // 在完成框上按 ↑ / ↓ 移到上一条 / 下一条的完成框（不用 Tab 穿过拖动手柄与菜单按钮）。
-          onKeyDown={(event) => moveFocusWithArrows(event, "[role=checkbox]")}
+          onKeyDown={handleKeyDown}
           className="flex flex-col gap-0.5"
         >
           {todos.map((item) => (

@@ -196,6 +196,37 @@ describe("Today 里的键盘移动", () => {
     expect(box("下周截止")).toHaveFocus();
   });
 
+  it("在完成框上按 M 推迟到明天，焦点落在下一条", () => {
+    const postponed: string[] = [];
+    /** 推迟即从列表移走。 */
+    function Host() {
+      const [view, setView] = useState(VIEW);
+      return (
+        <TodayList
+          view={view}
+          onComplete={() => undefined}
+          onMove={() => undefined}
+          onPostpone={(item, kind) => {
+            postponed.push(`${item.id}:${kind}`);
+            setView((current) => ({
+              ...current,
+              todos: current.todos.filter((todo) => todo.id !== item.id),
+            }));
+          }}
+          onReopen={() => undefined}
+        />
+      );
+    }
+    renderWithProviders(<Host />);
+    const box = (title: string) => screen.getByRole("checkbox", { name: `完成「${title}」` });
+    box("今天截止").focus();
+    fireEvent.keyDown(box("今天截止"), { key: "m", ctrlKey: true });
+    expect(postponed).toEqual([]);
+    fireEvent.keyDown(box("今天截止"), { key: "m" });
+    expect(postponed).toEqual(["b:tomorrow"]);
+    expect(box("明天截止")).toHaveFocus();
+  });
+
   it("取消勾选已完成的一条后，焦点落在它回到待办列表后的完成框", () => {
     const done: TodayItemDto = { ...todo("z", "做完的", null), status: "done" };
     /** 取消勾选即回到待办列表，和真实的乐观更新一样。 */
