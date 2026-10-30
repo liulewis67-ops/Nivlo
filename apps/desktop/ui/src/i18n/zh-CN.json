@@ -976,7 +976,9 @@
       "inbox": "收集箱（先勾选条目）",
       "notes": "笔记列表",
       "calendar": "日历",
-      "projects": "项目与标签"
+      "projects": "项目与标签",
+      "workflows": "自动化",
+      "trash": "回收站"
     },
     "global": {
       "quickCreate": "快速创建",
@@ -1038,6 +1040,12 @@
     "projects": {
       "move": "在条目之间移动，回车打开详情",
       "sidebar": "在左侧：换到上一个 / 下一个项目或标签"
+    },
+    "workflows": {
+      "move": "在规则之间移动（↵ 打开）"
+    },
+    "trash": {
+      "move": "在各项的同一个按钮之间移动"
     }
   }
 }

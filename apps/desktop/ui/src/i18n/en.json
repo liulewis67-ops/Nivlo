@@ -981,7 +981,9 @@
       "inbox": "Inbox (select items first)",
       "notes": "Notes list",
       "calendar": "Calendar",
-      "projects": "Projects and tags"
+      "projects": "Projects and tags",
+      "workflows": "Automations",
+      "trash": "Trash"
     },
     "global": {
       "quickCreate": "Quick Create",
@@ -1043,6 +1045,12 @@
     "projects": {
       "move": "Move between items; Enter opens one",
       "sidebar": "In the sidebar: previous / next project or tag"
+    },
+    "workflows": {
+      "move": "Move between rules (↵ opens one)"
+    },
+    "trash": {
+      "move": "Move to the same button on the next / previous entry"
     }
   }
 }

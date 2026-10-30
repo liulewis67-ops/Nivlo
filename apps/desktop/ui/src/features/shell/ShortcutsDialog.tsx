@@ -79,6 +79,14 @@ const SECTIONS: readonly Section[] = [
     ],
   },
   {
+    title: "shortcuts.section.workflows",
+    rows: [["↑ ↓", "shortcuts.workflows.move"]],
+  },
+  {
+    title: "shortcuts.section.trash",
+    rows: [["↑ ↓", "shortcuts.trash.move"]],
+  },
+  {
     title: "shortcuts.section.calendar",
     rows: [
       ["J / K", "shortcuts.calendar.page"],
