@@ -16,11 +16,11 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ContextMenu, Menu } from "@/components";
 import type { MenuItemSpec } from "@/components";
-import { moveFocusWithArrows } from "@/lib/arrow-focus";
+import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import type { TodayItemDto } from "@/lib/ipc";
 import { ItemTitle } from "./ItemTitle";
@@ -134,6 +134,7 @@ function SortableTodo({ item, today, onComplete, onPostpone }: SortableTodoProps
     <ContextMenu items={menuItems}>
       <li
         ref={setNodeRef}
+        data-todo-id={item.id}
         style={{ transform: CSS.Translate.toString(transform), transition }}
         className={cx(
           "group flex items-center gap-1.5 rounded-md py-1.5 pr-1 pl-0.5 text-sm text-text",
@@ -264,6 +265,38 @@ export function SortableTodoList({
 }: SortableTodoListProps) {
   const { t } = useTranslation();
   const [isDragging, setIsDragging] = useState(false);
+  const listRef = useRef<HTMLUListElement>(null);
+  /** 完成之后要聚焦的那一行（完成前焦点在列表里时才有）；列表更新后由下面的 Effect 聚焦。 */
+  const refocusId = useRef<string | null>(null);
+
+  /**
+   * 完成一条：完成的行会离开列表，焦点随之丢到页面上；改为落在下一条（没有就是上一条）的完成框，
+   * 键盘用户可以接着 ↓ 空格。
+   *
+   * @param item 完成的待办。
+   */
+  function complete(item: TodayItemDto): void {
+    if (listRef.current?.contains(document.activeElement) === true) {
+      refocusId.current = nextRemaining(
+        todos.map((todo) => todo.id),
+        [item.id],
+      );
+    }
+    onComplete(item);
+  }
+
+  // 列表更新（完成的行已离开）后把焦点放到记下的那一行。只操作 DOM，不改状态。
+  useEffect(() => {
+    const id = refocusId.current;
+    if (id === null) return;
+    const row = [...(listRef.current?.querySelectorAll<HTMLElement>("[data-todo-id]") ?? [])].find(
+      (element) => element.dataset.todoId === id,
+    );
+    const box = row?.querySelector<HTMLElement>("[role=checkbox]");
+    if (box === null || box === undefined) return;
+    refocusId.current = null;
+    box.focus();
+  }, [todos]);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX },
@@ -325,6 +358,7 @@ export function SortableTodoList({
     >
       <SortableContext items={todos.map((todo) => todo.id)} strategy={verticalListSortingStrategy}>
         <ul
+          ref={listRef}
           aria-label={t("today.section.todos")}
           // 在完成框上按 ↑ / ↓ 移到上一条 / 下一条的完成框（不用 Tab 穿过拖动手柄与菜单按钮）。
           onKeyDown={(event) => moveFocusWithArrows(event, "[role=checkbox]")}
@@ -335,7 +369,7 @@ export function SortableTodoList({
               key={item.id}
               item={item}
               today={today}
-              onComplete={onComplete}
+              onComplete={complete}
               onPostpone={onPostpone}
             />
           ))}

@@ -20,3 +20,24 @@ export function moveFocusWithArrows(event: KeyboardEvent<HTMLElement>, selector:
   next.focus();
   return true;
 }
+
+/**
+ * 一批条目从列表里移走（整理、完成）之后，焦点该落在哪一行：最后一个移走的条目后面第一条留下的；
+ * 后面没有就取前面最近的一条。
+ *
+ * @param order 列表里的 ID 顺序。
+ * @param removed 移走的 ID。
+ * @returns 留下的那一行的 ID；全部移走时为 `null`。
+ */
+export function nextRemaining(order: readonly string[], removed: readonly string[]): string | null {
+  const gone = new Set(removed);
+  const last = Math.max(...order.map((id, index) => (gone.has(id) ? index : -1)));
+  const after = order.slice(last + 1).find((id) => !gone.has(id));
+  if (after !== undefined) return after;
+  return (
+    order
+      .slice(0, Math.max(last, 0))
+      .reverse()
+      .find((id) => !gone.has(id)) ?? null
+  );
+}

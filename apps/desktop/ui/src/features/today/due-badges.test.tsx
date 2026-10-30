@@ -1,4 +1,5 @@
 import { fireEvent, screen, within } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
 import { renderWithProviders } from "@/test/render";
@@ -162,5 +163,36 @@ describe("Today 里的键盘移动", () => {
     expect(boxes[1]).toHaveFocus();
     fireEvent.keyDown(boxes[1] as HTMLElement, { key: "ArrowUp" });
     expect(boxes[0]).toHaveFocus();
+  });
+
+  it("完成一条后焦点落在下一条的完成框；最后一条完成后落在上一条", () => {
+    /** 完成即从列表移走，和真实的乐观更新一样。 */
+    function Host() {
+      const [view, setView] = useState(VIEW);
+      return (
+        <TodayList
+          view={view}
+          onComplete={(item) =>
+            setView((current) => ({
+              ...current,
+              todos: current.todos.filter((todo) => todo.id !== item.id),
+            }))
+          }
+          onMove={() => undefined}
+          onPostpone={() => undefined}
+          onReopen={() => undefined}
+        />
+      );
+    }
+    renderWithProviders(<Host />);
+    const box = (title: string) => screen.getByRole("checkbox", { name: `完成「${title}」` });
+
+    box("今天截止").focus();
+    fireEvent.click(box("今天截止"));
+    expect(box("明天截止")).toHaveFocus();
+
+    box("没有截止").focus();
+    fireEvent.click(box("没有截止"));
+    expect(box("下周截止")).toHaveFocus();
   });
 });
