@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { TodayItemDto, TodayViewDto } from "@/lib/ipc";
 import { renderWithProviders } from "@/test/render";
@@ -142,5 +142,25 @@ describe("Today 里待办的具体时间", () => {
     expect(textOf("评审方案")).toContain("15:00评审方案");
     expect(textOf("昨天的会")).not.toContain("09:30");
     expect(textOf("全天的事")).not.toMatch(/\d\d:\d\d/);
+  });
+});
+
+describe("Today 里的键盘移动", () => {
+  it("在完成框上按 ↑ / ↓ 移到上一条 / 下一条的完成框", () => {
+    renderWithProviders(
+      <TodayList
+        view={VIEW}
+        onComplete={() => undefined}
+        onMove={() => undefined}
+        onPostpone={() => undefined}
+        onReopen={() => undefined}
+      />,
+    );
+    const boxes = within(screen.getByRole("list", { name: "待办" })).getAllByRole("checkbox");
+    boxes[0]?.focus();
+    fireEvent.keyDown(boxes[0] as HTMLElement, { key: "ArrowDown" });
+    expect(boxes[1]).toHaveFocus();
+    fireEvent.keyDown(boxes[1] as HTMLElement, { key: "ArrowUp" });
+    expect(boxes[0]).toHaveFocus();
   });
 });

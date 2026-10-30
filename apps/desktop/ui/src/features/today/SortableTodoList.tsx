@@ -323,7 +323,27 @@ export function SortableTodoList({
       }}
     >
       <SortableContext items={todos.map((todo) => todo.id)} strategy={verticalListSortingStrategy}>
-        <ul aria-label={t("today.section.todos")} className="flex flex-col gap-0.5">
+        <ul
+          aria-label={t("today.section.todos")}
+          // 在完成框上按 ↑ / ↓ 移到上一条 / 下一条的完成框（不用 Tab 穿过拖动手柄与菜单按钮）。
+          onKeyDown={(event) => {
+            const target = event.target;
+            if (
+              (event.key !== "ArrowDown" && event.key !== "ArrowUp") ||
+              !(target instanceof HTMLElement) ||
+              target.getAttribute("role") !== "checkbox"
+            ) {
+              return;
+            }
+            const boxes = [...event.currentTarget.querySelectorAll<HTMLElement>("[role=checkbox]")];
+            const next = boxes[boxes.indexOf(target) + (event.key === "ArrowDown" ? 1 : -1)];
+            if (next !== undefined) {
+              event.preventDefault();
+              next.focus();
+            }
+          }}
+          className="flex flex-col gap-0.5"
+        >
           {todos.map((item) => (
             <SortableTodo
               key={item.id}

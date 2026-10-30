@@ -1003,6 +1003,7 @@
       "cancel": "Cancel"
     },
     "today": {
+      "move": "Move between to-dos",
       "reorder": "Pick up / drop a to-do; ↑ ↓ to move it"
     },
     "inbox": {
