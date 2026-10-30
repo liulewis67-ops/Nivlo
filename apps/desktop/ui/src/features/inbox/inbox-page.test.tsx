@@ -112,6 +112,23 @@ describe("InboxPage", () => {
     });
   });
 
+  it("Ctrl+A 选中全部条目，接着按 T 一次整理掉", async () => {
+    const ipc = createMemoryIpc();
+    for (const text of ["一", "二", "三"]) await capture(ipc, text);
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("一");
+    const first = screen.getByRole("checkbox", { name: "选择：一" });
+    first.focus();
+
+    fireEvent.keyDown(first, { key: "a", ctrlKey: true });
+    for (const text of ["一", "二", "三"]) {
+      expect(screen.getByRole("checkbox", { name: `选择：${text}` })).toBeChecked();
+    }
+    fireEvent.keyDown(first, { key: "t" });
+    await waitFor(() => expect(ipc.organizations).toHaveLength(1));
+    expect(ipc.organizations[0]?.ids).toHaveLength(3);
+  });
+
   it("在勾选框上按 ↑ / ↓ 移到上一条 / 下一条的勾选框", async () => {
     const ipc = createMemoryIpc();
     for (const text of ["一", "二", "三"]) await capture(ipc, text);

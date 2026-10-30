@@ -1018,7 +1018,8 @@
       "move": "Move between items",
       "today": "Schedule for today",
       "tomorrow": "Schedule for tomorrow",
-      "clear": "Clear the selection"
+      "clear": "Clear the selection",
+      "all": "Select all"
     },
     "notes": {
       "move": "Open the previous / next note",
