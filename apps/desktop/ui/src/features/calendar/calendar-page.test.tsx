@@ -119,6 +119,32 @@ describe("CalendarPage 月视图", () => {
     expect(await screen.findByRole("heading", { name: "2026年10月" })).toBeInTheDocument();
   });
 
+  it("键盘：J / K 翻页，T 回到今天，W / M 切换视图；在输入框里不响应", async () => {
+    renderWithProviders(<CalendarPage />, createMemoryIpc());
+    await screen.findByRole("heading", { name: "2026年10月" });
+
+    fireEvent.keyDown(document.body, { key: "j" });
+    expect(await screen.findByRole("heading", { name: "2026年11月" })).toBeInTheDocument();
+    fireEvent.keyDown(document.body, { key: "K" });
+    fireEvent.keyDown(document.body, { key: "k" });
+    expect(await screen.findByRole("heading", { name: "2026年9月" })).toBeInTheDocument();
+    fireEvent.keyDown(document.body, { key: "t" });
+    expect(await screen.findByRole("heading", { name: "2026年10月" })).toBeInTheDocument();
+
+    fireEvent.keyDown(document.body, { key: "w" });
+    expect(await screen.findByRole("heading", { name: "10月5日 – 10月11日" })).toBeInTheDocument();
+    fireEvent.keyDown(document.body, { key: "m" });
+    expect(await screen.findByRole("heading", { name: "2026年10月" })).toBeInTheDocument();
+
+    // 带修饰键或在输入框里：只是普通按键。
+    fireEvent.keyDown(document.body, { key: "j", ctrlKey: true });
+    const input = document.createElement("input");
+    document.body.append(input);
+    fireEvent.keyDown(input, { key: "j" });
+    input.remove();
+    expect(screen.getByRole("heading", { name: "2026年10月" })).toBeInTheDocument();
+  });
+
   it("一周起始日设置为周日时，表头与网格跟着变", async () => {
     const ipc = createMemoryIpc();
     await ipc.setWeekStart("sunday");

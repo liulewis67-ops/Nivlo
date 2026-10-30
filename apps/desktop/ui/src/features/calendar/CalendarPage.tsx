@@ -12,6 +12,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
+import { isTyping } from "@/lib/typing";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
@@ -313,6 +314,37 @@ export function CalendarPage() {
     placeholderData: (previous) => previous,
   });
   const data = calendar.data;
+
+  const today = calendar.data?.today ?? initial.data?.today ?? null;
+
+  // 键盘：J / K 下一段 / 上一段，T 回到今天，M / W 切换月 / 周视图（常见日历应用的约定）。
+  // 正在输入、按着修饰键或有对话框打开时不响应。
+  useEffect(() => {
+    /**
+     * 页面快捷键。
+     *
+     * @param event 键盘事件。
+     */
+    function handleKeyDown(event: globalThis.KeyboardEvent): void {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (isTyping(event) || document.querySelector('[aria-modal="true"]') !== null) return;
+      if (effectiveAnchor === null) return;
+      const key = event.key.toLowerCase();
+      if (key === "j" || key === "k") {
+        setAnchor(shiftAnchor(view, effectiveAnchor, key === "j" ? 1 : -1));
+      } else if (key === "t" && today !== null) {
+        setAnchor(today);
+      } else if (key === "m" || key === "w") {
+        setView(key === "m" ? "month" : "week");
+        setAdding(null);
+      } else {
+        return;
+      }
+      event.preventDefault();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [view, effectiveAnchor, today]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE_PX } }),

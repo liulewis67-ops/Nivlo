@@ -977,7 +977,8 @@
       "quickCreate": "Quick Create",
       "today": "Today list",
       "inbox": "Inbox (select items first)",
-      "notes": "Notes list"
+      "notes": "Notes list",
+      "calendar": "Calendar"
     },
     "global": {
       "quickCreate": "Quick Create",
@@ -1019,6 +1020,11 @@
       "move": "Open the previous / next note",
       "filterOpen": "In the filter: open the first match",
       "filterClear": "In the filter: clear it"
+    },
+    "calendar": {
+      "page": "Next / previous month or week",
+      "today": "Go to today",
+      "view": "Month view / week view"
     }
   }
 }

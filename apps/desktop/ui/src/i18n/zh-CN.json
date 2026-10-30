@@ -972,7 +972,8 @@
       "quickCreate": "快速创建",
       "today": "今天的列表",
       "inbox": "收集箱（先勾选条目）",
-      "notes": "笔记列表"
+      "notes": "笔记列表",
+      "calendar": "日历"
     },
     "global": {
       "quickCreate": "快速创建",
@@ -1014,6 +1015,11 @@
       "move": "换到上一篇 / 下一篇",
       "filterOpen": "在筛选框里：打开第一篇匹配的笔记",
       "filterClear": "在筛选框里：清空筛选"
+    },
+    "calendar": {
+      "page": "下一段 / 上一段（月或周）",
+      "today": "回到今天",
+      "view": "切换到月视图 / 周视图"
     }
   }
 }

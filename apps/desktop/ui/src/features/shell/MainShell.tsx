@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
+import { isTyping } from "@/lib/typing";
 import { CalendarPage } from "@/features/calendar";
 import { DevConsole } from "@/features/dev-console";
 import { ItemDetailPanel, OpenItemContext } from "@/features/detail";
@@ -37,20 +38,6 @@ const NAV_VIEWS: MainView[] = ["inbox", "today", "calendar", "notes", "projects"
 
 /** 开发模式额外显示的视图：Phase 0 的 IPC 演示页，发布版本不出现。 */
 const DEV_VIEWS: MainView[] = import.meta.env.DEV ? ["dev"] : [];
-
-/**
- * 按键是不是落在可输入的地方（输入框、文本区、可编辑内容）：这时「?」只是一个字符。
- *
- * @param event 键盘事件。
- * @returns 正在输入时为 `true`。
- */
-function isTyping(event: KeyboardEvent): boolean {
-  const target = event.target;
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
-}
 
 /** [`NavButton`] 的 Props。 */
 type NavButtonProps = {
