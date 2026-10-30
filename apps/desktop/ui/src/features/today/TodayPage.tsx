@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components";
@@ -53,6 +53,24 @@ export function TodayPage() {
   const { remove } = useDeleteItems();
   const sectionRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Ctrl+N（macOS ⌘N）跳到添加框（与笔记页的「新建」一致）；有对话框打开时不响应。
+  useEffect(() => {
+    /**
+     * 「新建」快捷键。
+     *
+     * @param event 键盘事件。
+     */
+    function handleKeyDown(event: globalThis.KeyboardEvent): void {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
+      if (event.key.toLowerCase() !== "n") return;
+      if (document.querySelector('[aria-modal="true"]') !== null) return;
+      event.preventDefault();
+      inputRef.current?.focus();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   /**
    * 处理按键：Enter 创建待办（输入法组合期间与空标题不提交），Esc 清空；↓ 移到第一条待办的完成框。
@@ -144,6 +162,7 @@ export function TodayPage() {
         </div>
         <Input
           ref={inputRef}
+          aria-keyshortcuts="Control+N"
           aria-label={t("today.page.addLabel")}
           placeholder={t("today.page.addPlaceholder")}
           value={title}

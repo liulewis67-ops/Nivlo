@@ -1017,7 +1017,8 @@
       "reorder": "Pick up / drop a to-do; ↑ ↓ to move it",
       "fromInput": "In the add box: jump into the list (↑ on the first to-do comes back)",
       "tomorrow": "Move to tomorrow (can be undone)",
-      "delete": "Delete (can be undone)"
+      "delete": "Delete (can be undone)",
+      "add": "Jump to the add box"
     },
     "inbox": {
       "move": "Move between items",

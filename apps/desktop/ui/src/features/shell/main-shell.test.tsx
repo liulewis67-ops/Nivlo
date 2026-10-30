@@ -224,6 +224,18 @@ describe("MainShell", () => {
     expect(ipc.items).toHaveLength(0);
   });
 
+  it("Ctrl+N 跳到添加框", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday(VIEW);
+    renderWithProviders(<MainShell />, ipc);
+    const input = await screen.findByRole("textbox", { name: "添加待办" });
+    const first = await screen.findByRole("checkbox", { name: "完成「写周报」" });
+    first.focus();
+    fireEvent.keyDown(first, { key: "n", ctrlKey: true });
+    expect(input).toHaveFocus();
+    expect(input).toHaveAttribute("aria-keyshortcuts", "Control+N");
+  });
+
   it("空标题不会提交", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();
