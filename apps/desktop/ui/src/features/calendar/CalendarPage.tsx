@@ -185,6 +185,7 @@ function DayCell({
         </span>
         <button
           type="button"
+          data-day-add=""
           aria-label={t("calendar.addOn", { date: formatDate(parsed, "monthDay") })}
           onClick={() => onAdd(true)}
           className="flex size-5 items-center justify-center rounded text-muted opacity-0 transition-opacity duration-(--nv-duration-fast) hover:bg-surface-hover hover:text-text focus-visible:opacity-100 group-hover:opacity-100"
@@ -235,6 +236,33 @@ function DayCell({
       </div>
     </div>
   );
+}
+
+/** 日历网格里方向键对应的步长：左右一天，上下一周。 */
+const DAY_STEPS: Readonly<Record<string, number>> = {
+  ArrowLeft: -1,
+  ArrowRight: 1,
+  ArrowUp: -7,
+  ArrowDown: 7,
+};
+
+/**
+ * 网格里的方向键：在各天的「+」之间移动（左右一天、上下一周），到边上就停住；
+ * 到了想要的那天按 Enter 就能原地写一条待办。
+ *
+ * @param event 键盘事件。
+ */
+function moveBetweenDays(event: KeyboardEvent<HTMLElement>): void {
+  const step = DAY_STEPS[event.key];
+  const target = event.target;
+  if (step === undefined || !(target instanceof HTMLElement) || !target.matches("[data-day-add]")) {
+    return;
+  }
+  const days = [...event.currentTarget.querySelectorAll<HTMLElement>("[data-day-add]")];
+  const next = days[days.indexOf(target) + step];
+  if (next === undefined) return;
+  event.preventDefault();
+  next.focus();
 }
 
 /** [`Unscheduled`] 的 Props。 */
@@ -514,7 +542,12 @@ export function CalendarPage() {
           onDragCancel={() => setDragging(null)}
         >
           <div className="flex min-h-0 flex-1">
-            <div role="grid" aria-label={title} className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div
+              role="grid"
+              aria-label={title}
+              onKeyDown={moveBetweenDays}
+              className="flex min-h-0 min-w-0 flex-1 flex-col"
+            >
               <div role="row" className="grid grid-cols-7 border-b border-border bg-surface">
                 {weekdayLabels(data.from).map((label) => (
                   <div

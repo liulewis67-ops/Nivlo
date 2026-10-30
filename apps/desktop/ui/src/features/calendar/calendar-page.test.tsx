@@ -145,6 +145,25 @@ describe("CalendarPage 月视图", () => {
     expect(screen.getByRole("heading", { name: "2026年10月" })).toBeInTheDocument();
   });
 
+  it("网格里用方向键在各天之间移动：左右一天、上下一周，到边上停住", async () => {
+    renderWithProviders(<CalendarPage />, createMemoryIpc());
+    await screen.findByRole("heading", { name: "2026年10月" });
+    const add = (day: string) => screen.getByRole("button", { name: `在10月${day}日添加待办` });
+
+    add("10").focus();
+    fireEvent.keyDown(add("10"), { key: "ArrowRight" });
+    expect(add("11")).toHaveFocus();
+    fireEvent.keyDown(add("11"), { key: "ArrowDown" });
+    expect(add("18")).toHaveFocus();
+    fireEvent.keyDown(add("18"), { key: "ArrowUp" });
+    fireEvent.keyDown(add("11"), { key: "ArrowLeft" });
+    expect(add("10")).toHaveFocus();
+
+    // Enter 原地写一条待办。
+    fireEvent.click(add("10"));
+    expect(screen.getByRole("textbox", { name: "新待办" })).toHaveFocus();
+  });
+
   it("一周起始日设置为周日时，表头与网格跟着变", async () => {
     const ipc = createMemoryIpc();
     await ipc.setWeekStart("sunday");
