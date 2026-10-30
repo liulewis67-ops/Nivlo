@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Switch } from "@/components";
+import { useNavStore } from "@/features/shell";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
@@ -127,7 +128,17 @@ export function WorkflowsPage() {
   const trackDirty = useCallback((dirty: boolean) => {
     unsaved.current = dirty;
     // 修改都撤回了（或已保存）时，之前的提醒也不再需要。
-    if (!dirty) setPendingLeave(null);
+    if (!dirty) {
+      setPendingLeave(null);
+      useNavStore.getState().cancelLeave();
+    }
+  }, []);
+  // 换到别的视图（侧栏、Ctrl+1…5、Ctrl+K）也一样先提醒。
+  const pendingNav = useNavStore((state) => state.pendingNav);
+  useEffect(() => {
+    const { setLeaveGuard } = useNavStore.getState();
+    setLeaveGuard(() => unsaved.current);
+    return () => setLeaveGuard(null);
   }, []);
 
   /**
@@ -270,14 +281,20 @@ export function WorkflowsPage() {
           </Button>
         </div>
       </header>
-      {pendingLeave !== null && (
+      {(pendingLeave !== null || pendingNav !== null) && (
         <div
           role="alert"
           className="mx-6 mt-3 flex items-center justify-between gap-3 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-text"
         >
           <p>{t("workflows.leave.message")}</p>
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" onClick={() => setPendingLeave(null)}>
+            <Button
+              size="sm"
+              onClick={() => {
+                setPendingLeave(null);
+                useNavStore.getState().cancelLeave();
+              }}
+            >
               {t("workflows.leave.keep")}
             </Button>
             <Button
@@ -288,7 +305,8 @@ export function WorkflowsPage() {
                 const action = pendingLeave;
                 unsaved.current = false;
                 setPendingLeave(null);
-                action();
+                if (action !== null) action();
+                else useNavStore.getState().confirmLeave();
               }}
             >
               {t("workflows.leave.discard")}

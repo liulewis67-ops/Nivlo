@@ -50,6 +50,19 @@ type NavState = {
   settingsSection: string | null;
   /** 打开设置页并滚到某个分组（Ctrl+K 的「设置：…」命令）；`null` 表示清空。 */
   openSettings: (section: string | null) => void;
+  /**
+   * 离开当前视图前的检查（如自动化编辑区有没保存的修改）：返回 `true` 时切换先被拦下，
+   * 记在 [`pendingNav`] 里，等用户确认放弃修改（[`confirmLeave`]）再执行。
+   */
+  leaveGuard: (() => boolean) | null;
+  /** 注册 / 清除离开检查。 */
+  setLeaveGuard: (guard: (() => boolean) | null) => void;
+  /** 被拦下的那次切换；没有时为 `null`。 */
+  pendingNav: (() => void) | null;
+  /** 放弃修改，执行被拦下的切换。 */
+  confirmLeave: () => void;
+  /** 留在原处，丢掉被拦下的切换。 */
+  cancelLeave: () => void;
 };
 
 /**
@@ -57,22 +70,52 @@ type NavState = {
  *
  * 主窗口"关闭"只是隐藏，所以这个状态在窗口再次显示时仍然保留，用户回到离开前的位置。
  */
-export const useNavStore = create<NavState>((set) => ({
-  view: "today",
-  // 离开 Notes 后「刚新建」不再成立：回来时不再全选标题，免得打字覆盖已经写好的标题。
-  setView: (view) =>
-    set((state) => ({ view, freshNoteId: view === "notes" ? state.freshNoteId : null })),
-  noteId: null,
-  freshNoteId: null,
-  settingsSection: null,
-  openSettings: (section) =>
-    set(
-      section === null ? { settingsSection: null } : { view: "settings", settingsSection: section },
-    ),
-  openNote: (id, fresh = false) =>
-    set((state) => ({
-      view: "notes",
-      noteId: id,
-      freshNoteId: fresh ? id : state.freshNoteId === id ? id : null,
-    })),
-}));
+export const useNavStore = create<NavState>((set, get) => {
+  /**
+   * 换视图：离开检查说要拦下时先记着，等确认；否则立即执行。
+   *
+   * @param apply 真正的切换。
+   */
+  const navigate = (apply: () => void): void => {
+    if (get().leaveGuard?.() === true) {
+      set({ pendingNav: apply });
+      return;
+    }
+    apply();
+  };
+  return {
+    view: "today",
+    // 离开 Notes 后「刚新建」不再成立：回来时不再全选标题，免得打字覆盖已经写好的标题。
+    setView: (view) => {
+      /** 真正的切换。 */
+      const apply = (): void =>
+        set((state) => ({ view, freshNoteId: view === "notes" ? state.freshNoteId : null }));
+      if (view === get().view) apply();
+      else navigate(apply);
+    },
+    leaveGuard: null,
+    setLeaveGuard: (guard) => set({ leaveGuard: guard }),
+    pendingNav: null,
+    confirmLeave: () => {
+      const pending = get().pendingNav;
+      set({ pendingNav: null, leaveGuard: null });
+      pending?.();
+    },
+    cancelLeave: () => set({ pendingNav: null }),
+    noteId: null,
+    freshNoteId: null,
+    settingsSection: null,
+    openSettings: (section) => {
+      if (section === null) set({ settingsSection: null });
+      else navigate(() => set({ view: "settings", settingsSection: section }));
+    },
+    openNote: (id, fresh = false) =>
+      navigate(() =>
+        set((state) => ({
+          view: "notes",
+          noteId: id,
+          freshNoteId: fresh ? id : state.freshNoteId === id ? id : null,
+        })),
+      ),
+  };
+});

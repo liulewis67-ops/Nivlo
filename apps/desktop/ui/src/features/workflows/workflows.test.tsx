@@ -1,6 +1,7 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
+import { useNavStore } from "@/features/shell";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import { applyForm, parseDefinition, toForm } from "./model/definition";
@@ -85,6 +86,22 @@ describe("Workflow 管理页", () => {
     await userEvent.click(screen.getByRole("button", { name: /^网页链接/ }));
     expect(await screen.findByText(/内置规则不能直接修改/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "保存" })).not.toBeInTheDocument();
+  });
+
+  it("有没保存的修改时换到别的视图也先提醒，放弃修改后才切换", async () => {
+    useNavStore.setState({ view: "workflows", pendingNav: null });
+    const ipc = createMemoryIpc();
+    renderWithProviders(<WorkflowsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: /^网页链接/ }));
+    await userEvent.click(await screen.findByRole("button", { name: "复制" }));
+    await screen.findByRole("list", { name: "我的" });
+    await userEvent.selectOptions(await screen.findByLabelText("创建"), "todo");
+
+    act(() => useNavStore.getState().setView("today"));
+    expect(useNavStore.getState().view).toBe("workflows");
+    expect(await screen.findByRole("alert")).toHaveTextContent("这条规则还有没保存的修改");
+    await userEvent.click(screen.getByRole("button", { name: "放弃修改" }));
+    expect(useNavStore.getState().view).toBe("today");
   });
 
   it("有没保存的修改时换到别的规则会先提醒：继续编辑留在原处，放弃修改才换走", async () => {
