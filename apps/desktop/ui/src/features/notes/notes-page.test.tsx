@@ -1,6 +1,7 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { AUTOSAVE_DELAY_MS } from "@/features/detail";
+import { useNavStore } from "@/features/shell";
 import { AppError } from "@/lib/errors";
 import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
@@ -63,6 +64,10 @@ describe("noteMatches", () => {
 });
 
 describe("NotesPage", () => {
+  beforeEach(() => {
+    useNavStore.setState({ noteId: null, freshNoteId: null });
+  });
+
   it("没有笔记时给出空状态，点「新笔记」创建并立刻打开", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<NotesPage />, ipc);
@@ -152,6 +157,21 @@ describe("NotesPage", () => {
     expect(
       within(screen.getByRole("list", { name: "笔记列表" })).getAllByRole("button"),
     ).toHaveLength(2);
+  });
+
+  it("离开笔记页再回来，打开的还是上次那一篇", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "旧的笔记", "第一版");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await seedNote(ipc, "新的笔记", "第二版");
+    const first = renderWithProviders(<NotesPage />, ipc);
+    const list = await screen.findByRole("list", { name: "笔记列表" });
+    fireEvent.click(within(list).getByRole("button", { name: /旧的笔记/ }));
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("旧的笔记"));
+    first.unmount();
+
+    renderWithProviders(<NotesPage />, ipc);
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("旧的笔记"));
   });
 
   it("编辑后自动保存，并立即在列表里按最新更新重排", async () => {

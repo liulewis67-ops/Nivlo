@@ -1279,7 +1279,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       calls.push("searchItems");
       const terms = query
         .toLowerCase()
-        .split(/s+/)
+        .split(/\s+/)
         .filter((term) => term !== "");
       if (terms.length === 0) return Promise.resolve([]);
       const matches = items

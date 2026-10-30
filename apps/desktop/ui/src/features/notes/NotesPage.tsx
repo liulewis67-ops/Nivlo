@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input } from "@/components";
+import { useNavStore } from "@/features/shell";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
@@ -34,9 +35,10 @@ export function NotesPage() {
       ipc.listItems({ itemType: "note", includeArchived: false, orderBy: "updated", limit: null }),
     staleTime: Infinity,
   });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  // 刚新建的那一篇：打开时聚焦标题；换到别的笔记后就不再算。
-  const [freshId, setFreshId] = useState<string | null>(null);
+  // 打开的笔记放在导航 Store 里：离开 Notes 再回来仍是这一篇，Ctrl+K「新建笔记」也能直接打开。
+  const selectedId = useNavStore((state) => state.noteId);
+  const freshId = useNavStore((state) => state.freshNoteId);
+  const openNote = useNavStore((state) => state.openNote);
   const [filter, setFilter] = useState("");
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -53,10 +55,7 @@ export function NotesPage() {
         reminderAt: null,
         projectId: null,
       }),
-    onSuccess: (note) => {
-      setSelectedId(note.id);
-      setFreshId(note.id);
-    },
+    onSuccess: (note) => openNote(note.id, true),
     onError: reportError,
   });
 
@@ -135,10 +134,7 @@ export function NotesPage() {
                   type="button"
                   data-note-item=""
                   aria-current={note.id === activeId ? "true" : undefined}
-                  onClick={() => {
-                    setSelectedId(note.id);
-                    if (note.id !== freshId) setFreshId(null);
-                  }}
+                  onClick={() => openNote(note.id)}
                   className={cx(
                     "flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left",
                     "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",

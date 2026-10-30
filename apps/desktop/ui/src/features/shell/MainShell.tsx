@@ -113,6 +113,7 @@ export function MainShell() {
   const { t } = useTranslation();
   const view = useNavStore((state) => state.view);
   const setView = useNavStore((state) => state.setView);
+  const openNote = useNavStore((state) => state.openNote);
   const remaining = useTodayQuery().data?.remainingCount ?? null;
   const inboxCount = useInboxCountQuery().data ?? null;
   /** 详情面板里正在编辑的条目；`null` 表示面板关闭。 */
@@ -196,7 +197,7 @@ export function MainShell() {
             reminderAt: null,
             projectId: null,
           })
-          .then((note) => setOpenId(note.id))
+          .then((note) => openNote(note.id, true))
           .catch(reportError);
       },
     },

@@ -158,7 +158,7 @@ describe("全局搜索（Ctrl+K）", () => {
     expect(ipc.calls).not.toContain("searchItems");
   });
 
-  it("「新建笔记」命令建好一篇未命名笔记并直接打开它的详情", async () => {
+  it("「新建笔记」命令建好一篇未命名笔记，在笔记页打开并选中标题", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<MainShell />, ipc);
     pressCtrlK();
@@ -167,8 +167,10 @@ describe("全局搜索（Ctrl+K）", () => {
     typeQuery("> 新建笔记");
     fireEvent.keyDown(screen.getByLabelText("搜索关键词"), { key: "Enter" });
 
-    const detail = await screen.findByLabelText("条目详情");
-    expect(await within(detail).findByDisplayValue("未命名笔记")).toBeInTheDocument();
+    const editor = await screen.findByLabelText("笔记编辑区");
+    const title = await within(editor).findByDisplayValue("未命名笔记");
+    expect(title).toHaveFocus();
+    expect(useNavStore.getState().view).toBe("notes");
     expect(ipc.items.map((item) => [item.itemType, item.title])).toEqual([["note", "未命名笔记"]]);
   });
 

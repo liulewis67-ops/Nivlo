@@ -35,7 +35,8 @@ export type PaletteCommand = {
 };
 
 /**
- * 按输入过滤命令：名称或匹配词里包含输入（忽略大小写）；输入为空时全部列出。
+ * 按输入过滤命令（忽略大小写）：输入按空格分成几个词，每个词都要出现在名称或某个匹配词里，
+ * 所以「new note」能找到匹配词分别是 new、note 的「新建笔记」；输入为空时全部列出。
  *
  * @param commands 全部命令。
  * @param input 去掉前缀之后的输入。
@@ -45,12 +46,11 @@ export function matchCommands(
   commands: readonly PaletteCommand[],
   input: string,
 ): PaletteCommand[] {
-  const needle = input.trim().toLowerCase();
-  return commands.filter((command) =>
-    [command.label, ...(command.keywords ?? [])].some((text) =>
-      text.toLowerCase().includes(needle),
-    ),
-  );
+  const words = input.toLowerCase().split(/\s+/).filter(Boolean);
+  return commands.filter((command) => {
+    const texts = [command.label, ...(command.keywords ?? [])].map((text) => text.toLowerCase());
+    return words.every((word) => texts.some((text) => text.includes(word)));
+  });
 }
 
 /** 「已复制」提示显示多久（毫秒）。 */

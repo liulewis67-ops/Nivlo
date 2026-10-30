@@ -40,6 +40,12 @@ type NavState = {
   view: MainView;
   /** 切换视图。 */
   setView: (view: MainView) => void;
+  /** Notes 视图里打开的笔记；`null` 表示打开最近更新的那一篇。离开 Notes 再回来时仍是这一篇。 */
+  noteId: string | null;
+  /** 刚新建的笔记：打开时聚焦并全选标题；换到别的笔记后清空。 */
+  freshNoteId: string | null;
+  /** 切到 Notes 视图并打开一篇笔记；`fresh` 表示刚新建。 */
+  openNote: (id: string, fresh?: boolean) => void;
 };
 
 /**
@@ -49,5 +55,15 @@ type NavState = {
  */
 export const useNavStore = create<NavState>((set) => ({
   view: "today",
-  setView: (view) => set({ view }),
+  // 离开 Notes 后「刚新建」不再成立：回来时不再全选标题，免得打字覆盖已经写好的标题。
+  setView: (view) =>
+    set((state) => ({ view, freshNoteId: view === "notes" ? state.freshNoteId : null })),
+  noteId: null,
+  freshNoteId: null,
+  openNote: (id, fresh = false) =>
+    set((state) => ({
+      view: "notes",
+      noteId: id,
+      freshNoteId: fresh ? id : state.freshNoteId === id ? id : null,
+    })),
 }));
