@@ -5,6 +5,7 @@ import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
+import { useState } from "react";
 import { AUTOSAVE_DELAY_MS, ItemDetailPanel } from "./ItemDetailPanel";
 
 /** 推进虚拟时间并让挂起的 Promise 完成。 */
@@ -174,6 +175,34 @@ describe("ItemDetailPanel", () => {
     await advance(0);
     fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Escape" });
     expect(closed).toBe(1);
+  });
+
+  it("打开时焦点移进面板，Esc 关闭后回到打开它的那一行", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    /** 模拟列表里的一行：按下打开详情，Esc 关闭。 */
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            {"row"}
+          </button>
+          {open && <ItemDetailPanel id={id} onClose={() => setOpen(false)} />}
+        </>
+      );
+    }
+    renderWithProviders(<Host />, ipc);
+    const row = screen.getByRole("button", { name: "row" });
+    row.focus();
+    fireEvent.click(row);
+    await advance(0);
+    const panel = screen.getByRole("complementary", { name: "条目详情" });
+    expect(panel).toHaveFocus();
+
+    fireEvent.keyDown(panel, { key: "Escape" });
+    expect(screen.queryByRole("complementary", { name: "条目详情" })).not.toBeInTheDocument();
+    expect(row).toHaveFocus();
   });
 
   it("来源：网址显示链接并可以打开；文件不存在时禁用并提示", async () => {

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Textarea } from "@/components";
@@ -119,6 +119,7 @@ function Field({ label, children }: FieldProps) {
  *   继续编辑也会再次尝试；
  * * 类型转换由后端按领域规则清理不再适用的字段（离开 Todo 清除优先级 / 截止日期等），
  *   前端只在对应类型下显示这些字段；
+ * * 打开时焦点移进面板（键盘用户可以直接 Tab 到各字段、按 Esc 关闭），关闭时回到打开它的元素；
  * * Esc 关闭。
  *
  * @param props 条目 ID 与关闭回调。
@@ -129,6 +130,21 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   const { query, detail, draft, status, problem, edit, save } = useItemDraft(id);
   const item = detail?.item;
   const { remove } = useDeleteItems();
+  const panelRef = useRef<HTMLElement>(null);
+
+  // 打开时把焦点移进面板；关闭时还给打开它的那一行。焦点已经在面板里（如点了里面的字段）时不动；
+  // 关闭时焦点已经去了别处（点了另一行），或那一行已经不在（删除了）时也不抢。
+  useEffect(() => {
+    const panel = panelRef.current;
+    const opener = document.activeElement;
+    if (panel !== null && !panel.contains(opener)) panel.focus({ preventScroll: true });
+    return () => {
+      const current = document.activeElement;
+      const lost =
+        current === null || current === document.body || panel?.contains(current) === true;
+      if (lost && opener instanceof HTMLElement && opener.isConnected) opener.focus();
+    };
+  }, []);
 
   // 记下「打开过」，让搜索框空输入时的「最近使用」把它排在前面。只是排序提示，失败不打扰用户。
   useEffect(() => {
@@ -167,9 +183,11 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   const kind = draft?.itemType ?? "todo";
   return (
     <aside
+      ref={panelRef}
+      tabIndex={-1}
       aria-label={t("detail.label")}
       onKeyDown={handleKeyDown}
-      className="flex h-full w-[24rem] shrink-0 flex-col border-l border-border bg-surface"
+      className="flex h-full focus-visible:outline-none w-[24rem] shrink-0 flex-col border-l border-border bg-surface"
     >
       <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
         <h2 className="text-sm font-semibold text-text">{t("detail.title")}</h2>
