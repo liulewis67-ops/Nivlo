@@ -6,6 +6,7 @@ import type { ItemTypeDto } from "@/lib/ipc";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
+import { RECENT_COMMANDS_KEY } from "@/features/search";
 
 /** 创建一个条目。 */
 async function seed(
@@ -37,6 +38,11 @@ function typeQuery(text: string): void {
 function pressCtrlK(): void {
   fireEvent.keyDown(window, { key: "k", ctrlKey: true });
 }
+
+// 命令按最近使用排序：每个测试从没有记录开始，互不影响。
+beforeEach(() => {
+  window.localStorage.removeItem(RECENT_COMMANDS_KEY);
+});
 
 describe("全局搜索（Ctrl+K）", () => {
   beforeEach(() => {
@@ -307,6 +313,23 @@ describe("键盘快捷键一览", () => {
     await waitFor(() => expect(scrolled).toContain("settings-shortcuts"));
     expect(useNavStore.getState().settingsSection).toBeNull();
     Element.prototype.scrollIntoView = original;
+  });
+
+  it("用过的命令排在前面：用过「设置：快捷键」后，输入「快捷键」先列出它", async () => {
+    renderWithProviders(<MainShell />, createMemoryIpc());
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery("> 快捷键");
+    const commands = screen.getByRole("listbox", { name: "命令" });
+    expect(within(commands).getAllByRole("option")[0]).toHaveAccessibleName(/键盘快捷键/);
+    fireEvent.click(within(commands).getByRole("option", { name: /设置：快捷键/ }));
+
+    pressCtrlK();
+    await screen.findByRole("dialog", { name: "搜索" });
+    typeQuery("> 快捷键");
+    expect(
+      within(screen.getByRole("listbox", { name: "命令" })).getAllByRole("option")[0],
+    ).toHaveAccessibleName(/设置：快捷键/);
   });
 
   it("Ctrl+K 的命令也能打开", async () => {

@@ -4,3 +4,4 @@ export { matchCommands, SearchPanel, SEARCH_DEBOUNCE_MS } from "./SearchPanel";
 export type { PaletteCommand } from "./SearchPanel";
 export { GOTO_VIEWS } from "./model/commands";
 export type { GotoView } from "./model/commands";
+export { RECENT_COMMANDS_KEY } from "./model/recent-commands";

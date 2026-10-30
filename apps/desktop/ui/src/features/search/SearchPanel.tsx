@@ -13,6 +13,7 @@ import type { ItemDto, ItemTypeDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { highlight, searchTerms, snippetAround } from "./model/highlight";
+import { rankByRecent, readRecentCommands, rememberCommand } from "./model/recent-commands";
 import type { Segment } from "./model/highlight";
 import { itemMeta } from "./model/meta";
 
@@ -266,10 +267,25 @@ export function SearchPanel({
 
   /** 命令模式：只列出命令，不搜索条目。 */
   const commandMode = commands !== undefined && text.trimStart().startsWith(COMMAND_PREFIX);
+  // 最近用过的命令排在前面（按使用习惯）；面板每次打开时读一次。
+  const [recentCommands] = useState(readRecentCommands);
   const matches =
     commands !== undefined && commandMode
-      ? matchCommands(commands, text.trimStart().slice(COMMAND_PREFIX.length))
+      ? rankByRecent(
+          matchCommands(commands, text.trimStart().slice(COMMAND_PREFIX.length)),
+          recentCommands,
+        )
       : [];
+
+  /**
+   * 执行一条命令，并记下它，下次排在前面。
+   *
+   * @param command 命令。
+   */
+  function runCommand(command: PaletteCommand): void {
+    rememberCommand(command.id);
+    command.run();
+  }
   /** 送去搜索的文本；命令模式下为空，不打后端。 */
   const searchable = commandMode ? "" : text.trim();
 
@@ -448,7 +464,7 @@ export function SearchPanel({
       undoDone();
     } else if (event.key === "Enter" && commandMode) {
       event.preventDefault();
-      activeCommand?.run();
+      if (activeCommand !== undefined) runCommand(activeCommand);
     } else if (event.key === "Enter" && event.shiftKey) {
       event.preventDefault();
       if (activeItem === undefined) return;
@@ -565,7 +581,7 @@ export function SearchPanel({
                   role="option"
                   aria-selected={selected}
                   onMouseMove={() => setActive(index)}
-                  onClick={command.run}
+                  onClick={() => runCommand(command)}
                   className={cx(
                     "flex cursor-pointer items-center gap-3 rounded-md px-3 py-2",
                     selected ? "bg-primary/10" : "hover:bg-surface-hover",
