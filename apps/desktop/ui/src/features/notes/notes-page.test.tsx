@@ -6,6 +6,7 @@ import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
+import { noteMatches } from "./model/note-filter";
 import { noteSnippet } from "./model/note-snippet";
 import { NotesPage } from "./NotesPage";
 
@@ -46,6 +47,18 @@ describe("noteSnippet", () => {
     expect([...snippet]).toHaveLength(80);
     expect(snippet.endsWith("…")).toBe(true);
     expect(noteSnippet("😀".repeat(100)).startsWith("😀")).toBe(true);
+  });
+});
+
+describe("noteMatches", () => {
+  it("在标题或内容里找，不区分大小写，多个词都要出现", () => {
+    const note = { title: "Weekly 周报", content: "本周完成了 Nivlo 的搜索" };
+    expect(noteMatches(note, "")).toBe(true);
+    expect(noteMatches(note, "  ")).toBe(true);
+    expect(noteMatches(note, "weekly")).toBe(true);
+    expect(noteMatches(note, "NIVLO 搜索")).toBe(true);
+    expect(noteMatches(note, "周报 日历")).toBe(false);
+    expect(noteMatches({ title: "空的", content: null }, "内容")).toBe(false);
   });
 });
 
@@ -103,6 +116,34 @@ describe("NotesPage", () => {
     fireEvent.keyDown(older, { key: "ArrowUp" });
     expect(newer).toHaveFocus();
     await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("新的笔记"));
+  });
+
+  it("筛选框按标题与内容筛选列表；↓ 打开第一篇，Esc 清空，没有匹配时说明", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "周报", "本周完成了搜索");
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await seedNote(ipc, "读书笔记", "第一章");
+    renderWithProviders(<NotesPage />, ipc);
+
+    const filter = await screen.findByRole("searchbox", { name: "筛选笔记" });
+    fireEvent.change(filter, { target: { value: "搜索" } });
+    const list = screen.getByRole("list", { name: "笔记列表" });
+    expect(within(list).getAllByRole("button")).toHaveLength(1);
+    // 筛选不切换正在编辑的笔记。
+    expect(screen.getByLabelText("标题")).toHaveValue("读书笔记");
+
+    fireEvent.keyDown(filter, { key: "ArrowDown" });
+    const weekly = within(list).getByRole("button", { name: /周报/ });
+    expect(weekly).toHaveFocus();
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("周报"));
+
+    fireEvent.change(filter, { target: { value: "没有这个词" } });
+    expect(screen.getByText("没有匹配的笔记。")).toHaveAttribute("role", "status");
+    fireEvent.keyDown(filter, { key: "Escape" });
+    expect(filter).toHaveValue("");
+    expect(
+      within(screen.getByRole("list", { name: "笔记列表" })).getAllByRole("button"),
+    ).toHaveLength(2);
   });
 
   it("编辑后自动保存，并立即在列表里按最新更新重排", async () => {

@@ -74,7 +74,9 @@
       "hint": "Quick thoughts and long text live here. Click “New note” to write something down and organize it later."
     },
     "characters_one": "{{count}} character",
-    "characters_other": "{{count}} characters"
+    "characters_other": "{{count}} characters",
+    "filter": "Filter notes",
+    "noMatch": "No matching notes."
   },
   "detail": {
     "label": "Item details",
@@ -1014,7 +1016,9 @@
       "clear": "Clear the selection"
     },
     "notes": {
-      "move": "Open the previous / next note"
+      "move": "Open the previous / next note",
+      "filterOpen": "In the filter: open the first match",
+      "filterClear": "In the filter: clear it"
     }
   }
 }

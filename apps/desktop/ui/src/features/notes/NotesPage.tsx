@@ -1,14 +1,16 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components";
+import { Button, Input } from "@/components";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
+import { noteMatches } from "./model/note-filter";
 import { noteSnippet } from "./model/note-snippet";
 import { NoteEditor } from "./NoteEditor";
 
@@ -19,7 +21,8 @@ import { NoteEditor } from "./NoteEditor";
  * * 「+ 新笔记」立刻创建一篇并打开，先写下来再说（先创建，再整理）；
  * * 编辑区自动保存（同详情面板，保存失败不丢内容）；
  * * 归档带可撤销的提示；
- * * 没有选中时默认打开最近更新的那一篇，一篇都没有时引导用户新建。
+ * * 没有选中时默认打开最近更新的那一篇，一篇都没有时引导用户新建；
+ * * 列表上方的筛选框按标题与内容筛选（不切换正在编辑的笔记）；在筛选框里按 ↓ 或 Enter 打开第一篇，Esc 清空。
  *
  * @returns Notes 页面。
  */
@@ -32,6 +35,8 @@ export function NotesPage() {
     staleTime: Infinity,
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState("");
+  const listRef = useRef<HTMLUListElement>(null);
 
   const create = useMutation({
     mutationFn: () =>
@@ -53,6 +58,26 @@ export function NotesPage() {
   const list = notes.data ?? [];
   // 选中的被归档 / 删除后回落到最近更新的那一篇（渲染时推导，不在 Effect 里同步状态）。
   const activeId = list.find((note) => note.id === selectedId)?.id ?? list[0]?.id ?? null;
+  const visible = list.filter((note) => noteMatches(note, filter));
+
+  /**
+   * 筛选框的键盘：↓ / Enter 打开并聚焦第一篇匹配的笔记（之后可以继续用 ↑ ↓），Esc 清空筛选。
+   *
+   * @param event 键盘事件。
+   */
+  function handleFilterKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    if (event.key === "Escape" && filter !== "") {
+      event.preventDefault();
+      event.stopPropagation();
+      setFilter("");
+    } else if (event.key === "ArrowDown" || event.key === "Enter") {
+      const first = listRef.current?.querySelector<HTMLElement>("[data-note-item]");
+      if (first === null || first === undefined) return;
+      event.preventDefault();
+      first.focus();
+      first.click();
+    }
+  }
 
   return (
     <section aria-label={t("notes.label")} className="flex h-full min-w-0">
@@ -68,10 +93,28 @@ export function NotesPage() {
             {t("notes.new")}
           </Button>
         </header>
+        {list.length > 0 && (
+          <div className="px-3 pb-2">
+            <Input
+              type="search"
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              onKeyDown={handleFilterKeyDown}
+              aria-label={t("notes.filter")}
+              placeholder={t("notes.filter")}
+              className="h-8"
+            />
+          </div>
+        )}
         {notes.data === undefined ? null : list.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-muted">{t("notes.empty.list")}</p>
+        ) : visible.length === 0 ? (
+          <p role="status" className="px-4 py-6 text-center text-sm text-muted">
+            {t("notes.noMatch")}
+          </p>
         ) : (
           <ul
+            ref={listRef}
             aria-label={t("notes.listLabel")}
             className="min-h-0 flex-1 overflow-y-auto px-2 pb-3"
             // ↑ / ↓ 换到上一篇 / 下一篇，右边的编辑区跟着切换。
@@ -81,7 +124,7 @@ export function NotesPage() {
               }
             }}
           >
-            {list.map((note) => (
+            {visible.map((note) => (
               <li key={note.id}>
                 <button
                   type="button"
