@@ -97,8 +97,24 @@ const ACCENT_SWATCH: Record<(typeof ACCENTS)[number], string> = {
   amber: "#d97706",
 };
 
+/** 页首跳转链接：分组的锚点 ID 与标题的翻译键，顺序与页面上一致。 */
+const SECTION_LINKS: readonly (readonly [string, string])[] = [
+  ["settings-general", "settings.section.general"],
+  ["settings-floating", "settings.section.floating"],
+  ["settings-shortcuts", "settings.section.shortcuts"],
+  ["settings-appearance", "settings.section.appearance"],
+  ["settings-notifications", "settings.section.notifications"],
+  ["settings-onboarding", "settings.onboarding.label"],
+  ["settings-schedule", "settings.section.schedule"],
+  ["settings-integrations", "settings.section.integrations"],
+  ["settings-about", "settings.section.about"],
+  ["settings-data", "settings.section.data"],
+];
+
 /** [`Section`] 的 Props。 */
 type SectionProps = {
+  /** 分组的锚点 ID（页首的跳转链接用）。 */
+  id: string;
   /** 分组标题。 */
   title: string;
   /** 分组里的设置行。 */
@@ -111,9 +127,9 @@ type SectionProps = {
  * @param props 标题与内容。
  * @returns 分组元素。
  */
-function Section({ title, children }: SectionProps) {
+function Section({ id, title, children }: SectionProps) {
   return (
-    <section aria-label={title} className="flex flex-col gap-2">
+    <section id={id} aria-label={title} className="flex scroll-mt-4 flex-col gap-2">
       <h2 className="px-1 text-xs font-semibold tracking-wide text-muted">{title}</h2>
       <div className="divide-y divide-border rounded-lg border border-border bg-surface">
         {children}
@@ -217,7 +233,20 @@ export function SettingsPage() {
         className="mx-auto flex max-w-2xl flex-col gap-6 px-8 py-8"
       >
         <h1 className="text-2xl font-semibold text-text">{t("settings.title")}</h1>
-        <Section title={t("settings.section.general")}>
+        {/* 设置分组较多：页首列出各组，点一下滚到那里。 */}
+        <nav aria-label={t("settings.jump")} className="-mt-3 flex flex-wrap gap-x-3 gap-y-1">
+          {SECTION_LINKS.map(([id, key]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => document.getElementById(id)?.scrollIntoView({ block: "start" })}
+              className="text-xs text-muted transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) hover:text-primary"
+            >
+              {t(key)}
+            </button>
+          ))}
+        </nav>
+        <Section id="settings-general" title={t("settings.section.general")}>
           <Row label={t("settings.autostart.label")} hint={t("settings.autostart.hint")}>
             <Switch
               label={t("settings.autostart.label")}
@@ -270,7 +299,7 @@ export function SettingsPage() {
             </div>
           </Row>
         </Section>
-        <Section title={t("settings.section.floating")}>
+        <Section id="settings-floating" title={t("settings.section.floating")}>
           <Row label={t("settings.alwaysOnTop.label")} hint={t("settings.alwaysOnTop.hint")}>
             <Switch
               label={t("settings.alwaysOnTop.label")}
@@ -285,7 +314,7 @@ export function SettingsPage() {
             />
           </Row>
         </Section>
-        <Section title={t("settings.section.shortcuts")}>
+        <Section id="settings-shortcuts" title={t("settings.section.shortcuts")}>
           <Row label={t("settings.shortcut.label")} hint={t("settings.shortcut.hint")}>
             <ShortcutSetting action="quickCreate" showStatus />
           </Row>
@@ -306,7 +335,7 @@ export function SettingsPage() {
             />
           </Row>
         </Section>
-        <Section title={t("settings.section.appearance")}>
+        <Section id="settings-appearance" title={t("settings.section.appearance")}>
           <Row
             label={t("settings.appearance.accent.label")}
             hint={t("settings.appearance.accent.hint")}
@@ -450,7 +479,7 @@ export function SettingsPage() {
             />
           </Row>
         </Section>
-        <Section title={t("settings.section.notifications")}>
+        <Section id="settings-notifications" title={t("settings.section.notifications")}>
           <Row
             label={t("settings.pauseNotifications.label")}
             hint={t("settings.pauseNotifications.hint")}
@@ -468,7 +497,7 @@ export function SettingsPage() {
             />
           </Row>
         </Section>
-        <Section title={t("settings.onboarding.label")}>
+        <Section id="settings-onboarding" title={t("settings.onboarding.label")}>
           <Row label={t("settings.onboarding.label")} hint={t("settings.onboarding.hint")}>
             <Button
               size="sm"
@@ -484,7 +513,7 @@ export function SettingsPage() {
             </Button>
           </Row>
         </Section>
-        <Section title={t("settings.section.schedule")}>
+        <Section id="settings-schedule" title={t("settings.section.schedule")}>
           <Row label={t("settings.later.label")} hint={t("settings.later.hint")}>
             <div
               role="radiogroup"
@@ -555,15 +584,15 @@ export function SettingsPage() {
             </div>
           </Row>
         </Section>
-        <Section title={t("settings.section.integrations")}>
+        <Section id="settings-integrations" title={t("settings.section.integrations")}>
           <IntegrationsSetting />
         </Section>
-        <Section title={t("settings.section.about")}>
+        <Section id="settings-about" title={t("settings.section.about")}>
           <Row label={t("settings.update.label")} hint={t("settings.update.hint")}>
             <UpdateSetting />
           </Row>
         </Section>
-        <Section title={t("settings.section.data")}>
+        <Section id="settings-data" title={t("settings.section.data")}>
           <Row label={t("settings.diagnostics.label")} hint={t("settings.diagnostics.hint")}>
             <Button
               size="sm"

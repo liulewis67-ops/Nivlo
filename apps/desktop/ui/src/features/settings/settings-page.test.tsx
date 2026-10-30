@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setLanguage } from "@/i18n";
@@ -28,6 +28,20 @@ describe("设置页", () => {
     );
     expect(screen.getByRole("radio", { name: "下周一" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("radio", { name: "3 天后" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("页首列出各个分组，点一下滚到那一组", async () => {
+    renderWithProviders(<SettingsPage />, createMemoryIpc());
+    const nav = await screen.findByRole("navigation", { name: "跳到设置分组" });
+    const links = within(nav).getAllByRole("button");
+    expect(links).toHaveLength(10);
+    const section = screen.getByRole("region", { name: "快捷键" });
+    const scrolled: Element[] = [];
+    section.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    fireEvent.click(within(nav).getByRole("button", { name: "快捷键" }));
+    expect(scrolled).toEqual([section]);
   });
 
   it("开关立即生效并保存；重新打开设置页仍是新值", async () => {
