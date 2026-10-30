@@ -12,6 +12,9 @@ use nivlo_platform::placement::{Edge, MonitorInfo, Rect};
 
 use super::*;
 
+/// 测试里徽标的 logical 尺寸（缩放比例 1，与假窗口的初始大小一致）。
+const BADGE: (f64, f64) = (88.0, 40.0);
+
 /// 假窗口：记录收到的调用，位置变化立即反映在 `bounds` 中。
 struct FakePort {
     state: Mutex<FakeState>,
@@ -82,10 +85,11 @@ impl FloatingWindowPort for FakePort {
     fn bounds(&self) -> Result<Rect, PlatformError> {
         Ok(lock(&self.state).bounds)
     }
-    fn collapse(&self) -> Result<(), PlatformError> {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+    fn collapse(&self, (width, height): (f64, f64)) -> Result<(), PlatformError> {
         let mut state = lock(&self.state);
-        state.bounds.width = 88;
-        state.bounds.height = 40;
+        state.bounds.width = width as u32;
+        state.bounds.height = height as u32;
         Ok(())
     }
     fn expand(&self, bounds: Rect) -> Result<(), PlatformError> {
@@ -203,6 +207,7 @@ async fn fixture(monitors: Vec<MonitorInfo>, start: (i32, i32), saved: &[(&str, 
         }),
         foreground.clone(),
     );
+    *lock(&controller.badge) = BADGE;
     Fixture {
         controller,
         port,
@@ -409,7 +414,7 @@ async fn collapse_restores_the_original_badge_position() {
     let before = f.port.bounds().unwrap();
 
     f.controller.expand(PANEL).unwrap();
-    f.controller.collapse().unwrap();
+    f.controller.collapse(BADGE).unwrap();
 
     assert_eq!(f.port.bounds().unwrap(), before);
 }
@@ -425,7 +430,7 @@ async fn repeated_expansion_keeps_returning_to_the_same_badge() {
     // 进入 Quick Create 后面板变高，再次展开基于同一个收起态外框。
     f.controller.expand((300.0, 460.0)).unwrap();
     assert_eq!(f.port.bounds().unwrap().height, 460);
-    f.controller.collapse().unwrap();
+    f.controller.collapse(BADGE).unwrap();
 
     assert_eq!(f.port.bounds().unwrap(), before);
 }
@@ -450,7 +455,7 @@ async fn dragging_works_again_after_collapsing() {
     let f = fixture(single(), (700, 400), &[]).await;
     f.controller.restore().await;
     f.controller.expand(PANEL).unwrap();
-    f.controller.collapse().unwrap();
+    f.controller.collapse(BADGE).unwrap();
 
     f.port.drag_to(10, 300);
     f.controller.on_moved(Point { x: 10, y: 300 });
@@ -481,7 +486,7 @@ async fn collapse_without_expanding_is_a_no_op_and_failed_expand_leaves_it_colla
     let f = fixture(single(), (700, 400), &[]).await;
     f.controller.restore().await;
     let before = f.port.bounds().unwrap();
-    f.controller.collapse().unwrap();
+    f.controller.collapse(BADGE).unwrap();
     assert_eq!(f.port.bounds().unwrap(), before);
 
     // 没有显示器时展开失败，控制器不能卡在"已展开"状态。
@@ -492,6 +497,31 @@ async fn collapse_without_expanding_is_a_no_op_and_failed_expand_leaves_it_colla
     f.controller.on_moved(Point { x: 10, y: 300 });
     advance(Duration::from_millis(300)).await;
     assert!(saved_placement(&f.uow).is_some());
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_new_badge_size_keeps_the_badge_on_its_edge() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1920 - 88, 500);
+    f.controller.on_moved(Point {
+        x: 1920 - 88,
+        y: 500,
+    });
+    advance(Duration::from_millis(300)).await;
+
+    // 收起态下换成更小的形状：仍贴着右边缘，垂直中心不变。
+    f.controller.collapse((40.0, 40.0)).unwrap();
+    let bounds = f.port.bounds().unwrap();
+    assert_eq!((bounds.width, bounds.height), (40, 40));
+    assert_eq!(bounds.x + 40, 1920);
+
+    // 展开期间换了形状：收起时先回到原来的外框，再按新尺寸落位。
+    f.controller.expand(PANEL).unwrap();
+    f.controller.collapse((64.0, 32.0)).unwrap();
+    let bounds = f.port.bounds().unwrap();
+    assert_eq!((bounds.width, bounds.height), (64, 32));
+    assert_eq!(bounds.x + 64, 1920);
 }
 
 #[tokio::test(start_paused = true)]
@@ -525,7 +555,7 @@ async fn watchdog_stops_after_collapsing() {
     let f = fixture(single(), (700, 400), &[]).await;
     f.controller.restore().await;
     f.controller.expand(PANEL).unwrap();
-    f.controller.collapse().unwrap();
+    f.controller.collapse(BADGE).unwrap();
 
     f.port.set_cursor(100, 100);
     advance(Duration::from_millis(2000)).await;

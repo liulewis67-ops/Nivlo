@@ -7,8 +7,11 @@ import { reportError } from "@/lib/report-error";
 import { useDropCapture } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
 import { useTodayQuery } from "@/features/today";
+import { useAppearanceStore } from "@/stores/appearance-store";
+import { useSkinStore } from "@/stores/skin-store";
 import { FloatingBadge } from "./FloatingBadge";
 import { TodayPanel } from "./TodayPanel";
+import { DEFAULT_BADGE_SIZE, badgeSize } from "./model/badge-size";
 import { needsPanelWindow } from "./model/floating-machine";
 import { useFloatingMachine } from "./use-floating-machine";
 import { useIgnoreWindowBlur } from "./use-ignore-window-blur";
@@ -45,8 +48,13 @@ export function FloatingRoot() {
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
   const [quickCreateKind, setQuickCreateKind] = useState<ItemTypeDto | null>(null);
   const isPanel = needsPanelWindow(state);
+  const shape = useAppearanceStore((s) => s.appearance.badgeShape);
+  const hasSkin = useSkinStore((s) => s.skin.frames.length > 0);
+  const { width: badgeWidth, height: badgeHeight } = badgeSize(shape, hasSkin);
   /** 是否曾经展开过：避免启动时对"本来就是收起"的窗口多发一次收起命令。 */
   const hasExpandedRef = useRef(false);
+  /** 最近一次告诉后端的徽标尺寸；窗口按默认尺寸创建，形状没变时不必再说一次。 */
+  const toldBadgeRef = useRef(DEFAULT_BADGE_SIZE);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,14 +66,21 @@ export function FloatingRoot() {
           if (!cancelled) setLayout(result);
         })
         .catch(reportError);
-    } else if (hasExpandedRef.current) {
+    } else if (
+      hasExpandedRef.current ||
+      badgeWidth !== toldBadgeRef.current.width ||
+      badgeHeight !== toldBadgeRef.current.height
+    ) {
+      // 收起，或者收起态下换了形状 / 皮肤：窗口跟着变成新形状的大小（后端保持贴边位置）。
+      hasExpandedRef.current = false;
+      toldBadgeRef.current = { width: badgeWidth, height: badgeHeight };
       setLayout(null);
-      ipc.collapseFloating().catch(reportError);
+      ipc.collapseFloating(badgeWidth, badgeHeight).catch(reportError);
     }
     return () => {
       cancelled = true;
     };
-  }, [isPanel]);
+  }, [isPanel, badgeWidth, badgeHeight]);
 
   /**
    * 进入快速创建：状态机切到 QuickCreate（此时指针离开不会收起面板），并显示输入行。
@@ -117,6 +132,11 @@ export function FloatingRoot() {
           send("pointerEnter");
         }}
         onPointerLeave={() => send("pointerLeave")}
+        // WebView 自带的右键菜单（后退 / 刷新 / 检查）在悬浮窗里没有意义；输入框保留，方便复制粘贴。
+        onContextMenu={(event) => {
+          const target = event.target as HTMLElement;
+          if (!target.closest("input, textarea, [contenteditable='true']")) event.preventDefault();
+        }}
         {...drop.handlers}
       >
         {isPanel ? (
@@ -144,7 +164,7 @@ export function FloatingRoot() {
             }}
           />
         ) : (
-          <FloatingBadge />
+          <FloatingBadge onQuickAdd={() => startQuickCreate("todo")} />
         )}
       </div>
     </MenuModalContext.Provider>

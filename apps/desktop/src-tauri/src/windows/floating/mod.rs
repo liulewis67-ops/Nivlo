@@ -50,12 +50,15 @@ pub trait FloatingHandle: Send + Sync {
     /// 没有可用显示器或窗口调用失败时返回 [`PlatformError`]。
     fn expand(&self, panel_logical: (f64, f64)) -> Result<ExpandedLayout, PlatformError>;
 
-    /// 收起回徽标，位置与展开前一致。未展开时是空操作。
+    /// 收起回 `badge_logical`（logical px）大小的徽标，位置与展开前一致。
+    ///
+    /// 徽标尺寸随形状 / 皮肤变化：尺寸和上次不同时，按原来的位置（贴边则仍贴边）换算成新尺寸重新落位；
+    /// 未展开且尺寸没变时是空操作。
     ///
     /// # Errors
     ///
     /// 窗口调用失败时返回 [`PlatformError`]。
-    fn collapse(&self) -> Result<(), PlatformError>;
+    fn collapse(&self, badge_logical: (f64, f64)) -> Result<(), PlatformError>;
 
     /// 立即把还没来得及落盘的窗口状态（拖动后的吸附位置）保存下来。退出流程在关闭数据库之前调用。
     fn flush(&self) -> std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send + '_>>;
@@ -124,6 +127,8 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     /// 展开 / 收起会让窗口位置与尺寸变化并产生 `Moved` 事件，这些不是用户拖动，
     /// 因此展开期间忽略移动事件，也不做吸附。
     collapsed: Mutex<Option<Rect>>,
+    /// 收起态徽标的 logical 尺寸：由前端按形状 / 皮肤告知，默认是胶囊的尺寸。
+    badge: Mutex<(f64, f64)>,
     /// 控制器自己发起的移动的目标位置，用来忽略自己触发的 `Moved` 事件。
     expected: Mutex<Option<Point>>,
     /// 最近一次保存的位置 JSON，内容没变时不重复写库。
@@ -160,6 +165,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
             generation: AtomicU64::new(0),
             watchdog: AtomicU64::new(0),
             collapsed: Mutex::new(None),
+            badge: Mutex::new((COLLAPSED_WIDTH_LOGICAL_PX, COLLAPSED_HEIGHT_LOGICAL_PX)),
             expected: Mutex::new(None),
             last_saved: Mutex::new(None),
             input_active: AtomicBool::new(false),
@@ -174,7 +180,8 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
     /// 悬浮窗在默认位置仍然可用，用户可以拖动它。
     pub async fn restore(&self) {
         // 先收起到徽标大小：Windows 创建窗口时会把宽度夹到系统最小宽度，之后按徽标尺寸计算位置才准确。
-        if let Err(error) = self.port.collapse() {
+        let badge = *lock(&self.badge);
+        if let Err(error) = self.port.collapse(badge) {
             tracing::warn!(event = "floating_collapse_failed", %error, "收起悬浮窗失败");
         }
         if let Err(error) = self.restore_position().await {
@@ -222,7 +229,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
         let Some(placement) = saved.or_else(|| default_placement(&monitors)) else {
             return Err(PlatformError::Failed("没有可用的显示器".to_owned()));
         };
-        let size = (COLLAPSED_WIDTH_LOGICAL_PX, COLLAPSED_HEIGHT_LOGICAL_PX);
+        let size = *lock(&self.badge);
         let Some((position, _monitor)) = resolve_position(&placement, size, &monitors) else {
             return Err(PlatformError::Failed("没有可用的显示器".to_owned()));
         };
@@ -232,8 +239,10 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
     /// 显示器配置变化后重新定位（见 [`FloatingHandle::on_display_changed`]）。
     pub async fn display_changed(&self) {
         // 展开着的面板外框是按旧的显示器布局算的：先收起，再按保存的位置重新定位。
+        // 先把尺寸取出来：条件里的锁守卫会活到整个 if 结束，而 collapse 还要再锁一次。
+        let badge = *lock(&self.badge);
         if lock(&self.collapsed).is_some()
-            && let Err(error) = FloatingHandle::collapse(self)
+            && let Err(error) = FloatingHandle::collapse(self, badge)
         {
             tracing::warn!(event = "floating_display_collapse_failed", %error, "显示器变化时收起悬浮窗失败");
         }
@@ -274,7 +283,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
         let Some(placement) = placement_for_bounds(bounds, &monitors) else {
             return Ok(());
         };
-        let size = (COLLAPSED_WIDTH_LOGICAL_PX, COLLAPSED_HEIGHT_LOGICAL_PX);
+        let size = *lock(&self.badge);
         // 用户只能拖动收起态的徽标（展开面板时窗口位置由 expand / collapse 决定，不走这里），
         // 因此按收起态的 logical 尺寸还原位置即可。
         if let Some((target, _)) = resolve_position(&placement, size, &monitors)
@@ -347,6 +356,22 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
             *lock(&self.expected) = None;
         })
     }
+
+    /// 徽标换了尺寸：先按当前外框算出位置（吸附边缘 + 相对比例），换成新尺寸后再按它落位，
+    /// 贴在右边缘的徽标变宽 / 变窄后仍贴着右边缘。位置本身没变，不需要重新保存。
+    fn resize_badge(&self, size: (f64, f64)) -> Result<(), PlatformError> {
+        let bounds = self.port.bounds()?;
+        let monitors = self.port.monitors()?;
+        let placement = placement_for_bounds(bounds, &monitors);
+        self.port.collapse(size)?;
+        if let Some(placement) = placement
+            && let Some((target, _)) = resolve_position(&placement, size, &monitors)
+            && (target.x != bounds.x || target.y != bounds.y)
+        {
+            self.move_to(target)?;
+        }
+        Ok(())
+    }
 }
 
 impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
@@ -401,15 +426,23 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
         Ok(layout)
     }
 
-    /// 收起：恢复展开前保存的徽标外框。
-    fn collapse(&self) -> Result<(), PlatformError> {
-        let Some(collapsed) = lock(&self.collapsed).take() else {
-            return Ok(());
-        };
-        self.watchdog.fetch_add(1, Ordering::SeqCst);
-        // 先清掉 collapsed 再移动：移动产生的事件会被当作"自己的移动"（expected）而忽略，
-        // 不会误触发一次吸附。
-        self.move_to_rect(collapsed)
+    /// 收起：恢复展开前保存的徽标外框；徽标尺寸变了再按新尺寸落位。
+    fn collapse(&self, badge_logical: (f64, f64)) -> Result<(), PlatformError> {
+        let previous = std::mem::replace(&mut *lock(&self.badge), badge_logical);
+        let expanded = lock(&self.collapsed).take();
+        if let Some(collapsed) = expanded {
+            self.watchdog.fetch_add(1, Ordering::SeqCst);
+            // 先清掉 collapsed 再移动：移动产生的事件会被当作"自己的移动"（expected）而忽略，
+            // 不会误触发一次吸附。
+            self.move_to_rect(collapsed)?;
+        }
+        // 尺寸只来自前端的几个固定常量，按位比较即可。
+        if previous.0.to_bits() != badge_logical.0.to_bits()
+            || previous.1.to_bits() != badge_logical.1.to_bits()
+        {
+            self.resize_badge(badge_logical)?;
+        }
+        Ok(())
     }
 
     /// 开始文本输入：先记住前台窗口，再让悬浮窗可聚焦并聚焦。

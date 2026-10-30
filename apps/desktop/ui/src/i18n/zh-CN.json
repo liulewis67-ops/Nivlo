@@ -261,7 +261,9 @@
   },
   "floating": {
     "label": "拾序悬浮窗",
-    "open": "打开拾序主窗口"
+    "open": "打开拾序主窗口",
+    "allDone": "今天的事都做完了",
+    "quickAddHint": "右键快速添加待办"
   },
   "shell": {
     "nav": {

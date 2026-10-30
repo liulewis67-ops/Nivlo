@@ -262,7 +262,9 @@
   },
   "floating": {
     "label": "Nivlo floating badge",
-    "open": "Open the Nivlo main window"
+    "open": "Open the Nivlo main window",
+    "allDone": "all done for today",
+    "quickAddHint": "right-click to add a to-do"
   },
   "shell": {
     "nav": {

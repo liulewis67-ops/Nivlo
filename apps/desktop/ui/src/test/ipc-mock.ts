@@ -150,6 +150,8 @@ export interface MemoryIpc extends IpcClient, WorkflowMock {
   emitFloatingPointerLeft(): void;
   /** 最近一次 `expandFloating` 请求的尺寸。 */
   readonly lastExpand: { width: number; height: number } | null;
+  /** 最近一次 `collapseFloating` 告知的徽标尺寸。 */
+  readonly lastCollapse: { width: number; height: number } | null;
 }
 
 /** 由捕获请求推出来源与附件（与后端默认规则一致的形状）。 */
@@ -340,6 +342,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   /** 捕获时记录的来源与附件，供 `listInbox` 返回。 */
   const provenance = new Map<string, { sources: SourceDto[]; attachments: AttachmentDto[] }>();
   let lastExpand: { width: number; height: number } | null = null;
+  let lastCollapse: { width: number; height: number } | null = null;
 
   /** 某个 Item 的标签，按名称排序。 */
   function tagsOf(itemId: string): TagDto[] {
@@ -833,13 +836,17 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     get lastExpand() {
       return lastExpand;
     },
+    get lastCollapse() {
+      return lastCollapse;
+    },
     expandFloating: (width: number, height: number) => {
       calls.push("expandFloating");
       lastExpand = { width, height };
       return Promise.resolve({ horizontal: "right" as const, vertical: "top" as const });
     },
-    collapseFloating: () => {
+    collapseFloating: (width: number, height: number) => {
       calls.push("collapseFloating");
+      lastCollapse = { width, height };
       return Promise.resolve();
     },
     startFloatingDrag: (grab?: { x: number; y: number }) => {

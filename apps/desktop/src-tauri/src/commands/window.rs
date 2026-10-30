@@ -8,7 +8,9 @@ use tauri::{AppHandle, Manager, PhysicalPosition, Runtime, State, WebviewWindow}
 use tauri_specta::Event;
 
 use crate::app::AppState;
-use crate::dto::{DragGrabPoint, ExpandFloatingRequest, ExpandedLayoutDto, IpcError};
+use crate::dto::{
+    CollapseFloatingRequest, DragGrabPoint, ExpandFloatingRequest, ExpandedLayoutDto, IpcError,
+};
 use crate::events::MainViewRequestedEvent;
 use crate::windows::floating::FloatingHandle;
 use crate::windows::show_main_window;
@@ -220,15 +222,24 @@ pub async fn expand_floating(
         .map_err(window_error)
 }
 
-/// 把悬浮窗收起回徽标，位置与展开前一致。未展开时是空操作。
+/// 把悬浮窗收起回徽标，位置与展开前一致。
+///
+/// `request` 是当前形状 / 皮肤下徽标的尺寸：前端启动时与形状变化时也会调用，尺寸变了就按原位置
+/// 换成新尺寸；未展开且尺寸没变时是空操作。
 ///
 /// # Errors
 ///
-/// 窗口不可用时返回 `WINDOW_UNAVAILABLE`。
+/// 尺寸不合法返回 `INVALID_INPUT`；窗口不可用返回 `WINDOW_UNAVAILABLE`。
 #[tauri::command]
 #[specta::specta]
-pub async fn collapse_floating(state: State<'_, AppState>) -> Result<(), IpcError> {
-    floating_handle(&state)?.collapse().map_err(window_error)
+pub async fn collapse_floating(
+    state: State<'_, AppState>,
+    request: CollapseFloatingRequest,
+) -> Result<(), IpcError> {
+    let badge = request.validated()?;
+    floating_handle(&state)?
+        .collapse(badge)
+        .map_err(window_error)
 }
 
 /// 取出悬浮窗的行为句柄；启动尚未完成时返回 `WINDOW_UNAVAILABLE`。

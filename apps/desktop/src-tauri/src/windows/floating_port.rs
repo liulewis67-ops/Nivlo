@@ -5,9 +5,7 @@
 
 use nivlo_platform::error::PlatformError;
 use nivlo_platform::floating_window::{FloatingBounds, FloatingWindowPort};
-use nivlo_platform::placement::{
-    COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, MonitorInfo, Point, Rect,
-};
+use nivlo_platform::placement::{MonitorInfo, Point, Rect};
 use tauri::{PhysicalPosition, PhysicalSize, Runtime, WebviewWindow};
 
 /// 把任意 Tauri 错误转换为 [`PlatformError::Failed`]，不向上泄漏 Tauri 的错误类型。
@@ -69,13 +67,13 @@ impl<R: Runtime> FloatingWindowPort for TauriFloatingWindow<R> {
     }
 
     /// 收起为徽标大小：尺寸按窗口当前所在显示器的缩放换算，保持左上角不动。
-    fn collapse(&self) -> Result<(), PlatformError> {
+    fn collapse(&self, (width, height): (f64, f64)) -> Result<(), PlatformError> {
         let scale = self.window.scale_factor().map_err(failed)?;
         // 徽标尺寸为几十 logical px，乘以缩放后远小于 u32 上限，转换不会截断。
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let size = PhysicalSize::new(
-            (COLLAPSED_WIDTH_LOGICAL_PX * scale).round() as u32,
-            (COLLAPSED_HEIGHT_LOGICAL_PX * scale).round() as u32,
+            (width * scale).round() as u32,
+            (height * scale).round() as u32,
         );
         self.window.set_size(size).map_err(failed)
     }

@@ -90,7 +90,7 @@ const clickText = (page, text) =>
 
 /** 场景：名称、视口、地址、截图前的步骤。 */
 const SCENARIOS = [
-  { name: "floating-collapsed", w: 220, h: 100, url: `${APP}/?window=floating`, steps: async () => sleep(800) },
+  { name: "floating-collapsed", w: 64, h: 32, url: `${APP}/?window=floating`, steps: async () => sleep(800) },
   {
     name: "floating-expanded",
     w: 380,

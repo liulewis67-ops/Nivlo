@@ -763,13 +763,16 @@ export const commands = {
 	 */
 	expandFloating: (request: ExpandFloatingRequest) => typedError<ExpandedLayoutDto, IpcError>(__TAURI_INVOKE("expand_floating", { request })),
 	/**
-	 *  把悬浮窗收起回徽标，位置与展开前一致。未展开时是空操作。
+	 *  把悬浮窗收起回徽标，位置与展开前一致。
+	 * 
+	 *  `request` 是当前形状 / 皮肤下徽标的尺寸：前端启动时与形状变化时也会调用，尺寸变了就按原位置
+	 *  换成新尺寸；未展开且尺寸没变时是空操作。
 	 * 
 	 *  # Errors
 	 * 
-	 *  窗口不可用时返回 `WINDOW_UNAVAILABLE`。
+	 *  尺寸不合法返回 `INVALID_INPUT`；窗口不可用返回 `WINDOW_UNAVAILABLE`。
 	 */
-	collapseFloating: () => typedError<null, IpcError>(__TAURI_INVOKE("collapse_floating")),
+	collapseFloating: (request: CollapseFloatingRequest) => typedError<null, IpcError>(__TAURI_INVOKE("collapse_floating", { request })),
 	/**
 	 *  开始悬浮窗的文本输入（Quick Create）：悬浮窗临时可聚焦并获得键盘焦点。
 	 * 
@@ -953,6 +956,14 @@ export type CaptureResultDto = {
 	items: ItemDto[],
 	/**  撤销这次捕获的句柄：传给 `undo_capture`。 */
 	undoIds: string[],
+};
+
+/**  收起悬浮窗的请求：徽标的 logical 尺寸（随形状 / 皮肤变化）。 */
+export type CollapseFloatingRequest = {
+	/**  徽标宽度（logical px）。 */
+	width: number | null,
+	/**  徽标高度（logical px）。 */
+	height: number | null,
 };
 
 /**  内容格式。 */

@@ -297,35 +297,74 @@ html[data-theme="dark"][data-surface="glass"] .nv-float {
 }
 
 /*
- * 收起态徽标铺满整个窗口：悬停不能放大（放大会被窗口边界截成方角），
+ * 收起态徽标铺满整个窗口（窗口和形状一样大）：悬停不能放大（放大会被窗口边界截成方角），
  * 改为主色轻染 + 内描边加深；按下只缩小，不会越界。
  */
 .nv-badge {
+  --nv-ring-track: color-mix(in srgb, var(--nv-text) 13%, transparent);
+  cursor: default;
   transition:
     transform var(--nv-duration-fast) var(--nv-ease-standard),
     box-shadow var(--nv-duration-fast) var(--nv-ease-standard);
 }
+html[data-theme="dark"] .nv-badge {
+  --nv-ring-track: color-mix(in srgb, white 16%, transparent);
+}
 .nv-badge:hover {
-  --nv-float-edge: color-mix(in srgb, var(--nv-primary) 35%, transparent);
-  --nv-float-tint: color-mix(in srgb, var(--nv-primary) 8%, transparent);
+  --nv-float-edge: color-mix(in srgb, var(--nv-primary) 40%, transparent);
+  --nv-float-tint: color-mix(in srgb, var(--nv-primary) 7%, transparent);
+  --nv-ring-track: color-mix(in srgb, var(--nv-primary) 22%, transparent);
 }
 .nv-badge:active {
-  transform: scale(0.96);
+  transform: scale(0.94);
+}
+/* 今天的事全部完成：整块轻染主色，对勾用主色。 */
+.nv-badge[data-done] {
+  --nv-float-tint: color-mix(in srgb, var(--nv-primary) 12%, transparent);
+  --nv-float-edge: color-mix(in srgb, var(--nv-primary) 30%, transparent);
 }
 /* 键盘焦点：默认 outline 有 offset，会画到窗口外被截断，徽标上改为内描边。 */
 .nv-badge:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--nv-focus-ring);
 }
-.nv-badge-dot {
-  background: radial-gradient(
-    circle at 35% 30%,
-    color-mix(in srgb, white 45%, var(--nv-primary)),
-    var(--nv-primary) 70%
-  );
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--nv-primary) 18%, transparent),
-    0 1px 2px color-mix(in srgb, var(--nv-primary) 40%, transparent);
+.nv-badge-ring circle {
+  fill: none;
+}
+.nv-badge-ring-track {
+  stroke: var(--nv-ring-track);
+}
+.nv-badge-ring-value {
+  stroke: var(--nv-primary);
+  stroke-linecap: round;
+}
+.nv-badge-ring .nv-badge-ring-core {
+  fill: var(--nv-primary);
+}
+.nv-badge-check {
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--nv-primary);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* 数字变化时轻轻弹一下；时长来自 Token，「减少动态效果」时为 0。 */
+@keyframes nv-badge-count-pop {
+  from {
+    opacity: 0.4;
+    transform: translateY(3px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.nv-badge-count {
+  display: inline-block;
+}
+.nv-badge-count-pop {
+  animation: nv-badge-count-pop var(--nv-duration-normal) var(--nv-ease-standard);
 }
 
 /* 自定义皮肤：像素风最近邻缩放 + 附加动效。 */

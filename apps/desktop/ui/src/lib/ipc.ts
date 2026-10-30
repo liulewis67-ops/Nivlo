@@ -362,8 +362,13 @@ export interface IpcClient {
    * @returns 展开方向，用于设置面板动画的 transform-origin。
    */
   expandFloating(width: number, height: number): Promise<ExpandedLayoutDto>;
-  /** 把悬浮窗收起回徽标，位置与展开前一致。 */
-  collapseFloating(): Promise<void>;
+  /**
+   * 把悬浮窗收起回徽标，位置与展开前一致；收起态下换了形状时也用它把窗口换成新尺寸。
+   *
+   * @param width 徽标宽度（logical px）。
+   * @param height 徽标高度（logical px）。
+   */
+  collapseFloating(width: number, height: number): Promise<void>;
   /**
    * 开始悬浮窗的文本输入：后端记住用户当前的前台窗口，悬浮窗临时可聚焦并获得键盘焦点。
    * 必须与 [`IpcClient.endFloatingInput`] 成对使用。
@@ -592,8 +597,8 @@ const tauriIpc: IpcClient = {
   },
   expandFloating: (width, height) =>
     call("expand_floating", commands.expandFloating({ width, height })),
-  collapseFloating: async () => {
-    await call("collapse_floating", commands.collapseFloating());
+  collapseFloating: async (width, height) => {
+    await call("collapse_floating", commands.collapseFloating({ width, height }));
   },
   beginFloatingInput: async () => {
     await call("begin_floating_input", commands.beginFloatingInput());
@@ -725,7 +730,7 @@ export const ipc: IpcClient = {
   quitApp: () => current.quitApp(),
   startFloatingDrag: (grab) => current.startFloatingDrag(grab),
   expandFloating: (width, height) => current.expandFloating(width, height),
-  collapseFloating: () => current.collapseFloating(),
+  collapseFloating: (width, height) => current.collapseFloating(width, height),
   beginFloatingInput: () => current.beginFloatingInput(),
   endFloatingInput: () => current.endFloatingInput(),
   subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),

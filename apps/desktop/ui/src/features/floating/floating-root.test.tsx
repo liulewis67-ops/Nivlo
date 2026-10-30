@@ -1,6 +1,7 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TodayItemDto } from "@/lib/ipc";
+import { useAppearanceStore } from "@/stores/appearance-store";
 import { EMPTY_TODAY, createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import { FloatingRoot, PANEL_HEIGHT_PX, PANEL_WIDTH_PX } from "./FloatingRoot";
@@ -55,6 +56,43 @@ describe("FloatingRoot", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    useAppearanceStore.getState().reset();
+  });
+
+  it("默认形状启动时不调整窗口；换了形状就把窗口收成新形状的大小", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    await advance(0);
+    expect(ipc.calls).not.toContain("collapseFloating");
+
+    act(() => useAppearanceStore.getState().update({ badgeShape: "circle" }));
+    await advance(0);
+
+    expect(ipc.lastCollapse).toEqual({ width: 36, height: 36 });
+  });
+
+  it("展开后收起时告诉后端当前形状的徽标尺寸", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    await advance(0);
+    fireEvent.pointerEnter(root());
+    await advance(HOVER_ENTER_DELAY_MS);
+    fireEvent.pointerLeave(root());
+    await advance(HOVER_LEAVE_DELAY_MS);
+
+    expect(ipc.lastCollapse).toEqual({ width: 64, height: 32 });
+  });
+
+  it("右键徽标直接进入待办的快速创建", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    await advance(0);
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: /打开拾序主窗口/ }));
+    await advance(0);
+
+    expect(ipc.calls).toContain("expandFloating");
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
   });
 
   it("Hover 延迟之后展开为面板，并请求 Rust 把窗口调整为面板大小", async () => {

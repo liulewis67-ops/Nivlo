@@ -468,6 +468,43 @@ pub struct ExpandFloatingRequest {
     pub height: f64,
 }
 
+/// 收起悬浮窗的请求：徽标的 logical 尺寸（随形状 / 皮肤变化）。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct CollapseFloatingRequest {
+    /// 徽标宽度（logical px）。
+    pub width: f64,
+    /// 徽标高度（logical px）。
+    pub height: f64,
+}
+
+impl CollapseFloatingRequest {
+    /// 校验尺寸并返回 `(宽, 高)`。
+    ///
+    /// # Errors
+    ///
+    /// 尺寸不是有限数，或超出允许范围时返回 `INVALID_INPUT`。
+    pub fn validated(self) -> Result<(f64, f64), AppError> {
+        let in_range = |value: f64| {
+            value.is_finite() && (MIN_BADGE_LOGICAL_PX..=MAX_BADGE_LOGICAL_PX).contains(&value)
+        };
+        if in_range(self.width) && in_range(self.height) {
+            Ok((self.width, self.height))
+        } else {
+            Err(invalid(format!(
+                "无效的徽标尺寸：{} x {}",
+                self.width, self.height
+            )))
+        }
+    }
+}
+
+/// 徽标允许的最小边长（logical px）：再小就很难点中。
+const MIN_BADGE_LOGICAL_PX: f64 = 20.0;
+
+/// 徽标允许的最大边长（logical px）。
+const MAX_BADGE_LOGICAL_PX: f64 = 200.0;
+
 /// 开始拖动悬浮窗时按下的位置：窗口内的 logical 坐标（页面的 `clientX` / `clientY`）。
 ///
 /// 拖动要先移动几像素才会开始，再加上一次 IPC，系统接手时光标已经离开了按下的位置；后端据此把

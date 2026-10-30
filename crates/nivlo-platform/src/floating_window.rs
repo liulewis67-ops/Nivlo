@@ -18,12 +18,12 @@ pub trait FloatingWindowPort: Send + Sync {
     /// 窗口已销毁或系统调用失败时返回 [`PlatformError::Failed`]。
     fn bounds(&self) -> Result<Rect, PlatformError>;
 
-    /// 把窗口收起到徽标大小，保持左上角位置不变。
+    /// 把窗口收起到 `logical`（logical px）大小的徽标，保持左上角位置不变。
     ///
     /// # Errors
     ///
     /// 系统调用失败时返回 [`PlatformError::Failed`]。
-    fn collapse(&self) -> Result<(), PlatformError>;
+    fn collapse(&self, logical: (f64, f64)) -> Result<(), PlatformError>;
 
     /// 把窗口调整为 `bounds`（物理像素）。
     ///

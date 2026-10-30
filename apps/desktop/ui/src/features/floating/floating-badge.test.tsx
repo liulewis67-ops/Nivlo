@@ -1,6 +1,7 @@
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { TodayItemDto } from "@/lib/ipc";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import { FloatingBadge } from "./FloatingBadge";
@@ -10,7 +11,51 @@ function badge(): HTMLElement {
   return screen.getByRole("button", { name: /打开拾序主窗口/ });
 }
 
+/** 构造一个已完成的待办。 */
+function doneTodo(id: string): TodayItemDto {
+  return {
+    id,
+    itemType: "todo",
+    title: id,
+    brief: null,
+    status: "done",
+    priority: "none",
+    scheduled: { date: "2026-10-10", time: null },
+    due: null,
+    isOverdue: false,
+  };
+}
+
 describe("FloatingBadge", () => {
+  it("显示剩余数量；全部完成时改为「都做完了」的对勾", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setToday({
+      date: "2026-10-10",
+      remainingCount: 0,
+      todos: [],
+      tips: [],
+      completed: [doneTodo("a"), doneTodo("b")],
+    });
+    renderWithProviders(<FloatingBadge />, ipc);
+
+    expect(await screen.findByRole("button", { name: /今天的事都做完了/ })).toHaveAttribute(
+      "data-done",
+      "true",
+    );
+  });
+
+  it("右键不弹系统菜单，而是快速添加待办", () => {
+    const ipc = createMemoryIpc();
+    const onQuickAdd = vi.fn();
+    renderWithProviders(<FloatingBadge onQuickAdd={onQuickAdd} />, ipc);
+
+    const prevented = !fireEvent.contextMenu(badge());
+
+    expect(prevented).toBe(true);
+    expect(onQuickAdd).toHaveBeenCalledTimes(1);
+    expect(ipc.openMainCalls).toBe(0);
+  });
+
   it("单击（没有明显移动）打开主窗口", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();

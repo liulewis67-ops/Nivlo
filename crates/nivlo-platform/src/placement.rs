@@ -12,11 +12,11 @@ use serde::{Deserialize, Serialize};
 /// 吸附阈值（logical px）：窗口边缘距离屏幕边缘不超过该值时吸附。
 pub const SNAP_THRESHOLD_LOGICAL_PX: f64 = 24.0;
 
-/// 收起态（徽标）的宽度（logical px）。
-pub const COLLAPSED_WIDTH_LOGICAL_PX: f64 = 88.0;
+/// 收起态（徽标）的默认宽度（logical px）：默认的胶囊形状。其他形状由前端在收起时告知尺寸。
+pub const COLLAPSED_WIDTH_LOGICAL_PX: f64 = 64.0;
 
-/// 收起态（徽标）的高度（logical px）。
-pub const COLLAPSED_HEIGHT_LOGICAL_PX: f64 = 40.0;
+/// 收起态（徽标）的默认高度（logical px）。
+pub const COLLAPSED_HEIGHT_LOGICAL_PX: f64 = 32.0;
 
 /// 默认位置在吸附边缘（右侧）上的相对高度：靠近顶部但不贴边。
 const DEFAULT_Y_RATIO: f64 = 0.08;
