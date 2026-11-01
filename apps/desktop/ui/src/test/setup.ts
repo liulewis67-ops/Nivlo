@@ -2,6 +2,8 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { initI18n } from "@/i18n";
+import { useNavStore } from "@/features/shell/nav-store";
+import { useDraftTransitionStore } from "@/stores/draft-transition-store";
 
 // 所有测试共用同一份 zh-CN 资源，断言直接使用用户可见文案。
 initI18n();
@@ -28,4 +30,6 @@ if (typeof Element.prototype.scrollIntoView !== "function") {
 
 afterEach(() => {
   cleanup();
+  useNavStore.setState({ detailId: null });
+  useDraftTransitionStore.getState().cancel();
 });

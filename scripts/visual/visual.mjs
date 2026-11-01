@@ -21,8 +21,9 @@ import { PNG } from "pngjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const PLATFORM = process.platform;
-const IMPLEMENTATION = process.argv.includes("--implementation-baseline");
-const BASELINES = IMPLEMENTATION
+const DETAIL_STAGE = process.argv.includes("--detail-stage");
+const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE;
+const BASELINES = DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
   ? join(ROOT, "tests", "visual", "implementation-baseline")
   : join(ROOT, "tests", "visual", "baselines", PLATFORM);
 const DIFFS = join(ROOT, "tests", "visual", "diff");
@@ -68,12 +69,14 @@ async function connect(wsUrl) {
   await new Promise((r) => (ws.onopen = r));
   let n = 0;
   const pending = new Map();
+  const listeners = new Map();
   ws.onmessage = (m) => {
     const d = JSON.parse(m.data);
     if (pending.has(d.id)) {
       pending.get(d.id)(d);
       pending.delete(d.id);
     }
+    if (d.method) listeners.get(d.method)?.(d.params);
   };
   const send = (method, params = {}) =>
     new Promise((res) => {
@@ -86,7 +89,7 @@ async function connect(wsUrl) {
     if (r.error || r.result?.exceptionDetails) throw new Error(JSON.stringify(r.error ?? r.result.exceptionDetails));
     return r.result?.result?.value;
   };
-  return { send, evaluate, close: () => ws.close() };
+  return { send, evaluate, on: (method, listener) => listeners.set(method, listener), close: () => ws.close() };
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -94,6 +97,15 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /** 点击页面上文本匹配的按钮。 */
 const clickText = (page, text) =>
   page.evaluate(`(() => { const b=[...document.querySelectorAll('button,[role=button],a')].find(x=>x.textContent.trim()===${JSON.stringify(text)} || [...x.children].some(c=>c.tagName==='SPAN' && c.textContent.trim()===${JSON.stringify(text)})); if(!b) return false; b.click(); return true; })()`);
+
+/** 在开发服务器 / React 提交完成前等待可操作的目标，不重复已经成功的动作。 */
+async function clickWhenReady(page, label) {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (await clickText(page, label)) return;
+    await sleep(100);
+  }
+  throw new Error(`Missing action ${label}: ${await page.evaluate("document.body.innerText.slice(0, 500)")}`);
+}
 
 /** 场景：名称、视口、地址、截图前的步骤。 */
 const SCENARIOS = [
@@ -174,6 +186,82 @@ const STABILIZE = `
   document.head.appendChild(s);
 `;
 
+// M1 的独立验收集；不覆盖 W0 或历史回归图片。
+if (DETAIL_STAGE) {
+  SCENARIOS.length = 0;
+  for (const scene of [
+    { name: "detail-960-light-zh", w: 960, h: 640 },
+    { name: "detail-960-dark-en", w: 960, h: 640, dark: true, en: true },
+    { name: "detail-1280-light-en", w: 1280, h: 800, en: true },
+    { name: "detail-400-dark-zh", w: 400, h: 600, dark: true },
+    { name: "detail-resize-saving", w: 1280, h: 800, resize: true },
+    { name: "detail-failed-close", w: 960, h: 640, fail: true },
+    { name: "detail-scrolled-failure", w: 960, h: 640, fail: true, content: true, en: true },
+  ]) SCENARIOS.push({ ...scene, url: APP, steps: async (page) => {
+    for (let attempt = 0; !await page.evaluate("!!document.querySelector('main')"); attempt++) {
+      if (attempt >= 100) throw new Error("Main shell did not become ready");
+      await sleep(100);
+    }
+    await page.evaluate(`import('/src/i18n/index.ts').then(m => m.setLanguage('${scene.en ? "en" : "zh-CN"}'))`);
+    if (scene.dark) await page.evaluate("import('/src/stores/theme-store.ts').then(m => m.useThemeStore.getState().setPreference('dark'))");
+    if (scene.w < 800) { await clickWhenReady(page, "导航"); await sleep(100); }
+    await clickWhenReady(page, scene.en ? "Inbox" : "收集箱");
+    await sleep(400);
+    await clickWhenReady(page, "记得给新来的同事开通测试环境的权限");
+    await sleep(400);
+    if (scene.name === "detail-960-light-zh") {
+      // 默认尺寸下直接安排日期，不先经过描述；另存实际浏览器帧的录像。
+      await page.evaluate(`(() => {
+        const input = document.querySelector('.nv-detail-panel input[type=date]');
+        input.focus();
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '2026-10-15');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      })()`);
+      await sleep(900);
+      if (!await page.evaluate(`(async () => {
+        const { ipc } = await import('/src/lib/ipc.ts');
+        const { useNavStore } = await import('/src/features/shell/nav-store.ts');
+        const item = await ipc.getItem(useNavStore.getState().detailId);
+        return item.scheduled?.date === '2026-10-15' && item.due === null;
+      })()`)) throw new Error("Default-size scheduling did not persist, or altered due");
+    }
+    if (scene.resize || scene.fail) {
+      await page.evaluate(`(async () => {
+        const { ipc } = await import('/src/lib/ipc.ts');
+        const update = ipc.updateItem;
+        ${scene.fail ? `const { AppError } = await import('/src/lib/errors.ts'); ipc.updateItem = async () => { throw new AppError('STORAGE_UNAVAILABLE', 'injected'); };` : `ipc.updateItem = async (...args) => { await new Promise(resolve => window.__releaseDetailSave = resolve); return update(...args); };`}
+        window.__detailTitle = document.querySelector('.nv-detail-panel ${scene.content ? "textarea" : "input"}');
+        window.__detailTitle.focus(); window.__detailTitle.select();
+      })()`);
+      await page.send("Input.insertText", { text: "Resize / failed-save draft" });
+      if (scene.fail) await page.evaluate("document.querySelector('.nv-detail-panel header button[aria-label]').click()");
+      else {
+        await sleep(850);
+        await page.send("Emulation.setDeviceMetricsOverride", { width: 960, height: 640, deviceScaleFactor: 1, mobile: false });
+        await sleep(200);
+        const stable = await page.evaluate("window.__detailTitle === document.querySelector('.nv-detail-panel input') && document.querySelector('.nv-detail-panel').getAttribute('aria-modal') === 'true' && typeof window.__releaseDetailSave === 'function'");
+        if (!stable) throw new Error("Resize remounted or lost the pending editor");
+        await page.send("Emulation.setDeviceMetricsOverride", { width: scene.w, height: scene.h, deviceScaleFactor: 1, mobile: false });
+        await page.evaluate("window.__releaseDetailSave()");
+      }
+      await sleep(500);
+    }
+    const checks = await page.evaluate(`(() => {
+      const panel = document.querySelector('.nv-detail-panel');
+      const dates = [...panel.querySelectorAll('input[type=date]')];
+      return { noOverflow: document.documentElement.scrollWidth <= innerWidth,
+        datesReachable: dates.length === 2 && ${scene.content ? "true" : "dates.every(x => x.getBoundingClientRect().bottom <= innerHeight)"},
+        expectedModal: panel.getAttribute('aria-modal') === (innerWidth < 1200 ? 'true' : null),
+        backgroundInert: document.querySelector('main').inert === (innerWidth < 1200),
+        draftPreserved: ${scene.resize || scene.fail ? `panel.querySelector('${scene.content ? "textarea" : "input"}').value === 'Resize / failed-save draft'` : "true"},
+        failureRecoverable: ${scene.fail ? "!!panel.querySelector('[role=alert]') && panel.querySelector('[role=alert]').getBoundingClientRect().top >= 0 && panel.querySelector('[role=alert]').getBoundingClientRect().bottom <= innerHeight" : "true"}
+      };
+    })()`);
+    if (Object.values(checks).some(value => !value)) throw new Error(`Detail checks failed: ${JSON.stringify(checks)}`);
+  } });
+}
+
 async function main() {
   mkdirSync(BASELINES, { recursive: true });
   let server = null;
@@ -198,6 +286,7 @@ async function main() {
 
   let failed = 0;
   const artifacts = [];
+  const recordings = [];
   try {
     for (const scenario of SCENARIOS) {
       const created = await (await fetch(`http://127.0.0.1:9333/json/new?${encodeURIComponent("about:blank")}`, { method: "PUT" })).json();
@@ -225,7 +314,31 @@ async function main() {
       await page.send("Page.navigate", { url: scenario.url });
       await sleep(1200);
       await page.evaluate(STABILIZE);
+      const frames = [];
+      const record = DETAIL_STAGE && scenario.name === "detail-960-light-zh";
+      if (record) {
+        page.on("Page.screencastFrame", (frame) => {
+          frames.push({ data: Buffer.from(frame.data, "base64"), timestamp: frame.metadata.timestamp });
+          void page.send("Page.screencastFrameAck", { sessionId: frame.sessionId });
+        });
+        await page.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: 960, maxHeight: 640, everyNthFrame: 1 });
+        await sleep(300);
+      }
       await scenario.steps(page);
+      if (record) {
+        await page.send("Page.stopScreencast");
+        if (frames.length < 2) throw new Error("No useful browser recording frames");
+        const list = [];
+        for (let i = 0; i < frames.length; i++) {
+          const file = `frame-${String(i).padStart(4, '0')}.jpg`;
+          writeFileSync(join(profile, file), frames[i].data);
+          list.push(`file '${file}'`, `duration ${i + 1 < frames.length ? Math.max(0.04, frames[i + 1].timestamp - frames[i].timestamp) : 0.5}`);
+        }
+        writeFileSync(join(profile, "recording.ffconcat"), "ffconcat version 1.0\n" + list.join("\n") + "\n");
+        const video = join(BASELINES, "default-size-scheduling.mp4");
+        execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", join(profile, "recording.ffconcat"), "-fps_mode", "vfr", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", video]);
+        recordings.push({ file: "default-size-scheduling.mp4", scene: scenario.name, frames: frames.length, source: "CDP screencast; frame timestamp intervals", sha256: createHash("sha256").update(readFileSync(video)).digest("hex") });
+      }
       const shot = await page.send("Page.captureScreenshot", { format: "png" });
       const actual = Buffer.from(shot.result.data, "base64");
       const file = join(BASELINES, `${scenario.name}.png`);
@@ -278,9 +391,21 @@ async function main() {
   if (IMPLEMENTATION) writeFileSync(join(BASELINES, "manifest.json"), JSON.stringify({
     sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim(),
     branch: execFileSync("git", ["branch", "--show-current"], { cwd: ROOT, encoding: "utf8" }).trim(),
-    fixtureRevision: "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
+    fixtureRevision: DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
+    sourceFiles: DETAIL_STAGE ? Object.fromEntries([
+      "scripts/visual/visual.mjs", "apps/desktop/ui/src/test/dev-seed.ts",
+      "apps/desktop/ui/src/features/detail/use-item-draft.ts", "apps/desktop/ui/src/features/detail/ItemDetailPanel.tsx",
+      "apps/desktop/ui/src/features/shell/MainShell.tsx", "apps/desktop/ui/src/stores/draft-transition-store.ts",
+      "apps/desktop/ui/src/features/shell/nav-store.ts", "apps/desktop/ui/src/features/detail/DraftRecovery.tsx",
+      "apps/desktop/ui/src/features/detail/SourceSection.tsx", "apps/desktop/ui/src/features/notes/NoteEditor.tsx",
+      "apps/desktop/ui/src/features/notes/NotesPage.tsx", "apps/desktop/ui/src/lib/layout.ts",
+      "apps/desktop/ui/src/lib/focus-trap.ts", "apps/desktop/ui/src/components/Menu.tsx",
+      "apps/desktop/ui/src/styles/tokens.css", "apps/desktop/ui/src/styles/global.css",
+      "apps/desktop/ui/src/i18n/en.json", "apps/desktop/ui/src/i18n/zh-CN.json",
+    ].map(file => [file, createHash("sha256").update(readFileSync(join(ROOT, file))).digest("hex")])) : undefined,
+    acceptance: DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
     platform: PLATFORM, timezone: "Asia/Shanghai", motion: "reduce; animations/transitions disabled",
-    environment: "Chrome browser mock; OS scale and native WebView2 not certified", artifacts,
+    environment: "Chrome browser mock; OS scale and native WebView2 not certified", artifacts, recordings,
   }, null, 2) + "\n");
   process.exit(failed > 0 ? 1 : 0);
 }

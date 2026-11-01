@@ -38,6 +38,23 @@ body,
   height: 100%;
 }
 
+.nv-detail-panel {
+  width: min(var(--nv-detail-width), calc(100vw - 2rem));
+}
+
+/* 日期输入在窄侧页 / 放大后的有效宽度下纵向排列。 */
+.nv-detail-panel {
+  container-type: inline-size;
+}
+@container (max-width: 300px) {
+  .nv-detail-date {
+    flex-direction: column;
+  }
+  .nv-detail-date input {
+    width: 100%;
+  }
+}
+
 body {
   margin: 0;
   background: var(--nv-bg);

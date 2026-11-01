@@ -96,6 +96,11 @@ export function NotesPage() {
   const list = notes.data ?? [];
   // 选中的被归档 / 删除后回落到最近更新的那一篇（渲染时推导，不在 Effect 里同步状态）。
   const activeId = list.find((note) => note.id === selectedId)?.id ?? list[0]?.id ?? null;
+  // 记录已显示的初始选择，防止其他笔记更新排序时替换正在编辑的实例。
+  // 此处不执行离开操作，也不关闭叠在上面的详情。
+  useEffect(() => {
+    if (selectedId === null && notes.data?.[0]) useNavStore.setState({ noteId: notes.data[0].id });
+  }, [selectedId, notes.data]);
   // 每篇的小写全文只在列表变化时算一次：上千篇长文时，逐字输入也不用每次把全部内容重新转小写。
   const searchTexts = useMemo(
     () => new Map((notes.data ?? []).map((note) => [note.id, noteSearchText(note)])),

@@ -16,7 +16,9 @@ System UI stack, starting with Microsoft YaHei UI; Cascadia Mono for code. Incum
 
 Use the existing 4px rhythm, 8px compact gaps, 12–16px related fields and 24px major sections. Observed main grid reserves 216px navigation and a 384px detail panel regardless of viewport; default native main size is 960×640. This compresses list titles.
 
-Target (not yet implemented): at least 1200px shell width permits docked details; 800–1199px uses a modal detail sheet; below 800px uses a labeled navigation drawer. Calendar backlog docks only with at least 1000px calendar content width. Preserve a stable editor instance on resize. The default native size stays unchanged. Core flows must remain reachable at effective widths around 400px and 200% zoom.
+Implemented in M1: at least 1200px shell width permits docked details; 800–1199px uses a modal detail sheet; below 800px uses a labeled navigation drawer. One detail instance changes positioning without reparenting or saving merely because of resize. Modal sheets contain Tab and make the background inert. The default native size stays unchanged. M1 browser acceptance covers details and navigation at effective widths down to 400px; other pages' reflow, actual 200% zoom/native and assistive-technology acceptance remain in their owning stages and the integrated sweep.
+
+Calendar backlog docking at at least 1000px calendar content width remains the W2 target.
 
 ## Elevation & Depth
 
@@ -30,7 +32,11 @@ Incumbent radii are 4/8/12px plus full radius. Preserve familiar buttons, input 
 
 Reuse Button, Input, Textarea, Tooltip and Menu. Button has primary/secondary/ghost/danger variants; medium is 36px and compact 28px. Global focus-visible is a 2px token-colored outline with 2px offset. Selected, busy, saved and failed states have separate meanings.
 
-Observed details put description before scheduling and delete near Close. Target: title and scheduling first, compact empty description, source summary, labeled secondary actions and persistent save/retry feedback. Observed Calendar chips truncate and use native title text; target full-title Tooltip on focus/hover and keyboard date editing through details. These targets do not claim implemented behavior.
+M1 details put title/brief and scheduling before reminder, project, priority, description, tags, source and conversion. Description starts at three rows and expands the same native textarea, retaining draft, selection and undo ownership. Source has a concise summary and explicit expansion for the full wrapped location. Delete lives in the labeled More menu. Close and save state remain in the header.
+
+Draft saves are serialized. A leave request waits for the in-flight version and subsequent edits; failures preserve the editor and expose Retry, Stay and confirmed Discard. One pending destination uses latest-request-wins; Stay clears it. Active detail drafts precede underlying Notes drafts, and the existing Workflow guard remains authoritative for its unsaved definition. Native hiding retains mounted drafts; process destruction/crash recovery is not claimed.
+
+Calendar chips still truncate and use native title text; full-title Tooltip on focus/hover and keyboard date editing through details remain W2 acceptance work.
 
 ## Do's and Don'ts
 

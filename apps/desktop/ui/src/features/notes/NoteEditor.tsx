@@ -7,10 +7,12 @@ import { useDeleteItems } from "@/features/trash";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
 import { handleMarkdownKeyDown, handleMarkdownPaste } from "@/lib/markdown-keys";
+import { useDraftTransitionStore } from "@/stores/draft-transition-store";
+import { DraftRecovery } from "@/features/detail";
 
 /** [`NoteEditor`] 的 Props。 */
 export type NoteEditorProps = {
-  /** 笔记（`note` 类型的 Item）的 ID；切换到另一篇时请用 `key` 重新挂载，未保存的修改会先被保存。 */
+  /** 笔记 ID；父级必须先通过导航的草稿检查，再用新 `key` 挂载另一篇。 */
   id: string;
   /** 刚新建的笔记：标题出现时聚焦并全选，直接打字就替换掉「未命名笔记」。 */
   focusTitle?: boolean;
@@ -53,7 +55,7 @@ function enterMovesToBody(event: KeyboardEvent<HTMLInputElement>): void {
  */
 export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps) {
   const { t } = useTranslation();
-  const { query, draft, status, problem, edit, save } = useItemDraft(id);
+  const { query, draft, status, problem, owner, edit, save } = useItemDraft(id);
   const { organize } = useOrganize();
   const { remove } = useDeleteItems();
 
@@ -80,6 +82,7 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
           <span role="status">
             {status === "saving" && t("detail.status.saving")}
             {status === "saved" && t("detail.status.saved")}
+            {status === "error" && t("detail.status.error")}
           </span>
           <span className="tabular-nums">{t("notes.characters", { count: characters })}</span>
         </div>
@@ -101,8 +104,10 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
             size="sm"
             variant="ghost"
             onClick={() => {
-              onLeave?.();
-              void organize([id], "archive", draft.title);
+              useDraftTransitionStore.getState().request(() => {
+                onLeave?.();
+                void organize([id], "archive", draft.title);
+              });
             }}
           >
             {t("inbox.action.archive")}
@@ -112,23 +117,19 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
             variant="ghost"
             className="text-danger"
             onClick={() => {
-              onLeave?.();
-              void remove([id], draft.title);
+              useDraftTransitionStore.getState().request(() => {
+                onLeave?.();
+                void remove([id], draft.title);
+              });
             }}
           >
             {t("trash.delete")}
           </Button>
         </div>
       </header>
-      {status === "error" && problem !== null && (
-        <div
-          role="alert"
-          className="mx-8 mt-3 flex items-center justify-between gap-3 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-text"
-        >
-          <p>{t("detail.saveFailed", { reason: problem })}</p>
-          <Button size="sm" onClick={() => void save()}>
-            {t("detail.retry")}
-          </Button>
+      {problem !== null && (
+        <div className="mx-8 mt-3">
+          <DraftRecovery owner={owner} problem={problem} save={save} />
         </div>
       )}
       <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col gap-3 px-8 py-6">

@@ -225,7 +225,8 @@ describe("从各处删除", () => {
     renderWithProviders(<ItemDetailPanel id={id} onClose={onClose} />, ipc);
     await screen.findByLabelText("标题");
 
-    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "更多" }), { key: "ArrowDown" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "删除" }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect((await ipc.listTrash())[0]?.item.id).toBe(id);
     const toast = useToastStore.getState().toasts.at(-1);
@@ -254,7 +255,8 @@ describe("从各处删除", () => {
     renderWithProviders(<ItemDetailPanel id={id} onClose={onClose} />, ipc);
     await screen.findByLabelText("标题");
 
-    fireEvent.click(screen.getByRole("button", { name: "删除" }));
+    fireEvent.keyDown(screen.getByRole("button", { name: "更多" }), { key: "ArrowDown" });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "删除" }));
     await waitFor(() =>
       expect(useToastStore.getState().toasts.some((t) => t.kind === "error")).toBe(true),
     );

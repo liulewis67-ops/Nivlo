@@ -153,10 +153,11 @@ describe("ItemDetailPanel", () => {
 
     fireEvent.change(screen.getByLabelText("标题"), { target: { value: "关闭前的修改" } });
     fireEvent.click(screen.getByRole("button", { name: "关闭详情" }));
-    expect(closed).toBe(true);
-    unmount();
+    expect(closed).toBe(false);
     await advance(0);
+    expect(closed).toBe(true);
     expect(ipc.updates).toEqual([{ id, request: { title: "关闭前的修改" } }]);
+    unmount();
   });
 
   it("Todo 有简述，自动保存；转成笔记后不再显示", async () => {

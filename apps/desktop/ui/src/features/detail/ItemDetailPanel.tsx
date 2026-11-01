@@ -1,7 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Input, Textarea } from "@/components";
+import { Button, Input, Textarea, Menu } from "@/components";
 import { cx } from "@/lib/cx";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
@@ -15,6 +15,9 @@ import { useDeleteItems } from "@/features/trash";
 import { reminderPresets } from "./model/reminder-presets";
 import { SourceSection } from "./SourceSection";
 import { useItemDraft } from "./use-item-draft";
+import { DraftRecovery } from "./DraftRecovery";
+import { useDraftTransitionStore } from "@/stores/draft-transition-store";
+import { trapTab } from "@/lib/focus-trap";
 
 export { AUTOSAVE_DELAY_MS } from "./use-item-draft";
 
@@ -29,10 +32,14 @@ const FORMATS: ContentFormatDto[] = ["plain", "markdown"];
 
 /** [`ItemDetailPanel`] 的 Props。 */
 export type ItemDetailPanelProps = {
-  /** 要编辑的 Item。切换到另一个 Item 时请用 `key` 重新挂载，未保存的修改会先被保存。 */
+  /** 要编辑的 Item。父级切换条目前必须经过草稿协调器，成功后才用新 `key` 挂载。 */
   id: string;
   /** 关闭面板。 */
   onClose: () => void;
+  /** 窄窗口使用同一个编辑器实例作为模态侧页。 */
+  modal?: boolean;
+  /** 搜索等临时模态拥有焦点时暂停当前表面。 */
+  suspended?: boolean;
 };
 
 /** [`Segmented`] 的 Props。 */
@@ -126,25 +133,56 @@ function Field({ label, children }: FieldProps) {
  * @param props 条目 ID 与关闭回调。
  * @returns 详情面板。
  */
-export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
+export function ItemDetailPanel({
+  id,
+  onClose,
+  modal = false,
+  suspended = false,
+}: ItemDetailPanelProps) {
   const { t } = useTranslation();
-  const { query, detail, draft, status, problem, edit, save } = useItemDraft(id);
+  const { query, detail, draft, status, problem, owner, edit, save } = useItemDraft(id, 20);
   const item = detail?.item;
   const { remove } = useDeleteItems();
   const panelRef = useRef<HTMLElement>(null);
+  const openedFrom = useRef(document.activeElement);
   const titleRef = useRef<HTMLInputElement>(null);
+  const contentId = useId();
+  const [contentExpanded, setContentExpanded] = useState(false);
+  /** 正常关闭必须等待草稿保存，失败则保留挂载。 */
+  const close = (): void => useDraftTransitionStore.getState().request(onClose);
+
+  // 从停靠转成模态或从搜索返回时，保留已有的输入焦点；焦点在背景时移入。
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (modal && !suspended && panel && !panel.contains(document.activeElement))
+      panel.focus({ preventScroll: true });
+  }, [modal, suspended]);
 
   // 打开时把焦点移进面板；关闭时还给打开它的那一行。焦点已经在面板里（如点了里面的字段）时不动；
   // 关闭时焦点已经去了别处（点了另一行），或那一行已经不在（删除了）时也不抢。
   useEffect(() => {
     const panel = panelRef.current;
-    const opener = document.activeElement;
+    const opener = openedFrom.current;
+    const row = opener instanceof Element ? opener.closest("li") : null;
+    const neighbor =
+      row?.nextElementSibling?.querySelector<HTMLElement>("button") ??
+      row?.previousElementSibling?.querySelector<HTMLElement>("button");
     if (panel !== null && !panel.contains(opener)) panel.focus({ preventScroll: true });
     return () => {
       const current = document.activeElement;
       const lost =
         current === null || current === document.body || panel?.contains(current) === true;
-      if (lost && opener instanceof HTMLElement && opener.isConnected) opener.focus();
+      if (!lost) return;
+      if (opener instanceof HTMLElement && opener !== document.body && opener.isConnected)
+        opener.focus();
+      else if (neighbor?.isConnected) neighbor.focus();
+      else {
+        const heading = document.querySelector<HTMLElement>("main h1");
+        if (heading) {
+          heading.tabIndex = -1;
+          heading.focus();
+        }
+      }
     };
   }, []);
 
@@ -154,14 +192,19 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
   }, [id]);
 
   /**
-   * Esc 关闭面板（在输入框里也一样：自动保存会在卸载时完成）；刚打开时的第一下 Tab 进到标题。
+   * Esc 请求保存并关闭；失败保留当前面板。刚打开时的第一下 Tab 进到标题。
    *
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLElement>): void {
+    if (
+      event.defaultPrevented ||
+      (event.target instanceof Element && event.target.closest('[role="menu"]'))
+    )
+      return;
     if (event.key === "Escape") {
       event.stopPropagation();
-      onClose();
+      close();
     } else if (
       event.key === "Tab" &&
       !event.shiftKey &&
@@ -171,6 +214,8 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
       // 刚打开时焦点在面板本身：第一下 Tab 进到标题，而不是页首的「删除」，免得 Tab、Enter 误删。
       event.preventDefault();
       titleRef.current.focus();
+    } else if (modal) {
+      trapTab(event, panelRef.current);
     }
   }
 
@@ -193,213 +238,200 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
 
   const kind = draft?.itemType ?? "todo";
   return (
-    <aside
-      ref={panelRef}
-      tabIndex={-1}
-      aria-label={t("detail.label")}
-      onKeyDown={handleKeyDown}
-      className="flex h-full focus-visible:outline-none w-[24rem] shrink-0 flex-col border-l border-border bg-surface"
-    >
-      <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold text-text">{t("detail.title")}</h2>
-        <div className="flex items-center gap-2">
-          <span role="status" className="text-xs text-muted">
-            {status === "saving" && t("detail.status.saving")}
-            {status === "saved" && t("detail.status.saved")}
-          </span>
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={item === undefined}
-            className="text-danger"
-            onClick={() => {
-              if (item === undefined) return;
-              void remove([id], item.title).then((deleted) => {
-                if (deleted) onClose();
-              });
-            }}
-          >
-            {t("trash.delete")}
-          </Button>
-          <Button size="sm" variant="ghost" aria-label={t("detail.close")} onClick={onClose}>
-            {"✕"}
-          </Button>
-        </div>
-      </header>
-      {query.isError ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-          <p className="text-sm text-muted">{errorMessage(toAppError(query.error))}</p>
-          <Button size="sm" onClick={onClose}>
-            {t("detail.close")}
-          </Button>
-        </div>
-      ) : draft === null || item === undefined || query.data === undefined ? (
-        <div className="flex flex-1 items-center justify-center text-sm text-muted">
-          {t("detail.loading")}
-        </div>
-      ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
-          {status === "error" && problem !== null && (
-            <div
-              role="alert"
-              className="flex flex-col gap-2 rounded-md border border-danger/40 bg-danger/10 p-3 text-xs text-text"
-            >
-              <p>{t("detail.saveFailed", { reason: problem })}</p>
-              <div>
-                <Button size="sm" onClick={() => void save()}>
-                  {t("detail.retry")}
+    <>
+      {modal && !suspended && (
+        <div
+          aria-hidden="true"
+          className="fixed inset-0 z-(--nv-z-menu) bg-text/30"
+          onMouseDown={close}
+        />
+      )}
+      <aside
+        ref={panelRef}
+        tabIndex={-1}
+        role={modal && !suspended ? "dialog" : "complementary"}
+        aria-modal={modal && !suspended ? true : undefined}
+        inert={suspended}
+        aria-label={t("detail.label")}
+        onKeyDown={handleKeyDown}
+        className={cx(
+          "nv-detail-panel flex min-h-0 flex-col border-l border-border bg-surface focus-visible:outline-none",
+          modal ? "fixed inset-y-0 right-0 z-(--nv-z-dialog) shadow-lg" : "row-start-2 h-full",
+          suspended && "invisible",
+        )}
+      >
+        <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold text-text">{t("detail.title")}</h2>
+          <div className="flex items-center gap-2">
+            <span role="status" className="text-xs text-muted">
+              {status === "saving" && t("detail.status.saving")}
+              {status === "saved" && t("detail.status.saved")}
+              {status === "error" && t("detail.status.error")}
+            </span>
+            <Menu
+              withinDialog={modal}
+              trigger={
+                <Button size="sm" variant="ghost">
+                  {t("detail.more")}
                 </Button>
-              </div>
-            </div>
-          )}
-          <Field label={t("detail.field.type")}>
-            <Segmented
-              label={t("detail.field.type")}
-              options={TYPES}
-              value={draft.itemType}
-              render={(option) => t(`quickCreate.kind.${option}`)}
-              onChange={(option) => edit({ itemType: option })}
+              }
+              items={[
+                {
+                  id: "delete",
+                  label: t("trash.delete"),
+                  isDanger: true,
+                  isDisabled: item === undefined,
+                  onSelect: () =>
+                    useDraftTransitionStore.getState().request(() => {
+                      if (item)
+                        void remove([id], item.title).then((deleted) => {
+                          if (deleted) onClose();
+                        });
+                    }),
+                },
+              ]}
             />
-          </Field>
-          <Field label={t("detail.field.title")}>
-            <Input
-              ref={titleRef}
-              aria-label={t("detail.field.title")}
-              value={draft.title}
-              onChange={(event) => edit({ title: event.target.value })}
-            />
-          </Field>
-          {kind !== "note" && (
-            <Field label={t("detail.field.brief")}>
+            <Button size="sm" variant="ghost" aria-label={t("detail.close")} onClick={close}>
+              {"✕"}
+            </Button>
+          </div>
+        </header>
+        <DraftRecovery
+          owner={owner}
+          problem={problem}
+          save={save}
+          showBlocked={modal && !suspended}
+          className="mx-4 mt-3 max-h-[40%] shrink-0 overflow-y-auto"
+        />
+        {query.isError ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+            <p className="text-sm text-muted">{errorMessage(toAppError(query.error))}</p>
+            <Button size="sm" onClick={close}>
+              {t("detail.close")}
+            </Button>
+          </div>
+        ) : draft === null || item === undefined || query.data === undefined ? (
+          <div className="flex flex-1 items-center justify-center text-sm text-muted">
+            {t("detail.loading")}
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
+            <Field label={t("detail.field.title")}>
               <Input
-                aria-label={t("detail.field.brief")}
-                placeholder={t("detail.briefPlaceholder")}
-                value={draft.brief}
-                onChange={(event) => edit({ brief: event.target.value })}
+                ref={titleRef}
+                aria-label={t("detail.field.title")}
+                value={draft.title}
+                onChange={(event) => edit({ title: event.target.value })}
               />
             </Field>
-          )}
-          {kind !== "note" && (
-            <Field label={t("detail.field.reminder")}>
-              <Input
-                type="datetime-local"
-                aria-label={t("detail.reminder.input")}
-                value={draft.reminder}
-                onChange={(event) => edit({ reminder: event.target.value })}
-              />
-              <div className="flex flex-wrap items-center gap-1.5">
-                {reminderPresets(draft).map((preset) => {
-                  const reason =
-                    preset.value !== null
-                      ? undefined
-                      : preset.kind === "minutes15" || preset.kind === "hour1"
-                        ? t("detail.reminder.needTime")
-                        : t("detail.reminder.needDate");
-                  return (
-                    <Button
-                      key={preset.kind}
-                      size="sm"
-                      variant={
-                        preset.value !== null && preset.value === draft.reminder
-                          ? "primary"
-                          : "secondary"
-                      }
-                      disabled={preset.value === null}
-                      title={reason}
-                      onClick={() => preset.value !== null && edit({ reminder: preset.value })}
-                    >
-                      {t(`detail.reminder.preset.${preset.kind}`)}
-                    </Button>
-                  );
-                })}
-                {draft.reminder !== "" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    aria-label={t("detail.reminder.clear")}
-                    onClick={() => edit({ reminder: "" })}
-                  >
-                    {"✕"}
-                  </Button>
-                )}
-              </div>
-              <p className="text-xs text-muted">{t("detail.reminder.hint")}</p>
-            </Field>
-          )}
-          <Field label={t("detail.field.project")}>
-            <ProjectSelect value={draft.projectId} onChange={(projectId) => edit({ projectId })} />
-          </Field>
-          <Field label={t("detail.field.tags")}>
-            <TagsField itemId={id} tags={query.data.tags} />
-          </Field>
-          <Field label={t("detail.field.content")}>
-            <Textarea
-              aria-label={t("detail.field.content")}
-              placeholder={t("detail.contentPlaceholder")}
-              value={draft.content}
-              rows={8}
-              onChange={(event) => edit({ content: event.target.value })}
-              // Markdown 时与笔记编辑区一样：Ctrl+B / I、列表续行与缩进。
-              onKeyDown={(event) => {
-                if (draft.contentFormat === "markdown") {
-                  handleMarkdownKeyDown(event, (content) => edit({ content }));
-                }
-              }}
-              onPaste={(event) => {
-                if (draft.contentFormat === "markdown") {
-                  handleMarkdownPaste(event, (content) => edit({ content }));
-                }
-              }}
-              className="resize-y font-mono text-[13px] leading-relaxed"
-            />
-            <Segmented
-              label={t("detail.field.format")}
-              options={FORMATS}
-              value={draft.contentFormat}
-              render={(option) => t(`detail.format.${option}`)}
-              onChange={(option) => edit({ contentFormat: option })}
-            />
-          </Field>
-          <Field label={t("detail.field.scheduled")}>
-            <div className="flex gap-2">
-              <Input
-                type="date"
-                aria-label={t("detail.field.scheduledDate")}
-                value={draft.scheduledDate}
-                onChange={(event) => edit({ scheduledDate: event.target.value })}
-                className="min-w-0 flex-1"
-              />
-              <Input
-                type="time"
-                aria-label={t("detail.field.scheduledTime")}
-                value={draft.scheduledTime}
-                disabled={draft.scheduledDate === ""}
-                onChange={(event) => edit({ scheduledTime: event.target.value })}
-                className="w-24 shrink-0"
-              />
-            </div>
-          </Field>
-          {kind === "todo" && (
-            <>
-              <Field label={t("detail.field.due")}>
-                <div className="flex gap-2">
-                  <Input
-                    type="date"
-                    aria-label={t("detail.field.dueDate")}
-                    value={draft.dueDate}
-                    onChange={(event) => edit({ dueDate: event.target.value })}
-                    className="min-w-0 flex-1"
-                  />
-                  <Input
-                    type="time"
-                    aria-label={t("detail.field.dueTime")}
-                    value={draft.dueTime}
-                    disabled={draft.dueDate === ""}
-                    onChange={(event) => edit({ dueTime: event.target.value })}
-                    className="w-24 shrink-0"
-                  />
-                </div>
+            {kind !== "note" && (
+              <Field label={t("detail.field.brief")}>
+                <Input
+                  aria-label={t("detail.field.brief")}
+                  placeholder={t("detail.briefPlaceholder")}
+                  value={draft.brief}
+                  onChange={(event) => edit({ brief: event.target.value })}
+                />
               </Field>
+            )}
+            <Field label={t("detail.field.scheduled")}>
+              <p className="text-xs text-muted">{t("detail.scheduleHint")}</p>
+              <div className="nv-detail-date flex gap-2">
+                <Input
+                  type="date"
+                  aria-label={t("detail.field.scheduledDate")}
+                  value={draft.scheduledDate}
+                  onChange={(event) => edit({ scheduledDate: event.target.value })}
+                  className="min-w-0 flex-1"
+                />
+                <Input
+                  type="time"
+                  aria-label={t("detail.field.scheduledTime")}
+                  value={draft.scheduledTime}
+                  disabled={draft.scheduledDate === ""}
+                  onChange={(event) => edit({ scheduledTime: event.target.value })}
+                  className="w-24 shrink-0"
+                />
+              </div>
+            </Field>
+            {kind === "todo" && (
+              <>
+                <Field label={t("detail.field.due")}>
+                  <p className="text-xs text-muted">{t("detail.dueHint")}</p>
+                  <div className="nv-detail-date flex gap-2">
+                    <Input
+                      type="date"
+                      aria-label={t("detail.field.dueDate")}
+                      value={draft.dueDate}
+                      onChange={(event) => edit({ dueDate: event.target.value })}
+                      className="min-w-0 flex-1"
+                    />
+                    <Input
+                      type="time"
+                      aria-label={t("detail.field.dueTime")}
+                      value={draft.dueTime}
+                      disabled={draft.dueDate === ""}
+                      onChange={(event) => edit({ dueTime: event.target.value })}
+                      className="w-24 shrink-0"
+                    />
+                  </div>
+                </Field>
+              </>
+            )}
+            {kind !== "note" && (
+              <Field label={t("detail.field.reminder")}>
+                <Input
+                  type="datetime-local"
+                  aria-label={t("detail.reminder.input")}
+                  value={draft.reminder}
+                  onChange={(event) => edit({ reminder: event.target.value })}
+                />
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {reminderPresets(draft).map((preset) => {
+                    const reason =
+                      preset.value !== null
+                        ? undefined
+                        : preset.kind === "minutes15" || preset.kind === "hour1"
+                          ? t("detail.reminder.needTime")
+                          : t("detail.reminder.needDate");
+                    return (
+                      <Button
+                        key={preset.kind}
+                        size="sm"
+                        variant={
+                          preset.value !== null && preset.value === draft.reminder
+                            ? "primary"
+                            : "secondary"
+                        }
+                        disabled={preset.value === null}
+                        title={reason}
+                        onClick={() => preset.value !== null && edit({ reminder: preset.value })}
+                      >
+                        {t(`detail.reminder.preset.${preset.kind}`)}
+                      </Button>
+                    );
+                  })}
+                  {draft.reminder !== "" && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={t("detail.reminder.clear")}
+                      onClick={() => edit({ reminder: "" })}
+                    >
+                      {"✕"}
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted">{t("detail.reminder.hint")}</p>
+              </Field>
+            )}
+            <Field label={t("detail.field.project")}>
+              <ProjectSelect
+                value={draft.projectId}
+                onChange={(projectId) => edit({ projectId })}
+              />
+            </Field>
+            {kind === "todo" && (
               <Field label={t("detail.field.priority")}>
                 <Segmented
                   label={t("detail.field.priority")}
@@ -409,11 +441,66 @@ export function ItemDetailPanel({ id, onClose }: ItemDetailPanelProps) {
                   onChange={(option) => edit({ priority: option })}
                 />
               </Field>
-            </>
-          )}
-          <SourceSection detail={query.data} onOpen={openSource} onRerun={rerun} />
-        </div>
-      )}
-    </aside>
+            )}
+            <Field label={t("detail.field.content")}>
+              <Textarea
+                id={contentId}
+                aria-label={t("detail.field.content")}
+                placeholder={t("detail.contentPlaceholder")}
+                value={draft.content}
+                rows={contentExpanded ? 12 : 3}
+                onChange={(event) => edit({ content: event.target.value })}
+                // Markdown 时与笔记编辑区一样：Ctrl+B / I、列表续行与缩进。
+                onKeyDown={(event) => {
+                  if (draft.contentFormat === "markdown") {
+                    handleMarkdownKeyDown(event, (content) => edit({ content }));
+                  }
+                }}
+                onPaste={(event) => {
+                  if (draft.contentFormat === "markdown") {
+                    handleMarkdownPaste(event, (content) => edit({ content }));
+                  }
+                }}
+                className="resize-y font-mono text-[13px] leading-relaxed"
+              />
+              {!contentExpanded && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-expanded={false}
+                  aria-controls={contentId}
+                  onClick={() => {
+                    setContentExpanded(true);
+                    document.getElementById(contentId)?.focus({ preventScroll: true });
+                  }}
+                >
+                  {t("detail.expandContent")}
+                </Button>
+              )}
+              <Segmented
+                label={t("detail.field.format")}
+                options={FORMATS}
+                value={draft.contentFormat}
+                render={(option) => t(`detail.format.${option}`)}
+                onChange={(option) => edit({ contentFormat: option })}
+              />
+            </Field>
+            <Field label={t("detail.field.tags")}>
+              <TagsField itemId={id} tags={query.data.tags} />
+            </Field>
+            <SourceSection detail={query.data} onOpen={openSource} onRerun={rerun} />
+            <Field label={t("detail.field.type")}>
+              <Segmented
+                label={t("detail.field.type")}
+                options={TYPES}
+                value={draft.itemType}
+                render={(option) => t(`quickCreate.kind.${option}`)}
+                onChange={(option) => edit({ itemType: option })}
+              />
+            </Field>
+          </div>
+        )}
+      </aside>
+    </>
   );
 }

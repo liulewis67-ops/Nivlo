@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ipc } from "@/lib/ipc";
 import { isCommandKey, isDialogOpen, isTyping } from "@/lib/typing";
@@ -19,6 +19,8 @@ import { TodayPage, useTodayQuery } from "@/features/today";
 import { TrashPage } from "@/features/trash";
 import { WorkflowsPage } from "@/features/workflows";
 import { cx } from "@/lib/cx";
+import { LAYOUT, useContainerWidth } from "@/lib/layout";
+import { trapTab } from "@/lib/focus-trap";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useDisplayStore } from "@/stores/display-store";
@@ -108,11 +110,34 @@ export function MainShell() {
   const remaining = useTodayQuery().data?.remainingCount ?? null;
   const inboxCount = useInboxCountQuery().data ?? null;
   /** 详情面板里正在编辑的条目；`null` 表示面板关闭。 */
-  const [openId, setOpenId] = useState<string | null>(null);
+  const openId = useNavStore((state) => state.detailId);
+  const setOpenId = useNavStore((state) => state.openItem);
   /** 搜索面板（Ctrl+K）是否打开。 */
   const [searching, setSearching] = useState(false);
   /** 键盘快捷键一览是否打开。 */
   const [showingShortcuts, setShowingShortcuts] = useState(false);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const navTriggerRef = useRef<HTMLButtonElement>(null);
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const width = useContainerWidth(shellRef);
+  const compact = width < LAYOUT.compactShell;
+  const detailSheet = openId !== null && width < LAYOUT.dockedDetail;
+  const detailModal = detailSheet && !searching && !showingShortcuts;
+  const navModal = compact && navigationOpen && !detailModal && !searching && !showingShortcuts;
+
+  // 抽屉在导航成功后关闭；被保存失败拦下时，当前编辑器仍可恢复。
+  useEffect(
+    () =>
+      useNavStore.subscribe((next, previous) => {
+        if (next.view !== previous.view || next.detailId !== previous.detailId)
+          setNavigationOpen(false);
+      }),
+    [],
+  );
+  useEffect(() => {
+    if (navModal) navRef.current?.focus();
+  }, [navModal]);
   useUpdateCheckOnStart();
   const queryClient = useQueryClient();
   const settings = useQuery({
@@ -297,12 +322,75 @@ export function MainShell() {
       cancelled = true;
       unsubscribe();
     };
-  }, [setView]);
+  }, [setView, setOpenId]);
 
   return (
     <OpenItemContext.Provider value={setOpenId}>
-      <div className="grid h-full grid-cols-[13.5rem_1fr_auto] bg-bg">
-        <aside className="flex min-h-0 flex-col gap-4 overflow-y-auto border-r border-border bg-surface px-3 py-4">
+      <div
+        ref={shellRef}
+        className={cx(
+          "grid h-full grid-rows-[auto_minmax(0,1fr)] bg-bg",
+          compact
+            ? "grid-cols-[minmax(0,1fr)]"
+            : "grid-cols-[var(--nv-sidebar-width)_minmax(0,1fr)_auto]",
+        )}
+      >
+        <header
+          hidden={!compact}
+          inert={detailModal || navModal || searching || showingShortcuts}
+          className={cx(
+            "col-span-full items-center gap-3 border-b border-border bg-surface px-3 py-2",
+            compact ? "flex" : "hidden",
+          )}
+        >
+          <button
+            ref={navTriggerRef}
+            type="button"
+            aria-expanded={navModal}
+            aria-controls="main-navigation"
+            onClick={() => setNavigationOpen(true)}
+            className="h-9 rounded-md border border-border px-3 text-sm"
+          >
+            {t("shell.navigation")}
+          </button>
+          <span className="text-sm font-medium">{t(`shell.nav.${view}`)}</span>
+        </header>
+        {navModal && (
+          <div
+            aria-hidden="true"
+            className="fixed inset-0 z-(--nv-z-menu) bg-text/30"
+            onMouseDown={() => {
+              setNavigationOpen(false);
+              navTriggerRef.current?.focus();
+            }}
+          />
+        )}
+        <aside
+          id="main-navigation"
+          hidden={compact && !navModal}
+          ref={navRef}
+          tabIndex={-1}
+          role={navModal ? "dialog" : undefined}
+          aria-modal={navModal ? true : undefined}
+          aria-label={navModal ? t("shell.navigation") : undefined}
+          inert={detailModal || searching || showingShortcuts}
+          onKeyDown={(event) => {
+            if (!navModal || event.defaultPrevented) return;
+            if (event.key === "Escape") {
+              event.stopPropagation();
+              setNavigationOpen(false);
+              navTriggerRef.current?.focus();
+            } else trapTab(event, navRef.current);
+          }}
+          className={cx(
+            "row-start-2 min-h-0 flex-col gap-4 overflow-y-auto border-r border-border bg-surface px-3 py-4",
+            compact
+              ? navModal
+                ? "fixed inset-y-0 left-0 z-(--nv-z-dialog) flex w-(--nv-sidebar-width) shadow-lg"
+                : "hidden"
+              : "flex",
+          )}
+        >
           <div className="flex items-center gap-2 px-2">
             <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
             <span className="text-lg font-semibold tracking-wide text-text">{t("app.name")}</span>
@@ -365,7 +453,10 @@ export function MainShell() {
             <ThemeMenu />
           </div>
         </aside>
-        <main className="min-h-0 min-w-0 overflow-hidden">
+        <main
+          inert={detailModal || navModal || searching || showingShortcuts}
+          className="row-start-2 min-h-0 min-w-0 overflow-hidden"
+        >
           {view === "inbox" && <InboxPage />}
           {view === "notes" && <NotesPage />}
           {view === "today" && <TodayPage />}
@@ -401,7 +492,13 @@ export function MainShell() {
         )}
         {showingShortcuts && <ShortcutsDialog onClose={() => setShowingShortcuts(false)} />}
         {openId !== null && (
-          <ItemDetailPanel key={openId} id={openId} onClose={() => setOpenId(null)} />
+          <ItemDetailPanel
+            key={openId}
+            id={openId}
+            onClose={() => setOpenId(null)}
+            modal={detailSheet}
+            suspended={searching || showingShortcuts}
+          />
         )}
       </div>
     </OpenItemContext.Provider>

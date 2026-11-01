@@ -7,6 +7,9 @@
  */
 
 :root {
+  /* 主窗口布局预算（逻辑像素）；断点见 lib/layout.ts。 */
+  --nv-sidebar-width: 13.5rem;
+  --nv-detail-width: 24rem;
   /* 字体：中文优先使用系统 UI 字体，保证各平台 WebView 外观一致。 */
   --nv-font-sans:
     "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", system-ui, -apple-system, "Segoe UI",

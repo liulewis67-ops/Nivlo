@@ -87,7 +87,8 @@
     "saveFailed": "Couldn't save: {{reason}} Your changes are still here and won't be lost.",
     "status": {
       "saving": "Saving…",
-      "saved": "Saved"
+      "saved": "Saved",
+      "error": "Save failed"
     },
     "contentPlaceholder": "Write something… (Markdown supported)",
     "briefPlaceholder": "One line that adds to the title",
@@ -157,6 +158,22 @@
         "sameDay9": "Same day, 9:00",
         "dayBefore9": "Day before, 9:00"
       }
+    },
+    "more": "More",
+    "scheduleHint": "When you plan to work on this item.",
+    "dueHint": "When this item must be finished.",
+    "expandContent": "Expand description",
+    "incompleteReminder": "Enter a complete reminder date and time.",
+    "incompleteDate": "Complete or clear the date and time before leaving.",
+    "leave": {
+      "message": "Your changes are still here. Save them before leaving.",
+      "confirm": "Discard only the unsaved changes in this editor?",
+      "back": "Back",
+      "confirmDiscard": "Confirm discard",
+      "stay": "Stay here",
+      "discard": "Discard changes…",
+      "other": "The editor for “{{title}}” also needs to save.",
+      "confirmOther": "Discard only the unsaved changes to “{{title}}”?"
     }
   },
   "shortcut": {
@@ -278,7 +295,8 @@
       "trash": "Trash",
       "settings": "Settings",
       "workflows": "Automation"
-    }
+    },
+    "navigation": "Navigation"
   },
   "today": {
     "badge": {

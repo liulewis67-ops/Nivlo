@@ -30,6 +30,8 @@ export type MenuProps = {
   trigger: ReactElement;
   /** 菜单项。 */
   items: MenuItemSpec[];
+  /** 对话框内的子菜单必须出现在父表面之上。 */
+  withinDialog?: boolean;
 };
 
 /**
@@ -41,7 +43,7 @@ export type MenuProps = {
  * @param props 触发元素与菜单项。
  * @returns 菜单元素。
  */
-export function Menu({ trigger, items }: MenuProps) {
+export function Menu({ trigger, items, withinDialog = false }: MenuProps) {
   const modal = useContext(MenuModalContext);
   return (
     <DropdownMenu.Root modal={modal}>
@@ -51,7 +53,8 @@ export function Menu({ trigger, items }: MenuProps) {
           align="end"
           sideOffset={4}
           className={cx(
-            "z-(--nv-z-menu) min-w-36 rounded-md border border-border bg-surface p-1 shadow-md",
+            "min-w-36 rounded-md border border-border bg-surface p-1 shadow-md",
+            withinDialog ? "z-(--nv-z-tooltip)" : "z-(--nv-z-menu)",
           )}
         >
           {items.map((item) => (

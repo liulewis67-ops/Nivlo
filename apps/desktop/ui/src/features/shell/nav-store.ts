@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useDraftTransitionStore } from "@/stores/draft-transition-store";
 
 /** 主窗口里的视图。 */
 export type MainView =
@@ -38,6 +39,10 @@ export function parseMainView(name: string): MainView | null {
 type NavState = {
   /** 当前显示的视图。 */
   view: MainView;
+  /** 活动详情，仅在成功保存或确认放弃后切换。 */
+  detailId: string | null;
+  /** 打开 / 关闭详情，经过所有活动草稿。 */
+  openItem: (id: string | null) => void;
   /** 切换视图。 */
   setView: (view: MainView) => void;
   /** Notes 视图里打开的笔记；`null` 表示打开最近更新的那一篇。离开 Notes 再回来时仍是这一篇。 */
@@ -77,21 +82,35 @@ export const useNavStore = create<NavState>((set, get) => {
    * @param apply 真正的切换。
    */
   const navigate = (apply: () => void): void => {
-    if (get().leaveGuard?.() === true) {
-      set({ pendingNav: apply });
-      return;
-    }
-    apply();
+    useDraftTransitionStore.getState().request(() => {
+      if (get().leaveGuard?.() === true) {
+        // 详情已经保存成功，关闭它后才能操作背后 Workflow 的既有离开提示。
+        set({ pendingNav: apply, detailId: null });
+        return;
+      }
+      apply();
+    });
   };
   return {
     view: "today",
+    detailId: null,
+    openItem: (id) => {
+      useDraftTransitionStore.getState().request(() => set({ detailId: id }));
+    },
     // 离开 Notes 后「刚新建」不再成立：回来时不再全选标题，免得打字覆盖已经写好的标题。
     setView: (view) => {
       /** 真正的切换。 */
       const apply = (): void =>
-        set((state) => ({ view, freshNoteId: view === "notes" ? state.freshNoteId : null }));
-      if (view === get().view) apply();
-      else navigate(apply);
+        set((state) => ({
+          view,
+          detailId: null,
+          freshNoteId: view === "notes" ? state.freshNoteId : null,
+        }));
+      if (view === get().view && get().detailId === null) {
+        useDraftTransitionStore.getState().cancel();
+        set({ pendingNav: null });
+        apply();
+      } else navigate(apply);
     },
     leaveGuard: null,
     setLeaveGuard: (guard) => set({ leaveGuard: guard }),
@@ -107,12 +126,13 @@ export const useNavStore = create<NavState>((set, get) => {
     settingsSection: null,
     openSettings: (section) => {
       if (section === null) set({ settingsSection: null });
-      else navigate(() => set({ view: "settings", settingsSection: section }));
+      else navigate(() => set({ view: "settings", detailId: null, settingsSection: section }));
     },
     openNote: (id, fresh = false) =>
       navigate(() =>
         set((state) => ({
           view: "notes",
+          detailId: null,
           noteId: id,
           freshNoteId: fresh ? id : state.freshNoteId === id ? id : null,
         })),

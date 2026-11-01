@@ -86,7 +86,8 @@
     "saveFailed": "没能保存：{{reason}}你的修改还留在这里，不会丢。",
     "status": {
       "saving": "保存中…",
-      "saved": "已保存"
+      "saved": "已保存",
+      "error": "保存失败"
     },
     "contentPlaceholder": "写点什么…（支持 Markdown）",
     "briefPlaceholder": "一句话补充标题",
@@ -156,6 +157,22 @@
         "sameDay9": "当天 9:00",
         "dayBefore9": "前一天 9:00"
       }
+    },
+    "more": "更多",
+    "scheduleHint": "打算什么时候处理这件事。",
+    "dueHint": "最迟需要在什么时候完成。",
+    "expandContent": "展开描述",
+    "incompleteReminder": "请填写完整的提醒日期和时间。",
+    "incompleteDate": "请填写完整或清除日期和时间后再离开。",
+    "leave": {
+      "message": "修改仍保留在这里，保存成功后再离开。",
+      "confirm": "确认只放弃当前编辑器里尚未保存的修改？",
+      "back": "返回",
+      "confirmDiscard": "确认放弃",
+      "stay": "留在这里",
+      "discard": "放弃修改…",
+      "other": "“{{title}}”的编辑器也需要完成保存。",
+      "confirmOther": "确认只放弃“{{title}}”里尚未保存的修改？"
     }
   },
   "shortcut": {
@@ -277,7 +294,8 @@
       "trash": "回收站",
       "settings": "设置",
       "workflows": "自动化"
-    }
+    },
+    "navigation": "导航"
   },
   "today": {
     "badge": {

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useId, useState } from "react";
 import { Button } from "@/components";
 import type { InboxEntryDto } from "@/lib/ipc";
 
@@ -27,6 +28,8 @@ export type SourceSectionProps = {
  */
 export function SourceSection({ detail, onOpen, onRerun }: SourceSectionProps) {
   const { t } = useTranslation();
+  const contentId = useId();
+  const [expanded, setExpanded] = useState(false);
   const source = detail.sources[0];
   if (source === undefined) return null;
   const reference = detail.attachments.find((attachment) => attachment.kind === "reference");
@@ -38,18 +41,28 @@ export function SourceSection({ detail, onOpen, onRerun }: SourceSectionProps) {
       aria-label={t("detail.source.label")}
       className="flex flex-col gap-2 rounded-md border border-border bg-bg p-3"
     >
-      <h3 className="text-xs font-medium text-muted">{t("detail.source.label")}</h3>
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-expanded={expanded}
+        aria-controls={contentId}
+        onClick={() => setExpanded((value) => !value)}
+      >
+        {t("detail.source.label")}
+      </Button>
       <p className="text-sm text-text">
         {t(`detail.source.type.${source.sourceType}`, { defaultValue: source.sourceType })}
         {source.sourceApp !== null && (
           <span className="text-muted">{` · ${source.sourceApp}`}</span>
         )}
       </p>
-      {location !== null && (
-        <p className="text-xs break-all text-muted" title={location}>
-          {location}
-        </p>
-      )}
+      <div id={contentId} hidden={!expanded}>
+        {location !== null && (
+          <p className="text-xs break-all text-muted" title={location}>
+            {location}
+          </p>
+        )}
+      </div>
       {missing && (
         <p role="alert" className="text-xs text-danger">
           {t("inbox.missingFile")}

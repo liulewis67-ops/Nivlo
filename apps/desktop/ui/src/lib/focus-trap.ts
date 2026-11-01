@@ -16,12 +16,16 @@ export function trapTab(event: KeyboardEvent<HTMLElement>, container: HTMLElemen
   if (event.key !== "Tab" || container === null) return;
   const focusable = [...container.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
     (element) =>
-      !element.hasAttribute("disabled") && element.getAttribute("aria-hidden") !== "true",
+      !element.hasAttribute("disabled") &&
+      element.closest('[hidden], [inert], [aria-hidden="true"]') === null &&
+      getComputedStyle(element).display !== "none" &&
+      getComputedStyle(element).visibility !== "hidden",
   );
   const first = focusable[0];
   const last = focusable.at(-1);
   if (first === undefined || last === undefined) {
     event.preventDefault();
+    container.focus();
     return;
   }
   const active = document.activeElement;
@@ -29,7 +33,7 @@ export function trapTab(event: KeyboardEvent<HTMLElement>, container: HTMLElemen
   if (event.shiftKey && (active === first || !inside || active === container)) {
     event.preventDefault();
     last.focus();
-  } else if (!event.shiftKey && (active === last || !inside)) {
+  } else if (!event.shiftKey && (active === last || !inside || active === container)) {
     event.preventDefault();
     first.focus();
   }
