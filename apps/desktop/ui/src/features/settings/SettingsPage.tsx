@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Switch } from "@/components";
+import { Button, Switch, LoadFeedback } from "@/components";
 import { isLanguage, setLanguage } from "@/i18n";
 import { ShortcutSetting } from "@/features/shortcut";
 import { useNavStore } from "@/features/shell";
@@ -67,7 +67,7 @@ function Segmented<T extends string>({
     <div
       role="group"
       aria-label={label}
-      className="flex rounded-md border border-border bg-bg p-0.5"
+      className="flex max-w-full flex-wrap rounded-md border border-border bg-bg p-0.5"
     >
       {options.map((option) => (
         <button
@@ -131,7 +131,9 @@ type SectionProps = {
 function Section({ id, title, children }: SectionProps) {
   return (
     <section id={id} aria-label={title} className="flex scroll-mt-4 flex-col gap-2">
-      <h2 className="px-1 text-xs font-semibold tracking-wide text-muted">{title}</h2>
+      <h2 tabIndex={-1} className="px-1 text-base font-semibold text-text">
+        {title}
+      </h2>
       <div className="divide-y divide-border rounded-lg border border-border bg-surface">
         {children}
       </div>
@@ -157,12 +159,12 @@ type RowProps = {
  */
 function Row({ label, hint, children }: RowProps) {
   return (
-    <div className="flex items-center justify-between gap-6 px-4 py-3.5">
-      <div className="min-w-0">
+    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3.5">
+      <div className="min-w-0 flex-1 basis-52">
         <p className="text-sm font-medium text-text">{label}</p>
         <p className="mt-0.5 text-xs text-muted">{hint}</p>
       </div>
-      <div className="shrink-0">{children}</div>
+      <div className="min-w-0 max-w-full">{children}</div>
     </div>
   );
 }
@@ -179,6 +181,14 @@ function Row({ label, hint, children }: RowProps) {
  */
 export function SettingsPage() {
   const { t, i18n } = useTranslation();
+  const [activeSection, setActiveSection] = useState(SETTINGS_SECTIONS[0]?.[0] ?? "");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  /** 分组跳转后聚焦真实标题，继续 Tab 就进入该组控件。 */
+  function jumpTo(id: string): void {
+    const section = document.getElementById(id);
+    section?.scrollIntoView({ block: "start" });
+    section?.querySelector<HTMLElement>("h2")?.focus({ preventScroll: true });
+  }
   const hideCompleted = useDisplayStore((state) => state.hideCompleted);
   const setHideCompleted = useDisplayStore((state) => state.setHideCompleted);
   const queryClient = useQueryClient();
@@ -229,32 +239,59 @@ export function SettingsPage() {
   const requestedSection = useNavStore((state) => state.settingsSection);
   useEffect(() => {
     if (requestedSection === null) return;
-    document.getElementById(requestedSection)?.scrollIntoView({ block: "start" });
+    jumpTo(requestedSection);
     useNavStore.getState().openSettings(null);
   }, [requestedSection]);
 
   const current = settings.data;
   return (
-    <div className="h-full overflow-y-auto">
+    <div
+      ref={scrollRef}
+      className="h-full overflow-y-auto"
+      onFocusCapture={(event) => {
+        if (event.target instanceof Element) {
+          const id = event.target.closest('section[id^="settings-"]')?.id;
+          if (id) setActiveSection(id);
+        }
+      }}
+      onScroll={() => {
+        const top = scrollRef.current?.getBoundingClientRect().top ?? 0;
+        const reached = SETTINGS_SECTIONS.filter(
+          ([id]) =>
+            (document.getElementById(id)?.getBoundingClientRect().top ?? Infinity) <= top + 64,
+        );
+        const latest = reached.at(-1)?.[0];
+        if (latest) setActiveSection(latest);
+      }}
+    >
       <div
         role="region"
         aria-label={t("settings.label")}
-        className="mx-auto flex max-w-2xl flex-col gap-6 px-8 py-8"
+        className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6"
       >
-        <h1 className="text-2xl font-semibold text-text">{t("settings.title")}</h1>
+        <h1 className="text-lg font-semibold text-text">{t("settings.title")}</h1>
         {/* 设置分组较多：页首列出各组，点一下滚到那里。 */}
         <nav aria-label={t("settings.jump")} className="-mt-3 flex flex-wrap gap-x-3 gap-y-1">
           {SETTINGS_SECTIONS.map(([id, key]) => (
             <button
               key={id}
               type="button"
-              onClick={() => document.getElementById(id)?.scrollIntoView({ block: "start" })}
-              className="text-xs text-muted transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) hover:text-primary"
+              aria-current={activeSection === id ? "location" : undefined}
+              onClick={() => jumpTo(id)}
+              className={cx(
+                "min-h-7 rounded px-2 text-left text-sm transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) hover:text-primary",
+                activeSection === id ? "bg-primary/10 font-medium text-text" : "text-muted",
+              )}
             >
               {t(key)}
             </button>
           ))}
         </nav>
+        <LoadFeedback
+          loading={settings.isLoading}
+          failed={settings.isError}
+          onRetry={() => void settings.refetch()}
+        />
         <Section id="settings-general" title={t("settings.section.general")}>
           <Row label={t("settings.autostart.label")} hint={t("settings.autostart.hint")}>
             <Switch
@@ -345,148 +382,184 @@ export function SettingsPage() {
           </Row>
         </Section>
         <Section id="settings-appearance" title={t("settings.section.appearance")}>
-          <Row
-            label={t("settings.appearance.accent.label")}
-            hint={t("settings.appearance.accent.hint")}
-          >
-            <div
-              role="radiogroup"
-              aria-label={t("settings.appearance.accent.label")}
-              className="flex gap-2"
-            >
-              {ACCENTS.map((accent) => (
-                <button
-                  key={accent}
-                  type="button"
-                  role="radio"
-                  aria-checked={appearance.accent === accent}
-                  aria-label={t(`settings.appearance.accent.${accent}`)}
-                  onClick={() => updateAppearance({ accent })}
-                  style={{ backgroundColor: ACCENT_SWATCH[accent] }}
-                  className={cx(
-                    "size-6 rounded-full transition-transform duration-(--nv-duration-fast)",
-                    appearance.accent === accent
-                      ? "scale-110 ring-2 ring-text ring-offset-2 ring-offset-surface"
-                      : "hover:scale-110",
-                  )}
+          <fieldset className="min-w-0 p-3">
+            <legend className="px-1 text-sm font-medium text-text">
+              {t("settings.appearance.group.badge")}
+            </legend>
+            <div className="divide-y divide-border">
+              <Row
+                label={t("settings.appearance.shape.label")}
+                hint={t("settings.appearance.shape.hint")}
+              >
+                <Segmented
+                  label={t("settings.appearance.shape.label")}
+                  value={appearance.badgeShape}
+                  options={BADGE_SHAPES}
+                  render={(o) => t(`settings.appearance.shape.${o}`)}
+                  onChange={(badgeShape) => updateAppearance({ badgeShape })}
                 />
-              ))}
+              </Row>
+              <Row
+                label={t("settings.appearance.corners.label")}
+                hint={t("settings.appearance.corners.hint")}
+              >
+                <Segmented
+                  label={t("settings.appearance.corners.label")}
+                  value={appearance.corners}
+                  options={CORNERS}
+                  render={(o) => t(`settings.appearance.corners.${o}`)}
+                  onChange={(corners) => updateAppearance({ corners })}
+                />
+              </Row>
             </div>
-          </Row>
-          <Row
-            label={t("settings.appearance.shape.label")}
-            hint={t("settings.appearance.shape.hint")}
-          >
-            <Segmented
-              label={t("settings.appearance.shape.label")}
-              value={appearance.badgeShape}
-              options={BADGE_SHAPES}
-              render={(o) => t(`settings.appearance.shape.${o}`)}
-              onChange={(badgeShape) => updateAppearance({ badgeShape })}
-            />
-          </Row>
-          <Row
-            label={t("settings.appearance.surface.label")}
-            hint={t("settings.appearance.surface.hint")}
-          >
-            <Segmented
-              label={t("settings.appearance.surface.label")}
-              value={appearance.surface}
-              options={SURFACES}
-              render={(o) => t(`settings.appearance.surface.${o}`)}
-              onChange={(surface) => updateAppearance({ surface })}
-            />
-          </Row>
-          <Row
-            label={t("settings.appearance.corners.label")}
-            hint={t("settings.appearance.corners.hint")}
-          >
-            <Segmented
-              label={t("settings.appearance.corners.label")}
-              value={appearance.corners}
-              options={CORNERS}
-              render={(o) => t(`settings.appearance.corners.${o}`)}
-              onChange={(corners) => updateAppearance({ corners })}
-            />
-          </Row>
-          <Row
-            label={t("settings.appearance.opacity.label")}
-            hint={t("settings.appearance.opacity.hint")}
-          >
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                aria-label={t("settings.appearance.opacity.label")}
-                min={MIN_OPACITY}
-                max={MAX_OPACITY}
-                step={5}
-                value={appearance.opacity}
-                onChange={(event) => updateAppearance({ opacity: Number(event.target.value) })}
-                className="w-32 accent-(--nv-primary)"
-              />
-              <span className="w-10 text-right text-xs text-muted tabular-nums">
-                {`${appearance.opacity}%`}
-              </span>
+          </fieldset>
+          <fieldset className="min-w-0 p-3">
+            <legend className="px-1 text-sm font-medium text-text">
+              {t("settings.appearance.group.surface")}
+            </legend>
+            <div className="divide-y divide-border">
+              <Row
+                label={t("settings.appearance.accent.label")}
+                hint={t("settings.appearance.accent.hint")}
+              >
+                <div
+                  role="radiogroup"
+                  aria-label={t("settings.appearance.accent.label")}
+                  className="flex gap-2"
+                >
+                  {ACCENTS.map((accent) => (
+                    <button
+                      key={accent}
+                      type="button"
+                      role="radio"
+                      aria-checked={appearance.accent === accent}
+                      aria-label={t(`settings.appearance.accent.${accent}`)}
+                      onClick={() => updateAppearance({ accent })}
+                      style={{ backgroundColor: ACCENT_SWATCH[accent] }}
+                      className={cx(
+                        "size-6 rounded-full transition-transform duration-(--nv-duration-fast)",
+                        appearance.accent === accent
+                          ? "scale-110 ring-2 ring-text ring-offset-2 ring-offset-surface"
+                          : "hover:scale-110",
+                      )}
+                    />
+                  ))}
+                </div>
+              </Row>
+              <Row
+                label={t("settings.appearance.surface.label")}
+                hint={t("settings.appearance.surface.hint")}
+              >
+                <Segmented
+                  label={t("settings.appearance.surface.label")}
+                  value={appearance.surface}
+                  options={SURFACES}
+                  render={(o) => t(`settings.appearance.surface.${o}`)}
+                  onChange={(surface) => updateAppearance({ surface })}
+                />
+              </Row>
+              <Row
+                label={t("settings.appearance.opacity.label")}
+                hint={t("settings.appearance.opacity.hint")}
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    aria-label={t("settings.appearance.opacity.label")}
+                    min={MIN_OPACITY}
+                    max={MAX_OPACITY}
+                    step={5}
+                    value={appearance.opacity}
+                    onChange={(event) => updateAppearance({ opacity: Number(event.target.value) })}
+                    className="w-32 accent-(--nv-primary)"
+                  />
+                  <span className="w-10 text-right text-xs text-muted tabular-nums">
+                    {`${appearance.opacity}%`}
+                  </span>
+                </div>
+              </Row>
+              <Row
+                label={t("settings.appearance.reset.label")}
+                hint={t("settings.appearance.reset.hint")}
+              >
+                <Button size="sm" onClick={resetAppearance}>
+                  {t("settings.appearance.reset.button")}
+                </Button>
+              </Row>
             </div>
-          </Row>
-          <Row
-            label={t("settings.appearance.reset.label")}
-            hint={t("settings.appearance.reset.hint")}
-          >
-            <Button size="sm" onClick={resetAppearance}>
-              {t("settings.appearance.reset.button")}
-            </Button>
-          </Row>
-          <Row label={t("settings.skin.label")} hint={t("settings.skin.hint")}>
-            <SkinSetting />
-          </Row>
-          <Row label={t("settings.skin.playback.label")} hint={t("settings.skin.playback.hint")}>
-            <Segmented
-              label={t("settings.skin.playback.label")}
-              value={skin.playback}
-              options={PLAYBACKS}
-              render={(o) => t(`settings.skin.playback.${o}`)}
-              onChange={(playback) => updateSkin({ playback })}
-            />
-          </Row>
-          <Row label={t("settings.skin.fps.label")} hint={t("settings.skin.fps.hint")}>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                aria-label={t("settings.skin.fps.label")}
-                min={MIN_FPS}
-                max={MAX_FPS}
-                step={1}
-                value={skin.fps}
-                onChange={(event) => updateSkin({ fps: Number(event.target.value) })}
-                className="w-32 accent-(--nv-primary)"
-              />
-              <span className="w-10 text-right text-xs text-muted tabular-nums">{skin.fps}</span>
+          </fieldset>
+          <fieldset className="min-w-0 p-3">
+            <legend className="px-1 text-sm font-medium text-text">
+              {t("settings.appearance.group.skin")}
+            </legend>
+            <div className="divide-y divide-border">
+              <Row label={t("settings.skin.label")} hint={t("settings.skin.hint")}>
+                <SkinSetting />
+              </Row>
+              <Row label={t("settings.skin.pixel.label")} hint={t("settings.skin.pixel.hint")}>
+                <Switch
+                  label={t("settings.skin.pixel.label")}
+                  checked={skin.pixel}
+                  onCheckedChange={(pixel) => updateSkin({ pixel })}
+                />
+              </Row>
+              <Row
+                label={t("settings.skin.showCount.label")}
+                hint={t("settings.skin.showCount.hint")}
+              >
+                <Switch
+                  label={t("settings.skin.showCount.label")}
+                  checked={skin.showCount}
+                  onCheckedChange={(showCount) => updateSkin({ showCount })}
+                />
+              </Row>
             </div>
-          </Row>
-          <Row label={t("settings.skin.motion.label")} hint={t("settings.skin.motion.hint")}>
-            <Segmented
-              label={t("settings.skin.motion.label")}
-              value={skin.motion}
-              options={MOTIONS}
-              render={(o) => t(`settings.skin.motion.${o}`)}
-              onChange={(motion) => updateSkin({ motion })}
-            />
-          </Row>
-          <Row label={t("settings.skin.pixel.label")} hint={t("settings.skin.pixel.hint")}>
-            <Switch
-              label={t("settings.skin.pixel.label")}
-              checked={skin.pixel}
-              onCheckedChange={(pixel) => updateSkin({ pixel })}
-            />
-          </Row>
-          <Row label={t("settings.skin.showCount.label")} hint={t("settings.skin.showCount.hint")}>
-            <Switch
-              label={t("settings.skin.showCount.label")}
-              checked={skin.showCount}
-              onCheckedChange={(showCount) => updateSkin({ showCount })}
-            />
-          </Row>
+          </fieldset>
+          <fieldset className="min-w-0 p-3">
+            <legend className="px-1 text-sm font-medium text-text">
+              {t("settings.appearance.group.motion")}
+            </legend>
+            <div className="divide-y divide-border">
+              <Row
+                label={t("settings.skin.playback.label")}
+                hint={t("settings.skin.playback.hint")}
+              >
+                <Segmented
+                  label={t("settings.skin.playback.label")}
+                  value={skin.playback}
+                  options={PLAYBACKS}
+                  render={(o) => t(`settings.skin.playback.${o}`)}
+                  onChange={(playback) => updateSkin({ playback })}
+                />
+              </Row>
+              <Row label={t("settings.skin.fps.label")} hint={t("settings.skin.fps.hint")}>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    aria-label={t("settings.skin.fps.label")}
+                    min={MIN_FPS}
+                    max={MAX_FPS}
+                    step={1}
+                    value={skin.fps}
+                    onChange={(event) => updateSkin({ fps: Number(event.target.value) })}
+                    className="w-32 accent-(--nv-primary)"
+                  />
+                  <span className="w-10 text-right text-xs text-muted tabular-nums">
+                    {skin.fps}
+                  </span>
+                </div>
+              </Row>
+              <Row label={t("settings.skin.motion.label")} hint={t("settings.skin.motion.hint")}>
+                <Segmented
+                  label={t("settings.skin.motion.label")}
+                  value={skin.motion}
+                  options={MOTIONS}
+                  render={(o) => t(`settings.skin.motion.${o}`)}
+                  onChange={(motion) => updateSkin({ motion })}
+                />
+              </Row>
+            </div>
+          </fieldset>
         </Section>
         <Section id="settings-notifications" title={t("settings.section.notifications")}>
           <Row

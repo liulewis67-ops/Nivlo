@@ -31,13 +31,22 @@ export function CommandPalette({ onClose, onOpenItem, commands }: CommandPalette
   const { t } = useTranslation();
   const previouslyFocused = useRef<Element | null>(document.activeElement);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const transferred = useRef(false);
   const global = useShortcutQuery("search").data;
 
   // 关闭时把焦点还给打开之前的元素。
   useEffect(() => {
     const target = previouslyFocused.current;
+    const dialog = dialogRef.current;
     return () => {
-      if (target instanceof HTMLElement) target.focus();
+      const active = document.activeElement;
+      if (
+        !transferred.current &&
+        (active === document.body || active === null || dialog?.contains(active)) &&
+        target instanceof HTMLElement &&
+        target.isConnected
+      )
+        target.focus();
     };
   }, []);
 
@@ -60,6 +69,7 @@ export function CommandPalette({ onClose, onOpenItem, commands }: CommandPalette
         <SearchPanel
           onClose={onClose}
           onOpenItem={(id) => {
+            transferred.current = true;
             onOpenItem(id);
             onClose();
           }}
@@ -71,6 +81,7 @@ export function CommandPalette({ onClose, onOpenItem, commands }: CommandPalette
             },
           }))}
           onCreated={(item) => {
+            transferred.current = true;
             onOpenItem(item.id);
             onClose();
           }}
@@ -78,7 +89,7 @@ export function CommandPalette({ onClose, onOpenItem, commands }: CommandPalette
             global?.registered === true && (
               <span>
                 {t("search.globalTip")}
-                <kbd className="ml-1 rounded border border-border px-1.5 text-[11px]">
+                <kbd className="ml-1 rounded border border-border px-1.5 text-xs">
                   {global.accelerator}
                 </kbd>
               </span>

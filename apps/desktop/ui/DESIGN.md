@@ -40,6 +40,12 @@ M2 calendar chips use wrapping full-title Tooltip on focus/hover, full accessibl
 
 ## Do's and Don'ts
 
+Implemented in M3: Search exposes Commands, visible result/create/completion actions and expandable keyboard help. `>` keeps the same command matching; global search only lists supported navigation commands. One footer live region reports result/mode/action state, with Undo ahead of guidance. Persistent inline search/capture errors opt out of the shared query/mutation toast via `meta.errorPresentation = "inline"`, preventing duplicate announcements and recovery controls covered by a toast. Normal query/mutation errors retain the existing global behavior. Search fitting continues through the same measured-content IPC; native work-area and performance acceptance remain M4/M5.
+
+Inbox rows always show a labeled Organize menu, including Today/Tomorrow; compact rows spend no title width on hidden direct-action slots. Floating capture uses a visible single-selection type group: arrows choose type, Tab enters/leaves normally, and pointer selection preserves the title input/selection. Initial focus remains on title. This deliberately supersedes the old Tab-cycle shortcut; help, onboarding and the bilingual implementation release notes describe the change.
+
+Settings section links wrap, mark the current location and focus the destination heading; appearance controls are grouped by badge, surface/accent/opacity, skin and motion. Workflow names wrap, summaries show up to two lines and full text is available by Tooltip on focus/hover. Disabled workflow state has a separate text label rather than dimming the whole row. Unselected workflow lists use the available workspace. Notes, Projects and Workflows stack stable panes below 700px of content width; Note resize tests retain the native editor node, selection, focus and one saved update. Today/Notes/Projects/Trash/Workflows/Settings and floating Today expose consistent loading/failure/retry feedback. Native modal coordination and assistive-technology acceptance remain M4.
+
 - Preserve typed IPC, backend validation, localization, Markdown, undo and native window ownership.
 - Use full accessible identity when truncating dense rows; wrap long source paths in details.
 - Keep pending drafts mounted until successful flush or confirmed discard.

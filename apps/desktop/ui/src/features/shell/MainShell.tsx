@@ -125,6 +125,14 @@ export function MainShell() {
   const detailSheet = openId !== null && width < LAYOUT.dockedDetail;
   const detailModal = detailSheet && !searching && !showingShortcuts;
   const navModal = compact && navigationOpen && !detailModal && !searching && !showingShortcuts;
+  /** 选择当前页面也要退出导航抽屉，避免把本页留在遮罩后。 */
+  function selectView(target: MainView): void {
+    setView(target);
+    if (compact && navigationOpen && target === view) {
+      setNavigationOpen(false);
+      navTriggerRef.current?.focus();
+    }
+  }
 
   // 抽屉在导航成功后关闭；被保存失败拦下时，当前编辑器仍可恢复。
   useEffect(
@@ -413,7 +421,7 @@ export function MainShell() {
               <path d="M10.5 10.5L14 14" />
             </svg>
             <span className="flex-1 text-left">{t("search.open")}</span>
-            <kbd className="rounded border border-border px-1.5 text-[11px]">{"Ctrl K"}</kbd>
+            <kbd className="rounded border border-border px-1.5 text-xs">{"Ctrl K"}</kbd>
           </button>
           <nav aria-label={t("shell.nav.label")} className="flex flex-col gap-1">
             {[...NAV_VIEWS, ...DEV_VIEWS].map((item, index) => (
@@ -423,7 +431,7 @@ export function MainShell() {
                 shortcut={index < NAV_VIEWS.length ? `Control+${index + 1}` : undefined}
                 isActive={view === item}
                 count={item === "today" ? remaining : item === "inbox" ? inboxCount : null}
-                onSelect={() => setView(item)}
+                onSelect={() => selectView(item)}
               />
             ))}
           </nav>
@@ -432,20 +440,20 @@ export function MainShell() {
               view="workflows"
               isActive={view === "workflows"}
               count={null}
-              onSelect={() => setView("workflows")}
+              onSelect={() => selectView("workflows")}
             />
             <NavButton
               view="trash"
               isActive={view === "trash"}
               count={null}
-              onSelect={() => setView("trash")}
+              onSelect={() => selectView("trash")}
             />
             <NavButton
               view="settings"
               shortcut="Control+,"
               isActive={view === "settings"}
               count={null}
-              onSelect={() => setView("settings")}
+              onSelect={() => selectView("settings")}
             />
             <ShortcutSetting action="quickCreate" />
             {/* 全局搜索的快捷键被占用时才出现（自动展开提示与修改框），否则只有设置页里看得到。 */}

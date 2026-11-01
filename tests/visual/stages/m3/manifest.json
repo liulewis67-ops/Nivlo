@@ -1,0 +1,401 @@
+{
+  "sourceCommit": "ed99ab9684c0a10f62a0b70c20a92624568e399d",
+  "branch": "main",
+  "fixtureRevision": "m3-v1: dev-seed; paired locale/theme, supported commands, failed floating capture",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "sourceFiles": {
+    "scripts/visual/guidance-scenes.mjs": "9f9dca561a5e52deca339fe514a154ee453414017cdc07d6febb7b160f41216f",
+    "apps/desktop/ui/src/features/search/SearchPanel.tsx": "3c0c04d16c56745b8fe42ee138b2d48b8752b724e2f07a16273bece2a807e11c",
+    "apps/desktop/ui/src/features/search/CommandPalette.tsx": "5013e52d8d61403a9dbc59261f239bfde61fc15ee7986f2a67de2f7e33dc2cbb",
+    "apps/desktop/ui/src/features/quick-create/QuickCreateForm.tsx": "964b50ec8f098f0fd5323eaf4dcbb187c00b5817cd6caf06c5575b0c9ccd062b",
+    "apps/desktop/ui/src/features/quick-create/model/quick-create.ts": "90bff54e97ddcaa2d1423502fd53ae350fe3d533eb405b6f07d10a4f0f421cf4",
+    "apps/desktop/ui/src/features/inbox/InboxRow.tsx": "cfe9451f503545b83fa30a69beacba483a41ff1ebedd6181845c928bb8c61fb5",
+    "apps/desktop/ui/src/features/settings/SettingsPage.tsx": "10e7208c137876f853fbbaeadccf29a4c3f6ac78508106b43e852b3beae8e9e7",
+    "apps/desktop/ui/src/features/settings/SkinSetting.tsx": "f0309b1fef50667d8f86854541e447ca16fb4d9a619e2ee0980b356ab59f3509",
+    "apps/desktop/ui/src/features/workflows/WorkflowsPage.tsx": "389e2cf3df2e3236b4e14fbd937bec3d6e0d2ce5787a2a39ebd9adc8ea0c7ede",
+    "apps/desktop/ui/src/features/workflows/WorkflowEditor.tsx": "f9a4027300f14fc24b249a95829dc169da11fe1473b490830e570eaaf39ebf00",
+    "apps/desktop/ui/src/features/onboarding/OnboardingDialog.tsx": "d455b9a5448aeee1a8803cbe8bc5fc197cfa53243fd34e4929e2d372698c1272",
+    "apps/desktop/ui/src/features/projects/ProjectsPage.tsx": "e6ae35266623b38a6dd6ceb843a3c17afc4c3f596b0fa3da384f8d6c2615bce8",
+    "apps/desktop/ui/src/features/trash/TrashPage.tsx": "e38fe1988faa15e25c0d9d802579420889e55a3563940922c193e1e9ff6950bb",
+    "apps/desktop/ui/src/features/today/TodayPage.tsx": "0cfaa61da947fbaef170077189d5d8a91a1d2888b388760812bf1a26fdb3547b",
+    "apps/desktop/ui/src/components/LoadFeedback.tsx": "fbbfb26e856b54af1ef4325c4de51c5762da7484d0834ed2648ae8854bfafb2f",
+    "apps/desktop/ui/src/features/floating/TodayPanel.tsx": "42c658ffd4612369435a840a9619904986f0b5a4d52e40ffd91ada06fa721052",
+    "apps/desktop/ui/src/app/providers/AppProviders.tsx": "0dbf94b4c7f955396d0102f7d4f529e9ea243565f8b6267957afbf3ad6d0fef4",
+    "apps/desktop/ui/src/features/inbox/InboxPage.tsx": "63580c3b41682cd6438960140fb1d6307e66db719c48049260163c0ff44053eb",
+    "apps/desktop/ui/src/features/shell/ShortcutsDialog.tsx": "9e99dffbfe50060a0a84927c19cd041ae10df1a0e48d3ad4fc18131e0080416a",
+    "apps/desktop/ui/src/features/calendar/CalendarPage.tsx": "d4a1ff27858288fdf182d00b001318304fe491b7dedc165e9da2604a7a816fef",
+    "apps/desktop/ui/src/features/calendar/CalendarChip.tsx": "533bb4ce2cd1a36daf6f43f115c83e5c252f5cb3e401b1f9cfa3fb76769cb68a",
+    "apps/desktop/ui/src/components/Tooltip.tsx": "a7af2d1e04aa77a54f87fbb20d1b409b0429009c519da7a8186862f5a5a511ca",
+    "scripts/visual/visual.mjs": "550ab0dcb764c084745b2fa109735e9cf6cd77e6aa42baa8b2d449da81b48d85",
+    "apps/desktop/ui/src/test/dev-seed.ts": "190f1daa3ff2cfbdc1e26c6fd306f72d94cf4422c8a39eb4a3ad071b2e2f3188",
+    "apps/desktop/ui/src/features/detail/use-item-draft.ts": "089bb23cdc64353d8d5650394fab48c5f73e2478b7369ee5ed3252b2dc20cb26",
+    "apps/desktop/ui/src/features/detail/ItemDetailPanel.tsx": "9a23bca6728fa22ae51c02299a2a279124b41da34b53411c2d632b8eeb30e4ee",
+    "apps/desktop/ui/src/features/shell/MainShell.tsx": "20c612913d1a5540711c20671883864b361bedbb5ae0cf5fdf0d582266a6e5f5",
+    "apps/desktop/ui/src/stores/draft-transition-store.ts": "1020eee92c99d9596ae2b789eaa269b0f2340310c2521f8bbdcd23b2c0ff4b53",
+    "apps/desktop/ui/src/features/shell/nav-store.ts": "dbf10d7f49f0d3537a53304f438266a44c9d7306dea3299d4948b5650acbdbf7",
+    "apps/desktop/ui/src/features/detail/DraftRecovery.tsx": "5701ccb95f9eb683026f9df477f7e73f13855443d1a8239f3c091e23b6dbd23d",
+    "apps/desktop/ui/src/features/detail/SourceSection.tsx": "79caff815925c00699bbd6d7d841d402cf992e384a1b6282b7c22d4a7cfe572a",
+    "apps/desktop/ui/src/features/notes/NoteEditor.tsx": "2b4a1d093ffdcf3a27a77b768a08276d9e4608db48b507e55bbc420b22685b38",
+    "apps/desktop/ui/src/features/notes/NotesPage.tsx": "1344cc188cef448c8c47e340b9f88b9421290d73d660e7d9262516a5a77b7d2f",
+    "apps/desktop/ui/src/lib/layout.ts": "46e5b46925c3ea2fe4531d13d97ebba6d5d68f0b9bf51f1d749a57ff680f592c",
+    "apps/desktop/ui/src/lib/focus-trap.ts": "def30fabf4d7f08ded27717c59e6d2c3696fe3bb3f54807cf52467239e232329",
+    "apps/desktop/ui/src/components/Menu.tsx": "1abfc3045c9d25b4a1fe930aecb22d58267be1291c49a82bb0021e2d92bb085b",
+    "apps/desktop/ui/src/styles/tokens.css": "83cfaa7b0f9a002ff7dbbad86820c2299fe43408c8bf4a73938e0bcfd6ec020c",
+    "apps/desktop/ui/src/styles/global.css": "52270d8ede4f2ea8a934f1b7fc47524b8aa7dfb3160f14bc482e0ff9f474eaab",
+    "apps/desktop/ui/src/i18n/en.json": "55f8dc29f46cc792f6cffea41e16ff9d042ad03d9a5f2ab68d002ba295ce7743",
+    "apps/desktop/ui/src/i18n/zh-CN.json": "7c258248799c2b0d114492e3b8a63d960d7314a68098873d53c0c2b04c3b2ba7"
+  },
+  "acceptance": "M3: paired language/theme renders, default/narrow layouts, no horizontal overflow or sub-12px guidance, command scope, focus, visible organization/capture routes, retained failed capture; browser mock only",
+  "platform": "win32",
+  "timezone": "Asia/Shanghai",
+  "motion": "reduce; animations/transitions disabled",
+  "environment": "Chrome browser mock; OS scale and native WebView2 not certified",
+  "artifacts": [
+    {
+      "name": "guidance-inbox-960-zh",
+      "file": "guidance-inbox-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "bfa122e78d3cd1d3a9ed893d553209520b4502fbeed071ed360a0def53c08767"
+    },
+    {
+      "name": "guidance-inbox-400-en-dark",
+      "file": "guidance-inbox-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "a29ddac985e09ba97141e101de5213f9b55f2ce32cfd3fce627446dbb15e7c44"
+    },
+    {
+      "name": "guidance-settings-960-zh",
+      "file": "guidance-settings-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "16af1bb8db478f8aee37c0937ce56846cf4cf96885653b3b6a9754bab6e19076"
+    },
+    {
+      "name": "guidance-settings-400-en-dark",
+      "file": "guidance-settings-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "4d684ec2e981ee28f0efd4e0921830656eba76a14ef81f4aa69720d11c43fe36"
+    },
+    {
+      "name": "guidance-workflows-960-zh",
+      "file": "guidance-workflows-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "37b495ec9898a50a8a35ec93977464eb009907eb639d99e01807d0d4314a23c7"
+    },
+    {
+      "name": "guidance-workflows-400-en-dark",
+      "file": "guidance-workflows-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "e7645e87815f6233d1fcbe507449ea27c6097c33a95604f3900201d4d51f3901"
+    },
+    {
+      "name": "guidance-notes-960-zh",
+      "file": "guidance-notes-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "cc4cb6bc720264bc3c0efe99604da97effddefe20924801af53581120fb20d8e"
+    },
+    {
+      "name": "guidance-notes-400-en-dark",
+      "file": "guidance-notes-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "89439d7fc111096ea4fcea449e6e5ea4919a7066891816cc6b3bb0b2b0fbb7d6"
+    },
+    {
+      "name": "guidance-projects-960-zh",
+      "file": "guidance-projects-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "6617083a36f6716d906dd1bb112e9fc665acb92ad785e6aba2dd0e016135c9d1"
+    },
+    {
+      "name": "guidance-projects-400-en-dark",
+      "file": "guidance-projects-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "fe59705a396492961ea7a120ac41734a42407f3520402e2c44d3dadffa70b9e9"
+    },
+    {
+      "name": "guidance-today-960-zh",
+      "file": "guidance-today-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "90a4b4ace69e6edd4c147acaad62d58beded67dc03bcdaa87d9ca684b0215f69"
+    },
+    {
+      "name": "guidance-today-400-en-dark",
+      "file": "guidance-today-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "d97a3262c2c94b2ec072095cbc64bb02c458dd613480ee785178a01ef188e9a6"
+    },
+    {
+      "name": "guidance-trash-960-zh",
+      "file": "guidance-trash-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "ea17082b64399e812e8256967f246b31a30bad2378d671feda2fc41534d8e2b6"
+    },
+    {
+      "name": "guidance-trash-400-en-dark",
+      "file": "guidance-trash-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "92141c2aebe9d7e12434a383c50ae5b0ea276de1392e849f95158f7c97dc51b9"
+    },
+    {
+      "name": "guidance-onboarding-960-zh",
+      "file": "guidance-onboarding-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "2de889653032bcd9c42512b008da076404184a8e36c797b22a2bb540460190ac"
+    },
+    {
+      "name": "guidance-onboarding-400-en-dark",
+      "file": "guidance-onboarding-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "88db10b3d33f640230ec26a1c133577b43263459a17c09516b11862bc36d790b"
+    },
+    {
+      "name": "guidance-palette-zh",
+      "file": "guidance-palette-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "82f95a606da2d12b3d2981d408e9ea6cc2775eb2f648b22deb61c9b5342853d6"
+    },
+    {
+      "name": "guidance-palette-en-dark",
+      "file": "guidance-palette-en-dark.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "f58e517a8d6c02307a12587be63b3e40e374cc2eb945e17322ab5e74a01bf4e7"
+    },
+    {
+      "name": "guidance-global-zh",
+      "file": "guidance-global-zh.png",
+      "viewport": {
+        "width": 640,
+        "height": 440
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "58d13f47e55b083eff66f532f60a0be24f9cf95697dd18f7e26a7abb6901cfe8"
+    },
+    {
+      "name": "guidance-global-en-dark",
+      "file": "guidance-global-en-dark.png",
+      "viewport": {
+        "width": 640,
+        "height": 440
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "857e16e78ca7bfe2686b95651317d989e2ccf45bf85b2c00f658b0065ddf78c0"
+    },
+    {
+      "name": "guidance-capture-zh",
+      "file": "guidance-capture-zh.png",
+      "viewport": {
+        "width": 300,
+        "height": 380
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "4ab555bf1a4b2d771f8243e18e48ee62fcad81c0c7e9f79e93b16e7b4b3f3d50"
+    },
+    {
+      "name": "guidance-capture-en-dark",
+      "file": "guidance-capture-en-dark.png",
+      "viewport": {
+        "width": 300,
+        "height": 380
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "ee8725835058735c0c62cdb14a3bf12d6f97bc6535c8271207e7897dbfcf7c0e"
+    },
+    {
+      "name": "guidance-global-error-undo-zh",
+      "file": "guidance-global-error-undo-zh.png",
+      "viewport": {
+        "width": 640,
+        "height": 440
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "8b160ee6a9be83f3601b4b0a3fe7f6fd6b2e4c4719ceaa4677c204b2a3f6c834"
+    }
+  ],
+  "recordings": []
+}

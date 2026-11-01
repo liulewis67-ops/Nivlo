@@ -37,12 +37,10 @@ describe("resolveKey", () => {
   });
 });
 
-describe("Tab 切换类型", () => {
-  it("Tab 向后、Shift+Tab 向前；输入法组合期间忽略", () => {
-    expect(resolveKey({ key: "Tab", isComposing: false, title: "" })).toBe("nextKind");
-    expect(resolveKey({ key: "Tab", isComposing: false, title: "", shiftKey: true })).toBe(
-      "previousKind",
-    );
+describe("类型组与标准焦点遍历", () => {
+  it("标题中的 Tab / Shift+Tab 不拦截；输入法组合期间也忽略", () => {
+    expect(resolveKey({ key: "Tab", isComposing: false, title: "" })).toBe("none");
+    expect(resolveKey({ key: "Tab", isComposing: false, title: "", shiftKey: true })).toBe("none");
     expect(resolveKey({ key: "Tab", isComposing: true, title: "" })).toBe("none");
   });
 

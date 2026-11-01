@@ -8,6 +8,16 @@ import { renderWithProviders } from "@/test/render";
 import { ONBOARDING_STEPS } from "@/features/onboarding";
 
 describe("首次运行引导", () => {
+  it("停用的快速创建快捷键不会在引导中被当作可用入口", async () => {
+    const ipc = createMemoryIpc();
+    await ipc.disableShortcut("quickCreate");
+    ipc.showOnboarding();
+    renderWithProviders(<MainShell />, ipc);
+    const dialog = await screen.findByRole("dialog", { name: "欢迎使用拾序" });
+    await userEvent.click(screen.getByRole("tab", { name: "第 4 步" }));
+    expect(dialog).not.toHaveTextContent("Ctrl+Shift+Space");
+    expect(dialog).toHaveTextContent("Ctrl+Alt+Space");
+  });
   it("全新安装时出现，已经看过的不再出现", async () => {
     useNavStore.setState({ view: "today" });
     const fresh = createMemoryIpc();

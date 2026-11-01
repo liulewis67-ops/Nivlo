@@ -68,6 +68,33 @@ describe("NotesPage", () => {
     useNavStore.setState({ noteId: null, freshNoteId: null });
   });
 
+  it("列表与编辑区从并排变为上下排列时保留草稿、选区与焦点，只保存一次", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "正在编辑", "初稿");
+    const previousWidth = window.innerWidth;
+    renderWithProviders(<NotesPage />, ipc);
+    const body = await screen.findByLabelText("描述");
+    if (!(body instanceof HTMLTextAreaElement)) throw Error("Expected textarea");
+    fireEvent.change(body, { target: { value: "resize draft" } });
+    body.focus();
+    body.setSelectionRange(2, 5);
+    try {
+      for (const width of [400, 1280]) {
+        Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
+        fireEvent.resize(window);
+        expect(screen.getByLabelText("描述")).toBe(body);
+        expect(body).toHaveFocus();
+        expect([body.selectionStart, body.selectionEnd]).toEqual([2, 5]);
+        expect(body).toHaveValue("resize draft");
+      }
+      await waitForSave(ipc, 1);
+      expect(ipc.items[0]?.content).toBe("resize draft");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: previousWidth });
+      fireEvent.resize(window);
+    }
+  });
+
   it("没有笔记时给出空状态，点「新笔记」创建并立刻打开", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<NotesPage />, ipc);

@@ -165,7 +165,7 @@ describe("FloatingRoot", () => {
     expect(ipc.calls).toEqual(["getToday", "getInboxCount", "expandFloating"]);
   });
 
-  it("快速创建时按 Tab 在待办 / 笔记 / 提示之间切换，创建的就是切换后的类型", async () => {
+  it("类型组内用方向键选择；标题里的 Tab 与方向键不更改类型", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
     act(() => ipc.emitQuickAddRequested());
@@ -173,10 +173,13 @@ describe("FloatingRoot", () => {
 
     const input = screen.getByLabelText("标题");
     fireEvent.keyDown(input, { key: "Tab" });
-    expect(screen.getByText("笔记")).toBeInTheDocument();
-    fireEvent.keyDown(input, { key: "Tab", shiftKey: true });
-    fireEvent.keyDown(input, { key: "Tab", shiftKey: true });
-    expect(screen.getByText("提示")).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: "ArrowRight" });
+    expect(screen.getByRole("radio", { name: "待办" })).toBeChecked();
+    const todo = screen.getByRole("radio", { name: "待办" });
+    todo.focus();
+    fireEvent.keyDown(todo, { key: "ArrowLeft" });
+    expect(screen.getByRole("radio", { name: "提示" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "提示" })).toHaveFocus();
 
     fireEvent.change(input, { target: { value: "喝水" } });
     fireEvent.keyDown(input, { key: "Enter" });

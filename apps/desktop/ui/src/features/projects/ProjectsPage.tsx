@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Input, Menu } from "@/components";
+import { Button, Input, Menu, LoadFeedback } from "@/components";
+import { LAYOUT, useContainerWidth } from "@/lib/layout";
 import type { MenuItemSpec } from "@/components";
 import { useProjectsQuery, useTagsQuery } from "@/features/organize";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
@@ -160,6 +161,8 @@ function NameEditor({ label, initial, placeholder, onSubmit, onCancel }: NameEdi
  * @returns 项目与标签页面。
  */
 export function ProjectsPage() {
+  const rootRef = useRef<HTMLElement>(null);
+  const compact = useContainerWidth(rootRef) < LAYOUT.stackedWorkspace;
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const projectsQuery = useProjectsQuery();
@@ -314,8 +317,25 @@ export function ProjectsPage() {
 
   const heading = selectedProject?.name ?? (selectedTag ? `# ${selectedTag.tag.name}` : "");
   return (
-    <section aria-label={t("projects.label")} className="flex h-full min-w-0">
-      <div className="flex w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-surface">
+    <section
+      ref={rootRef}
+      aria-label={t("projects.label")}
+      className={cx("flex h-full min-w-0", compact && "flex-col")}
+    >
+      <div
+        className={cx(
+          "flex shrink-0 flex-col overflow-y-auto border-r border-border bg-surface",
+          compact ? "max-h-52 w-full" : "w-64",
+        )}
+      >
+        <LoadFeedback
+          loading={projectsQuery.isLoading || tagsQuery.isLoading}
+          failed={projectsQuery.isError || tagsQuery.isError}
+          onRetry={() => {
+            void projectsQuery.refetch();
+            void tagsQuery.refetch();
+          }}
+        />
         <nav
           aria-label={t("projects.sidebar")}
           className="flex flex-col gap-4 px-2 py-3"
@@ -445,7 +465,7 @@ export function ProjectsPage() {
           </div>
         </nav>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {selection === null ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
             {projectsQuery.data !== undefined && tagsQuery.data !== undefined && (
@@ -497,6 +517,11 @@ export function ProjectsPage() {
                 </Button>
               </div>
             )}
+            <LoadFeedback
+              loading={itemsQuery.isLoading}
+              failed={itemsQuery.isError}
+              onRetry={() => void itemsQuery.refetch()}
+            />
             {itemsQuery.data !== undefined && items.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center gap-1 px-8 text-center">
                 <p className="text-base font-medium text-text">

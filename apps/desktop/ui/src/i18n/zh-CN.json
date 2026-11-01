@@ -3,7 +3,9 @@
     "name": "拾序"
   },
   "common": {
-    "loading": "加载中…"
+    "loading": "加载中…",
+    "retry": "重试",
+    "loadFailed": "暂时无法加载此页面，请重试。"
   },
   "toast": {
     "dismiss": "关闭提示"
@@ -48,7 +50,7 @@
     },
     "input": {
       "label": "标题",
-      "placeholder": "输入标题，回车创建，Tab 换类型"
+      "placeholder": "输入标题，Enter 创建"
     },
     "parsed": {
       "label": "识别到计划：{{label}}",
@@ -59,7 +61,9 @@
       "today": "今天",
       "tomorrow": "明天",
       "dayAfter": "后天"
-    }
+    },
+    "typeLabel": "捕获类型",
+    "retry": "编辑后重试"
   },
   "notes": {
     "label": "笔记",
@@ -237,7 +241,8 @@
       "leave": "移出收集箱",
       "archive": "归档",
       "more": "更多整理方式",
-      "moreShort": "更多"
+      "moreShort": "更多",
+      "organize": "整理"
     },
     "done": {
       "today": "已安排到今天（{{count}} 项）",
@@ -493,7 +498,21 @@
     },
     "windowHint": "输入关键词或拼音首字母，搜索标题、正文和来源；回车在主窗口中打开。",
     "globalTip": "在任何应用里搜索",
-    "settingsGroup": "设置：{{group}}"
+    "settingsGroup": "设置：{{group}}",
+    "keyboardHelp": "键盘帮助",
+    "allKeys": "↑ / ↓：选择结果\nCtrl+Home / Ctrl+End：首条 / 末条结果\nEnter：打开条目或执行命令\nShift+Enter：复制标题\nCtrl+Enter：创建待办\nCtrl+D：完成 / 重新打开选中的待办或提示\nCtrl+Z：撤销提示可见时，撤销完成\n>：命令模式\nTab / Shift+Tab：在控件间移动\nEsc：先关闭帮助，再关闭搜索",
+    "browseKeys": "↑↓ 选择 · Enter 打开",
+    "commandStatus": "命令模式 · {{count}} 条命令",
+    "run": "执行命令",
+    "completeAction": "完成",
+    "reopenAction": "重新打开",
+    "createTodo": "创建待办",
+    "creating": "正在创建…",
+    "searching": "正在搜索…",
+    "loadFailed": "暂时无法加载结果，搜索词已保留。",
+    "retry": "重试",
+    "openAction": "打开",
+    "dismissError": "关闭错误提示"
   },
   "trash": {
     "label": "回收站",
@@ -649,6 +668,12 @@
         "label": "恢复默认外观",
         "hint": "还原为默认的样子。",
         "button": "恢复"
+      },
+      "group": {
+        "badge": "徽标形状",
+        "surface": "表面、强调色与透明度",
+        "skin": "自定义皮肤",
+        "motion": "皮肤动画"
       }
     },
     "skin": {
@@ -793,23 +818,24 @@
     "start": "开始使用",
     "step0": {
       "title": "欢迎使用拾序",
-      "body": "拾序是一个常驻在屏幕边缘的任务入口：想到什么先收下，之后再整理。屏幕边缘那个带数字的圆形徽标，就是它。"
+      "body": "拾序住在屏幕边缘：先收下想到的事，再慢慢整理。在屏幕边缘找到小徽标就能开始。"
     },
     "step1": {
       "title": "悬停看今天，点一下就添加",
-      "body": "把鼠标移到徽标上，今天要做的事就展开了；点「+ 待办」写下一件事，回车就收好。勾选完成，拖动排序，还能一键推迟到明天。"
+      "body": "悬停在徽标上展开今日事项。点击「+ 待办」，选择待办、笔记或提示，输入标题后按 Enter。类型组内用方向键选择，Tab 在控件间移动。"
     },
     "step2": {
       "title": "随手收进来",
-      "body": "把网页链接、选中的文字、图片或文件拖到悬浮窗，或者复制后点「粘贴」，都会先放进「收集箱」，等你有空再整理。"
+      "body": "复制一个链接，在悬浮面板点击「粘贴」。打开收集箱，点击该条目的「整理」，再选择「明天」：来源留住了，日期也安排好了。"
     },
     "step3": {
       "title": "用说话的方式安排时间",
-      "body": "写「明天下午3点 评审方案」，拾序会认出日期和时间，并在添加前让你确认。在任何应用里按下快捷键就能立刻写下一条：",
+      "body": "输入「明天下午3点 评审方案」，拾序会识别日期与时间。确认识别出的计划后，再按 Enter 创建。",
       "search": "想找回记下的东西，在任何应用里按：",
       "taken": "不过 {{shortcut}} 现在被别的程序占用了，按了不会有反应。可以在主窗口左下角换一个。",
       "searchTaken": "全局搜索的快捷键 {{shortcut}} 被别的程序占用了，可以在主窗口左下角换一个，就能在任何应用里搜索记下的东西。",
-      "cheatSheet": "想看所有键盘快捷键，在主窗口里按"
+      "cheatSheet": "想看所有键盘快捷键，在主窗口里按",
+      "quickShortcut": "在其他应用中，用这个快捷键快速记录："
     }
   },
   "workflows": {
@@ -992,7 +1018,9 @@
       "message": "这条规则还有没保存的修改。",
       "keep": "继续编辑",
       "discard": "放弃修改"
-    }
+    },
+    "enabledState": "已启用",
+    "disabledState": "已停用"
   },
   "dateFormat": {
     "monthDay": "M月d日",
@@ -1043,9 +1071,10 @@
     },
     "quickCreate": {
       "create": "创建（「明天下午3点 …」会认出日期）",
-      "kind": "在待办 / 笔记 / 提示之间切换",
+      "kind": "在类型组内选择待办 / 笔记 / 提示",
       "date": "取消刚认出的日期",
-      "cancel": "取消"
+      "cancel": "取消",
+      "focus": "在类型组与标题之间移动，并正常离开"
     },
     "today": {
       "move": "在完成框之间移动",

@@ -3,7 +3,7 @@ import { differenceInCalendarDays, parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, ConfirmButton, FilterInput } from "@/components";
+import { Button, ConfirmButton, FilterInput, LoadFeedback } from "@/components";
 import { nextRemaining } from "@/lib/arrow-focus";
 import { filterWords, matchesAllWords } from "@/lib/text-filter";
 import { ipc } from "@/lib/ipc";
@@ -120,7 +120,7 @@ export function TrashPage() {
 
   return (
     <section aria-label={t("trash.label")} className="flex h-full min-w-0 flex-col">
-      <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-4">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex items-baseline gap-3">
           <h1 className="text-lg font-semibold text-text">{t("shell.nav.trash")}</h1>
           {entries.length > 0 && (
@@ -138,6 +138,11 @@ export function TrashPage() {
           />
         )}
       </header>
+      <LoadFeedback
+        loading={trash.isLoading}
+        failed={trash.isError}
+        onRetry={() => void trash.refetch()}
+      />
       {(entries.length >= TRASH_FILTER_MIN || filter !== "") && (
         <div className="px-6 pt-3">
           <FilterInput

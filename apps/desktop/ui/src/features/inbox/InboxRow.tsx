@@ -47,6 +47,8 @@ export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: In
   );
 
   const moreItems: MenuItemSpec[] = [
+    { id: "today", label: t("inbox.action.today"), onSelect: () => onOrganize("today") },
+    { id: "tomorrow", label: t("inbox.action.tomorrow"), onSelect: () => onOrganize("tomorrow") },
     { id: "later", label: t("inbox.action.later"), onSelect: () => onOrganize("later") },
     ...CONVERT_KINDS.filter((kind) => kind !== item.itemType).map((kind) => ({
       id: `convert-${kind}`,
@@ -61,7 +63,7 @@ export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: In
   return (
     <li
       className={cx(
-        "group flex items-center gap-3 rounded-md px-3 py-2.5",
+        "group @container flex flex-wrap items-center gap-3 rounded-md px-3 py-2.5",
         "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
         selected ? "bg-primary/10" : "hover:bg-surface-hover",
       )}
@@ -105,21 +107,15 @@ export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: In
       </div>
       <time
         dateTime={item.createdAt}
-        className="shrink-0 text-xs text-muted tabular-nums group-hover:hidden group-focus-within:hidden"
+        className="hidden shrink-0 text-xs text-muted tabular-nums @2xl:block"
       >
         {distanceToNow(parseISO(item.createdAt), true)}
       </time>
-      <div className="hidden shrink-0 items-center gap-1 group-hover:flex group-focus-within:flex">
-        <Button size="sm" variant="secondary" onClick={() => onOrganize("today")}>
-          {t("inbox.action.today")}
-        </Button>
-        <Button size="sm" variant="secondary" onClick={() => onOrganize("tomorrow")}>
-          {t("inbox.action.tomorrow")}
-        </Button>
+      <div className="flex shrink-0 items-center gap-1">
         <Menu
           trigger={
             <Button size="sm" variant="ghost" aria-label={t("inbox.action.more")}>
-              {t("inbox.action.moreShort")}
+              {t("inbox.action.organize")}
             </Button>
           }
           items={moreItems}

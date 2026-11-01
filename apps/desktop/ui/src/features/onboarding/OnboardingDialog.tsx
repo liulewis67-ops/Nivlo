@@ -63,7 +63,7 @@ function Illustration({ step }: { step: number }) {
             </div>
           ))}
         </div>
-        <span className="absolute right-[4.5rem] bottom-3 rounded-md bg-primary px-2 py-1 text-[10px] text-primary-contrast">
+        <span className="absolute right-[4.5rem] bottom-3 rounded-md bg-primary px-2 py-1 text-xs text-primary-contrast">
           {t("onboarding.demo.add")}
         </span>
       </div>
@@ -110,7 +110,7 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const quickCreate = useShortcutQuery("quickCreate").data;
-  const shortcut = quickCreate?.accelerator ?? "Ctrl+Shift+Space";
+  const shortcut = quickCreate?.accelerator ?? "";
   const search = useShortcutQuery("search").data;
   const primaryRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -145,9 +145,14 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
     step === 3 ? (
       <>
         {t("onboarding.step3.body", { shortcut })}
-        <kbd className="ml-1 rounded border border-border bg-bg px-1.5 py-0.5 text-xs text-text">
-          {shortcut}
-        </kbd>
+        {quickCreate?.registered === true && (
+          <span className="mt-2 block">
+            {t("onboarding.step3.quickShortcut")}
+            <kbd className="ml-1 rounded border border-border bg-bg px-1.5 py-0.5 text-xs text-text">
+              {shortcut}
+            </kbd>
+          </span>
+        )}
         {/* 被别的程序占用的快捷键按了没反应：直接说明，并指向侧栏里的修改框（那里有可用的组合）。 */}
         {quickCreate?.conflict === true && (
           <span className="mt-2 block text-danger">
@@ -187,14 +192,14 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
         aria-modal="true"
         aria-label={t("onboarding.label")}
         onKeyDown={handleKeyDown}
-        className="nv-panel-in flex w-full max-w-md flex-col gap-5 rounded-xl border border-border bg-surface p-6 shadow-lg"
+        className="nv-panel-in flex max-h-[calc(100vh-32px)] w-full max-w-md flex-col gap-5 overflow-y-auto rounded-xl border border-border bg-surface p-5 shadow-lg"
       >
         <Illustration step={step} />
         <div className="flex min-h-24 flex-col gap-2">
           <h2 className="text-lg font-semibold text-text">{t(`onboarding.step${step}.title`)}</h2>
           <p className="text-sm leading-relaxed text-muted">{body}</p>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div
             role="tablist"
             aria-label={t("onboarding.steps")}
@@ -209,10 +214,17 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
                 aria-label={t("onboarding.goTo", { step: index + 1 })}
                 onClick={() => setStep(index)}
                 className={cx(
-                  "h-2 rounded-full transition-all duration-(--nv-duration-normal) ease-(--nv-ease-standard)",
-                  index === step ? "w-6 bg-primary" : "w-2 bg-border hover:bg-muted",
+                  "flex size-7 items-center justify-center rounded transition-colors duration-(--nv-duration-normal) ease-(--nv-ease-standard) hover:bg-surface-hover",
                 )}
-              />
+              >
+                <span
+                  aria-hidden="true"
+                  className={cx(
+                    "h-2 rounded-full",
+                    index === step ? "w-6 bg-primary" : "w-2 bg-border",
+                  )}
+                />
+              </button>
             ))}
           </div>
           <div className="flex items-center gap-2">

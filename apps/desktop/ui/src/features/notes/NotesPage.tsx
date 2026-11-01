@@ -6,6 +6,8 @@ import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, FilterInput } from "@/components";
+import { LoadFeedback } from "@/components";
+import { LAYOUT, useContainerWidth } from "@/lib/layout";
 import { useNavStore } from "@/features/shell";
 import { moveFocusWithArrows, nextRemaining } from "@/lib/arrow-focus";
 import { cx } from "@/lib/cx";
@@ -38,6 +40,8 @@ function notInEditor(): boolean {
  * @returns Notes 页面。
  */
 export function NotesPage() {
+  const rootRef = useRef<HTMLElement>(null);
+  const compact = useContainerWidth(rootRef) < LAYOUT.stackedWorkspace;
   const { t } = useTranslation();
   const notes = useQuery({
     queryKey: queryKeys.notes(),
@@ -170,8 +174,17 @@ export function NotesPage() {
   }
 
   return (
-    <section aria-label={t("notes.label")} className="flex h-full min-w-0">
-      <div className="flex w-72 shrink-0 flex-col border-r border-border bg-surface">
+    <section
+      ref={rootRef}
+      aria-label={t("notes.label")}
+      className={cx("flex h-full min-w-0", compact && "flex-col")}
+    >
+      <div
+        className={cx(
+          "flex shrink-0 flex-col border-r border-border bg-surface",
+          compact ? "max-h-52 min-h-0 w-full" : "w-72",
+        )}
+      >
         <header className="flex items-center justify-between gap-2 px-4 py-3">
           <h1 className="text-lg font-semibold text-text">{t("shell.nav.notes")}</h1>
           <Button
@@ -196,6 +209,11 @@ export function NotesPage() {
             />
           </div>
         )}
+        <LoadFeedback
+          loading={notes.isLoading}
+          failed={notes.isError}
+          onRetry={() => void notes.refetch()}
+        />
         {notes.data === undefined ? null : list.length === 0 ? (
           <p className="px-4 py-6 text-center text-sm text-muted">{t("notes.empty.list")}</p>
         ) : visible.length === 0 ? (
@@ -246,7 +264,7 @@ export function NotesPage() {
           </ul>
         )}
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="min-h-0 min-w-0 flex-1">
         {activeId === null ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 px-8 text-center">
             {notes.data !== undefined && (

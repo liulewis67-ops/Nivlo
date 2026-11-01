@@ -19,8 +19,16 @@ import { applyTheme, useThemeStore } from "@/stores/theme-store";
  */
 export function createQueryClient(): QueryClient {
   return new QueryClient({
-    queryCache: new QueryCache({ onError: reportError }),
-    mutationCache: new MutationCache({ onError: reportError }),
+    queryCache: new QueryCache({
+      onError: (error, query) => {
+        if (query.meta?.errorPresentation !== "inline") reportError(error);
+      },
+    }),
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) => {
+        if (mutation.meta?.errorPresentation !== "inline") reportError(error);
+      },
+    }),
     defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false } },
   });
 }

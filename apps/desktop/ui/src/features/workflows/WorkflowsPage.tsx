@@ -1,7 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Switch } from "@/components";
+import { Button, Switch, Tooltip, LoadFeedback } from "@/components";
+import { LAYOUT, useContainerWidth } from "@/lib/layout";
 import { useNavStore } from "@/features/shell";
 import { moveFocusWithArrows } from "@/lib/arrow-focus";
 import { isCommandKey, isDialogOpen } from "@/lib/typing";
@@ -50,31 +51,30 @@ function WorkflowRow({ workflow, selected, onSelect, onToggle, onPriority }: Wor
         "flex items-center gap-3 rounded-md px-2 py-2.5",
         "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
         selected ? "bg-surface-hover" : "hover:bg-surface-hover",
-        !workflow.enabled && "opacity-60",
       )}
     >
-      <Switch
-        label={t("workflows.enable", { name })}
-        checked={workflow.enabled}
-        onCheckedChange={onToggle}
-      />
-      <button
-        type="button"
-        data-workflow-item=""
-        aria-current={selected ? "true" : undefined}
-        onClick={onSelect}
-        // 名称与说明在窄栏里常被截断：指针移上去看全文。
-        title={
-          description === ""
-            ? name
-            : `${name}
-${description}`
-        }
-        className="min-w-0 flex-1 text-left"
-      >
-        <span className="block truncate text-sm font-medium text-text">{name}</span>
-        <span className="block truncate text-xs text-muted">{description}</span>
-      </button>
+      <div className="flex shrink-0 flex-col items-center gap-1">
+        <Switch
+          label={t("workflows.enable", { name })}
+          checked={workflow.enabled}
+          onCheckedChange={onToggle}
+        />
+        <span className="text-xs text-muted">
+          {t(workflow.enabled ? "workflows.enabledState" : "workflows.disabledState")}
+        </span>
+      </div>
+      <Tooltip content={description === "" ? name : `${name} — ${description}`}>
+        <button
+          type="button"
+          data-workflow-item=""
+          aria-current={selected ? "true" : undefined}
+          onClick={onSelect}
+          className="min-w-0 flex-1 text-left"
+        >
+          <span className="block text-sm font-medium wrap-anywhere text-text">{name}</span>
+          <span className="mt-1 line-clamp-2 text-xs wrap-anywhere text-muted">{description}</span>
+        </button>
+      </Tooltip>
       <div
         role="group"
         aria-label={t("workflows.priorityOf", { name })}
@@ -112,6 +112,8 @@ ${description}`
  * @returns 页面。
  */
 export function WorkflowsPage() {
+  const rootRef = useRef<HTMLElement>(null);
+  const compact = useContainerWidth(rootRef) < LAYOUT.stackedWorkspace;
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("rules");
@@ -264,9 +266,13 @@ export function WorkflowsPage() {
   }
 
   return (
-    <section aria-label={t("workflows.label")} className="flex h-full min-w-0 flex-col">
-      <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-4">
-        <div className="flex items-baseline gap-4">
+    <section
+      ref={rootRef}
+      aria-label={t("workflows.label")}
+      className="flex h-full min-w-0 flex-col"
+    >
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+        <div className="flex flex-wrap items-baseline gap-3">
           <h1 className="text-lg font-semibold text-text">{t("shell.nav.workflows")}</h1>
           <div role="tablist" aria-label={t("workflows.tabs")} className="flex gap-1">
             {(["rules", "runs"] as const).map((item) => (
@@ -334,13 +340,27 @@ export function WorkflowsPage() {
       {tab === "runs" ? (
         <RunInspector />
       ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(20rem,26rem)_1fr]">
+        <div
+          className={cx(
+            "grid min-h-0 flex-1",
+            compact
+              ? "grid-cols-1 grid-rows-[minmax(0,2fr)_minmax(0,3fr)]"
+              : selected === null && importPreview === null
+                ? "grid-cols-1 grid-rows-[minmax(0,1fr)_auto]"
+                : "grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]",
+          )}
+        >
           <div
             className="min-h-0 overflow-y-auto border-r border-border px-3 py-3"
             // ↑ / ↓ 在规则之间移动（跨过「内置 / 我的」分组），Enter 打开；不自动打开，免得丢掉正在编辑的内容。
             onKeyDown={(event) => moveFocusWithArrows(event, "[data-workflow-item]")}
           >
             <p className="px-2 pb-3 text-xs text-muted">{t("workflows.intro")}</p>
+            <LoadFeedback
+              loading={workflows.isLoading}
+              failed={workflows.isError}
+              onRetry={() => void workflows.refetch()}
+            />
             {[
               { key: "builtin", rows: builtin },
               { key: "mine", rows: mine },
@@ -384,7 +404,7 @@ export function WorkflowsPage() {
                 }}
               />
             ) : selected === null ? (
-              <div className="flex h-full flex-col items-center justify-center gap-1 px-8 text-center">
+              <div className="flex h-full flex-col items-center justify-center gap-1 px-4 py-3 text-center">
                 <p className="text-base font-medium text-text">{t("workflows.pickTitle")}</p>
                 <p className="max-w-sm text-sm text-muted">{t("workflows.pickHint")}</p>
               </div>

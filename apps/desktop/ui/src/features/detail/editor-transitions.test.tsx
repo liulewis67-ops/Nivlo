@@ -345,6 +345,12 @@ describe("编辑器安全离开", () => {
     expect(screen.queryByRole("dialog", { name: "导航" })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
     expect(document.querySelector("main")).not.toHaveAttribute("inert");
+    fireEvent.click(trigger);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "导航" })).getByRole("button", { name: "收集箱" }),
+    );
+    expect(screen.queryByRole("dialog", { name: "导航" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it("详情保存后保留背后 Workflow 的离开检查，既有确认控件可达", async () => {

@@ -1,0 +1,7 @@
+{
+  "method": "shortcut",
+  "inputFocused": true,
+  "active": "<input role=\"combobox\" aria-expanded=\"true\" aria-controls=\"_r_c_\" aria-autocomplete=\"list\" aria-label=\"搜索关键词\" placeholder=\"搜索待办、笔记和提示…\" spellcheck=\"false\" autocomplete=\"off\" class=\"min-w-0 flex-1 bg-transparent text-text placeholder:text-muted/80 focus-visible:outline-none h-12 text-base\" value=\"\" aria-activedescendant=\"_r_c_-00000000-0000-4000-8000-000000000013\">",
+  "immediateTyping": true,
+  "browserOnly": true
+}

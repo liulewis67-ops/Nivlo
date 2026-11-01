@@ -16,4 +16,5 @@ export { Switch } from "./Switch";
 export type { SwitchProps } from "./Switch";
 export { ToastViewport } from "./ToastViewport";
 export { Tooltip, TooltipProvider } from "./Tooltip";
+export { LoadFeedback } from "./LoadFeedback";
 export type { TooltipProps, TooltipProviderProps } from "./Tooltip";

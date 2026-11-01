@@ -6,6 +6,20 @@ import { createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import { useToastStore } from "@/stores/toast-store";
 import { QuickCreateForm } from "./QuickCreateForm";
+import { useState } from "react";
+import type { ItemTypeDto } from "@/lib/ipc";
+
+/** 标准焦点遍历覆盖类型组和输入框外的真实按钮。 */
+function CaptureHarness() {
+  const [kind, setKind] = useState<ItemTypeDto>("todo");
+  return (
+    <>
+      <button>之前</button>
+      <QuickCreateForm kind={kind} onKindChange={setKind} onDone={() => undefined} />
+      <button>之后</button>
+    </>
+  );
+}
 
 /** 渲染一个 Todo 的快速创建输入行，并等待它拿到键盘焦点。 */
 async function renderReady(ipc = createMemoryIpc(), onDone = vi.fn()) {
@@ -16,6 +30,32 @@ async function renderReady(ipc = createMemoryIpc(), onDone = vi.fn()) {
 }
 
 describe("QuickCreateForm", () => {
+  it("类型组不困住 Tab；方向键选择，指针切换保持标题焦点与选区", async () => {
+    const user = userEvent.setup();
+    const ipc = createMemoryIpc();
+    renderWithProviders(<CaptureHarness />, ipc);
+    const input = screen.getByRole("textbox", { name: "标题" });
+    await waitFor(() => expect(input).toHaveFocus());
+    await user.keyboard("draft");
+    if (!(input instanceof HTMLInputElement)) throw Error("Expected input");
+    input.setSelectionRange(1, 3);
+    await user.click(screen.getByRole("radio", { name: "笔记" }));
+    expect(input).toHaveFocus();
+    expect(input.selectionStart).toBe(1);
+    expect(input.selectionEnd).toBe(3);
+    expect(screen.getByRole("radio", { name: "笔记" })).toBeChecked();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("radio", { name: "笔记" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("radio", { name: "提示" })).toHaveFocus();
+    expect(screen.getByRole("radio", { name: "提示" })).toBeChecked();
+    await user.tab();
+    expect(input).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "之后" })).toHaveFocus();
+    expect(input).toHaveValue("draft");
+    expect(ipc.calls).not.toContain("endFloatingInput");
+  });
   afterEach(() => {
     vi.restoreAllMocks();
     vi.useRealTimers();
@@ -87,6 +127,7 @@ describe("QuickCreateForm", () => {
     await user.keyboard("写周报{Enter}");
 
     expect(await screen.findByRole("alert")).toHaveTextContent("本地数据库暂时不可用。");
+    expect(useToastStore.getState().toasts).toHaveLength(0);
     expect(onDone).not.toHaveBeenCalled();
     expect(input).toHaveValue("写周报");
 

@@ -1,5 +1,6 @@
 import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { AppError } from "@/lib/errors";
 import { OpenItemContext } from "@/features/detail";
 import { useToastStore } from "@/stores/toast-store";
@@ -55,7 +56,8 @@ describe("InboxPage", () => {
     renderWithProviders(<InboxPage />, ipc);
     await screen.findByText("整理周报");
 
-    fireEvent.click(within(row("整理周报")).getByRole("button", { name: "今天" }));
+    await userEvent.click(within(row("整理周报")).getByRole("button", { name: "更多整理方式" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "今天" }));
     await waitFor(() => expect(screen.queryByText("整理周报")).not.toBeInTheDocument());
     expect(ipc.organizations).toEqual([
       { ids: [ipc.items[0]?.id], action: { kind: "schedule", target: { kind: "today" } } },
@@ -135,7 +137,8 @@ describe("InboxPage", () => {
       ["明天M", "M"],
       ["删除Del", "Delete"],
     ]);
-    expect(screen.getAllByRole("button", { name: "今天" }).length).toBeGreaterThan(1);
+    expect(screen.getByRole("button", { name: "今天" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "更多整理方式" })).toHaveLength(3);
     fireEvent.keyDown(first, { key: "t" });
     await waitFor(() => expect(ipc.organizations).toHaveLength(1));
     expect(ipc.organizations[0]?.ids).toHaveLength(3);
@@ -291,7 +294,8 @@ describe("InboxPage", () => {
     await screen.findByText("整理周报");
 
     ipc.failNextOrganizeWith(new AppError("STORAGE_UNAVAILABLE", "boom"));
-    fireEvent.click(within(row("整理周报")).getByRole("button", { name: "今天" }));
+    await userEvent.click(within(row("整理周报")).getByRole("button", { name: "更多整理方式" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "今天" }));
     await waitFor(() =>
       expect(useToastStore.getState().toasts.some((t) => t.kind === "error")).toBe(true),
     );

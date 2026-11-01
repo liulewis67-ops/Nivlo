@@ -1,7 +1,7 @@
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
-import { Button, Tooltip } from "@/components";
+import { Button, Tooltip, LoadFeedback } from "@/components";
 import { CaptureFeedbackBar } from "@/features/capture";
 import type { CaptureFeedback } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
@@ -18,7 +18,7 @@ export type TodayPanelProps = {
   quickCreateKind: ItemTypeDto | null;
   /** 点击 `+ 待办` / `+ 笔记` / `+ 提示` 时调用。 */
   onQuickCreate: (kind: ItemTypeDto) => void;
-  /** 快速创建时按 Tab 切换了类型。 */
+  /** 快速创建的可见类型组改变选择。 */
   onQuickCreateKindChange?: ((kind: ItemTypeDto) => void) | undefined;
   /** 快速创建结束（成功、取消或失败）时调用。 */
   onQuickCreateDone: () => void;
@@ -58,7 +58,8 @@ export function TodayPanel({
   capture,
 }: TodayPanelProps) {
   const { t } = useTranslation();
-  const view = useTodayQuery().data;
+  const today = useTodayQuery();
+  const view = today.data;
   const inboxCount = useInboxCountQuery().data ?? 0;
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
@@ -108,8 +109,14 @@ export function TodayPanel({
           </Tooltip>
         </div>
       </header>
-      {view !== undefined &&
-      (view.todos.length > 0 || view.tips.length > 0 || view.completed.length > 0) ? (
+      <LoadFeedback
+        loading={today.isLoading}
+        failed={today.isError}
+        onRetry={() => void today.refetch()}
+      />
+      {view === undefined ? null : view.todos.length > 0 ||
+        view.tips.length > 0 ||
+        view.completed.length > 0 ? (
         <TodayBoard view={view} />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 p-4 text-center">
@@ -118,7 +125,7 @@ export function TodayPanel({
         </div>
       )}
       {quickCreateKind === null ? (
-        <footer className="flex items-center gap-2 border-t border-border px-3 py-2">
+        <footer className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2">
           {QUICK_CREATE_KINDS.map((kind) => (
             <Button key={kind} size="sm" variant="ghost" onClick={() => onQuickCreate(kind)}>
               {t(`quickCreate.add.${kind}`)}

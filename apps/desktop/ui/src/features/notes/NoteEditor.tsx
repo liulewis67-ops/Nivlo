@@ -77,7 +77,7 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
 
   return (
     <article aria-label={t("notes.editor")} className="flex h-full flex-col">
-      <header className="flex items-center justify-between gap-3 border-b border-border px-8 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
         <div className="flex items-center gap-3 text-xs text-muted">
           <span role="status">
             {status === "saving" && t("detail.status.saving")}
@@ -86,7 +86,7 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
           </span>
           <span className="tabular-nums">{t("notes.characters", { count: characters })}</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <div role="group" aria-label={t("detail.field.format")} className="flex gap-0.5">
             {(["plain", "markdown"] as const).map((format) => (
               <Button
@@ -132,7 +132,7 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
           <DraftRecovery owner={owner} problem={problem} save={save} />
         </div>
       )}
-      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col gap-3 px-8 py-6">
+      <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col gap-3 px-4 py-4">
         <input
           ref={focusTitle ? focusAndSelect : undefined}
           aria-label={t("detail.field.title")}
@@ -140,7 +140,7 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
           placeholder={t("notes.untitled")}
           onChange={(event) => edit({ title: event.target.value })}
           onKeyDown={enterMovesToBody}
-          className="w-full bg-transparent text-2xl font-semibold text-text placeholder:text-muted focus-visible:outline-none"
+          className="w-full bg-transparent text-lg font-semibold text-text placeholder:text-muted focus-visible:outline-none"
         />
         <Textarea
           aria-label={t("detail.field.content")}

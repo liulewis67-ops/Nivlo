@@ -47,8 +47,8 @@ export function SkinSetting() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex items-center gap-3">
+    <div className="flex max-w-full flex-col items-start gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="nv-float flex h-11 w-20 items-center justify-center rounded-full! px-2 py-1">
           {skin.frames.length > 0 ? (
             <SkinSprite skin={skin} hovered />

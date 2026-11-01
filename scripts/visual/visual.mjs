@@ -18,13 +18,16 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
+import { guidanceScenes } from "./guidance-scenes.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const PLATFORM = process.platform;
 const DETAIL_STAGE = process.argv.includes("--detail-stage");
 const CALENDAR_STAGE = process.argv.includes("--calendar-stage");
-const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE;
-const BASELINES = CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
+const FOCUS_AUDIT = process.argv.includes("--search-focus-audit");
+const GUIDANCE_STAGE = process.argv.includes("--guidance-stage");
+const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE || FOCUS_AUDIT || GUIDANCE_STAGE;
+const BASELINES = GUIDANCE_STAGE ? join(ROOT, "tests", "visual", "stages", "m3") : FOCUS_AUDIT ? join(ROOT, "tests", "visual", "stages", "m3", "before-focus") : CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
   ? join(ROOT, "tests", "visual", "implementation-baseline")
   : join(ROOT, "tests", "visual", "baselines", PLATFORM);
 const DIFFS = join(ROOT, "tests", "visual", "diff");
@@ -338,6 +341,29 @@ if (CALENDAR_STAGE) {
   } });
 }
 
+if (FOCUS_AUDIT) {
+  SCENARIOS.length = 0;
+  for (const method of ['click', 'shortcut']) SCENARIOS.push({ name: `search-focus-${method}`, w: 960, h: 640, url: APP, steps: async (page) => {
+    await page.send('Page.bringToFront');
+    await clickWhenReady(page, '收集箱');
+    await page.evaluate(`(() => { const b = [...document.querySelectorAll('button')].find(b => b.textContent.includes('Ctrl K')); b.focus(); ${method === 'click' ? 'b.click();' : ''} })()`);
+    if (method === 'shortcut') {
+      await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'k', code: 'KeyK', modifiers: 2, windowsVirtualKeyCode: 75 });
+      await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'k', code: 'KeyK', modifiers: 2, windowsVirtualKeyCode: 75 });
+    }
+    await sleep(300);
+    const before = await page.evaluate(`({ inputFocused: document.activeElement === document.querySelector('[role=combobox]'), active: document.activeElement?.outerHTML.slice(0,600) })`);
+    await page.send('Input.insertText', { text: 'focus audit' });
+    const after = await page.evaluate(`document.querySelector('[role=combobox]')?.value`);
+    writeFileSync(join(BASELINES, `search-focus-${method}.json`), JSON.stringify({ method, ...before, immediateTyping: after === 'focus audit', browserOnly: true }, null, 2));
+  } });
+}
+
+if (GUIDANCE_STAGE) {
+  SCENARIOS.length = 0;
+  SCENARIOS.push(...guidanceScenes({ app: APP, click: clickWhenReady, sleep }));
+}
+
 async function main() {
   mkdirSync(BASELINES, { recursive: true });
   let server = null;
@@ -370,7 +396,7 @@ async function main() {
       await page.send("Emulation.setDeviceMetricsOverride", { width: scenario.w, height: scenario.h, deviceScaleFactor: 1, mobile: false });
       await page.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }, { name: "prefers-reduced-motion", value: "reduce" }] });
       await page.send("Page.enable");
-      if (CALENDAR_STAGE) await page.send("Page.bringToFront");
+      if (CALENDAR_STAGE || GUIDANCE_STAGE || FOCUS_AUDIT) await page.send("Page.bringToFront");
       if (IMPLEMENTATION) {
         await page.send("Emulation.setTimezoneOverride", { timezoneId: "Asia/Shanghai" });
         await page.send("Page.addScriptToEvaluateOnNewDocument", { source: `
@@ -468,8 +494,15 @@ async function main() {
   if (IMPLEMENTATION) writeFileSync(join(BASELINES, "manifest.json"), JSON.stringify({
     sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim(),
     branch: execFileSync("git", ["branch", "--show-current"], { cwd: ROOT, encoding: "utf8" }).trim(),
-    fixtureRevision: CALENDAR_STAGE ? "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure" : DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
-    sourceFiles: DETAIL_STAGE || CALENDAR_STAGE ? Object.fromEntries([
+    fixtureRevision: GUIDANCE_STAGE ? "m3-v1: dev-seed; paired locale/theme, supported commands, failed floating capture" : CALENDAR_STAGE ? "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure" : DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
+    sourceFiles: DETAIL_STAGE || CALENDAR_STAGE || GUIDANCE_STAGE ? Object.fromEntries([
+      "scripts/visual/guidance-scenes.mjs", "apps/desktop/ui/src/features/search/SearchPanel.tsx", "apps/desktop/ui/src/features/search/CommandPalette.tsx",
+      "apps/desktop/ui/src/features/quick-create/QuickCreateForm.tsx", "apps/desktop/ui/src/features/quick-create/model/quick-create.ts",
+      "apps/desktop/ui/src/features/inbox/InboxRow.tsx", "apps/desktop/ui/src/features/settings/SettingsPage.tsx", "apps/desktop/ui/src/features/settings/SkinSetting.tsx",
+      "apps/desktop/ui/src/features/workflows/WorkflowsPage.tsx", "apps/desktop/ui/src/features/workflows/WorkflowEditor.tsx",
+      "apps/desktop/ui/src/features/onboarding/OnboardingDialog.tsx", "apps/desktop/ui/src/features/projects/ProjectsPage.tsx", "apps/desktop/ui/src/features/trash/TrashPage.tsx",
+      "apps/desktop/ui/src/features/today/TodayPage.tsx", "apps/desktop/ui/src/components/LoadFeedback.tsx", "apps/desktop/ui/src/features/floating/TodayPanel.tsx",
+      "apps/desktop/ui/src/app/providers/AppProviders.tsx", "apps/desktop/ui/src/features/inbox/InboxPage.tsx", "apps/desktop/ui/src/features/shell/ShortcutsDialog.tsx",
       "apps/desktop/ui/src/features/calendar/CalendarPage.tsx", "apps/desktop/ui/src/features/calendar/CalendarChip.tsx", "apps/desktop/ui/src/components/Tooltip.tsx",
       "scripts/visual/visual.mjs", "apps/desktop/ui/src/test/dev-seed.ts",
       "apps/desktop/ui/src/features/detail/use-item-draft.ts", "apps/desktop/ui/src/features/detail/ItemDetailPanel.tsx",
@@ -481,7 +514,7 @@ async function main() {
       "apps/desktop/ui/src/styles/tokens.css", "apps/desktop/ui/src/styles/global.css",
       "apps/desktop/ui/src/i18n/en.json", "apps/desktop/ui/src/i18n/zh-CN.json",
     ].map(file => [file, createHash("sha256").update(readFileSync(join(ROOT, file))).digest("hex")])) : undefined,
-    acceptance: CALENDAR_STAGE ? "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only" : DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
+    acceptance: GUIDANCE_STAGE ? "M3: paired language/theme renders, default/narrow layouts, no horizontal overflow or sub-12px guidance, command scope, focus, visible organization/capture routes, retained failed capture; browser mock only" : FOCUS_AUDIT ? "Pre-search-edit focus observations; no native acceptance" : CALENDAR_STAGE ? "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only" : DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
     platform: PLATFORM, timezone: "Asia/Shanghai", motion: "reduce; animations/transitions disabled",
     environment: "Chrome browser mock; OS scale and native WebView2 not certified", artifacts, recordings,
   }, null, 2) + "\n");

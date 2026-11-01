@@ -3,7 +3,9 @@
     "name": "Nivlo"
   },
   "common": {
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "retry": "Retry",
+    "loadFailed": "Couldn’t load this view. Try again."
   },
   "toast": {
     "dismiss": "Dismiss notification"
@@ -48,7 +50,7 @@
     },
     "input": {
       "label": "Title",
-      "placeholder": "Type a title, Enter to create, Tab to change type"
+      "placeholder": "Type a title, Enter to create"
     },
     "parsed": {
       "label": "Scheduled: {{label}}",
@@ -59,7 +61,9 @@
       "today": "Today",
       "tomorrow": "Tomorrow",
       "dayAfter": "In 2 days"
-    }
+    },
+    "typeLabel": "Capture type",
+    "retry": "Edit and retry"
   },
   "notes": {
     "label": "Notes",
@@ -238,7 +242,8 @@
       "leave": "Remove from Inbox",
       "archive": "Archive",
       "more": "More ways to organize",
-      "moreShort": "More"
+      "moreShort": "More",
+      "organize": "Organize"
     },
     "done": {
       "today": "Scheduled for today ({{count}})",
@@ -495,7 +500,21 @@
     },
     "windowHint": "Type keywords to search titles, content and sources. Enter opens it in the main window.",
     "globalTip": "Search from any app",
-    "settingsGroup": "Settings: {{group}}"
+    "settingsGroup": "Settings: {{group}}",
+    "keyboardHelp": "Keyboard help",
+    "allKeys": "↑ / ↓: Select a result\nCtrl+Home / Ctrl+End: First / last result\nEnter: Open item or run command\nShift+Enter: Copy title\nCtrl+Enter: Create Todo\nCtrl+D: Complete / reopen selected Todo or Tip\nCtrl+Z: Undo completion while Undo is visible\n>: Commands mode\nTab / Shift+Tab: Move between controls\nEsc: Close help, then search",
+    "browseKeys": "↑↓ Select · Enter Open",
+    "commandStatus": "Commands · {{count}} available",
+    "run": "Run command",
+    "completeAction": "Complete",
+    "reopenAction": "Reopen",
+    "createTodo": "Create Todo",
+    "creating": "Creating…",
+    "searching": "Searching…",
+    "loadFailed": "Couldn’t load results. Your query is kept.",
+    "retry": "Retry",
+    "openAction": "Open",
+    "dismissError": "Dismiss error"
   },
   "trash": {
     "label": "Trash",
@@ -652,6 +671,12 @@
         "label": "Reset appearance",
         "hint": "Restore the default look.",
         "button": "Reset"
+      },
+      "group": {
+        "badge": "Badge shape",
+        "surface": "Surface, accent and opacity",
+        "skin": "Custom skin",
+        "motion": "Skin motion"
       }
     },
     "skin": {
@@ -798,23 +823,24 @@
     "start": "Get started",
     "step0": {
       "title": "Welcome to Nivlo",
-      "body": "Nivlo is a task entry point that lives at the edge of your screen: catch whatever comes to mind now, organize it later. That round badge with a number is Nivlo."
+      "body": "Nivlo lives at the edge of your screen: catch what comes to mind now, organize it later. Look for the small badge at the screen edge."
     },
     "step1": {
       "title": "Hover to see today, click to add",
-      "body": "Move the mouse onto the badge and today's tasks unfold. Click “+ To-do”, write one down and press Enter. Tick to complete, drag to reorder, or postpone to tomorrow in one click."
+      "body": "Hover over the badge to see today. Click “+ To-do”, choose Todo, Note or Tip, write a title and press Enter. Use arrow keys inside the type group; Tab moves between controls."
     },
     "step2": {
       "title": "Capture on the go",
-      "body": "Drag web links, selected text, images or files onto the badge, or copy and click “Paste”. Everything lands in the Inbox first, so you can sort it when you have time."
+      "body": "Copy a link, then click “Paste” on the floating panel. Open Inbox, choose Organize on that item, then Tomorrow. You have captured and scheduled it without losing its source."
     },
     "step3": {
       "title": "Schedule in plain language",
-      "body": "Write “tomorrow 3pm review the plan” and Nivlo recognizes the date and time, letting you confirm before adding. In any app, press the shortcut to jot something down right away:",
+      "body": "Write “tomorrow 3pm review the plan” to recognize a date and time. Check the detected schedule before pressing Enter.",
       "search": "To find something you saved, press this in any app:",
       "taken": "{{shortcut}} is currently taken by another program, so it won’t respond. You can pick another one at the bottom left of the main window.",
       "searchTaken": "The global search shortcut {{shortcut}} is taken by another program. Pick another one at the bottom left of the main window to search what you saved from any app.",
-      "cheatSheet": "To see every keyboard shortcut, press this in the main window:"
+      "cheatSheet": "To see every keyboard shortcut, press this in the main window:",
+      "quickShortcut": "Capture from another app with:"
     }
   },
   "workflows": {
@@ -997,7 +1023,9 @@
       "message": "This rule has unsaved changes.",
       "keep": "Keep editing",
       "discard": "Discard changes"
-    }
+    },
+    "enabledState": "On",
+    "disabledState": "Off"
   },
   "dateFormat": {
     "monthDay": "MMM d",
@@ -1048,9 +1076,10 @@
     },
     "quickCreate": {
       "create": "Create (“tomorrow 3pm …” sets the date)",
-      "kind": "Switch between to-do / note / tip",
+      "kind": "Choose Todo / Note / Tip within the type group",
       "date": "Undo the recognised date",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "focus": "Move between type group and title, then leave normally"
     },
     "today": {
       "move": "Move between to-dos",

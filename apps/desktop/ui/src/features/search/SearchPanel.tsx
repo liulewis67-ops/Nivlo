@@ -11,7 +11,8 @@ import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import type { ItemDto, ItemTypeDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
-import { reportError } from "@/lib/report-error";
+import { errorMessage } from "@/lib/error-message";
+import { toAppError } from "@/lib/errors";
 import { highlight, searchTerms, snippetAround } from "./model/highlight";
 import { rankByRecent, readRecentCommands, rememberCommand } from "./model/recent-commands";
 import type { Segment } from "./model/highlight";
@@ -245,6 +246,10 @@ export function SearchPanel({
   const { t } = useTranslation();
   const listId = useId();
   const [text, setText] = useState("");
+  const [helpOpen, setHelpOpen] = useState(false);
+  const helpId = useId();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   const [debounced, setDebounced] = useState("");
   const [active, setActive] = useState(0);
   /** 用户在结果出来之前按了回车：结果一到就打开选中的那一条。 */
@@ -330,6 +335,7 @@ export function SearchPanel({
   }, [searchable]);
 
   const search = useQuery({
+    meta: { errorPresentation: "inline" },
     queryKey: queryKeys.search(debounced),
     queryFn: () => ipc.searchItems(debounced),
     enabled: debounced !== "",
@@ -341,6 +347,7 @@ export function SearchPanel({
   const projectNames = new Map(projects.data?.map((project) => [project.id, project.name]));
   const today = new Date();
   const recent = useQuery({
+    meta: { errorPresentation: "inline" },
     queryKey: queryKeys.searchRecent(),
     queryFn: () =>
       ipc.listItems({
@@ -390,14 +397,18 @@ export function SearchPanel({
         : undefined;
   const draft = onCreated === undefined || browsing || commandMode ? null : draftFrom(query);
   const create = useMutation({
+    meta: { errorPresentation: "inline" },
     mutationFn: (value: Draft) => ipc.quickCreate("todo", value.title, value.schedule),
     onSuccess: (item) => onCreated?.(item),
-    onError: reportError,
+    onError: (error) => setProblem(errorMessage(toAppError(error))),
   });
 
   /** 用当前搜索词新建待办（正在创建时忽略重复触发）。 */
   function createDraft(): void {
-    if (draft !== null && !create.isPending) create.mutate(draft);
+    if (draft !== null && !create.isPending) {
+      setProblem(null);
+      create.mutate(draft);
+    }
   }
 
   /**
@@ -409,6 +420,8 @@ export function SearchPanel({
   async function toggleDone(item: ItemDto): Promise<boolean> {
     if (item.itemType === "note" || toggling.current) return false;
     toggling.current = true;
+    setProblem(null);
+    setBusy(true);
     const completing = item.status !== "done";
     try {
       const updated = completing ? await ipc.completeItem(item.id) : await ipc.reopenItem(item.id);
@@ -416,10 +429,11 @@ export function SearchPanel({
       setDoneNotice({ item: updated, completed: completing });
       return true;
     } catch (error) {
-      reportError(error);
+      setProblem(errorMessage(toAppError(error)));
       return false;
     } finally {
       toggling.current = false;
+      setBusy(false);
     }
   }
 
@@ -440,6 +454,7 @@ export function SearchPanel({
       ? recent.data !== undefined
       : debounced !== "" &&
         search.data !== undefined &&
+        !search.isError &&
         !search.isPlaceholderData &&
         debounced === query;
 
@@ -461,12 +476,17 @@ export function SearchPanel({
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLElement>): void {
-    if (event.nativeEvent.isComposing) return;
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
-      onClose();
-    } else if (event.key === "ArrowDown" && count > 0) {
+      if (helpOpen) setHelpOpen(false);
+      else onClose();
+      return;
+    }
+    // 按钮保留自身的 Enter / Space 操作，不能误开当前搜索结果。
+    if (event.target !== inputRef.current) return;
+    if (event.key === "ArrowDown" && count > 0) {
       event.preventDefault();
       setActive((activeIndex + 1) % count);
     } else if (event.key === "ArrowUp" && count > 0) {
@@ -486,7 +506,7 @@ export function SearchPanel({
     ) {
       // 不论选中的是什么都拦下，免得落到 WebView 的默认行为（如加入收藏）。
       event.preventDefault();
-      if (activeItem !== undefined) void toggleDone(activeItem);
+      if (settled && activeItem !== undefined) void toggleDone(activeItem);
     } else if (
       (event.key === "z" || event.key === "Z") &&
       (event.ctrlKey || event.metaKey) &&
@@ -501,11 +521,11 @@ export function SearchPanel({
       if (activeCommand !== undefined) runCommand(activeCommand);
     } else if (event.key === "Enter" && event.shiftKey) {
       event.preventDefault();
-      if (activeItem === undefined) return;
+      if (!settled || activeItem === undefined) return;
       navigator.clipboard
         .writeText(activeItem.title)
         .then(() => setCopied(true))
-        .catch(reportError);
+        .catch((error: unknown) => setProblem(errorMessage(toAppError(error))));
     } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
       openWhenReady.current = false;
@@ -535,6 +555,25 @@ export function SearchPanel({
           isWindow ? "border-border/70 px-5" : "border-border px-4",
         )}
       >
+        {commands !== undefined && commands.length > 0 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-pressed={commandMode}
+            onClick={() => {
+              setText(
+                commandMode
+                  ? text.trimStart().slice(COMMAND_PREFIX.length).trimStart()
+                  : `${COMMAND_PREFIX} ${text}`,
+              );
+              setActive(0);
+              openWhenReady.current = false;
+              inputRef.current?.focus();
+            }}
+          >
+            {t("search.commands")}
+          </Button>
+        )}
         <svg
           viewBox="0 0 16 16"
           aria-hidden="true"
@@ -567,7 +606,7 @@ export function SearchPanel({
           }}
           className={cx(
             "min-w-0 flex-1 bg-transparent text-text placeholder:text-muted/80 focus-visible:outline-none",
-            isWindow ? "h-14 text-[17px]" : "h-12 text-base",
+            isWindow ? "h-14 text-base" : "h-12 text-base",
           )}
         />
         {text !== "" && search.isFetching && (
@@ -576,12 +615,36 @@ export function SearchPanel({
             className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary"
           />
         )}
-        <kbd className="shrink-0 rounded-md bg-surface-hover px-1.5 py-0.5 font-sans text-[11px] text-muted">
+        <kbd className="shrink-0 rounded-md bg-surface-hover px-1.5 py-0.5 font-sans text-xs text-muted">
           {"Esc"}
         </kbd>
       </div>
       <div ref={scrollRef} className="nv-scroll-hover min-h-0 flex-1 overflow-y-auto">
         <div ref={contentRef}>
+          {helpOpen && doneNotice === null && (
+            <section
+              id={helpId}
+              aria-label={t("search.keyboardHelp")}
+              className="border-b border-border px-4 py-3 text-xs text-muted"
+            >
+              <h2 className="mb-2 font-medium text-text">{t("search.keyboardHelp")}</h2>
+              <p className="whitespace-pre-line">{t("search.allKeys")}</p>
+            </section>
+          )}
+          {!commandMode && (browsing ? recent.isError : search.isError) && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm text-danger"
+            >
+              <p>{errorMessage(toAppError(browsing ? recent.error : search.error))}</p>
+              <Button
+                size="sm"
+                onClick={() => void (browsing ? recent.refetch() : search.refetch())}
+              >
+                {t("search.retry")}
+              </Button>
+            </div>
+          )}
           {showRecent && recentItems.length === 0 && !recent.isLoading && (
             <p className="px-6 py-8 text-center text-sm text-muted">
               {emptyHint ?? t("search.hint")}
@@ -589,14 +652,14 @@ export function SearchPanel({
           )}
           {!browsing && settled && flat.length === 0 && (
             <div className="flex flex-col items-center gap-3 px-6 py-8">
-              <p role="status" className="text-center text-sm text-muted">
+              <p className="text-center text-sm text-muted">
                 {t("search.empty", { query: debounced })}
               </p>
               {draft !== null && (
                 <Button size="sm" disabled={create.isPending} onClick={createDraft}>
                   <span className="truncate">{t("search.create", { title: draft.title })}</span>
                   {draft.label !== null && <span className="text-muted">{draft.label}</span>}
-                  <kbd className="rounded border border-border px-1 text-[11px] text-muted">
+                  <kbd className="rounded border border-border px-1 text-xs text-muted">
                     {"Ctrl+↵"}
                   </kbd>
                 </Button>
@@ -604,9 +667,7 @@ export function SearchPanel({
             </div>
           )}
           {commandMode && matches.length === 0 && (
-            <p role="status" className="px-6 py-8 text-center text-sm text-muted">
-              {t("search.noCommand")}
-            </p>
+            <p className="px-6 py-8 text-center text-sm text-muted">{t("search.noCommand")}</p>
           )}
           {commandMode && matches.length > 0 && (
             <ul id={listId} role="listbox" aria-label={t("search.commands")} className="p-2">
@@ -633,7 +694,7 @@ export function SearchPanel({
                       {command.label}
                     </span>
                     {selected && (
-                      <kbd className="shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
+                      <kbd className="shrink-0 rounded border border-border px-1.5 text-xs text-muted">
                         {"↵"}
                       </kbd>
                     )}
@@ -676,7 +737,9 @@ export function SearchPanel({
                           role="option"
                           aria-selected={selected}
                           onMouseMove={() => setActive(flat.indexOf(item))}
-                          onClick={() => onOpenItem(item.id)}
+                          onClick={() => {
+                            if (settled) onOpenItem(item.id);
+                          }}
                           className={cx(
                             "flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2",
                             selected ? "bg-primary/10" : "hover:bg-surface-hover",
@@ -706,7 +769,7 @@ export function SearchPanel({
                             </span>
                           )}
                           {selected && (
-                            <kbd className="mt-0.5 shrink-0 rounded border border-border px-1.5 text-[11px] text-muted">
+                            <kbd className="mt-0.5 shrink-0 rounded border border-border px-1.5 text-xs text-muted">
                               {"↵"}
                             </kbd>
                           )}
@@ -720,52 +783,105 @@ export function SearchPanel({
           )}
         </div>
       </div>
+      {problem !== null && (
+        <div
+          role="alert"
+          className="flex max-h-32 shrink-0 flex-wrap items-center gap-2 overflow-y-auto border-t border-border px-4 py-2 text-xs text-danger"
+        >
+          <p className="min-w-0 flex-1">{problem}</p>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setProblem(null);
+              inputRef.current?.focus();
+            }}
+          >
+            {t("search.dismissError")}
+          </Button>
+        </div>
+      )}
       <footer
         className={cx(
-          "flex shrink-0 items-center justify-between gap-3 border-t px-4 py-2 text-xs text-muted",
+          "flex max-h-40 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 overflow-y-auto border-t px-4 py-2 text-xs text-muted",
           isWindow ? "border-border/70 bg-surface-hover/40" : "border-border",
         )}
       >
-        <span>{t("search.keys")}</span>
-        <span className="flex items-center gap-3">
-          {/* 结果数量兼作读屏播报：元素一直存在、只更新文字（新插入的 live 区域常常不会被播报）。 */}
-          <span role="status" className="min-w-0 truncate tabular-nums empty:hidden">
-            {doneNotice !== null
-              ? t(doneNotice.completed ? "search.completed" : "search.reopened", {
-                  title: doneNotice.item.title,
-                })
+        <span role="status" className="min-w-0 flex-1 basis-40 wrap-anywhere tabular-nums">
+          {doneNotice !== null
+            ? t(doneNotice.completed ? "search.completed" : "search.reopened", {
+                title: doneNotice.item.title,
+              })
+            : create.isPending
+              ? t("search.creating")
               : copied
                 ? t("search.copied")
-                : !showRecent && settled && flat.length > 0
-                  ? t("search.count", { count: flat.length })
-                  : ""}
-          </span>
-          {doneNotice !== null && (
-            <button
-              type="button"
-              onClick={undoDone}
-              className="shrink-0 rounded px-1 font-medium text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary"
-            >
-              {t("search.undo")}
-            </button>
-          )}
-          {doneNotice === null &&
-            !browsing &&
-            activeItem !== undefined &&
-            activeItem.itemType !== "note" && (
-              <span className="shrink-0">
-                {t(activeItem.status === "done" ? "search.reopenHint" : "search.completeHint")}
-              </span>
-            )}
-          {/* 撤销提示在时右侧只留它，窄窗口里也放得下。 */}
-          {doneNotice === null && draft !== null && flat.length > 0 && (
-            <span>{t("search.createHint")}</span>
-          )}
-          {doneNotice === null && browsing && commands !== undefined && (
-            <span>{t("search.commandHint")}</span>
-          )}
-          {doneNotice === null && browsing && footerExtra}
+                : commandMode
+                  ? t("search.commandStatus", { count: matches.length })
+                  : !browsing && !settled && !search.isError
+                    ? t("search.searching")
+                    : !browsing && settled
+                      ? t("search.count", {
+                          count: flat.length,
+                          query: debounced,
+                        })
+                      : t("search.browseKeys")}
         </span>
+        {doneNotice !== null ? (
+          <Button size="sm" variant="ghost" onClick={undoDone}>
+            {t("search.undo")}
+          </Button>
+        ) : (
+          <>
+            {commandMode && activeCommand && (
+              <Button size="sm" onClick={() => runCommand(activeCommand)}>
+                {t("search.run")}
+              </Button>
+            )}
+            {settled && activeItem && (
+              <>
+                <Button size="sm" onClick={() => onOpenItem(activeItem.id)}>
+                  {t("search.openAction")}
+                </Button>
+                {activeItem.itemType !== "note" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => void toggleDone(activeItem)}
+                  >
+                    {t(
+                      activeItem.status === "done"
+                        ? "search.reopenAction"
+                        : "search.completeAction",
+                    )}
+                    <kbd aria-hidden="true" className="text-xs text-muted">
+                      {"Ctrl+D"}
+                    </kbd>
+                  </Button>
+                )}
+              </>
+            )}
+            {draft !== null && flat.length > 0 && (
+              <Button size="sm" variant="ghost" disabled={create.isPending} onClick={createDraft}>
+                {t("search.createTodo")}
+                <kbd aria-hidden="true" className="text-xs text-muted">
+                  {"Ctrl+↵"}
+                </kbd>
+              </Button>
+            )}
+            {browsing && footerExtra}
+          </>
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-expanded={helpOpen && doneNotice === null}
+          aria-controls={helpId}
+          onClick={() => setHelpOpen(!helpOpen)}
+        >
+          {t("search.keyboardHelp")}
+        </Button>
       </footer>
     </div>
   );

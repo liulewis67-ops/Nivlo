@@ -7,6 +7,7 @@ export const LAYOUT = {
   dockedDetail: 1200,
   dockedBacklog: 1000,
   stackedCalendarWeek: 600,
+  stackedWorkspace: 700,
 } as const;
 
 /**

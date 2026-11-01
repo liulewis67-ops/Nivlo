@@ -1,0 +1,25 @@
+(node:20784) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+新建基线：guidance-inbox-960-zh
+新建基线：guidance-inbox-400-en-dark
+新建基线：guidance-settings-960-zh
+新建基线：guidance-settings-400-en-dark
+新建基线：guidance-workflows-960-zh
+新建基线：guidance-workflows-400-en-dark
+新建基线：guidance-notes-960-zh
+新建基线：guidance-notes-400-en-dark
+新建基线：guidance-projects-960-zh
+新建基线：guidance-projects-400-en-dark
+新建基线：guidance-today-960-zh
+新建基线：guidance-today-400-en-dark
+新建基线：guidance-trash-960-zh
+新建基线：guidance-trash-400-en-dark
+新建基线：guidance-onboarding-960-zh
+新建基线：guidance-onboarding-400-en-dark
+新建基线：guidance-palette-zh
+新建基线：guidance-palette-en-dark
+新建基线：guidance-global-zh
+新建基线：guidance-global-en-dark
+新建基线：guidance-capture-zh
+新建基线：guidance-capture-en-dark
+新建基线：guidance-global-error-undo-zh

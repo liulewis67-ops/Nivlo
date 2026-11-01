@@ -150,7 +150,7 @@ describe("全局搜索（Ctrl+K）", () => {
     renderWithProviders(<MainShell />, ipc);
     pressCtrlK();
     await screen.findByRole("dialog", { name: "搜索" });
-    expect(await screen.findByText("输入 > 使用命令")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "命令" })).toBeInTheDocument();
 
     typeQuery(">");
     const commands = screen.getByRole("listbox", { name: "命令" });
@@ -218,6 +218,7 @@ describe("全局搜索（Ctrl+K）", () => {
 
     pressCtrlK();
     typeQuery("很久以前");
+    await screen.findByRole("listbox", { name: "搜索结果" });
     fireEvent.click(await screen.findByRole("option", { name: /很久以前的笔记/ }));
     await waitFor(() => expect(ipc.calls).toContain("markItemOpened"));
 
@@ -246,6 +247,7 @@ describe("全局搜索（Ctrl+K）", () => {
     pressCtrlK();
     const dialog = await screen.findByRole("dialog", { name: "搜索" });
     typeQuery("读书");
+    await screen.findByRole("listbox", { name: "搜索结果" });
     fireEvent.click(await screen.findByRole("option", { name: /读书笔记/ }));
     expect(await screen.findByDisplayValue("读书笔记")).toBeInTheDocument();
     expect(dialog).not.toBeInTheDocument();

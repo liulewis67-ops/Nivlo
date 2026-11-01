@@ -42,6 +42,11 @@ describe("设置页", () => {
     };
     fireEvent.click(within(nav).getByRole("button", { name: "快捷键" }));
     expect(scrolled).toEqual([section]);
+    expect(within(section).getByRole("heading", { name: "快捷键" })).toHaveFocus();
+    expect(within(nav).getByRole("button", { name: "快捷键" })).toHaveAttribute(
+      "aria-current",
+      "location",
+    );
   });
 
   it("开关立即生效并保存；重新打开设置页仍是新值", async () => {

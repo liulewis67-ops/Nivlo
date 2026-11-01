@@ -164,10 +164,10 @@ export function WorkflowEditor({
   const header = (
     <header className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="truncate text-base font-semibold text-text">
+        <h2 className="text-base font-semibold wrap-anywhere text-text">
           {workflowText(workflow).name}
         </h2>
-        <p className="mt-0.5 font-mono text-xs text-muted">{workflow.id}</p>
+        <p className="mt-0.5 font-mono text-xs wrap-anywhere text-muted">{workflow.id}</p>
       </div>
       <Button size="sm" variant="ghost" aria-label={t("workflows.close")} onClick={onClose}>
         {"✕"}

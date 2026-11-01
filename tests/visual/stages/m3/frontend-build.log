@@ -1,0 +1,23 @@
+$ pnpm --filter @nivlo/desktop-ui build
+$ tsc --noEmit && vite build
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 1161 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                         0.39 kB │ gzip:   0.26 kB
+dist/assets/index-BgAaH6df.css         47.30 kB │ gzip:   9.59 kB
+dist/assets/FloatingApp-io-wT3d7.js     0.14 kB │ gzip:   0.14 kB
+dist/assets/SearchApp-D5NXVmUj.js      16.40 kB │ gzip:   5.86 kB
+dist/assets/quick-create-CUp24Pe4.js   53.88 kB │ gzip:  17.58 kB
+dist/assets/MainApp-xOEPC0fo.js       122.90 kB │ gzip:  31.85 kB
+dist/assets/floating-CVW48z50.js      137.99 kB │ gzip:  40.48 kB
+dist/assets/ScriptEditor-DAIezRE9.js  429.38 kB │ gzip: 145.34 kB
+dist/assets/index-BqZjcp6E.js         506.05 kB │ gzip: 163.54 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 759ms

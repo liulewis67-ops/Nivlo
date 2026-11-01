@@ -6,6 +6,12 @@
 
 The historical fixed-height global-search description is superseded by the current content-fitting implementation (`fitSearch` / native `fit_search`). The 640px nominal width and 440px maximum height are constraints, not a fixed content height. See the [UI/UX implementation guide](ui-ux-implementation-guide.md) for work-area clamping requirements and the [stage ledger](ui-ux-progress.md) for current evidence. Earlier decisions and results remain historical records.
 
+## 2026-11-02 capture and search amendment
+
+M3 deliberately replaces input-level Tab / Shift+Tab capture-type cycling with standard focus traversal. The visible Todo / Note / Tip radio group uses arrow keys; Tab moves between that group, the title and other controls. Capture still starts with title focus; clicking a type preserves the title draft and selection. Enter submits and Escape cancels. Earlier Tab-cycle descriptions below remain historical, not current instructions.
+
+Search now exposes Commands and Keyboard help controls alongside the existing `>` route. Visible Open / Create Todo / Complete / Reopen actions share the existing operations and Undo duration. Global search exposes its supported navigation commands only. Browser click/Ctrl+K focus checks pass; Windows foreground handoff and NVDA remain unverified. See [stage evidence](ui-ux-progress.md) and [implementation release notes](ui-ux-release-notes.md).
+
 ## 1. 本轮已落地
 
 ### 1.1 第二个全局快捷键：全局搜索

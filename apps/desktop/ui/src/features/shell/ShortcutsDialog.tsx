@@ -44,7 +44,8 @@ const SECTIONS: readonly Section[] = [
     title: "shortcuts.section.quickCreate",
     rows: [
       ["↵", "shortcuts.quickCreate.create"],
-      ["Tab", "shortcuts.quickCreate.kind"],
+      ["↑ ↓ ← →", "shortcuts.quickCreate.kind"],
+      ["Tab / Shift+Tab", "shortcuts.quickCreate.focus"],
       ["Backspace", "shortcuts.quickCreate.date"],
       ["Esc", "shortcuts.quickCreate.cancel"],
     ],

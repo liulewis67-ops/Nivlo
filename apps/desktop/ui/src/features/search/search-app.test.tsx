@@ -128,7 +128,7 @@ describe("全局搜索窗口", () => {
 
     fireEvent.change(input(), { target: { value: "周报" } });
     await screen.findByRole("listbox", { name: "搜索结果" });
-    expect(screen.getByText("Ctrl+↵ 新建待办")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "创建待办" })).toBeInTheDocument();
     fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
 
     await waitFor(() => expect(ipc.items.map((item) => item.title)).toContain("周报"));
@@ -173,7 +173,7 @@ describe("全局搜索窗口", () => {
     renderWithProviders(<SearchApp />, ipc);
     fireEvent.change(input(), { target: { value: "登录超时" } });
     const results = await screen.findByRole("listbox", { name: "搜索结果" });
-    expect(screen.getByText("Ctrl+D 完成")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "完成" })).toBeInTheDocument();
 
     fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
 
@@ -212,7 +212,7 @@ describe("全局搜索窗口", () => {
     await screen.findByRole("listbox", { name: "最近使用" });
     fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
     await screen.findByText("已完成「修复登录超时」");
-    expect(screen.queryByText("Ctrl+D 完成")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "完成" })).not.toBeInTheDocument();
 
     fireEvent.keyDown(input(), { key: "z", ctrlKey: true });
     await waitFor(() => expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done"));
@@ -241,7 +241,7 @@ describe("全局搜索窗口", () => {
     });
     renderWithProviders(<SearchApp />, ipc);
     await screen.findByRole("listbox", { name: "最近使用" });
-    expect(screen.queryByText("Ctrl+D 完成")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "完成" })).not.toBeInTheDocument();
     fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
     expect(ipc.calls).not.toContain("completeItem");
 

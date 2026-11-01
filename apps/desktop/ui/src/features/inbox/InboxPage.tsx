@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, FilterInput, Menu } from "@/components";
+import { Button, FilterInput, Menu, LoadFeedback } from "@/components";
 import { usePasteCapture } from "@/features/capture";
 import { useOpenItem } from "@/features/detail";
 import type { ItemTypeDto } from "@/lib/ipc";
@@ -24,7 +24,7 @@ export const INBOX_FILTER_MIN = 10;
 /**
  * 主窗口的 Inbox 视图（实施计划 2.7、产品文档 §8）：捕获来的东西先落在这里，一两下整理走。
  *
- * * 每行悬停（或键盘聚焦）出现「今天 / 明天 / 更多」；
+ * * 每行始终显示「整理」，菜单包含今天 / 明天及其他整理动作；
  * * 勾选多行（Shift 点击选范围）后出现批量工具栏，一次整理一批，整批是一个事务；
  * * 每次整理都有可撤销的 Toast，撤销把条目精确放回收集箱；
  * * 空了就告诉用户怎么往里放东西，而不是一块空白。
@@ -33,7 +33,8 @@ export const INBOX_FILTER_MIN = 10;
  */
 export function InboxPage() {
   const { t } = useTranslation();
-  const entries = useInboxQuery().data;
+  const inbox = useInboxQuery();
+  const entries = inbox.data;
   const { organize } = useOrganize();
   const { remove } = useDeleteItems();
   const paste = usePasteCapture();
@@ -224,7 +225,7 @@ export function InboxPage() {
     >
       <header className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-8 pt-7 pb-3">
         <div className="flex items-baseline justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-text">{t("shell.nav.inbox")}</h1>
+          <h1 className="text-lg font-semibold text-text">{t("shell.nav.inbox")}</h1>
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted tabular-nums">
               {count === 0 ? t("inbox.page.allClear") : t("inbox.page.pending", { count })}
@@ -274,7 +275,7 @@ export function InboxPage() {
                 {/* 按钮里标出对应的按键（T / M / Delete），用着用着就记住了。 */}
                 <Button size="sm" aria-keyshortcuts="T" onClick={() => run(selectedIds, "today")}>
                   {t("inbox.action.today")}
-                  <kbd aria-hidden="true" className="ml-1.5 text-[10px] text-muted">
+                  <kbd aria-hidden="true" className="ml-1.5 text-xs text-muted">
                     {"T"}
                   </kbd>
                 </Button>
@@ -284,7 +285,7 @@ export function InboxPage() {
                   onClick={() => run(selectedIds, "tomorrow")}
                 >
                   {t("inbox.action.tomorrow")}
-                  <kbd aria-hidden="true" className="ml-1.5 text-[10px] text-muted">
+                  <kbd aria-hidden="true" className="ml-1.5 text-xs text-muted">
                     {"M"}
                   </kbd>
                 </Button>
@@ -317,7 +318,7 @@ export function InboxPage() {
                   onClick={() => deleteItems(selectedIds)}
                 >
                   {t("trash.delete")}
-                  <kbd aria-hidden="true" className="ml-1.5 text-[10px] text-muted">
+                  <kbd aria-hidden="true" className="ml-1.5 text-xs text-muted">
                     {"Del"}
                   </kbd>
                 </Button>
@@ -326,6 +327,11 @@ export function InboxPage() {
           </div>
         )}
       </header>
+      <LoadFeedback
+        loading={inbox.isLoading}
+        failed={inbox.isError}
+        onRetry={() => void inbox.refetch()}
+      />
       {count > 0 && entries !== undefined ? (
         <div className="min-h-0 flex-1 overflow-y-auto pb-6">
           {shown.length === 0 && (

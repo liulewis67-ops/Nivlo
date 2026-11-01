@@ -2,13 +2,15 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components";
+import { Button, Input } from "@/components";
+import { errorMessage } from "@/lib/error-message";
+import { toAppError } from "@/lib/errors";
 import { ipc } from "@/lib/ipc";
 import type { ItemTypeDto } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { DatePhraseChip, useDatePhrase } from "./DatePhraseChip";
 import type { DatePhraseResult } from "./model/date-phrase";
-import { cycleKind, normalizeTitle, resolveKey } from "./model/quick-create";
+import { QUICK_CREATE_KINDS, cycleKind, normalizeTitle, resolveKey } from "./model/quick-create";
 
 /** 输入获得焦点后等待多久确认窗口真的拿到了系统焦点（毫秒）。 */
 const FOCUS_CHECK_DELAY_MS = 500;
@@ -17,7 +19,7 @@ const FOCUS_CHECK_DELAY_MS = 500;
 export type QuickCreateFormProps = {
   /** 要创建的类型。 */
   kind: ItemTypeDto;
-  /** 按 Tab / Shift+Tab 切换类型时调用；不提供时不响应 Tab（保持默认的焦点移动）。 */
+  /** 在可见类型组内选择类型；Tab 始终按标准顺序移动焦点。 */
   onKindChange?: ((kind: ItemTypeDto) => void) | undefined;
   /**
    * 在输入框里粘贴了**不是文字**的内容（文件 / 图片）时调用；不提供时按浏览器默认处理。
@@ -40,7 +42,7 @@ export type QuickCreateFormProps = {
  *
  * 1. 挂载时请求后端 `beginFloatingInput`：记住用户当前的应用、让悬浮窗临时可聚焦并聚焦，
  *    完成后才聚焦输入框；失败（窗口无法聚焦）时提示错误并结束；
- * 2. Enter 创建（输入法组合期间与空标题不提交），Esc 取消，Tab / Shift+Tab 在待办 / 笔记 / 提示之间切换；
+ * 2. Enter 创建（输入法组合期间与空标题不提交），Esc 取消；类型组用方向键选择，Tab 正常移入/离开；
  *    粘贴文字是普通输入，粘贴文件 / 图片则收进 Inbox；
  * 3. 窗口失去系统焦点（用户点了别处）视为取消；
  * 4. 卸载时（创建成功 / 取消 / 失败都会卸载）请求 `endFloatingInput`，
@@ -71,6 +73,7 @@ export function QuickCreateForm({
   const datePhrase = useDatePhrase(title, today);
   const { parsed } = datePhrase;
   const create = useMutation({
+    meta: { errorPresentation: "inline" },
     mutationFn: (value: { title: string; scheduled: DatePhraseResult["schedule"] | null }) =>
       ipc.quickCreate(kind, value.title, value.scheduled),
     onSuccess: () => onDoneRef.current(),
@@ -130,11 +133,7 @@ export function QuickCreateForm({
       title,
       shiftKey: event.shiftKey,
     });
-    if (action === "nextKind" || action === "previousKind") {
-      if (onKindChange === undefined) return;
-      event.preventDefault();
-      onKindChange(cycleKind(kind, action === "previousKind"));
-    } else if (action === "submit" && !create.isPending) {
+    if (action === "submit" && !create.isPending) {
       event.preventDefault();
       create.mutate(
         parsed === null
@@ -160,11 +159,71 @@ export function QuickCreateForm({
   }
 
   return (
-    <div className="flex flex-col gap-1.5 border-t border-border px-3 py-2">
+    <div
+      className="flex flex-col gap-2 border-t border-border px-3 py-2"
+      onKeyDown={(event) => {
+        if (
+          event.key === "Escape" &&
+          !event.nativeEvent.isComposing &&
+          event.target !== inputRef.current
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          onDone();
+        }
+      }}
+    >
+      {onKindChange && (
+        <div
+          role="radiogroup"
+          aria-label={t("quickCreate.typeLabel")}
+          className="flex flex-wrap gap-1"
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return;
+            const backwards = event.key === "ArrowLeft" || event.key === "ArrowUp";
+            if (
+              !backwards &&
+              event.key !== "ArrowRight" &&
+              event.key !== "ArrowDown" &&
+              event.key !== "Home" &&
+              event.key !== "End"
+            )
+              return;
+            event.preventDefault();
+            const next =
+              event.key === "Home"
+                ? "todo"
+                : event.key === "End"
+                  ? "tip"
+                  : cycleKind(kind, backwards);
+            onKindChange(next);
+            event.currentTarget.querySelector<HTMLElement>(`[data-kind="${next}"]`)?.focus();
+          }}
+        >
+          {QUICK_CREATE_KINDS.map((option) => (
+            <Button
+              key={option}
+              role="radio"
+              aria-checked={kind === option}
+              data-kind={option}
+              tabIndex={kind === option ? 0 : -1}
+              size="sm"
+              variant={kind === option ? "primary" : "ghost"}
+              disabled={!isReady || create.isPending}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onKindChange(option)}
+            >
+              {t(`quickCreate.kind.${option}`)}
+            </Button>
+          ))}
+        </div>
+      )}
       <div className="flex items-center gap-2">
-        <span className="shrink-0 rounded-sm bg-surface-hover px-1.5 py-0.5 text-xs text-muted">
-          {t(`quickCreate.kind.${kind}`)}
-        </span>
+        {!onKindChange && (
+          <span className="shrink-0 rounded-sm bg-surface-hover px-1.5 py-0.5 text-xs text-muted">
+            {t(`quickCreate.kind.${kind}`)}
+          </span>
+        )}
         <Input
           ref={inputRef}
           aria-label={t("quickCreate.input.label")}
@@ -177,6 +236,20 @@ export function QuickCreateForm({
           className="h-8"
         />
       </div>
+      {create.isError && (
+        <div role="alert" className="flex flex-wrap items-center gap-2 text-xs text-danger">
+          <p>{errorMessage(toAppError(create.error))}</p>
+          <Button
+            size="sm"
+            onClick={() => {
+              inputRef.current?.focus();
+              create.reset();
+            }}
+          >
+            {t("quickCreate.retry")}
+          </Button>
+        </div>
+      )}
       {parsed !== null && (
         <DatePhraseChip
           parsed={parsed}

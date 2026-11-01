@@ -5,13 +5,12 @@ import { isCommandKey, isDialogOpen } from "@/lib/typing";
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Input } from "@/components";
+import { Input, LoadFeedback } from "@/components";
 import { DatePhraseChip, normalizeTitle, resolveKey, useDatePhrase } from "@/features/quick-create";
 import type { DatePhraseResult } from "@/features/quick-create";
 import { useDeleteItems } from "@/features/trash";
 import { useToastStore } from "@/stores/toast-store";
 import { ipc } from "@/lib/ipc";
-import { reportError } from "@/lib/report-error";
 import { useTodayQuery } from "./api";
 import { TodayBoard } from "./TodayBoard";
 
@@ -25,7 +24,8 @@ import { TodayBoard } from "./TodayBoard";
  */
 export function TodayPage() {
   const { t } = useTranslation();
-  const view = useTodayQuery().data;
+  const today = useTodayQuery();
+  const view = today.data;
   const [title, setTitle] = useState("");
   // 和快速创建同样识别日期短语（「明天下午3点 评审方案」），在输入框下方提示，退格或 ✕ 取消。
   const datePhrase = useDatePhrase(title, view?.date);
@@ -45,9 +45,8 @@ export function TodayPage() {
       }
     },
     // 失败时把用户写的内容放回输入框，不让他重新输入。
-    onError: (error, value) => {
+    onError: (_error, value) => {
       setTitle((current) => (current === "" ? value.raw : current));
-      reportError(error);
     },
   });
 
@@ -130,9 +129,9 @@ export function TodayPage() {
         inputRef.current?.focus();
       }}
     >
-      <header className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-8 pt-7 pb-4">
-        <div className="flex items-baseline justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-text">{t("today.panel.title")}</h1>
+      <header className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 pt-6 pb-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h1 className="text-lg font-semibold text-text">{t("today.panel.title")}</h1>
           <span className="text-sm text-muted">
             {formatDate(view === undefined ? new Date() : parseISO(view.date), "monthDayWeekday")}
           </span>
@@ -170,7 +169,12 @@ export function TodayPage() {
         />
         {parsed !== null && <DatePhraseChip parsed={parsed} onDismiss={datePhrase.dismiss} />}
       </header>
-      {hasContent ? (
+      <LoadFeedback
+        loading={today.isLoading}
+        failed={today.isError}
+        onRetry={() => void today.refetch()}
+      />
+      {view === undefined ? null : hasContent ? (
         <div className="min-h-0 flex-1 overflow-y-auto pb-6">
           <div className="mx-auto w-full max-w-3xl px-5">
             <TodayBoard view={view} onDelete={(item) => void remove([item.id], item.title)} />
