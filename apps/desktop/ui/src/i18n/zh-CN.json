@@ -767,9 +767,15 @@
     "newTodoPlaceholder": "写下一件事，回车添加",
     "timeRecognised": "🕒 {{time}}",
     "unscheduled": "待安排",
-    "unscheduledHint": "把待办拖到日期格上，就安排好了。",
+    "unscheduledHint": "打开条目，在详情中安排日期。侧栏停靠时，也可拖到日期格上。",
     "unscheduledEmpty": "没有待安排的待办 🎉",
-    "scheduled": "「{{title}}」已安排到 {{date}}"
+    "scheduled": "「{{title}}」已安排到 {{date}}",
+    "expanded": "已展开{{date}}所在周",
+    "closeBacklog": "关闭待安排",
+    "scheduleCleared": "已移除「{{title}}」的计划日期",
+    "editDue": "打开详情，修改截止日期…",
+    "planItem": "打开详情，安排日期…",
+    "changePlan": "打开详情，修改计划日期…"
   },
   "onboarding": {
     "demo": {

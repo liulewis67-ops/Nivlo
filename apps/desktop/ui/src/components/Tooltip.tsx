@@ -1,5 +1,6 @@
 import * as RadixTooltip from "@radix-ui/react-tooltip";
 import type { ReactElement, ReactNode } from "react";
+import { useState } from "react";
 
 /** Tooltip 出现前的延迟（毫秒），避免鼠标划过时闪烁。 */
 const TOOLTIP_DELAY_MS = 400;
@@ -35,13 +36,18 @@ export type TooltipProps = {
  * @returns Tooltip 元素。
  */
 export function Tooltip({ content, children }: TooltipProps) {
+  const [container, setContainer] = useState<HTMLElement | undefined>(undefined);
   return (
-    <RadixTooltip.Root>
+    <RadixTooltip.Root
+      onOpenChange={(open) => {
+        if (open) setContainer(document.querySelector<HTMLElement>("dialog[open]") ?? undefined);
+      }}
+    >
       <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
-      <RadixTooltip.Portal>
+      <RadixTooltip.Portal container={container}>
         <RadixTooltip.Content
           sideOffset={6}
-          className="z-(--nv-z-tooltip) rounded-md border border-border bg-surface px-2 py-1 text-xs text-text shadow-md"
+          className="z-(--nv-z-tooltip) max-w-[min(24rem,calc(100vw-32px))] rounded-md border border-border bg-surface px-2 py-1 text-xs wrap-anywhere text-text shadow-md"
         >
           {content}
         </RadixTooltip.Content>

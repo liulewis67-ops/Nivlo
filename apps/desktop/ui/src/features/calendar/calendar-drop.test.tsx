@@ -6,6 +6,7 @@ import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import type { DragPayload } from "./CalendarChip";
+import { AppError } from "@/lib/errors";
 
 /** 被替换的 `DndContext` 捕获到的拖拽结束回调。 */
 const captured: { onDragEnd: ((event: DragEndEvent) => void) | null } = { onDragEnd: null };
@@ -89,6 +90,29 @@ describe("拖拽排期", () => {
   beforeEach(() => {
     useToastStore.setState({ toasts: [] });
     captured.onDragEnd = null;
+  });
+
+  it("排期和撤销失败会报告错误，保留最近一次已成功保存的日期", async () => {
+    const ipc = createMemoryIpc();
+    const original = { date: "2026-10-14", time: "10:30:00" };
+    const id = await seed(ipc, "评审", original);
+    const change = vi.spyOn(ipc, "rescheduleItem");
+    change.mockRejectedValueOnce(new AppError("STORAGE_UNAVAILABLE", "injected"));
+    renderWithProviders(<CalendarPage />, ipc);
+    await screen.findByRole("heading", { name: "2026年10月" });
+    dropOn(payload(id, "评审", original), "2026-10-21");
+    await waitFor(() => expect(useToastStore.getState().toasts.at(-1)?.kind).toBe("error"));
+    expect(ipc.items.find((item) => item.id === id)?.scheduled).toEqual(original);
+    dropOn(payload(id, "评审", original), "2026-10-21");
+    await waitFor(() => expect(useToastStore.getState().toasts.at(-1)?.kind).toBe("success"));
+    const undo = useToastStore.getState().toasts.at(-1)?.action;
+    change.mockRejectedValueOnce(new AppError("STORAGE_UNAVAILABLE", "injected"));
+    act(() => undo?.onClick());
+    await waitFor(() => expect(useToastStore.getState().toasts.at(-1)?.kind).toBe("error"));
+    expect(ipc.items.find((item) => item.id === id)?.scheduled).toEqual({
+      ...original,
+      date: "2026-10-21",
+    });
   });
 
   it("从「待安排」拖到某一天：计划日期设为那天、离开待安排、出现在那天，并可撤销", async () => {

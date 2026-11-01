@@ -17,6 +17,10 @@ import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
+import { OpenItemContext, useOpenItem } from "@/features/detail";
+import { useNavStore } from "@/features/shell";
+import { LAYOUT, useContainerWidth } from "@/lib/layout";
+import { trapTab } from "@/lib/focus-trap";
 import { parseDatePhrase } from "@/features/quick-create";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
@@ -58,29 +62,6 @@ const MONTH_CELL_LIMIT = 3;
 /** 拖动超过这个距离（px）才算开始拖拽，避免点击被误判成拖拽。 */
 const DRAG_ACTIVATION_DISTANCE_PX = 5;
 
-/** 容器至少这么宽（px）时默认显示「待安排」侧栏，更窄时默认收起，给日期格让出空间。 */
-const WIDE_LAYOUT_PX = 1000;
-
-/**
- * 监听元素的宽度；没有 `ResizeObserver`（如测试环境）时返回 `null`。
- *
- * @param ref 要监听的元素。
- * @returns 当前宽度（px），或 `null`。
- */
-function useElementWidth(ref: React.RefObject<HTMLElement | null>): number | null {
-  const [width, setWidth] = useState<number | null>(null);
-  useEffect(() => {
-    const element = ref.current;
-    if (element === null || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry !== undefined) setWidth(entry.contentRect.width);
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return width;
-}
-
 /** 撤销提示停留的时间（毫秒）。 */
 const UNDO_MS = 6000;
 
@@ -94,6 +75,8 @@ type DayCellProps = {
   today: string;
   /** 视图。 */
   view: CalendarViewKind;
+  /** 有效宽度不足时，周视图按天纵向排列。 */
+  stacked: boolean;
   /** 这一天的条目。 */
   entries: CalendarEntryDto[];
   /** 是否正在这一格里添加待办。 */
@@ -101,7 +84,7 @@ type DayCellProps = {
   /** 开始 / 结束添加。 */
   onAdd: (adding: boolean) => void;
   /** 提交新待办的标题。 */
-  onCreate: (date: string, title: string) => void;
+  onCreate: (date: string, title: string) => Promise<boolean>;
   /** 展开这一天（切到周视图）。 */
   onExpand: (date: string) => void;
 };
@@ -119,6 +102,7 @@ function DayCell({
   anchor,
   today,
   view,
+  stacked,
   entries,
   adding,
   onAdd,
@@ -128,29 +112,57 @@ function DayCell({
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: date });
   const [title, setTitle] = useState("");
+  const [pending, setPending] = useState(false);
+  const submitting = useRef(false);
+  const cellRef = useRef<HTMLDivElement>(null);
+  const [cellHeight, setCellHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const cell = cellRef.current;
+    if (!cell || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => setCellHeight(cell.getBoundingClientRect().height));
+    observer.observe(cell);
+    return () => observer.disconnect();
+  }, []);
   const parsed = parseISO(date);
   const isToday = date === today;
   const outside = view === "month" && parsed.getMonth() !== parseISO(anchor).getMonth();
   const weekend = parsed.getDay() === 0 || parsed.getDay() === 6;
-  const visible = view === "month" ? entries.slice(0, MONTH_CELL_LIMIT) : entries;
+  // 日期行/内边距 44px，条目与间隔 32px；拥挤时先为「还有 N 项」留出同样空间。
+  const capacity =
+    cellHeight === null ? MONTH_CELL_LIMIT : Math.max(0, Math.floor((cellHeight - 44) / 32));
+  const limit = Math.min(
+    MONTH_CELL_LIMIT,
+    cellHeight !== null && entries.length > capacity ? Math.max(0, capacity - 1) : capacity,
+  );
+  const visible = view === "month" ? entries.slice(0, limit) : entries;
   const hidden = entries.length - visible.length;
   /** 输入里认出的时间：在格子里给个小提示，回车后就是这一天的这个时间。 */
   const recognised = adding ? timeInDay(title, date) : null;
 
   /**
-   * 回车创建，Esc / 失焦取消。
+   * 确认创建后才清空；组合输入与重复提交不会创建条目。
    *
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
     if (event.key === "Enter") {
       event.preventDefault();
-      if (title.trim() !== "") onCreate(date, title);
-      setTitle("");
-      onAdd(false);
+      if (title.trim() === "" || submitting.current) return;
+      submitting.current = true;
+      setPending(true);
+      void onCreate(date, title).then((success) => {
+        submitting.current = false;
+        setPending(false);
+        if (success) {
+          setTitle("");
+          onAdd(false);
+        }
+      });
     } else if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();
+      if (submitting.current) return;
       setTitle("");
       onAdd(false);
     }
@@ -158,8 +170,12 @@ function DayCell({
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        cellRef.current = node;
+        setNodeRef(node);
+      }}
       role="gridcell"
+      data-calendar-day={date}
       aria-label={formatDate(parsed, "monthDayWeekday")}
       aria-current={isToday ? "date" : undefined}
       className={cx(
@@ -168,6 +184,7 @@ function DayCell({
         weekend && !outside && "bg-surface-hover/40",
         outside && "bg-bg text-muted",
         isOver && "bg-primary/10 outline-2 -outline-offset-2 outline-primary",
+        stacked && (entries.length === 0 ? "min-h-16 shrink-0" : "max-h-80 min-h-40 shrink-0"),
       )}
     >
       <div className="flex items-center justify-between">
@@ -181,20 +198,23 @@ function DayCell({
                 : "text-text",
           )}
         >
-          {dayLabel(date)}
+          {stacked ? formatDate(parsed, "monthDayWeekday") : dayLabel(date)}
         </span>
         <button
           type="button"
           data-day-add=""
           aria-label={t("calendar.addOn", { date: formatDate(parsed, "monthDay") })}
           onClick={() => onAdd(true)}
-          className="flex size-5 items-center justify-center rounded text-muted opacity-0 transition-opacity duration-(--nv-duration-fast) hover:bg-surface-hover hover:text-text focus-visible:opacity-100 group-hover:opacity-100"
+          className="flex size-7 items-center justify-center rounded text-muted hover:bg-surface-hover hover:text-text"
         >
           {"+"}
         </button>
       </div>
       <div
-        className={cx("flex min-h-0 flex-1 flex-col gap-1", view === "week" && "overflow-y-auto")}
+        role="region"
+        aria-label={formatDate(parsed, "monthDayWeekday")}
+        tabIndex={0}
+        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
       >
         {visible.map((entry) => (
           <CalendarChip
@@ -207,7 +227,7 @@ function DayCell({
           <button
             type="button"
             onClick={() => onExpand(date)}
-            className="rounded px-1.5 text-left text-[11px] text-muted hover:text-text"
+            className="min-h-7 shrink-0 rounded px-1.5 text-left text-xs text-muted hover:text-text"
           >
             {t("calendar.more", { count: hidden })}
           </button>
@@ -219,17 +239,15 @@ function DayCell({
             placeholder={t("calendar.newTodoPlaceholder")}
             value={title}
             maxLength={500}
+            readOnly={pending}
+            aria-busy={pending}
             onChange={(event) => setTitle(event.target.value)}
             onKeyDown={handleKeyDown}
-            onBlur={() => {
-              setTitle("");
-              onAdd(false);
-            }}
-            className="h-7 w-full rounded-md border border-primary bg-surface px-1.5 text-xs text-text placeholder:text-muted focus-visible:outline-none"
+            className="h-7 w-full shrink-0 rounded-md border border-primary bg-surface px-1.5 text-xs text-text placeholder:text-muted focus-visible:outline-none"
           />
         )}
         {adding && recognised !== null && (
-          <span role="status" className="px-1 text-[11px] text-primary tabular-nums">
+          <span role="status" className="px-1 text-xs text-primary tabular-nums">
             {t("calendar.timeRecognised", { time: recognised.time })}
           </span>
         )}
@@ -269,6 +287,8 @@ function moveBetweenDays(event: KeyboardEvent<HTMLElement>): void {
 type UnscheduledProps = {
   /** 待安排的待办。 */
   items: CalendarItemDto[];
+  /** 侧页的关闭操作；停靠时不传。 */
+  onClose?: () => void;
 };
 
 /**
@@ -277,16 +297,24 @@ type UnscheduledProps = {
  * @param props 待办。
  * @returns 侧栏。
  */
-function Unscheduled({ items }: UnscheduledProps) {
+function Unscheduled({ items, onClose }: UnscheduledProps) {
   const { t } = useTranslation();
   return (
     <aside
       aria-label={t("calendar.unscheduled")}
-      className="flex w-60 shrink-0 flex-col border-l border-border bg-surface"
+      className={cx(
+        "flex min-h-0 shrink-0 flex-col border-l border-border bg-surface",
+        onClose ? "h-full w-full" : "w-60",
+      )}
     >
       <header className="flex items-baseline justify-between px-4 pt-4 pb-2">
         <h2 className="text-sm font-semibold text-text">{t("calendar.unscheduled")}</h2>
         <span className="text-xs text-muted tabular-nums">{items.length}</span>
+        {onClose && (
+          <Button size="sm" onClick={onClose}>
+            {t("calendar.closeBacklog")}
+          </Button>
+        )}
       </header>
       <p className="px-4 pb-2 text-xs text-muted">{t("calendar.unscheduledHint")}</p>
       {items.length === 0 ? (
@@ -301,6 +329,72 @@ function Unscheduled({ items }: UnscheduledProps) {
         </ul>
       )}
     </aside>
+  );
+}
+
+/**
+ * 原生模态层使整个应用背景不可交互；打开详情之前先交还焦点所有权。
+ *
+ * @param props 条目与关闭操作。
+ * @returns 待安排侧页。
+ */
+function BacklogSheet({ items, onClose }: Required<UnscheduledProps>) {
+  const { t } = useTranslation();
+  const openItem = useOpenItem();
+  const ref = useRef<HTMLDialogElement>(null);
+  const origin = useRef(document.activeElement);
+  useEffect(() => {
+    const dialog = ref.current;
+    const opener = origin.current;
+    dialog?.showModal();
+    dialog?.focus();
+    return () => {
+      dialog?.close();
+      if (
+        (document.activeElement === document.body || dialog?.contains(document.activeElement)) &&
+        opener instanceof HTMLElement &&
+        opener.isConnected
+      )
+        opener.focus();
+    };
+  }, []);
+  useEffect(
+    () =>
+      useNavStore.subscribe((next, previous) => {
+        if (next.detailId !== previous.detailId || next.view !== previous.view) onClose();
+      }),
+    [onClose],
+  );
+  return (
+    <dialog
+      ref={ref}
+      tabIndex={-1}
+      aria-modal="true"
+      aria-label={t("calendar.unscheduled")}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onKeyDown={(event) => {
+        if (isCommandKey(event, "k") || (event.key === "?" && !isTyping(event))) {
+          ref.current?.close();
+          onClose();
+        }
+        trapTab(event, ref.current);
+      }}
+      className="fixed inset-y-0 right-0 left-auto m-0 h-full max-h-none w-[min(384px,calc(100vw-32px))] max-w-none border-0 bg-surface p-0 text-text shadow-lg backdrop:bg-black/30"
+    >
+      <OpenItemContext
+        value={(id) => {
+          ref.current?.close();
+          if (origin.current instanceof HTMLElement) origin.current.focus();
+          onClose();
+          openItem?.(id);
+        }}
+      >
+        <Unscheduled items={items} onClose={onClose} />
+      </OpenItemContext>
+    </dialog>
   );
 }
 
@@ -324,7 +418,9 @@ export function CalendarPage() {
   /** 用户手动展开 / 收起「待安排」；`null` 表示跟随宽度。 */
   const [sideOpen, setSideOpen] = useState<boolean | null>(null);
   const rootRef = useRef<HTMLElement>(null);
-  const width = useElementWidth(rootRef);
+  const width = useContainerWidth(rootRef);
+  const [announcement, setAnnouncement] = useState("");
+  const expandedDay = useRef<string | null>(null);
 
   // 第一次取数时用「今天」作为锚点：今天由后端按用户时区给出，前端不自己读系统时间。
   const initial = useQuery({
@@ -344,6 +440,19 @@ export function CalendarPage() {
   const data = calendar.data;
 
   const today = calendar.data?.today ?? initial.data?.today ?? null;
+
+  useEffect(() => {
+    if (expandedDay.current === null || view !== "week" || calendar.isPlaceholderData) return;
+    const region = rootRef.current?.querySelector<HTMLElement>(
+      `[data-calendar-day="${expandedDay.current}"] [role="region"]`,
+    );
+    if (region) {
+      region.focus({ preventScroll: true });
+      if (width < LAYOUT.stackedCalendarWeek)
+        region.closest('[role="gridcell"]')?.scrollIntoView({ block: "start" });
+      expandedDay.current = null;
+    }
+  }, [view, width, calendar.data, calendar.isPlaceholderData]);
 
   // 键盘：J / K 下一段 / 上一段，T 回到今天，M / W 切换月 / 周视图（常见日历应用的约定）。
   // 正在输入、按着修饰键或有对话框打开时不响应。
@@ -415,10 +524,10 @@ export function CalendarPage() {
    * @param date 日期。
    * @param title 标题。
    */
-  function createTodo(date: string, title: string): void {
+  async function createTodo(date: string, title: string): Promise<boolean> {
     const timed = timeInDay(title, date);
-    ipc
-      .createItem({
+    try {
+      await ipc.createItem({
         itemType: "todo",
         title: timed?.title ?? title,
         content: null,
@@ -428,8 +537,12 @@ export function CalendarPage() {
         due: null,
         reminderAt: null,
         projectId: null,
-      })
-      .catch(reportError);
+      });
+      return true;
+    } catch (error) {
+      reportError(error);
+      return false;
+    }
   }
 
   /**
@@ -487,13 +600,18 @@ export function CalendarPage() {
   }
 
   const title = titleFor(view, effectiveAnchor, data.from, data.to);
-  const showSide = sideOpen ?? (width === null || width >= WIDE_LAYOUT_PX);
+  const docked = width >= LAYOUT.dockedBacklog;
+  const showSide = sideOpen ?? docked;
+  const stackedWeek = view === "week" && width < LAYOUT.stackedCalendarWeek;
   return (
     <section ref={rootRef} aria-label={t("calendar.label")} className="flex h-full min-w-0">
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
-          <div className="flex items-center gap-2">
-            <h1 className="min-w-44 text-lg font-semibold text-text tabular-nums">{title}</h1>
+        <p role="status" className="sr-only">
+          {announcement}
+        </p>
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-lg font-semibold text-text tabular-nums">{title}</h1>
             <Button
               size="sm"
               variant="ghost"
@@ -514,7 +632,7 @@ export function CalendarPage() {
               {"›"}
             </Button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               size="sm"
               variant="ghost"
@@ -568,7 +686,13 @@ export function CalendarPage() {
                 calendar.isPlaceholderData && "pointer-events-none opacity-50",
               )}
             >
-              <div role="row" className="grid grid-cols-7 border-b border-border bg-surface">
+              <div
+                role="row"
+                className={cx(
+                  "grid grid-cols-7 border-b border-border bg-surface",
+                  stackedWeek && "sr-only",
+                )}
+              >
                 {weekdayLabels(data.from).map((label) => (
                   <div
                     key={label}
@@ -584,7 +708,15 @@ export function CalendarPage() {
                 style={{ gridTemplateRows: `repeat(${weeks.length}, minmax(0, 1fr))` }}
               >
                 {weeks.map((week) => (
-                  <div key={week[0]} role="row" className="grid min-h-0 grid-cols-7">
+                  <div
+                    key={week[0]}
+                    role="row"
+                    className={
+                      stackedWeek
+                        ? "flex min-h-0 flex-col overflow-y-auto"
+                        : "grid min-h-0 grid-cols-7"
+                    }
+                  >
                     {week.map((date) => (
                       <DayCell
                         key={date}
@@ -592,13 +724,22 @@ export function CalendarPage() {
                         anchor={effectiveAnchor}
                         today={data.today}
                         view={view}
+                        stacked={stackedWeek}
                         entries={groups.get(date) ?? []}
                         adding={adding === date}
-                        onAdd={(on) => setAdding(on ? date : null)}
+                        onAdd={(on) =>
+                          setAdding((current) => (on ? date : current === date ? null : current))
+                        }
                         onCreate={createTodo}
                         onExpand={(day) => {
+                          expandedDay.current = day;
                           setAnchor(day);
                           switchView("week");
+                          setAnnouncement(
+                            t("calendar.expanded", {
+                              date: formatDate(parseISO(day), "monthDayWeekday"),
+                            }),
+                          );
                         }}
                       />
                     ))}
@@ -606,7 +747,12 @@ export function CalendarPage() {
                 ))}
               </div>
             </div>
-            {showSide && <Unscheduled items={data.unscheduled} />}
+            {showSide &&
+              (docked ? (
+                <Unscheduled items={data.unscheduled} />
+              ) : (
+                <BacklogSheet items={data.unscheduled} onClose={() => setSideOpen(false)} />
+              ))}
           </div>
           <DragOverlay dropAnimation={null}>
             {dragging !== null && (

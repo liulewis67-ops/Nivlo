@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { useTranslation } from "react-i18next";
 import { useOpenItem } from "@/features/detail";
+import { Tooltip } from "@/components";
 import { cx } from "@/lib/cx";
 import type { CalendarEntryDto, CalendarItemDto } from "@/lib/ipc";
 
@@ -102,42 +103,68 @@ export function CalendarChip({ entry, loose, showTime = false }: CalendarChipPro
   });
   if (item === undefined) return null;
   const time = isDue ? item.due?.time : item.scheduled?.time;
+  const action = t(
+    isDue
+      ? "calendar.editDue"
+      : item.scheduled === null
+        ? "calendar.planItem"
+        : "calendar.changePlan",
+  );
 
   return (
-    <button
-      ref={setNodeRef}
-      type="button"
-      {...attributes}
-      {...listeners}
-      onClick={() => openItem?.(item.id)}
-      title={item.title}
-      aria-label={isDue ? t("calendar.dueChip", { title: item.title }) : item.title}
-      className={cx(
-        "flex w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs",
-        "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
-        "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus",
-        isDue
-          ? "border border-dashed border-danger/60 bg-danger/5 text-danger hover:bg-danger/10"
-          : "bg-primary/10 text-text hover:bg-primary/20",
-        done && !isDue && "bg-surface-hover text-muted",
-        isDragging && "opacity-40",
-        payload !== null && "cursor-grab active:cursor-grabbing",
-      )}
+    <Tooltip
+      content={`${isDue ? t("calendar.dueChip", { title: item.title }) : item.title} · ${action}`}
     >
-      {isDue ? (
-        <svg viewBox="0 0 16 16" aria-hidden="true" className="size-3 shrink-0" fill="currentColor">
-          <path d="M3.5 2v12M3.5 3h8l-2 2.5 2 2.5h-8z" stroke="currentColor" strokeWidth="1.2" />
-        </svg>
-      ) : (
-        <Marker item={item} />
-      )}
-      {showTime && time !== undefined && time !== null && (
-        <span className="shrink-0 tabular-nums text-muted">{time.slice(0, 5)}</span>
-      )}
-      <span className={cx("min-w-0 flex-1 truncate", done && !isDue && "line-through")}>
-        {item.title}
-      </span>
-      {isDue && <span className="shrink-0 text-[10px] opacity-80">{t("calendar.due")}</span>}
-    </button>
+      <button
+        ref={setNodeRef}
+        type="button"
+        {...attributes}
+        {...listeners}
+        onKeyDown={(event) => {
+          // Enter 始终打开详情；空格保留既有的键盘拖拽入口。
+          if (event.key !== "Enter") listeners?.onKeyDown?.(event);
+        }}
+        onClick={() => openItem?.(item.id)}
+        aria-label={isDue ? t("calendar.dueChip", { title: item.title }) : item.title}
+        aria-description={action}
+        className={cx(
+          "flex min-h-7 w-full min-w-0 shrink-0 flex-wrap items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs",
+          "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
+          "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus",
+          isDue
+            ? "border border-dashed border-danger/60 bg-danger/5 text-danger hover:bg-danger/10"
+            : "bg-primary/10 text-text hover:bg-primary/20",
+          done && !isDue && "bg-surface-hover text-muted",
+          isDragging && "opacity-40",
+          payload !== null && "cursor-grab active:cursor-grabbing",
+        )}
+      >
+        {isDue ? (
+          <svg
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+            className="size-3 shrink-0"
+            fill="currentColor"
+          >
+            <path d="M3.5 2v12M3.5 3h8l-2 2.5 2 2.5h-8z" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+        ) : (
+          <Marker item={item} />
+        )}
+        {showTime && time !== undefined && time !== null && (
+          <span className="shrink-0 tabular-nums text-muted">{time.slice(0, 5)}</span>
+        )}
+        <span
+          className={cx(
+            "min-w-0 flex-1",
+            showTime || loose ? "wrap-anywhere whitespace-normal" : "truncate",
+            done && !isDue && "line-through",
+          )}
+        >
+          {item.title}
+        </span>
+        {isDue && <span className="shrink-0 text-xs">{t("calendar.due")}</span>}
+      </button>
+    </Tooltip>
   );
 }

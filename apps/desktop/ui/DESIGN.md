@@ -18,7 +18,7 @@ Use the existing 4px rhythm, 8px compact gaps, 12–16px related fields and 24px
 
 Implemented in M1: at least 1200px shell width permits docked details; 800–1199px uses a modal detail sheet; below 800px uses a labeled navigation drawer. One detail instance changes positioning without reparenting or saving merely because of resize. Modal sheets contain Tab and make the background inert. The default native size stays unchanged. M1 browser acceptance covers details and navigation at effective widths down to 400px; other pages' reflow, actual 200% zoom/native and assistive-technology acceptance remain in their owning stages and the integrated sweep.
 
-Calendar backlog docking at at least 1000px calendar content width remains the W2 target.
+Implemented in M2: Calendar backlog docks at at least 1000px of calendar content width. Otherwise the labeled toolbar action opens a side sheet, up to 384px / viewport minus 32px, without compressing the grid. The sheet uses the browser dialog top layer for full-shell background inertness and transfers focus ownership before opening details. This is DOM modality, not native window geometry. Below 600px of calendar content width, the week stacks labeled days vertically; the seven-column layout broke titles into single-character lines at 400px. Layout thresholds live in `src/lib/layout.ts`.
 
 ## Elevation & Depth
 
@@ -36,7 +36,7 @@ M1 details put title/brief and scheduling before reminder, project, priority, de
 
 Draft saves are serialized. A leave request waits for the in-flight version and subsequent edits; failures preserve the editor and expose Retry, Stay and confirmed Discard. One pending destination uses latest-request-wins; Stay clears it. Active detail drafts precede underlying Notes drafts, and the existing Workflow guard remains authoritative for its unsaved definition. Native hiding retains mounted drafts; process destruction/crash recovery is not claimed.
 
-Calendar chips still truncate and use native title text; full-title Tooltip on focus/hover and keyboard date editing through details remain W2 acceptance work.
+M2 calendar chips use wrapping full-title Tooltip on focus/hover, full accessible identity and a localized date-edit action description. Week/backlog titles wrap. Due overlays retain dashed borders, flag and a 12px Due label. Month cells show at most three chips, reducing that count by measured cell height to reserve a reachable overflow action; expanding it opens the corresponding week and focuses its labeled item region. The existing date controls in details provide the route to schedule without dragging. Success announcements use the persisted title/date; failed scheduling/Undo report an error and retain the last successful state. Inline creation ignores IME Enter, suppresses duplicate submissions and clears only after confirmed success; failure/blur retain text for retry.
 
 ## Do's and Don'ts
 

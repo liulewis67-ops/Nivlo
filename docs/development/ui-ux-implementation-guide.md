@@ -138,6 +138,7 @@ Responsibilities: frontend and design; QA verifies both pointer and keyboard pat
 - Month view remains compact; preserve the existing three-item limit initially. Ensure visible chips plus a reachable “N more” action fit vertically. At short heights, reduce the visible count or allow the grid content to scroll vertically; never clip the only overflow action.
 - Selecting “N more” opens the existing week view anchored to that day and announces the change. Provide the originating date's full item list there; do not introduce a second day-detail modal in this phase.
 - Week view uses wrapping titles with enough space to distinguish similar prefixes; per-day scroll regions must have clear labels and reachable focus. Test eight and twenty items in one day, not only sparse fixtures.
+- M2 rendered decision (2026-11-01): below 600px of calendar content width, week view stacks labeled days vertically with bounded, scrollable item regions. Seven narrow columns broke titles into single-character lines at 400px. Month view retains the three-chip maximum, reducing the visible count by measured cell height and reserving room for the overflow action. These values live with the shared layout constants and calendar cell sizing.
 - Backlog docks only when the calendar content budget permits it. At narrower sizes, use the shared modal sheet and preserve the calendar date/scroll behind it.
 
 ### 5.2 Mutation behavior

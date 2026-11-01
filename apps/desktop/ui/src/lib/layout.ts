@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import type { RefObject } from "react";
 
 /** 按实际容器的逻辑宽度选择布局；与 UI/UX 实施指南保持一致。 */
-export const LAYOUT = { compactShell: 800, dockedDetail: 1200, dockedBacklog: 1000 } as const;
+export const LAYOUT = {
+  compactShell: 800,
+  dockedDetail: 1200,
+  dockedBacklog: 1000,
+  stackedCalendarWeek: 600,
+} as const;
 
 /**
  * 监听容器宽度；首帧使用窗口逻辑宽度，测试环境可用 resize 回退。

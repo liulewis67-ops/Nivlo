@@ -22,8 +22,9 @@ import { PNG } from "pngjs";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const PLATFORM = process.platform;
 const DETAIL_STAGE = process.argv.includes("--detail-stage");
-const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE;
-const BASELINES = DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
+const CALENDAR_STAGE = process.argv.includes("--calendar-stage");
+const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE;
+const BASELINES = CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
   ? join(ROOT, "tests", "visual", "implementation-baseline")
   : join(ROOT, "tests", "visual", "baselines", PLATFORM);
 const DIFFS = join(ROOT, "tests", "visual", "diff");
@@ -262,6 +263,81 @@ if (DETAIL_STAGE) {
   } });
 }
 
+if (CALENDAR_STAGE) {
+  SCENARIOS.length = 0;
+  for (const scene of [
+    { name: "calendar-960-month-zh", w: 960, h: 640 },
+    { name: "calendar-960-week-en-dark", w: 960, h: 640, en: true, dark: true, week: true },
+    { name: "calendar-960-tooltip-focus", w: 960, h: 640, week: true, tooltip: true },
+    { name: "calendar-400-week-en", w: 400, h: 600, en: true, week: true },
+    { name: "calendar-1440-docked-zh", w: 1440, h: 800 },
+    { name: "calendar-960-backlog-en-dark", w: 960, h: 640, en: true, dark: true, backlog: true },
+    { name: "calendar-keyboard-schedule", w: 960, h: 640, keyboard: true },
+    { name: "calendar-create-failure", w: 960, h: 640, failure: true },
+  ]) SCENARIOS.push({ ...scene, url: APP, steps: async (page) => {
+    await page.evaluate(`import('/src/i18n/index.ts').then(m => m.setLanguage('${scene.en ? "en" : "zh-CN"}'))`);
+    if (scene.dark) await page.evaluate("import('/src/stores/theme-store.ts').then(m => m.useThemeStore.getState().setPreference('dark'))");
+    await page.evaluate(`(async () => {
+      const { ipc } = await import('/src/lib/ipc.ts');
+      for (let i = 1; i <= 20; i++) await ipc.createItem({ itemType: 'todo', title: '相同前缀 / Similar title — calendar task ' + String(i).padStart(2, '0'), content: null, contentFormat: 'plain', priority: null, reminderAt: null, projectId: null, scheduled: { date: '2026-10-13', time: i % 2 ? '15:00:00' : null }, due: i === 1 ? { date: '2026-10-15', time: null } : null });
+    })()`);
+    if (scene.w < 800) await clickWhenReady(page, scene.en ? "Navigation" : "导航");
+    await clickWhenReady(page, scene.en ? "Calendar" : "日历");
+    await sleep(500);
+    if (scene.week) {
+      await page.evaluate(`(() => { const b = document.querySelector('[data-calendar-day="2026-10-13"] [role=region] button:last-child'); b.scrollIntoView({block:'nearest'}); b.click(); })()`);
+      await sleep(500);
+      if (!await page.evaluate(`[...document.querySelector('[data-calendar-day="2026-10-13"] [role=region]').querySelectorAll('button')].filter(b => b.textContent.includes('Similar title')).length === 20`)) throw new Error('Dense week did not expose all twenty items');
+    }
+    if (scene.tooltip) {
+      await page.send("Page.bringToFront");
+      await page.evaluate(`document.querySelector('[data-calendar-day="2026-10-13"] button[aria-label*="Similar title"]').focus({preventScroll:true})`);
+      await sleep(600);
+      if (!await page.evaluate(`document.querySelector('[role=tooltip]')?.textContent.includes('Similar title')`)) throw new Error(`Full identity tooltip did not appear on focus: ${await page.evaluate('document.hasFocus() + document.activeElement.outerHTML')}`);
+    }
+    if (!scene.week && !scene.backlog && !scene.keyboard && !scene.failure) {
+      if (!await page.evaluate(`(() => { const region = document.querySelector('[data-calendar-day="2026-10-13"] [role=region]'); const more = region.querySelector('button:last-child'); return more.getBoundingClientRect().bottom <= region.getBoundingClientRect().bottom + 1; })()`)) throw new Error('Dense month overflow action is clipped');
+    }
+    if (scene.backlog || scene.keyboard) {
+      await page.evaluate(`(() => { const b = [...document.querySelectorAll('main header button')].find(b => b.textContent.includes('${scene.en ? "Unscheduled" : "待安排"}')); b.focus(); window.__backlogTrigger = b; window.__gridWidth = document.querySelector('[role=grid]').getBoundingClientRect().width; b.click(); })()`);
+      await sleep(300);
+      if (!await page.evaluate(`document.querySelector('dialog').matches(':modal') && document.querySelector('[role=grid]').getBoundingClientRect().width === window.__gridWidth`)) throw new Error('Backlog is not modal or compressed the grid');
+      // Top-layer containment must prevent even scripted background focus.
+      if (!await page.evaluate(`(() => { window.__backlogTrigger.focus(); return document.querySelector('dialog').contains(document.activeElement); })()`)) throw new Error('Backlog background accepted focus');
+      if (scene.backlog) {
+        await page.evaluate(`document.querySelector('dialog li button').focus()`);
+        await sleep(500);
+        if (!await page.evaluate(`!!document.querySelector('dialog [role=tooltip]')`)) throw new Error('Backlog tooltip escaped native modal layer');
+      }
+      if (scene.keyboard) {
+        await page.evaluate(`document.querySelector('dialog li button').focus()`);
+        await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13, text: '\r' });
+        await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+        for (let attempt = 0; !await page.evaluate("!!document.querySelector('.nv-detail-panel input[type=date]')"); attempt++) {
+          if (attempt > 30) throw new Error(`Keyboard open failed: ${await page.evaluate("document.activeElement?.outerHTML + document.body.innerText.slice(-600)")}`);
+          await sleep(100);
+        }
+        await page.evaluate(`(() => { const input = document.querySelector('.nv-detail-panel input[type=date]'); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, '2026-10-16'); input.dispatchEvent(new Event('input', {bubbles:true})); input.dispatchEvent(new Event('change', {bubbles:true})); })()`);
+        await sleep(900);
+        if (!await page.evaluate(`(async () => { const { ipc } = await import('/src/lib/ipc.ts'); const { useNavStore } = await import('/src/features/shell/nav-store.ts'); return (await ipc.getItem(useNavStore.getState().detailId)).scheduled.date === '2026-10-16'; })()`)) throw new Error('Keyboard detail schedule did not persist');
+        await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        await page.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+        await sleep(300);
+        if (!await page.evaluate(`document.activeElement === window.__backlogTrigger && !document.querySelector('[aria-modal=true]')`)) throw new Error('Keyboard return did not restore toolbar');
+      }
+    }
+    if (scene.failure) {
+      await page.evaluate(`(async () => { const { ipc } = await import('/src/lib/ipc.ts'); const { AppError } = await import('/src/lib/errors.ts'); ipc.createItem = async () => { throw new AppError('STORAGE_UNAVAILABLE', 'injected'); }; document.querySelector('[data-calendar-day="2026-10-13"] [data-day-add]').click(); })()`);
+      await page.send('Input.insertText', { text: 'Creation must retain this draft' });
+      await page.send('Input.dispatchKeyEvent', { type:'keyDown', key:'Enter', code:'Enter', windowsVirtualKeyCode:13 });
+      await page.send('Input.dispatchKeyEvent', { type:'keyUp', key:'Enter', code:'Enter', windowsVirtualKeyCode:13 });
+      await sleep(300);
+      if (!await page.evaluate(`document.querySelector('input[aria-label="新待办"]').value === 'Creation must retain this draft'`)) throw new Error('Failed create lost draft');
+    }
+    if (!await page.evaluate('document.documentElement.scrollWidth <= innerWidth')) throw new Error('Calendar page overflows horizontally');
+  } });
+}
+
 async function main() {
   mkdirSync(BASELINES, { recursive: true });
   let server = null;
@@ -294,6 +370,7 @@ async function main() {
       await page.send("Emulation.setDeviceMetricsOverride", { width: scenario.w, height: scenario.h, deviceScaleFactor: 1, mobile: false });
       await page.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }, { name: "prefers-reduced-motion", value: "reduce" }] });
       await page.send("Page.enable");
+      if (CALENDAR_STAGE) await page.send("Page.bringToFront");
       if (IMPLEMENTATION) {
         await page.send("Emulation.setTimezoneOverride", { timezoneId: "Asia/Shanghai" });
         await page.send("Page.addScriptToEvaluateOnNewDocument", { source: `
@@ -386,13 +463,14 @@ async function main() {
       } else server.kill();
     }
     await sleep(500);
-    rmSync(profile, { recursive: true, force: true });
+    rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
   }
   if (IMPLEMENTATION) writeFileSync(join(BASELINES, "manifest.json"), JSON.stringify({
     sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim(),
     branch: execFileSync("git", ["branch", "--show-current"], { cwd: ROOT, encoding: "utf8" }).trim(),
-    fixtureRevision: DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
-    sourceFiles: DETAIL_STAGE ? Object.fromEntries([
+    fixtureRevision: CALENDAR_STAGE ? "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure" : DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
+    sourceFiles: DETAIL_STAGE || CALENDAR_STAGE ? Object.fromEntries([
+      "apps/desktop/ui/src/features/calendar/CalendarPage.tsx", "apps/desktop/ui/src/features/calendar/CalendarChip.tsx", "apps/desktop/ui/src/components/Tooltip.tsx",
       "scripts/visual/visual.mjs", "apps/desktop/ui/src/test/dev-seed.ts",
       "apps/desktop/ui/src/features/detail/use-item-draft.ts", "apps/desktop/ui/src/features/detail/ItemDetailPanel.tsx",
       "apps/desktop/ui/src/features/shell/MainShell.tsx", "apps/desktop/ui/src/stores/draft-transition-store.ts",
@@ -403,7 +481,7 @@ async function main() {
       "apps/desktop/ui/src/styles/tokens.css", "apps/desktop/ui/src/styles/global.css",
       "apps/desktop/ui/src/i18n/en.json", "apps/desktop/ui/src/i18n/zh-CN.json",
     ].map(file => [file, createHash("sha256").update(readFileSync(join(ROOT, file))).digest("hex")])) : undefined,
-    acceptance: DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
+    acceptance: CALENDAR_STAGE ? "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only" : DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
     platform: PLATFORM, timezone: "Asia/Shanghai", motion: "reduce; animations/transitions disabled",
     environment: "Chrome browser mock; OS scale and native WebView2 not certified", artifacts, recordings,
   }, null, 2) + "\n");

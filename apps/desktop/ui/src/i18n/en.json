@@ -770,11 +770,17 @@
     "newTodoPlaceholder": "Write something, Enter to add",
     "timeRecognised": "🕒 {{time}}",
     "unscheduled": "Unscheduled",
-    "unscheduledHint": "Drag a to-do onto a day to schedule it.",
+    "unscheduledHint": "Open an item to schedule it in details. When docked, you can also drag it onto a day.",
     "unscheduledEmpty": "Nothing unscheduled 🎉",
     "scheduled": "“{{title}}” scheduled for {{date}}",
     "more_one": "{{count}} more",
-    "more_other": "{{count}} more"
+    "more_other": "{{count}} more",
+    "expanded": "Week opened for {{date}}",
+    "closeBacklog": "Close unscheduled",
+    "scheduleCleared": "Planned date removed from “{{title}}”",
+    "editDue": "Change due date in details…",
+    "planItem": "Schedule in details…",
+    "changePlan": "Change planned date in details…"
   },
   "onboarding": {
     "demo": {

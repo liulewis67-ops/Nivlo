@@ -11,6 +11,9 @@ import type { FlushOutcome } from "@/stores/draft-transition-store";
 import { buildPatch, dropSaved, toDraft } from "./model/item-draft";
 import type { ItemDraft } from "./model/item-draft";
 import { reminderToUtc } from "./model/reminder-presets";
+import { parseISO } from "date-fns";
+import { formatDate } from "@/lib/date-format";
+import { useToastStore } from "@/stores/toast-store";
 
 /** 停止输入多久之后自动保存（毫秒）。 */
 export const AUTOSAVE_DELAY_MS = 700;
@@ -101,6 +104,17 @@ export function useItemDraft(id: string, priority = 10): ItemDraftState {
       setStatus("saving");
       try {
         const saved = await ipc.updateItem(id, request);
+        if (request.scheduled !== undefined) {
+          useToastStore.getState().push(
+            "success",
+            saved.scheduled === null
+              ? t("calendar.scheduleCleared", { title: saved.title })
+              : t("calendar.scheduled", {
+                  title: saved.title,
+                  date: formatDate(parseISO(saved.scheduled.date), "monthDay"),
+                }),
+          );
+        }
         baseRef.current = saved;
         editsRef.current = dropSaved(editsRef.current, sent);
         setEdits(editsRef.current);

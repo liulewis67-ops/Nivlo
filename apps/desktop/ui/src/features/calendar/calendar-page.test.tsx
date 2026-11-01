@@ -1,5 +1,8 @@
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { AppError } from "@/lib/errors";
+import { MainShell, useNavStore } from "@/features/shell";
+import userEvent from "@testing-library/user-event";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
@@ -202,9 +205,9 @@ describe("CalendarPage 月视图", () => {
     expect(cell("10月31日 星期六")).toBeInTheDocument();
   });
 
-  it("一天的条目多于 3 条时折叠，点「还有 N 项」切到周视图看全部", async () => {
+  it.each([8, 20])("一天 %i 条时折叠，点「还有 N 项」切到周视图看全部并聚焦当天", async (count) => {
     const ipc = createMemoryIpc();
-    for (const n of [1, 2, 3, 4, 5]) {
+    for (let n = 1; n <= count; n++) {
       await seed(ipc, { title: `任务${n}`, scheduled: { date: "2026-10-14", time: null } });
     }
     renderWithProviders(<CalendarPage />, ipc);
@@ -215,14 +218,15 @@ describe("CalendarPage 月视图", () => {
     });
     expect(within(busy).queryByText("任务4")).not.toBeInTheDocument();
 
-    fireEvent.click(within(busy).getByRole("button", { name: "还有 2 项" }));
+    fireEvent.click(within(busy).getByRole("button", { name: `还有 ${count - 3} 项` }));
     expect(await screen.findByRole("heading", { name: "10月12日 – 10月18日" })).toBeInTheDocument();
     const week = await waitFor(() => {
       const c = cell("10月14日 星期三");
-      expect(within(c).getByText("任务5")).toBeInTheDocument();
+      expect(within(c).getByText(`任务${count}`)).toBeInTheDocument();
       return c;
     });
     expect(within(week).getByText("任务4")).toBeInTheDocument();
+    expect(within(week).getByRole("region")).toHaveFocus();
   });
 });
 
@@ -253,6 +257,37 @@ describe("CalendarPage 周视图", () => {
 });
 
 describe("CalendarPage 添加与待安排", () => {
+  it("组合输入不创建；请求未完成时重复回车只提交一次；失败后保留输入并可重试", async () => {
+    const ipc = createMemoryIpc();
+    const create = ipc.createItem.bind(ipc);
+    let reject: (error: Error) => void = () => undefined;
+    const request = vi.spyOn(ipc, "createItem").mockImplementationOnce(
+      () =>
+        new Promise((_resolve, fail) => {
+          reject = fail;
+        }),
+    );
+    renderWithProviders(<CalendarPage />, ipc);
+    await screen.findByRole("heading", { name: "2026年10月" });
+    fireEvent.click(screen.getByRole("button", { name: "在10月14日添加待办" }));
+    const input = screen.getByLabelText("新待办");
+    fireEvent.change(input, { target: { value: "下午3点 评审" } });
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    fireEvent.keyDown(input, { key: "Enter", keyCode: 229 });
+    expect(request).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: "Enter" });
+    fireEvent.keyDown(input, { key: "Enter" });
+    fireEvent.blur(input);
+    expect(request).toHaveBeenCalledTimes(1);
+    await act(async () => reject(new AppError("STORAGE_UNAVAILABLE", "injected")));
+    expect(input).toHaveValue("下午3点 评审");
+    request.mockImplementation(create);
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(screen.queryByLabelText("新待办")).not.toBeInTheDocument());
+    expect(ipc.items).toHaveLength(1);
+    expect(ipc.items[0]?.scheduled).toEqual({ date: "2026-10-14", time: "15:00" });
+  });
+
   it("点格子上的「+」原地写下一条待办，回车后计划在那一天；Esc 取消", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<CalendarPage />, ipc);
@@ -314,5 +349,62 @@ describe("CalendarPage 添加与待安排", () => {
     await seed(ipc, { title: "笔记不算", itemType: "note" });
     await waitFor(() => expect(within(side).getByText("还没安排的事")).toBeInTheDocument());
     expect(within(side).queryByText("笔记不算")).not.toBeInTheDocument();
+  });
+});
+
+describe("窄窗口待安排侧页", () => {
+  afterEach(() => {
+    cleanup();
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
+    Reflect.deleteProperty(HTMLDialogElement.prototype, "showModal");
+    Reflect.deleteProperty(HTMLDialogElement.prototype, "close");
+    vi.restoreAllMocks();
+  });
+
+  it("保持日历宽度，循环焦点，打开详情后只保留一个模态，关闭详情回到工具栏", async () => {
+    // jsdom 无 top-layer；此处仅验证调用与焦点协调，浏览器场景另验真正的模态背景。
+    Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+      configurable: true,
+      value: function (this: HTMLDialogElement) {
+        this.open = true;
+      },
+    });
+    Object.defineProperty(HTMLDialogElement.prototype, "close", {
+      configurable: true,
+      value: function (this: HTMLDialogElement) {
+        this.open = false;
+      },
+    });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 960 });
+    useNavStore.setState({ view: "calendar", detailId: null, leaveGuard: null });
+    const ipc = createMemoryIpc();
+    await seed(ipc, { title: "待安排的长标题" });
+    renderWithProviders(<MainShell />, ipc);
+    const trigger = await screen.findByRole("button", { name: /待安排\s*1/ });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const sheet = await screen.findByRole("dialog", { name: "待安排" });
+    expect(sheet).toHaveFocus();
+    fireEvent.keyDown(sheet, { key: "Tab" });
+    expect(within(sheet).getByRole("button", { name: "关闭待安排" })).toHaveFocus();
+    fireEvent.keyDown(within(sheet).getByRole("button", { name: "关闭待安排" }), {
+      key: "Tab",
+      shiftKey: true,
+    });
+    const item = within(sheet).getByRole("button", { name: "待安排的长标题" });
+    expect(item).toHaveFocus();
+    await userEvent.setup().keyboard("{Enter}");
+    const detail = await screen.findByRole("dialog", { name: "条目详情" });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    fireEvent.click(within(detail).getByRole("button", { name: "关闭详情" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
+    fireEvent.click(trigger);
+    fireEvent(
+      await screen.findByRole("dialog", { name: "待安排" }),
+      new Event("cancel", { cancelable: true }),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(trigger).toHaveFocus();
   });
 });
