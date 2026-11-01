@@ -2,6 +2,10 @@
 
 > 2026-10-26。记录本轮已经落地的内容、尚待真机确认的项目，以及按优先级排列的后续优化。
 
+## 2026-11-01 implementation amendment
+
+The historical fixed-height global-search description is superseded by the current content-fitting implementation (`fitSearch` / native `fit_search`). The 640px nominal width and 440px maximum height are constraints, not a fixed content height. See the [UI/UX implementation guide](ui-ux-implementation-guide.md) for work-area clamping requirements and the [stage ledger](ui-ux-progress.md) for current evidence. Earlier decisions and results remain historical records.
+
 ## 1. 本轮已落地
 
 ### 1.1 第二个全局快捷键：全局搜索

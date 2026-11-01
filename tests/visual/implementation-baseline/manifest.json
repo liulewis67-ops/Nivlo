@@ -1,0 +1,282 @@
+{
+  "sourceCommit": "14a17eca874d2d920f86515a97c8adb716245459",
+  "branch": "main",
+  "fixtureRevision": "w0-v1: dev-seed + 20 similar-prefix calendar entries",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "platform": "win32",
+  "timezone": "Asia/Shanghai",
+  "motion": "reduce; animations/transitions disabled",
+  "environment": "Chrome browser mock; OS scale and native WebView2 not certified",
+  "artifacts": [
+    {
+      "name": "floating-collapsed",
+      "file": "floating-collapsed.png",
+      "viewport": {
+        "width": 64,
+        "height": 32
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "cdd437772828f07cab2b0652e7fd5ad81ba0364f2366f49a49cfaef97d2a3529"
+    },
+    {
+      "name": "floating-expanded",
+      "file": "floating-expanded.png",
+      "viewport": {
+        "width": 380,
+        "height": 520
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "6daefcadb51a93f9218ac6c4142eb64c33e8557bc6d7bab1df3c6fe684d30296"
+    },
+    {
+      "name": "main-today",
+      "file": "main-today.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "a39d48e03ae71294bcc488b9406e3a1de81cf76f3a224b19eeb9f39f905d7ef2"
+    },
+    {
+      "name": "main-inbox",
+      "file": "main-inbox.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "21916695db03bc292ffef896a01b59c15a7c5ecdd34a860b4b23c36396b4e47c"
+    },
+    {
+      "name": "main-calendar",
+      "file": "main-calendar.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "b6cc2b20873b78578f8fda222285412711902a74db87cf25f32db579e0fa5053"
+    },
+    {
+      "name": "main-today-dark",
+      "file": "main-today-dark.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "d90bf8404d632f192e9ffc743f7e0b03a7ccc6f03c0ee4938abcf2ecd3959952"
+    },
+    {
+      "name": "baseline-inbox",
+      "file": "baseline-inbox.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "5f663ea4cdf613cdfc04a8b80c797f708ee7d14749d186e0d4c7da992ee57c13"
+    },
+    {
+      "name": "baseline-today",
+      "file": "baseline-today.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "2a7b04be501d617556bb31af8d1afd101fa24c20efdfa9c3d4893a7a2d333f3d"
+    },
+    {
+      "name": "baseline-calendar",
+      "file": "baseline-calendar.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "5af500d6d86a1b69eec974dc39e55c0fe9db0ddfe94269d514676ca4352f48cb"
+    },
+    {
+      "name": "baseline-notes",
+      "file": "baseline-notes.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "a9dc27be73bb532bf278c75211b0b7f2a22abfc6ed6d12dff43e58cc8ee2e065"
+    },
+    {
+      "name": "baseline-projects",
+      "file": "baseline-projects.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "5af13bde1247ed569b203757efa6481d91e0e244d8a0a1c86c58a07cc29e743a"
+    },
+    {
+      "name": "baseline-workflows",
+      "file": "baseline-workflows.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "87174cd6ceb0c3b21b2fa884e82e2190bfce35b767684317c50d00be061836fb"
+    },
+    {
+      "name": "baseline-trash",
+      "file": "baseline-trash.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "08756806fb11de3213d6c83086555d4a37121f56e3571217789532804ad8bd5e"
+    },
+    {
+      "name": "baseline-settings",
+      "file": "baseline-settings.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "f5750850ecdb2a122d860ab2849f73b9de22fa198dcd49b48d3f3bd232298f82"
+    },
+    {
+      "name": "baseline-inbox-detail",
+      "file": "baseline-inbox-detail.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "1f95f9a902c4bad4ea19d744b379a1cfc78cffc82a825399b2f2899ebdb6bfca"
+    },
+    {
+      "name": "baseline-todo-detail",
+      "file": "baseline-todo-detail.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "e6540e832e7b0a96b47a17a0aa6bf5fca2073cfd90eaf94daa44ae73c355459a"
+    },
+    {
+      "name": "baseline-calendar-dense",
+      "file": "baseline-calendar-dense.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "b52b580c086a87daf8faae9b8c48c5a88f69b0cdb6ae28b8043e0597e7142f17"
+    },
+    {
+      "name": "baseline-search",
+      "file": "baseline-search.png",
+      "viewport": {
+        "width": 640,
+        "height": 440
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "a45253610bbf5f7498fb920b732cae9beae11216c1bf2d09f29494c0ac9bb9b8"
+    }
+  ]
+}
