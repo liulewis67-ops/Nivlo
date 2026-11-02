@@ -1,0 +1,9 @@
+$ node scripts/visual/visual.mjs
+(node:34896) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ floating-collapsed（差异 0.000%）
+✓ floating-expanded（差异 0.000%）
+✓ main-today（差异 0.000%）
+✓ main-inbox（差异 0.000%）
+✓ main-calendar（差异 0.000%）
+✓ main-today-dark（差异 0.000%）

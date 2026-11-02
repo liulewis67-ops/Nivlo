@@ -361,37 +361,38 @@ export function WorkflowsPage() {
               failed={workflows.isError}
               onRetry={() => void workflows.refetch()}
             />
-            {[
-              { key: "builtin", rows: builtin },
-              { key: "mine", rows: mine },
-            ].map((group) => (
-              <div key={group.key} className="mb-4">
-                <h2 className="px-2 pb-1 text-xs font-medium text-muted">
-                  {t(`workflows.group.${group.key}`)}
-                </h2>
-                {group.rows.length === 0 ? (
-                  <p className="px-2 py-2 text-sm text-muted">{t("workflows.groupEmpty")}</p>
-                ) : (
-                  <ul aria-label={t(`workflows.group.${group.key}`)}>
-                    {group.rows.map((workflow) => (
-                      <WorkflowRow
-                        key={workflow.id}
-                        workflow={workflow}
-                        selected={selected?.id === workflow.id}
-                        onSelect={() =>
-                          leaveEditor(() => {
-                            setDraft(null);
-                            setSelectedId(workflow.id);
-                          })
-                        }
-                        onToggle={(enabled) => toggle(workflow, enabled)}
-                        onPriority={(delta) => changePriority(workflow, delta)}
-                      />
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
+            {workflows.data !== undefined &&
+              [
+                { key: "builtin", rows: builtin },
+                { key: "mine", rows: mine },
+              ].map((group) => (
+                <div key={group.key} className="mb-4">
+                  <h2 className="px-2 pb-1 text-xs font-medium text-muted">
+                    {t(`workflows.group.${group.key}`)}
+                  </h2>
+                  {group.rows.length === 0 ? (
+                    <p className="px-2 py-2 text-sm text-muted">{t("workflows.groupEmpty")}</p>
+                  ) : (
+                    <ul aria-label={t(`workflows.group.${group.key}`)}>
+                      {group.rows.map((workflow) => (
+                        <WorkflowRow
+                          key={workflow.id}
+                          workflow={workflow}
+                          selected={selected?.id === workflow.id}
+                          onSelect={() =>
+                            leaveEditor(() => {
+                              setDraft(null);
+                              setSelectedId(workflow.id);
+                            })
+                          }
+                          onToggle={(enabled) => toggle(workflow, enabled)}
+                          onPriority={(delta) => changePriority(workflow, delta)}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
           </div>
           <div className="min-h-0 min-w-0">
             {importPreview !== null ? (
@@ -404,10 +405,12 @@ export function WorkflowsPage() {
                 }}
               />
             ) : selected === null ? (
-              <div className="flex h-full flex-col items-center justify-center gap-1 px-4 py-3 text-center">
-                <p className="text-base font-medium text-text">{t("workflows.pickTitle")}</p>
-                <p className="max-w-sm text-sm text-muted">{t("workflows.pickHint")}</p>
-              </div>
+              workflows.data === undefined ? null : (
+                <div className="flex h-full flex-col items-center justify-center gap-1 px-4 py-3 text-center">
+                  <p className="text-base font-medium text-text">{t("workflows.pickTitle")}</p>
+                  <p className="max-w-sm text-sm text-muted">{t("workflows.pickHint")}</p>
+                </div>
+              )
             ) : (
               <WorkflowEditor
                 key={`${selected.id}:${generation}`}

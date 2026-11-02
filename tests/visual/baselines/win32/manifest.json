@@ -1,0 +1,105 @@
+{
+  "sourceCommit": "fd334ef2b8f1813a7406cfd5a384ada482cf47d3",
+  "fixtureRevision": "m5 regression: pinned 2026-10-13 clock/IDs, demo backend Today 2026-10-10; actual compact/expanded dimensions",
+  "platform": "win32",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "motion": "reduce; screenshot animations disabled",
+  "sourceFiles": {
+    "scripts/visual/visual.mjs": "2a1c867863f0011c53df64d56fcd3d1d6d893e9ec04b08c3acadecedbff37da9",
+    "apps/desktop/ui/src/test/dev-seed.ts": "190f1daa3ff2cfbdc1e26c6fd306f72d94cf4422c8a39eb4a3ad071b2e2f3188",
+    "apps/desktop/ui/src/styles/tokens.css": "83cfaa7b0f9a002ff7dbbad86820c2299fe43408c8bf4a73938e0bcfd6ec020c",
+    "apps/desktop/ui/src/styles/global.css": "52270d8ede4f2ea8a934f1b7fc47524b8aa7dfb3160f14bc482e0ff9f474eaab"
+  },
+  "artifacts": [
+    {
+      "name": "floating-collapsed",
+      "file": "floating-collapsed.png",
+      "viewport": {
+        "width": 64,
+        "height": 32
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "cdd437772828f07cab2b0652e7fd5ad81ba0364f2366f49a49cfaef97d2a3529"
+    },
+    {
+      "name": "floating-expanded",
+      "file": "floating-expanded.png",
+      "viewport": {
+        "width": 300,
+        "height": 380
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "fc9a7daaa375308c532beae82179704d38215609b89866987cfb4653858e6dc8"
+    },
+    {
+      "name": "main-today",
+      "file": "main-today.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "cf6524fec1551b190eedce1cf2f1f206f29d44b231752d5a900c9015dbcb4072"
+    },
+    {
+      "name": "main-inbox",
+      "file": "main-inbox.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "43cfe66d702259a42bcd4aeadc8b1909586af01a1d1b0fdc8747a584f82ce4e5"
+    },
+    {
+      "name": "main-calendar",
+      "file": "main-calendar.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "a78f1295c1151e4b11efadb4098ee2a6bb780624260c56f6ef97ed9443ff58a6"
+    },
+    {
+      "name": "main-today-dark",
+      "file": "main-today-dark.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "50f3bfefab931135ae51aed8867eeff9cfe980c67c12fec0e4026b71ccdc3784"
+    }
+  ]
+}

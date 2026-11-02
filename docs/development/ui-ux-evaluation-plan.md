@@ -112,6 +112,7 @@ Final package: current screenshot/state matrix, task scorecard, accessibility/na
 
 ## Evidence references
 
+- Implementation follow-up (2026-11-02): [stage ledger](ui-ux-progress.md), [requirements handoff](ui-ux-acceptance-handoff.md) and [unrun participant scorecard](ui-ux-task-scorecard.md). The initial findings and provisional score above remain historical; implementation/automated results do not replace formative sessions or manual accessibility/native review. The user directed proceeding with available checks and documenting gaps.
 - Product: `docs/architecture/Nivlo_Product_Design.md`.
 - Interaction history: `docs/development/interaction-optimization-plan.md`.
 - Native capture coverage: `docs/development/drop-matrix.md`.

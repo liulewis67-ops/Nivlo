@@ -10,7 +10,7 @@ The historical fixed-height global-search description is superseded by the curre
 
 M3 deliberately replaces input-level Tab / Shift+Tab capture-type cycling with standard focus traversal. The visible Todo / Note / Tip radio group uses arrow keys; Tab moves between that group, the title and other controls. Capture still starts with title focus; clicking a type preserves the title draft and selection. Enter submits and Escape cancels. Earlier Tab-cycle descriptions below remain historical, not current instructions.
 
-Search now exposes Commands and Keyboard help controls alongside the existing `>` route. Visible Open / Create Todo / Complete / Reopen actions share the existing operations and Undo duration. Global search exposes its supported navigation commands only. Browser click/Ctrl+K focus checks pass; Windows foreground handoff and NVDA remain unverified. See [stage evidence](ui-ux-progress.md) and [implementation release notes](ui-ux-release-notes.md).
+Search now exposes Commands and Keyboard help controls alongside the existing `>` route. Visible Open / Create Todo / Complete / Reopen actions share the existing operations and Undo duration. Global search exposes its supported navigation commands only. M4 release Windows checks pass for native invocation, previous-app focus return, click-away, visible/hidden/uncreated-main handoff and 200% content zoom. Search fitting distinguishes content zoom from monitor DPI; selected results follow the resized list viewport. Fast badge gestures capture the pointer and hand native dragging over synchronously. NVDA and physical mixed-monitor checks remain unrun. See [stage evidence](ui-ux-progress.md) and [implementation release notes](ui-ux-release-notes.md).
 
 ## 1. 本轮已落地
 

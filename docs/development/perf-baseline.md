@@ -91,7 +91,15 @@
 
 主窗口的代码块里有 CodeMirror（只有 Workflow 的「脚本」页签用到）。改为 `React.lazy` 按需加载后：主窗口块 533 KB → 104 KB（gzip 172 → 26 KB），编辑器单独 429 KB，打开「脚本」页签时才下载。主窗口第一次打开（从请求打开到侧栏渲染，3 次全新启动）：之前 517 / 433 / 435 ms，现在 450 / 463 / 386 ms。
 
-## 尚未测量
+## 2026-11-02 · UI/UX M4 integrated release candidate
+
+Command: `node tests/e2e/e2e.mjs --native --runs 3 --warm-runs 20 --zoom --badge-matrix`. [Measurements](../../tests/visual/stages/m4/native/measurements.json) include raw samples and source/executable hashes; [environment](../../tests/visual/stages/m4/environment.json) records Ryzen 7 5800H, 16GB RAM and one 1920×1080 monitor at 125%. Runtime: WebView2 Edge 156.0.4314.58. Database and WebView2 browser profiles are isolated per fixture.
+
+Warm global search, from native hotkey release to focused input and document: 20 samples, median **47ms**, p95 **67ms**, below the 150ms budget. Cold activations remain separate: **238/310/287ms**, median **287ms**. Quick capture input-ready medians: pointer **50ms**, hotkey **29ms**. Prewarm first activation **28ms**, approximately **90MB** additional process-tree working set. Three complete native E2E runs and cold-main/prewarm scenarios passed.
+
+The previous October search invocation figures used the same native key-release/focus endpoint but fewer runs; the new p95 has 20 warm samples. Hardware/profile/build differences limit direct causal attribution. These are system invocation times, not participant task completion times. M5 dense browser measurements are documented separately in its manifest; in-memory browser timers do not pass this native budget.
+
+## Remaining measurements
 
 * 启用循环皮肤 / 附加动效时的 CPU（D-13）；
 * 24 小时长稳（含休眠唤醒、批量捕获；跨午夜已在 8 小时测量里覆盖）；

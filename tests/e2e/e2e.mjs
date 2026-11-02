@@ -40,7 +40,9 @@ const warmActivations = [];
 const zoomRecords = [];
 const badgeRecords = [];
 const runtimeEnvironments = [];
-const EVIDENCE = join(ROOT,'tests','visual','stages','m4','native');
+const EVIDENCE_STAGE = process.argv.includes('--evidence-stage') ? process.argv[process.argv.indexOf('--evidence-stage')+1] : 'm4';
+if(!['m4','m5'].includes(EVIDENCE_STAGE))throw Error('Evidence stage must be m4 or m5');
+const EVIDENCE = join(ROOT,'tests','visual','stages',EVIDENCE_STAGE,'native');
 if (CHECK_ZOOM || WARM_RUNS || BADGE_MATRIX || SEARCH_ZOOM_ONLY) mkdirSync(EVIDENCE,{recursive:true});
 /** --native 测得的唤出耗时（毫秒）：从按键发出到输入框拿到焦点。 */
 const hotkeyTimings = { first: [], again: [] };
@@ -251,7 +253,7 @@ function ensureNoForeignInstance() {
   }
 }
 
-async function checkNativeSearchZoom({main,floating}) {
+async function checkNativeSearchZoom({main,floating,index}) {
   await main.invoke('quick_create',{request:{itemType:'todo',title:'zoom-search-fixture',scheduled:null}});
   await main.invoke('set_shortcut',{action:'search',accelerator:'Ctrl+Alt+Shift+F9'});
   pressSearchHotkey();
@@ -268,10 +270,12 @@ async function checkNativeSearchZoom({main,floating}) {
     const frames=[];
     for(let i=0;i<10;i++){frames.push(await search.evaluate(`(() => {const row=document.querySelector('[role=option][aria-selected=true]');const r=row.getBoundingClientRect();const viewport=row.closest('.nv-scroll-hover').getBoundingClientRect();return {width:innerWidth,height:innerHeight,dpr:devicePixelRatio,input:document.querySelector('input').getBoundingClientRect().bottom,footer:document.querySelector('footer').getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth>innerWidth,focus:document.activeElement===document.querySelector('input'),value:document.querySelector('input').value,row:{top:r.top,bottom:r.bottom},list:{top:viewport.top,bottom:viewport.bottom}}})()`));await sleep(100);}
     const screenshot=await search.send('Page.captureScreenshot',{format:'png'});
-    writeFileSync(join(EVIDENCE,'search-200pct.png'),Buffer.from(screenshot.result.data,'base64'));
+    const screenshotFile=`search-200pct-${index}.png`;
+    const screenshotBytes=Buffer.from(screenshot.result.data,'base64');
+    writeFileSync(join(EVIDENCE,screenshotFile),screenshotBytes);
     const after=frames.at(-1);
     if(after.row.top<after.list.top-1||after.row.bottom>after.list.bottom+1||after.overflow||after.footer>after.height+1||after.input>after.height+1||!after.focus||after.value!=='zoom-search-fixture'||new Set(frames.slice(-5).map(f=>f.height)).size!==1)throw Error('Search zoom clipping/focus/fitting: '+JSON.stringify({before,frames}));
-    zoomRecords.push({surface:'search',before,frames});
+    zoomRecords.push({surface:'search',before,frames,screenshotFile,screenshotSha256:createHash('sha256').update(screenshotBytes).digest('hex')});
   } finally {pressHotkey([0x11,0x30]);await search.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});search.close();}
 }
 
@@ -940,7 +944,7 @@ async function runOnce(index) {
       });
     }
     }
-    if (NATIVE && (SEARCH_ZOOM_ONLY || CHECK_ZOOM)) await step("200% search zoom and stable fitting",()=>checkNativeSearchZoom({main,floating}));
+    if (NATIVE && (SEARCH_ZOOM_ONLY || CHECK_ZOOM)) await step("200% search zoom and stable fitting",()=>checkNativeSearchZoom({main,floating,index}));
     if (DRAG_ONLY) await step("isolated native badge drag",()=>checkNativeBadgeDrag({main,floating,child,index}));
     if (OLE_ONLY) await step("isolated native OLE drop",()=>checkNativeOle({main,floating,data,index}));
     if (ZOOM_ONLY) await main.invoke('quick_create',{request:{itemType:'todo',title:'zoom fixture',scheduled:null}});
@@ -1277,7 +1281,7 @@ const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 if (WARM_RUNS || CHECK_ZOOM || BADGE_MATRIX || SEARCH_ZOOM_ONLY) {
   const sorted=[...warmActivations].sort((a,b)=>a-b);
   const sourceFiles=Object.fromEntries(execFileSync('git',['diff','--name-only','--','apps/desktop','crates'],{cwd:ROOT,encoding:'utf8'}).trim().split(/\r?\n/).filter(file=>/\.(rs|tsx?|json|css)$/.test(file)).map(file=>[file,createHash('sha256').update(readFileSync(join(ROOT,file))).digest('hex')]));
-  const metrics={runtimeEnvironments,profileIsolation:'Temporary NIVLO_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),sourceFiles,executableSha256:createHash('sha256').update(readFileSync(EXE)).digest('hex'),timestamp:new Date().toISOString(),cold:hotkeyTimings.first,warm:warmActivations,warmMedian:sorted.length?median(sorted):null,warmP95:sorted.length?sorted[Math.ceil(sorted.length*.95)-1]:null,budgetMs:150,quickCreate:quickCreateTimings,zoom:zoomRecords,badges:badgeRecords,failedScenarios:failed};
+  const metrics={harnessSha256:createHash('sha256').update(readFileSync(join(ROOT,'tests/e2e/e2e.mjs'))).digest('hex'),runtimeEnvironments,profileIsolation:'Temporary NIVLO_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),sourceFiles,executableSha256:createHash('sha256').update(readFileSync(EXE)).digest('hex'),timestamp:new Date().toISOString(),cold:hotkeyTimings.first,warm:warmActivations,warmMedian:sorted.length?median(sorted):null,warmP95:sorted.length?sorted[Math.ceil(sorted.length*.95)-1]:null,budgetMs:150,quickCreate:quickCreateTimings,zoom:zoomRecords,badges:badgeRecords,failedScenarios:failed};
   metrics.warmBudgetPassed=sorted.length>=20&&metrics.warmP95<metrics.budgetMs;
   writeFileSync(join(EVIDENCE,'measurements.json'),JSON.stringify(metrics,null,2)+'\n');
   console.log(`Warm search focus: ${sorted.length} runs, median ${metrics.warmMedian}ms, p95 ${metrics.warmP95}ms`);

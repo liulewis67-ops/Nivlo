@@ -1,0 +1,440 @@
+{
+  "reviewedOn": "2026-11-02",
+  "scope": "Implementation visual review, not human design sign-off or NVDA/mixed-DPI acceptance",
+  "artifacts": [
+    {
+      "name": "detail-960-light-zh",
+      "sha256": "04f06e72bd42cd9a768331b56d0aee4bcf7d935bb632cf08b076808ff00e624a",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "detail-960-dark-en",
+      "sha256": "8f46c40b285f740bfb878561f156928b5e441a45a9330e5c298feac36857e788",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "detail-1280-light-en",
+      "sha256": "9933593237b7645eb4fb623896ab4cb31e46aae78ebaf8e62f413a3b4585d5a4",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "detail-400-dark-zh",
+      "sha256": "89364687b98a6404e3c2e0f8e8c1b2eea112a8a7185600f137ab1109c4218b29",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "detail-resize-saving",
+      "sha256": "9a971e2dffa903fa0f82f691f3ebffc6afb9c6fdb15b49c396f8db78aa3a2909",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "detail-failed-close",
+      "sha256": "e1243632ce9d28e0b4f4417a2d3f4c21d89adbf6c7a247f18a6c914552878f25",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "detail-scrolled-failure",
+      "sha256": "d369eb40e1d9052c54bad2bd67c7922596a6e64ff87f6e2eebb2ac0216a22913",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-960-month-zh",
+      "sha256": "01fef3d7015a47aac7637ccaa6cb227f0b956d7eadfa7357c86532a0f5b328e9",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-960-week-en-dark",
+      "sha256": "ca49266c23976e2c874f89e434c9cfac0c11d532909e0931a4b1c5d0530500cf",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-960-tooltip-focus",
+      "sha256": "352098dabce051e8985efcb9e31849d1d0e3b4a6db4dd456be2f68204799df50",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-400-week-en",
+      "sha256": "110f181f8adc68754df5689a583bee43069ee8ce858cc184d4420d1c742a353c",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m2",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-1440-docked-zh",
+      "sha256": "6383fc2c08d612910df7b45a79303ac667390f412d45775bf380d814190335ee",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-960-backlog-en-dark",
+      "sha256": "cccf0f81aa9dc43fa6adae5df4f899c5d6f51f1eed331061dced714c9c05c875",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-keyboard-schedule",
+      "sha256": "fbad7cfc411a7ac72dec6366be96e4cce8c72b13702923bfefe0a51bba4f4df3",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "calendar-create-failure",
+      "sha256": "c1dcef6b0fa0a1b07190e6ed69a47979c9d522b9a9d345f7e49647c343150b81",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-inbox-960-zh",
+      "sha256": "a548b0fea58c5f2e5a9df23075f93fbfeb551bbcbaaf1e2c305af9adbd56c817",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-inbox-400-en-dark",
+      "sha256": "a29ddac985e09ba97141e101de5213f9b55f2ce32cfd3fce627446dbb15e7c44",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-settings-960-zh",
+      "sha256": "16af1bb8db478f8aee37c0937ce56846cf4cf96885653b3b6a9754bab6e19076",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-settings-400-en-dark",
+      "sha256": "4d684ec2e981ee28f0efd4e0921830656eba76a14ef81f4aa69720d11c43fe36",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-workflows-960-zh",
+      "sha256": "37b495ec9898a50a8a35ec93977464eb009907eb639d99e01807d0d4314a23c7",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-workflows-400-en-dark",
+      "sha256": "e7645e87815f6233d1fcbe507449ea27c6097c33a95604f3900201d4d51f3901",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-notes-960-zh",
+      "sha256": "cc4cb6bc720264bc3c0efe99604da97effddefe20924801af53581120fb20d8e",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-notes-400-en-dark",
+      "sha256": "89439d7fc111096ea4fcea449e6e5ea4919a7066891816cc6b3bb0b2b0fbb7d6",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-projects-960-zh",
+      "sha256": "d73c96ad6387b212fe5115b85d778569a3a81bd18b65af961247625de8b0aa8e",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-projects-400-en-dark",
+      "sha256": "337866143d264f4f256613e1796e286d94d17747d2174bdc7deaf1958457f3ad",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-today-960-zh",
+      "sha256": "240f7a91a847ecf201902d0a100006ff59b6aec6d752b561fc39c64475eff506",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-today-400-en-dark",
+      "sha256": "d97a3262c2c94b2ec072095cbc64bb02c458dd613480ee785178a01ef188e9a6",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-trash-960-zh",
+      "sha256": "ea17082b64399e812e8256967f246b31a30bad2378d671feda2fc41534d8e2b6",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-trash-400-en-dark",
+      "sha256": "92141c2aebe9d7e12434a383c50ae5b0ea276de1392e849f95158f7c97dc51b9",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-onboarding-960-zh",
+      "sha256": "2de889653032bcd9c42512b008da076404184a8e36c797b22a2bb540460190ac",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-onboarding-400-en-dark",
+      "sha256": "88db10b3d33f640230ec26a1c133577b43263459a17c09516b11862bc36d790b",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-palette-zh",
+      "sha256": "7d7e46c17752fbebf1db7a704756418c8c01ccdc7309ae5c3c1fea007b8acc2f",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-palette-en-dark",
+      "sha256": "565d8143e40c1d6f72fcc2c8a7474048dc9dbb980df3cf98230f72548000d542",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-global-zh",
+      "sha256": "58d13f47e55b083eff66f532f60a0be24f9cf95697dd18f7e26a7abb6901cfe8",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-global-en-dark",
+      "sha256": "49200b78fd35c2208f84849b95703835e735bc94522ec4aa41809451ee8b45cf",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-capture-zh",
+      "sha256": "790d94bb36d324947af954a7ff96c4ee1826d02f66c727abd1740e8a92a76e93",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-capture-en-dark",
+      "sha256": "ee8725835058735c0c62cdb14a3bf12d6f97bc6535c8271207e7897dbfcf7c0e",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "guidance-global-error-undo-zh",
+      "sha256": "9184260af9b66a67d8327580d5d25c4e2ae57d097f94360d571b0faad4cae8f7",
+      "reviewer": "Codex",
+      "method": "Byte-identical to previously individually inspected stage capture",
+      "priorStage": "m4",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "release-empty-inbox",
+      "sha256": "8454787c9d549b03b058ae5a04b2776e3b845b9b867a5e9ff2dea228bdbc03b7",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "release-empty-today",
+      "sha256": "70f85b924bc80be61335e1805e149925443cc340b1d0f61188f33278f19a36f7",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "release-error-notes",
+      "sha256": "c90dd283996d54b5c796f5763227a3505162185800a4b30b2389dbfa93540d97",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "release-error-workflows",
+      "sha256": "bfcfc452ef1e0628c6b0fb96cbd5668460aec5cd14147ee1a1cd717491b08aaf",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    },
+    {
+      "name": "release-dense-notes-1000",
+      "sha256": "5503b8a5d6c463307e2e7cb0e909264573688da7a1163a36c4fb71f6827b422a",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed",
+      "note": "Filtering deliberately retains the previously selected editor (entry-0999), while entry-0777 remains the filtered list result."
+    },
+    {
+      "name": "release-dense-search-1000",
+      "sha256": "94a7c2a8abf9a3879c2246b0468bf5f7de0a9f99044a8855b84882f40f13654c",
+      "reviewer": "Codex",
+      "method": "Current image individually inspected",
+      "result": "Reviewed; automated scene assertions passed"
+    }
+  ],
+  "regression": [
+    {
+      "name": "floating-collapsed",
+      "sha256": "cdd437772828f07cab2b0652e7fd5ad81ba0364f2366f49a49cfaef97d2a3529",
+      "reviewer": "Codex",
+      "result": "Individually inspected before update; comparison afterward 0.000%",
+      "reason": "Replace obsolete 220x100 preview with actual 64x32 badge"
+    },
+    {
+      "name": "floating-expanded",
+      "sha256": "fc9a7daaa375308c532beae82179704d38215609b89866987cfb4653858e6dc8",
+      "reviewer": "Codex",
+      "result": "Individually inspected before update; comparison afterward 0.000%",
+      "reason": "Replace obsolete 380x520 preview with actual 300x380 panel"
+    },
+    {
+      "name": "main-today",
+      "sha256": "cf6524fec1551b190eedce1cf2f1f206f29d44b231752d5a900c9015dbcb4072",
+      "reviewer": "Codex",
+      "result": "Individually inspected before update; comparison afterward 0.000%",
+      "reason": "Current typography, selected count, guidance and pinned date fixture"
+    },
+    {
+      "name": "main-inbox",
+      "sha256": "43cfe66d702259a42bcd4aeadc8b1909586af01a1d1b0fdc8747a584f82ce4e5",
+      "reviewer": "Codex",
+      "result": "Individually inspected before update; comparison afterward 0.000%",
+      "reason": "Always-visible Organize action, readable guidance and selected count"
+    },
+    {
+      "name": "main-calendar",
+      "sha256": "a78f1295c1151e4b11efadb4098ee2a6bb780624260c56f6ef97ed9443ff58a6",
+      "reviewer": "Codex",
+      "result": "Individually inspected before update; comparison afterward 0.000%",
+      "reason": "Current month/backlog/overflow/due rendering with pinned date fixture"
+    },
+    {
+      "name": "main-today-dark",
+      "sha256": "50f3bfefab931135ae51aed8867eeff9cfe980c67c12fec0e4026b71ccdc3784",
+      "reviewer": "Codex",
+      "result": "Individually inspected before update; comparison afterward 0.000%",
+      "reason": "Current typography, selected count, guidance and pinned date fixture"
+    }
+  ],
+  "native": [
+    {
+      "file": "search-200pct-1.png",
+      "sha256": "bc4d7de0c2def620e65e0283e45aa34175e817357cb6ca7cdecf3404012de800",
+      "reviewer": "Codex",
+      "result": "Individually inspected; native zoom/layout assertions passed"
+    },
+    {
+      "file": "main-200pct-1.png",
+      "sha256": "f518dff5cd31b1e52f8e5c75983bc7b35cd78e28281956d38e4a14cfeeeb9d8a",
+      "reviewer": "Codex",
+      "result": "Individually inspected; native zoom/layout assertions passed"
+    },
+    {
+      "file": "search-200pct-2.png",
+      "sha256": "bc4d7de0c2def620e65e0283e45aa34175e817357cb6ca7cdecf3404012de800",
+      "reviewer": "Codex",
+      "result": "Individually inspected; native zoom/layout assertions passed"
+    },
+    {
+      "file": "main-200pct-2.png",
+      "sha256": "f28487db1a3b32b2b27b8a111a83a8b4a4d0c206f743a897b5969daf2709c188",
+      "reviewer": "Codex",
+      "result": "Individually inspected; native zoom/layout assertions passed"
+    },
+    {
+      "file": "search-200pct-3.png",
+      "sha256": "bc4d7de0c2def620e65e0283e45aa34175e817357cb6ca7cdecf3404012de800",
+      "reviewer": "Codex",
+      "result": "Individually inspected; native zoom/layout assertions passed"
+    },
+    {
+      "file": "main-200pct-3.png",
+      "sha256": "e231d4ec0a945c27b0c96cabedad7633c3ea1c7f84ebd7a78f159e6fc463f7ae",
+      "reviewer": "Codex",
+      "result": "Individually inspected; native zoom/layout assertions passed"
+    },
+    {
+      "file": "badge-pill.png",
+      "sha256": "20d02ebb60c69de57d02e7bc1537322b462c10263bbb5e65dc1f6de3dbda478e",
+      "reviewer": "Codex",
+      "result": "Individually inspected; client/button bounds passed; OS per-pixel hit test remains manual"
+    },
+    {
+      "file": "badge-circle.png",
+      "sha256": "898186713a6d71b29489fe54dcb666987613d5335436cbf10dfbd5ef007d1bf2",
+      "reviewer": "Codex",
+      "result": "Individually inspected; client/button bounds passed; OS per-pixel hit test remains manual"
+    },
+    {
+      "file": "badge-dot.png",
+      "sha256": "8bac4bcbe8bc13118eb0e5def2827e677c8076db01e69473eaa0325c746c6500",
+      "reviewer": "Codex",
+      "result": "Individually inspected; client/button bounds passed; OS per-pixel hit test remains manual"
+    },
+    {
+      "file": "badge-skin.png",
+      "sha256": "8effe1ca44495dc1bf8a21050f358635b2f6b77a7d2e2b7aa501861af7e43cd3",
+      "reviewer": "Codex",
+      "result": "Individually inspected; client/button bounds passed; OS per-pixel hit test remains manual"
+    }
+  ]
+}

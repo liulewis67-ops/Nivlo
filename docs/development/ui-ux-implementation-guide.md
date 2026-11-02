@@ -351,3 +351,5 @@ Completion checklist:
 - [ ] Review processes/tabs/servers and temporary profiles are cleaned up; no production data was used.
 
 Final handoff package: source PRs, requirements-to-evidence table, reviewed screenshots/diffs, automated test logs, native/accessibility matrix, task scorecard, performance results, known limitations and rollback instructions.
+
+Implementation follow-up (2026-11-02): [stage ledger](ui-ux-progress.md), [requirements handoff](ui-ux-acceptance-handoff.md) and [task scorecard](ui-ux-task-scorecard.md) record stage commits and actual evidence. The user instructed proceeding with available checks and documenting gaps; unchecked human/hardware release criteria above remain unrun, rather than being silently marked passed.

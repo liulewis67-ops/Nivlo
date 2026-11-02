@@ -6,6 +6,28 @@ import { createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import { applyForm, parseDefinition, toForm } from "./model/definition";
 import { WorkflowsPage } from "./WorkflowsPage";
+import { AppError } from "@/lib/errors";
+import { useToastStore } from "@/stores/toast-store";
+
+it("首次加载失败不宣称规则为空，重试后显示实际规则", async () => {
+  const ipc = createMemoryIpc();
+  const original = ipc.listWorkflows;
+  ipc.listWorkflows = () => Promise.reject(new AppError("STORAGE_UNAVAILABLE", "fixture"));
+  renderWithProviders(<WorkflowsPage />, ipc);
+  expect(await screen.findByText("暂时无法加载此页面，请重试。")).toBeInTheDocument();
+  expect(
+    screen.queryByText("还没有。选一条内置规则，点「复制」就能开始自定义。"),
+  ).not.toBeInTheDocument();
+  expect(screen.queryByText("选一条规则查看或编辑")).not.toBeInTheDocument();
+  ipc.listWorkflows = original;
+  fireEvent.click(screen.getByRole("button", { name: "重试" }));
+  expect(await screen.findByText("选一条规则查看或编辑")).toBeInTheDocument();
+  expect(screen.queryByText("暂时无法加载此页面，请重试。")).not.toBeInTheDocument();
+  act(() => {
+    const { toasts, dismiss } = useToastStore.getState();
+    for (const toast of toasts) dismiss(toast.id);
+  });
+});
 
 /**
  * 断言值存在并返回它（测试里代替非空断言）。

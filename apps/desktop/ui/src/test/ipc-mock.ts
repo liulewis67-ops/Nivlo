@@ -543,7 +543,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     getInboxCount: () => {
       calls.push("getInboxCount");
-      return Promise.resolve(items.filter((i) => i.inInbox && i.archivedAt === null).length);
+      return Promise.resolve(
+        items.filter((i) => i.inInbox && i.archivedAt === null && !trashed.has(i.id)).length,
+      );
     },
     organizeItems: (ids: string[], action: OrganizeActionDto) => {
       calls.push("organizeItems");

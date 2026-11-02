@@ -1,0 +1,10 @@
+$ node scripts/visual/visual.mjs
+(node:6848) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✗ floating-collapsed：尺寸不同（基线 220x100，当前 64x32）
+✗ floating-expanded：尺寸不同（基线 380x520，当前 300x380）
+✗ main-today：1.11% 像素不同（见 tests/visual/diff/）
+✗ main-inbox：2.84% 像素不同（见 tests/visual/diff/）
+✗ main-calendar：1.18% 像素不同（见 tests/visual/diff/）
+✗ main-today-dark：1.17% 像素不同（见 tests/visual/diff/）
+[ELIFECYCLE] Command failed with exit code 1.

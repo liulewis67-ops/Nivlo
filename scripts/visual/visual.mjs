@@ -20,6 +20,7 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { guidanceScenes } from "./guidance-scenes.mjs";
 import { accessibilityAudit } from "./accessibility-audit.mjs";
+import { releaseScenes } from "./release-scenes.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const PLATFORM = process.platform;
@@ -28,13 +29,16 @@ const CALENDAR_STAGE = process.argv.includes("--calendar-stage");
 const FOCUS_AUDIT = process.argv.includes("--search-focus-audit");
 const GUIDANCE_STAGE = process.argv.includes("--guidance-stage");
 const ACCESSIBILITY_STAGE = process.argv.includes("--accessibility-stage");
+const RELEASE_STAGE = process.argv.includes("--release-stage");
+const releaseMeasurements = [];
 let contrastFailures = 0;
-const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE || FOCUS_AUDIT || GUIDANCE_STAGE || ACCESSIBILITY_STAGE;
-const BASELINES = ACCESSIBILITY_STAGE ? join(ROOT,"tests","visual","stages","m4") : GUIDANCE_STAGE ? join(ROOT, "tests", "visual", "stages", "m3") : FOCUS_AUDIT ? join(ROOT, "tests", "visual", "stages", "m3", "before-focus") : CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
+const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE || FOCUS_AUDIT || GUIDANCE_STAGE || ACCESSIBILITY_STAGE || RELEASE_STAGE;
+const BASELINES = RELEASE_STAGE ? join(ROOT,"tests","visual","stages","m5") : ACCESSIBILITY_STAGE ? join(ROOT,"tests","visual","stages","m4") : GUIDANCE_STAGE ? join(ROOT, "tests", "visual", "stages", "m3") : FOCUS_AUDIT ? join(ROOT, "tests", "visual", "stages", "m3", "before-focus") : CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
   ? join(ROOT, "tests", "visual", "implementation-baseline")
   : join(ROOT, "tests", "visual", "baselines", PLATFORM);
 const DIFFS = join(ROOT, "tests", "visual", "diff");
 const UPDATE = process.argv.includes("--update");
+const ONLY_SCENE = process.argv.includes("--scene") ? process.argv[process.argv.indexOf("--scene")+1] : null;
 const APP = "http://localhost:1420";
 /** 允许的像素差异比例（抗锯齿 / 亚像素差异）。 */
 const MAX_DIFF_RATIO = 0.002;
@@ -123,8 +127,8 @@ const SCENARIOS = [
   { name: "floating-collapsed", w: 64, h: 32, url: `${APP}/?window=floating`, steps: async () => sleep(800) },
   {
     name: "floating-expanded",
-    w: 380,
-    h: 520,
+    w: 300,
+    h: 380,
     url: `${APP}/?window=floating`,
     steps: async (page) => {
       await sleep(600);
@@ -154,7 +158,7 @@ const SCENARIOS = [
 ];
 
 // 实施前的独立证据集，不覆盖历史视觉回归基线。
-if (IMPLEMENTATION) {
+if (IMPLEMENTATION && !RELEASE_STAGE) {
   for (const [route, label] of Object.entries({ inbox: "收集箱", today: "今天", calendar: "日历", notes: "笔记", projects: "项目", workflows: "自动化", trash: "回收站", settings: "设置" })) {
     SCENARIOS.push({ name: `baseline-${route}`, w: 960, h: 640, url: APP, steps: async (page) => {
       if (!await clickText(page, label)) throw new Error(`Missing route: ${label}`);
@@ -198,7 +202,7 @@ const STABILIZE = `
 `;
 
 // M1 的独立验收集；不覆盖 W0 或历史回归图片。
-if (DETAIL_STAGE) {
+if (DETAIL_STAGE || RELEASE_STAGE) {
   SCENARIOS.length = 0;
   for (const scene of [
     { name: "detail-960-light-zh", w: 960, h: 640 },
@@ -273,8 +277,8 @@ if (DETAIL_STAGE) {
   } });
 }
 
-if (CALENDAR_STAGE) {
-  SCENARIOS.length = 0;
+if (CALENDAR_STAGE || RELEASE_STAGE) {
+  if (!RELEASE_STAGE) SCENARIOS.length = 0;
   for (const scene of [
     { name: "calendar-960-month-zh", w: 960, h: 640 },
     { name: "calendar-960-week-en-dark", w: 960, h: 640, en: true, dark: true, week: true },
@@ -317,7 +321,7 @@ if (CALENDAR_STAGE) {
       if (scene.backlog) {
         await page.evaluate(`document.querySelector('dialog li button').focus()`);
         await sleep(500);
-        if (!await page.evaluate(`!!document.querySelector('dialog [role=tooltip]')`)) throw new Error('Backlog tooltip escaped native modal layer');
+        if (!await page.evaluate(`!!document.querySelector('dialog [role=tooltip]')`)) throw new Error('Backlog tooltip not contained: '+JSON.stringify(await page.evaluate(`({focus:document.hasFocus(),active:document.activeElement?.outerHTML,tooltips:[...document.querySelectorAll('[role=tooltip]')].map(e=>({text:e.textContent,inDialog:!!e.closest('dialog')}))})`)));
       }
       if (scene.keyboard) {
         await page.evaluate(`document.querySelector('dialog li button').focus()`);
@@ -393,6 +397,11 @@ if (ACCESSIBILITY_STAGE) {
   }})));
 }
 
+if (RELEASE_STAGE) {
+  SCENARIOS.push(...guidanceScenes({app:APP,click:clickWhenReady,sleep}));
+  SCENARIOS.push(...releaseScenes({app:APP,click:clickWhenReady,sleep,record:(scene,value)=>releaseMeasurements.push({scene,...value})}));
+}
+
 async function main() {
   mkdirSync(BASELINES, { recursive: true });
   let server = null;
@@ -419,14 +428,14 @@ async function main() {
   const artifacts = [];
   const recordings = [];
   try {
-    for (const scenario of SCENARIOS) {
+    for (const scenario of SCENARIOS.filter(scene=>!ONLY_SCENE||scene.name===ONLY_SCENE)) {
       const created = await (await fetch(`http://127.0.0.1:9333/json/new?${encodeURIComponent("about:blank")}`, { method: "PUT" })).json();
       const page = await connect(created.webSocketDebuggerUrl);
       await page.send("Emulation.setDeviceMetricsOverride", { width: scenario.w, height: scenario.h, deviceScaleFactor: 1, mobile: false });
       await page.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }, { name: "prefers-reduced-motion", value: "reduce" }] });
       await page.send("Page.enable");
       if (CALENDAR_STAGE || GUIDANCE_STAGE || FOCUS_AUDIT || ACCESSIBILITY_STAGE) await page.send("Page.bringToFront");
-      if (IMPLEMENTATION) {
+      {
         await page.send("Emulation.setTimezoneOverride", { timezoneId: "Asia/Shanghai" });
         await page.send("Page.addScriptToEvaluateOnNewDocument", { source: `
           localStorage.clear();
@@ -444,6 +453,7 @@ async function main() {
       // 把引导对话框标记成已看过，避免它盖住页面。
       await page.send("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('nivlo.onboarding','done')" });
       await page.send("Page.navigate", { url: scenario.url });
+      await page.send("Page.bringToFront");
       await sleep(1200);
       await page.evaluate(STABILIZE);
       const frames = [];
@@ -456,7 +466,13 @@ async function main() {
         await page.send("Page.startScreencast", { format: "jpeg", quality: 90, maxWidth: 960, maxHeight: 640, everyNthFrame: 1 });
         await sleep(300);
       }
-      await scenario.steps(page);
+      try { await scenario.steps(page); }
+      catch(error) {
+        mkdirSync(DIFFS,{recursive:true});
+        const failedFrame=await page.send('Page.captureScreenshot',{format:'png',captureBeyondViewport:false});
+        writeFileSync(join(DIFFS,scenario.name+'.failed.png'),Buffer.from(failedFrame.result.data,'base64'));
+        throw error;
+      }
       if (record) {
         await page.send("Page.stopScreencast");
         if (frames.length < 2) throw new Error("No useful browser recording frames");
@@ -481,6 +497,8 @@ async function main() {
         const a = PNG.sync.read(readFileSync(file));
         const b = PNG.sync.read(actual);
         if (a.width !== b.width || a.height !== b.height) {
+          mkdirSync(DIFFS, { recursive: true });
+          writeFileSync(join(DIFFS, `${scenario.name}.actual.png`), actual);
           console.error(`✗ ${scenario.name}：尺寸不同（基线 ${a.width}x${a.height}，当前 ${b.width}x${b.height}）`);
           failed += 1;
         } else {
@@ -498,7 +516,7 @@ async function main() {
           }
         }
       }
-      if (IMPLEMENTATION) artifacts.push({
+      if (IMPLEMENTATION || UPDATE) artifacts.push({
         name: scenario.name, file: `${scenario.name}.png`, viewport: { width: scenario.w, height: scenario.h },
         ...await page.evaluate(`({ locale: document.documentElement.lang, theme: document.documentElement.dataset.theme,
           userAgent: navigator.userAgent, devicePixelRatio, clock: new Date().toISOString(),
@@ -523,8 +541,11 @@ async function main() {
   if (IMPLEMENTATION) writeFileSync(join(BASELINES, "manifest.json"), JSON.stringify({
     sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim(),
     branch: execFileSync("git", ["branch", "--show-current"], { cwd: ROOT, encoding: "utf8" }).trim(),
-    fixtureRevision: ACCESSIBILITY_STAGE ? "m4-v1: M3 paired fixtures; flat composited contrast/AX audit and empty light search placeholders" : GUIDANCE_STAGE ? "m3-v1: dev-seed; paired locale/theme, supported commands, failed floating capture" : CALENDAR_STAGE ? "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure" : DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
-    sourceFiles: DETAIL_STAGE || CALENDAR_STAGE || GUIDANCE_STAGE || ACCESSIBILITY_STAGE ? Object.fromEntries([
+    fixtureRevision: RELEASE_STAGE ? "m5-v1: M1/M2/M3 behavior scenes + empty/load-failure fixtures; 1000 long-title notes/items with deterministic IDs and ten typed filters" : ACCESSIBILITY_STAGE ? "m4-v1: M3 paired fixtures; flat composited contrast/AX audit and empty light search placeholders" : GUIDANCE_STAGE ? "m3-v1: dev-seed; paired locale/theme, supported commands, failed floating capture" : CALENDAR_STAGE ? "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure" : DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
+    measurements: RELEASE_STAGE ? releaseMeasurements : undefined,
+    sourceFiles: DETAIL_STAGE || CALENDAR_STAGE || GUIDANCE_STAGE || ACCESSIBILITY_STAGE || RELEASE_STAGE ? Object.fromEntries([
+      "scripts/visual/release-scenes.mjs",
+      "apps/desktop/ui/src/test/ipc-mock.ts", "apps/desktop/ui/src/test/workflow-mock.ts",
       "scripts/visual/accessibility-audit.mjs",
       "apps/desktop/ui/src/features/floating/FloatingBadge.tsx",
       "apps/desktop/ui/src/features/projects/ProjectItemRow.tsx",
@@ -547,10 +568,17 @@ async function main() {
       "apps/desktop/ui/src/styles/tokens.css", "apps/desktop/ui/src/styles/global.css",
       "apps/desktop/ui/src/i18n/en.json", "apps/desktop/ui/src/i18n/zh-CN.json",
     ].map(file => [file, createHash("sha256").update(readFileSync(join(ROOT, file))).digest("hex")])) : undefined,
-    acceptance: ACCESSIBILITY_STAGE ? "M4 rendered audit: inspect per-scene contrast failures and unmeasured gradients; browser AX trees are not NVDA evidence; native zoom and focus use separate release E2E" : GUIDANCE_STAGE ? "M3: paired language/theme renders, default/narrow layouts, no horizontal overflow or sub-12px guidance, command scope, focus, visible organization/capture routes, retained failed capture; browser mock only" : FOCUS_AUDIT ? "Pre-search-edit focus observations; no native acceptance" : CALENDAR_STAGE ? "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only" : DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
+    acceptance: RELEASE_STAGE ? "M5 empty/failure recovery and dense browser interaction evidence; timings include CDP/polling and are not native release or participant measurements" : ACCESSIBILITY_STAGE ? "M4 rendered audit: inspect per-scene contrast failures and unmeasured gradients; browser AX trees are not NVDA evidence; native zoom and focus use separate release E2E" : GUIDANCE_STAGE ? "M3: paired language/theme renders, default/narrow layouts, no horizontal overflow or sub-12px guidance, command scope, focus, visible organization/capture routes, retained failed capture; browser mock only" : FOCUS_AUDIT ? "Pre-search-edit focus observations; no native acceptance" : CALENDAR_STAGE ? "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only" : DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
     platform: PLATFORM, timezone: "Asia/Shanghai", motion: "reduce; animations/transitions disabled",
     environment: "Chrome browser mock; OS scale and native WebView2 not certified", artifacts, recordings,
   }, null, 2) + "\n");
+  if (UPDATE && !IMPLEMENTATION) writeFileSync(join(BASELINES,"manifest.json"),JSON.stringify({
+    sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
+    fixtureRevision:'m5 regression: pinned 2026-10-13 clock/IDs, demo backend Today 2026-10-10; actual compact/expanded dimensions',
+    platform:PLATFORM,clock:CLOCK,motion:'reduce; screenshot animations disabled',
+    sourceFiles:Object.fromEntries(['scripts/visual/visual.mjs','apps/desktop/ui/src/test/dev-seed.ts','apps/desktop/ui/src/styles/tokens.css','apps/desktop/ui/src/styles/global.css'].map(file=>[file,createHash('sha256').update(readFileSync(join(ROOT,file))).digest('hex')])),
+    artifacts,
+  },null,2)+'\n');
   process.exit(failed > 0 || contrastFailures > 0 ? 1 : 0);
 }
 
