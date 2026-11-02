@@ -1,0 +1,5761 @@
+{
+  "samples": [
+    {
+      "text": "拾序",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "搜索",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Ctrl K",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "收集箱",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "3",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "今天",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "3",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "日历",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "笔记",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "项目",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "开发控制台",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "自动化",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "回收站",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "设置",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "background": [
+        37,
+        99,
+        235,
+        1
+      ],
+      "ratio": 5.169,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "快速创建：Ctrl+Shift+Space",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "主题 · 浅色",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "设置",
+      "tag": "H1",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "通用",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        224.89411764705883,
+        231.8078431372549,
+        247.57254901960786,
+        1
+      ],
+      "ratio": 13.42,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "悬浮窗",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "快捷键",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "悬浮窗外观",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "通知",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "新手引导",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "日程",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "集成",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "关于",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "数据与诊断",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "通用",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "开机自动启动",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "语言",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "切换后立即生效。",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "zh-CN",
+      "tag": "SELECT",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "主题",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "跟随系统，或固定为浅色 / 深色。",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "跟随系统",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "浅色",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "background": [
+        37,
+        99,
+        235,
+        1
+      ],
+      "ratio": 5.169,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "深色",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "悬浮窗",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "悬浮窗置顶",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "开启后悬浮窗始终显示在其他窗口上面。",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "快捷键",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "快速创建快捷键",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "在任何应用里按下它，就能立刻写下一条待办。",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "快速创建：Ctrl+Shift+Space",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "已生效",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        46,
+        125,
+        50,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.127,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 960,
+    "height": 640,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "complementary",
+      "name": "",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "main",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "拾序",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "搜索 Ctrl K",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "navigation",
+      "name": "主导航",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "自动化",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "回收站",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "设置",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+,"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "主题 · 浅色",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "拾序",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "搜索",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "收集箱 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+1"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "今天 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+2"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "日历",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+3"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "笔记",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+4"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "项目",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+5"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "开发控制台",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "自动化",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "主题 · 浅色",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "搜索",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Ctrl K",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "日历",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "项目",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "开发控制台",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "自动化",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "主题 · 浅色",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "设置",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "navigation",
+      "name": "跳到设置分组",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "通用",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "悬浮窗",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "快捷键",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "悬浮窗外观",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "通知",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "新手引导",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "日程",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "集成",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "关于",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "数据与诊断",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl K",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "日历",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "项目",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "开发控制台",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "通用",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "悬浮窗",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "快捷键",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "悬浮窗外观",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "通知",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "新手引导",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "日程",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "集成",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "关于",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "数据与诊断",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "通用",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "主题",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "悬浮窗",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "快捷键",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "全局搜索：Ctrl+Alt+Space",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "悬浮窗外观",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "徽标形状",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 235,
+                "text": "徽标形状"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "表面、强调色与透明度",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 255,
+                "text": "表面、强调色与透明度"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "自定义皮肤",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 294,
+                "text": "自定义皮肤"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "皮肤动画",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 325,
+                "text": "皮肤动画"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "通知",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "新手引导",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "日程",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "「稍后」是哪一天",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "一周从哪天开始",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "集成",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "GitHub",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Jira",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "关于",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "检查更新",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "数据与诊断",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "combobox",
+      "name": "导出格式",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "导出笔记和待办",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "通用",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "悬浮窗",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "快捷键",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "悬浮窗外观",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "通知",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "新手引导",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "日程",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "集成",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "关于",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "数据与诊断",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "通用",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "开机自动启动",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "开机自动启动",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "语言",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "切换后立即生效。",
+      "properties": []
+    },
+    {
+      "role": "combobox",
+      "name": "语言",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "主题",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "跟随系统，或固定为浅色 / 深色。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "跟随系统",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "浅色",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "深色",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "悬浮窗",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "悬浮窗置顶",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "开启后悬浮窗始终显示在其他窗口上面。",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "悬浮窗置顶",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "快捷键",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "快速创建快捷键",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "在任何应用里按下它，就能立刻写下一条待办。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "已生效",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "全局搜索快捷键",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "在任何应用里按下它，弹出搜索框，直接找到待办、笔记和提示。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "全局搜索：Ctrl+Alt+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "已生效",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "预先准备全局搜索框",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "启动后在后台提前创建搜索框，第一次按快捷键时弹出得更快（约 0.3 秒 → 0.12 秒）；代价是常驻多占约 90 MB 内存。",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "预先准备全局搜索框",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "悬浮窗外观",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "徽标形态",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "圆角",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "强调色",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "质感",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "slider",
+      "name": "窗口不透明度",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "horizontal"
+          }
+        },
+        {
+          "name": "valuemin",
+          "value": {
+            "type": "number",
+            "value": 40
+          }
+        },
+        {
+          "name": "valuemax",
+          "value": {
+            "type": "number",
+            "value": 100
+          }
+        },
+        {
+          "name": "valuetext",
+          "value": {
+            "type": "string",
+            "value": "100"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "100%",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "无皮肤",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "添加图片…",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "移除皮肤",
+      "properties": [
+        {
+          "name": "disabled",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "播放方式",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "slider",
+      "name": "速度",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "horizontal"
+          }
+        },
+        {
+          "name": "valuemin",
+          "value": {
+            "type": "number",
+            "value": 1
+          }
+        },
+        {
+          "name": "valuemax",
+          "value": {
+            "type": "number",
+            "value": 24
+          }
+        },
+        {
+          "name": "valuetext",
+          "value": {
+            "type": "string",
+            "value": "6"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "6",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "附加动效",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "通知",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "暂停通知",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "暂停期间不弹出提醒；到点的提醒不会丢，恢复后会汇总通知你。托盘菜单里也有这个开关。",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "暂停通知",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "新手引导",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "新手引导",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "再看一遍拾序的基本用法。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "重新查看",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "日程",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "「稍后」是哪一天",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "悬浮窗和收集箱里的「稍后」按钮会把条目安排到这一天。",
+      "properties": []
+    },
+    {
+      "role": "radio",
+      "name": "下周一",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "3 天后",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "7 天后",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "隐藏已完成的待办",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "在 Today 列表与悬浮面板中隐藏今天已完成的待办。",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "隐藏已完成的待办",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "一周从哪天开始",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "影响日历的周视图与月视图。",
+      "properties": []
+    },
+    {
+      "role": "radio",
+      "name": "周一",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "周日",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "集成",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "form",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "form",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "关于",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "更新",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "更新包经过签名校验；安装前会自动备份你的数据。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "检查更新",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "数据与诊断",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "导出诊断信息",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "把运行环境和最近的日志（已去除内容与令牌）打成一个压缩包，反馈问题时附上它。不包含你的笔记、待办、剪贴板和文件。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "导出诊断信息",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "导出笔记和待办",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "导出成普通文件，任何编辑器都能打开，包含来源信息。回收站里的不导出。",
+      "properties": []
+    },
+    {
+      "role": "MenuListPopup",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "导出",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "备份",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "把全部数据（含 Workflow 和设置）和你粘贴的图片打成一个压缩包。不包含你的原始文件，也不含任何密钥。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "创建备份",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "从备份恢复",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "选择一个备份包。恢复前会先自动备份当前数据，重启后生效；被替换的数据也会保留在数据目录里。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "选择备份…",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "通用",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "悬浮窗",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "快捷键",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "悬浮窗外观",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "通知",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "新手引导",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "日程",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "集成",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "关于",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "数据与诊断",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "通用",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "开机自动启动",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "语言",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "切换后立即生效。",
+      "properties": []
+    },
+    {
+      "role": "MenuListPopup",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "主题",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "跟随系统，或固定为浅色 / 深色。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "跟随系统",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "浅色",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "深色",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "悬浮窗",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "悬浮窗置顶",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "开启后悬浮窗始终显示在其他窗口上面。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "快捷键",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "快速创建快捷键",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "在任何应用里按下它，就能立刻写下一条待办。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "已生效",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "全局搜索快捷键",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "在任何应用里按下它，弹出搜索框，直接找到待办、笔记和提示。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "全局搜索：Ctrl+Alt+Space",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "已生效",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "预先准备全局搜索框",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "启动后在后台提前创建搜索框，第一次按快捷键时弹出得更快（约 0.3 秒 → 0.12 秒）；代价是常驻",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "多占约 90 MB 内存。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "悬浮窗外观",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "徽标形状",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "徽标形态",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收起时徽标的样子。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "胶囊",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "数字",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "圆点",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "圆角",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "面板的圆角大小。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "柔和",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "圆润",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "表面、强调色与透明度",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "强调色",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "用于徽标圆点、按钮和高亮。",
+      "properties": []
+    },
+    {
+      "role": "radio",
+      "name": "蓝",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "紫",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "青",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "玫红",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "琥珀",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "质感",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "通透带有柔和半透明，纯色则完全不透明。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "纯色",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "通透",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "窗口不透明度",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "调低后可以透出后面的内容。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "100%",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "恢复默认外观",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "还原为默认的样子。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "恢复",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "自定义皮肤",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "自定义皮肤",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "选择多张图片或像素图，会作为帧在收起的徽标上播放。最多 16 帧，会自动缩小；GIF 只取第一帧。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "无皮肤",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "添加图片…",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "移除皮肤",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "像素风模式",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "保持锐利的像素边缘而不做平滑，请在添加图片前开启。",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "像素风模式",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "显示数字",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "在皮肤旁保留剩余待办数。",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "显示数字",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "皮肤动画",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "播放方式",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "帧的播放方式。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "循环",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "往返",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "悬停时",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "静止",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "速度",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "每秒播放的帧数。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "6",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "附加动效",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "在图片上叠加的轻微动作。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "无",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "漂浮",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "呼吸",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "弹跳",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "通知",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "暂停通知",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "暂停期间不弹出提醒；到点的提醒不会丢，恢复后会汇总通知你。托盘菜单里也有这个开关。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "新手引导",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "新手引导",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "再看一遍拾序的基本用法。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "重新查看",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "日程",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "「稍后」是哪一天",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "悬浮窗和收集箱里的「稍后」按钮会把条目安排到这一天。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "下周一",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "3 天后",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "7 天后",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "隐藏已完成的待办",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "在 Today 列表与悬浮面板中隐藏今天已完成的待办。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "一周从哪天开始",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "影响日历的周视图与月视图。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "周一",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "周日",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "集成",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "GitHub",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "未连接",
+      "properties": []
+    },
+    {
+      "role": "textbox",
+      "name": "个人访问令牌",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Jira",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "未连接",
+      "properties": []
+    },
+    {
+      "role": "textbox",
+      "name": "Jira 地址",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "textbox",
+      "name": "个人访问令牌（PAT）",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "关于",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "更新",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "更新包经过签名校验；安装前会自动备份你的数据。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "检查更新",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "数据与诊断",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "导出诊断信息",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "把运行环境和最近的日志（已去除内容与令牌）打成一个压缩包，反馈问题时附上它。不包含你的笔",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "记、待办、剪贴板和文件。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "导出",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "导出笔记和待办",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "导出成普通文件，任何编辑器都能打开，包含来源信息。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回收站里的不导出。",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "JSON（完整）",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "Markdown（单个文件）",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "Markdown（每条一个文件）",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "导出",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "备份",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "把全部数据（含 Workflow 和设置）和你粘贴的图片打成一个压缩包。不包含你的原始文件，也",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "不含任何密钥。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "创建备份",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "从备份恢复",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "选择一个备份包。恢复前会先自动备份当前数据，重启后生效；被替换的数据也会保留在数据目",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "录里。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "选择备份…",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "简体中文",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "English",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "跟随系统",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "浅色",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "深色",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "徽标形状",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "徽标形态",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收起时徽标的样子。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "胶囊",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "数字",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "圆点",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "圆角",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "面板的圆角大小。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "柔和",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "圆润",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "表面、强调色与透明度",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "强调色",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "用于徽标圆点、按钮和高亮。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "质感",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "通透带有柔和半透明，纯色则完全不透明。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "纯色",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "通透",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "窗口不透明度",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "调低后可以透出后面的内容。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "恢复默认外观",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "还原为默认的样子。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "恢复",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "自定义皮肤",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "自定义皮肤",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "选择多张图片或像素图，会作为帧在收起的徽标上播放。最",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "多 16 帧，会自动缩小；GIF 只取第一帧。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "添加图片…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "移除皮肤",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "像素风模式",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "保持锐利的像素边缘而不做平滑，请在添加图片前开启。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "显示数字",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "在皮肤旁保留剩余待办数。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "皮肤动画",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "播放方式",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "帧的播放方式。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "循环",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "往返",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "悬停时",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "静止",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "速度",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "每秒播放的帧数。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "附加动效",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "在图片上叠加的轻微动作。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "无",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "漂浮",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "呼吸",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "弹跳",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "重新查看",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "下周一",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "3 天后",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "7 天后",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "周一",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "周日",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "GitHub",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "未连接",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "需要对你要捕获链接的仓库有读取权限的令牌。令牌保存在系统凭据库里，之后无法读回。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "连接",
+      "properties": [
+        {
+          "name": "disabled",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Jira",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "未连接",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Jira Cloud：账号邮箱 + API Token；自托管 Jira：个人访问令牌。保存在系统凭据库里，之后无法读回。",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "连接",
+      "properties": [
+        {
+          "name": "disabled",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "导出",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "创建备份",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "选择备份…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "胶囊",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "数字",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "圆点",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "柔和",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "圆润",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "纯色",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "通透",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "恢复",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "循环",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "往返",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "悬停时",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "静止",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "无",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "漂浮",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "呼吸",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "弹跳",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "需要对你要捕获链接的仓库有读取权限的令牌。令牌保存在系统凭据库里，之后无法读回。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "连接",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Jira Cloud：账号邮箱 + API Token；自托管 Jira：个人访问令牌。保存在系统凭据库里，之后无法读回。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "连接",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "连接",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "连接",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

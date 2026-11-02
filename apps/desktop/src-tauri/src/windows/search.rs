@@ -35,6 +35,12 @@ pub const SEARCH_HEIGHT: f64 = 440.0;
 /// 搜索窗口的最小高度（logical px）：只剩输入框一行。
 pub const SEARCH_MIN_HEIGHT: f64 = 56.0;
 
+/// 最窄仍可容纳命令入口、关键词与 Esc 的内容宽度；更窄时明确拒绝显示。
+pub const SEARCH_MIN_WIDTH: f64 = 240.0;
+
+/// 搜索窗口与工作区四边保留的逻辑像素。
+pub const SEARCH_MARGIN: f64 = 16.0;
+
 /// 把页面请求的高度限制在 [`SEARCH_MIN_HEIGHT`]..=[`SEARCH_HEIGHT`] 之内；不是有限数时用最大高度。
 #[must_use]
 pub fn fit_height(requested: f64) -> f64 {
@@ -61,26 +67,69 @@ pub struct WorkArea {
     pub height: u32,
 }
 
-/// 计算搜索窗口左上角的位置（物理像素）：水平居中、顶边在 [`TOP_RATIO`] 处，并保证完整位于工作区内。
+/// 适配后的逻辑尺寸与物理位置；只有原生适配器负责 DPI 换算。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SearchGeometry {
+    /// 内容宽度（logical px）。
+    pub width: f64,
+    /// 内容高度（logical px）。
+    pub height: f64,
+    /// 左边（physical px）。
+    pub x: i32,
+    /// 顶边（physical px）。
+    pub y: i32,
+}
+
+/// 工作区只转换一次到逻辑单位；尺寸与位置均受工作区约束。
+/// 无效缩放或连最小输入栏都放不下时返回 `None`。
+/// 顶边以该工作区的最大可用高度计算，不随页面内容来回移动。
 #[must_use]
-pub fn search_origin(area: WorkArea, scale: f64) -> (i32, i32) {
-    let width = SEARCH_WIDTH * scale;
-    let height = SEARCH_HEIGHT * scale;
-    let area_w = f64::from(area.width);
-    let area_h = f64::from(area.height);
-    let left = f64::from(area.x) + ((area_w - width) / 2.0).max(0.0);
-    let top_offset = (area_h * TOP_RATIO).min((area_h - height).max(0.0));
-    let top = f64::from(area.y) + top_offset;
+pub fn search_geometry(area: WorkArea, scale: f64, requested: f64) -> Option<SearchGeometry> {
+    if !scale.is_finite() || scale <= 0.0 {
+        return None;
+    }
+    let area_w = f64::from(area.width) / scale;
+    let area_h = f64::from(area.height) / scale;
+    if !area_w.is_finite() || !area_h.is_finite() {
+        return None;
+    }
+    let width = SEARCH_WIDTH.min(area_w - 2.0 * SEARCH_MARGIN);
+    let max_height = SEARCH_HEIGHT.min(area_h - 2.0 * SEARCH_MARGIN);
+    if width < SEARCH_MIN_WIDTH || max_height < SEARCH_MIN_HEIGHT {
+        return None;
+    }
+    let height = fit_height(requested).min(max_height);
+    let left = f64::from(area.x) + (area_w - width) * scale / 2.0;
+    let top_offset = (area_h * TOP_RATIO).clamp(
+        SEARCH_MARGIN,
+        (area_h - max_height - SEARCH_MARGIN).max(SEARCH_MARGIN),
+    );
+    let top = f64::from(area.y) + top_offset * scale;
     // 坐标远小于 i32 的范围，取整后转换不会溢出。
     #[allow(clippy::cast_possible_truncation)]
-    (left.round() as i32, top.round() as i32)
+    Some(SearchGeometry {
+        width,
+        height,
+        x: left.round() as i32,
+        y: top.round() as i32,
+    })
 }
 
 /// 搜索窗口的运行时状态（注册为 Tauri 托管状态）。
-#[derive(Default)]
 pub struct SearchWindowState {
     /// 前台窗口的记忆与还原；窗口创建之后才有。
     foreground: Mutex<Option<Arc<dyn ForegroundPort>>>,
+    /// 最新页面高度；显示器变化时重算尺寸，不要求页面重复发送相同请求。
+    requested_height: Mutex<f64>,
+}
+
+impl Default for SearchWindowState {
+    fn default() -> Self {
+        Self {
+            foreground: Mutex::new(None),
+            requested_height: Mutex::new(SEARCH_HEIGHT),
+        }
+    }
 }
 
 impl SearchWindowState {
@@ -154,14 +203,46 @@ pub fn release_prewarmed<R: Runtime>(app: &AppHandle<R>) {
     }
 }
 
-/// 按页面量出的内容高度（logical px）调整搜索窗口的高度，宽度与左上角不变；窗口还没创建时什么都不做。
-pub fn fit<R: Runtime>(app: &AppHandle<R>, height: f64) {
+/// CSS 内容高度乘渲染 DPR 再除显示器缩放；省略 DPR 的旧调用保留原生逻辑单位。
+#[must_use]
+pub fn content_height(height: f64, content_scale: Option<f64>, window_scale: f64) -> f64 {
+    let zoom = content_scale
+        .filter(|scale| scale.is_finite() && *scale > 0.0)
+        .filter(|_| window_scale.is_finite() && window_scale > 0.0)
+        .map_or(1.0, |scale| scale / window_scale);
+    fit_height(height * zoom)
+}
+
+/// 保存页面量出的内容高度，在当前工作区上约束；同一工作区内保持顶边稳定。
+pub fn fit<R: Runtime>(app: &AppHandle<R>, height: f64, content_scale: Option<f64>) {
+    let window_scale = app
+        .get_webview_window(SEARCH_WINDOW_LABEL)
+        .and_then(|window| window.scale_factor().ok())
+        .unwrap_or(1.0);
+    if let Some(state) = app.try_state::<SearchWindowState>() {
+        *state
+            .requested_height
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) =
+            content_height(height, content_scale, window_scale);
+    }
+    reflow(app);
+}
+
+/// DPI、移动或工作区变化时用当前显示器重新约束；不重新获取焦点、不重置页面。
+pub fn reflow<R: Runtime>(app: &AppHandle<R>) {
     let Some(window) = app.get_webview_window(SEARCH_WINDOW_LABEL) else {
         return;
     };
-    let size = LogicalSize::new(SEARCH_WIDTH, fit_height(height));
-    if let Err(error) = window.set_size(size) {
-        tracing::debug!(event = "search_window_fit_failed", %error, "调整搜索窗口高度失败");
+    let monitor = window
+        .current_monitor()
+        .ok()
+        .flatten()
+        .or_else(|| app.primary_monitor().ok().flatten());
+    if let Some(monitor) = monitor
+        && !apply_geometry(app, &window, &monitor)
+    {
+        dismiss(app, false);
     }
 }
 
@@ -199,6 +280,7 @@ fn create<R: Runtime>(
     )
     .title("Nivlo")
     .inner_size(SEARCH_WIDTH, SEARCH_HEIGHT)
+    .zoom_hotkeys_enabled(cfg!(target_os = "windows"))
     .decorations(false)
     // 不透明 + 系统阴影：Windows 11 上自动得到圆角与阴影，和系统其他浮层一致。
     .shadow(true)
@@ -235,7 +317,9 @@ fn create<R: Runtime>(
 
 /// 把窗口放到鼠标所在的显示器上、显示、聚焦，并通知页面重置输入。
 fn present<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) {
-    place(app, window);
+    if !place(app, window) {
+        return;
+    }
     if let Err(error) = window.show().and_then(|()| window.set_focus()) {
         tracing::warn!(event = "search_window_show_failed", %error, "显示搜索窗口失败");
         return;
@@ -247,15 +331,28 @@ fn present<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) {
 }
 
 /// 按鼠标所在的显示器（取不到时用主显示器）定位窗口。
-fn place<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) {
+fn place<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) -> bool {
     let monitor = app
         .cursor_position()
         .ok()
         .and_then(|cursor| app.monitor_from_point(cursor.x, cursor.y).ok().flatten())
         .or_else(|| app.primary_monitor().ok().flatten());
     let Some(monitor) = monitor else {
-        return;
+        tracing::warn!(
+            event = "search_work_area_unavailable",
+            "无法取得搜索窗口工作区"
+        );
+        return false;
     };
+    apply_geometry(app, window, &monitor)
+}
+
+/// 比较实际物理尺寸/位置再写入，避免 Moved / DPI / 页面测量事件相互触发调整循环。
+fn apply_geometry<R: Runtime>(
+    app: &AppHandle<R>,
+    window: &WebviewWindow<R>,
+    monitor: &tauri::Monitor,
+) -> bool {
     let rect = monitor.work_area();
     let area = WorkArea {
         x: rect.position.x,
@@ -263,10 +360,39 @@ fn place<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) {
         width: rect.size.width,
         height: rect.size.height,
     };
-    let (x, y) = search_origin(area, monitor.scale_factor());
-    if let Err(error) = window.set_position(PhysicalPosition::new(x, y)) {
+    let requested = app
+        .try_state::<SearchWindowState>()
+        .map_or(SEARCH_HEIGHT, |state| {
+            *state
+                .requested_height
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+        });
+    let scale = monitor.scale_factor();
+    let Some(bounds) = search_geometry(area, scale, requested) else {
+        tracing::warn!(
+            event = "search_work_area_unsupported",
+            ?area,
+            scale,
+            "工作区无法容纳搜索输入栏"
+        );
+        return false;
+    };
+    let position = PhysicalPosition::new(bounds.x, bounds.y);
+    if window.outer_position().ok() != Some(position)
+        && let Err(error) = window.set_position(position)
+    {
         tracing::debug!(event = "search_window_place_failed", %error, "定位搜索窗口失败");
+        return false;
     }
+    let size = LogicalSize::new(bounds.width, bounds.height).to_physical::<u32>(scale);
+    if window.inner_size().ok() != Some(size)
+        && let Err(error) = window.set_size(size)
+    {
+        tracing::debug!(event = "search_window_fit_failed", %error, "调整搜索窗口尺寸失败");
+        return false;
+    }
+    true
 }
 
 /// 窗口创建之后，装上前台窗口的记忆 / 还原（需要窗口句柄）。
@@ -300,23 +426,27 @@ mod tests {
     };
 
     #[test]
-    fn centred_horizontally_and_placed_high() {
-        let (x, y) = search_origin(FULL_HD, 1.0);
+    fn centred_horizontally_and_placed_high() -> Result<(), &'static str> {
+        let SearchGeometry { x, y, .. } = search_geometry(FULL_HD, 1.0, SEARCH_HEIGHT)
+            .ok_or("fixture work area supports the input bar")?;
         assert_eq!(x, (1920 - 640) / 2);
         assert_eq!(y, (1040.0 * TOP_RATIO).round() as i32);
+        Ok(())
     }
 
     #[test]
-    fn respects_the_scale_factor_and_monitor_offset() {
+    fn respects_the_scale_factor_and_monitor_offset() -> Result<(), &'static str> {
         let area = WorkArea {
             x: -2560,
             y: 100,
             width: 2560,
             height: 1400,
         };
-        let (x, y) = search_origin(area, 1.5);
+        let SearchGeometry { x, y, .. } = search_geometry(area, 1.5, SEARCH_HEIGHT)
+            .ok_or("fixture work area supports the input bar")?;
         assert_eq!(x, -2560 + (2560 - 960) / 2);
         assert_eq!(y, 100 + (1400.0 * TOP_RATIO).round() as i32);
+        Ok(())
     }
 
     #[test]
@@ -329,15 +459,129 @@ mod tests {
     }
 
     #[test]
-    fn stays_inside_a_short_work_area() {
+    fn content_zoom_is_separate_from_monitor_scale_and_legacy_units() {
+        assert_eq!(content_height(174.0, Some(1.25), 1.25), 174.0);
+        assert_eq!(content_height(174.0, Some(2.5), 1.25), 348.0);
+        assert_eq!(content_height(174.0, Some(4.0), 2.0), 348.0);
+        assert_eq!(content_height(300.0, Some(2.5), 1.25), SEARCH_HEIGHT);
+        assert_eq!(content_height(174.0, None, 1.25), 174.0);
+        assert_eq!(content_height(174.0, Some(f64::NAN), 1.25), 174.0);
+        assert_eq!(content_height(174.0, Some(2.5), 0.0), 174.0);
+    }
+
+    #[test]
+    fn stays_inside_a_short_work_area() -> Result<(), &'static str> {
         let area = WorkArea {
             x: 0,
             y: 0,
             width: 600,
             height: 460,
         };
-        let (x, y) = search_origin(area, 1.0);
-        assert_eq!(x, 0, "比窗口还窄时贴左边，不跑到屏幕外");
-        assert_eq!(y, 20, "顶边下移会让底边出界时上移");
+        let bounds = search_geometry(area, 1.0, SEARCH_HEIGHT)
+            .ok_or("fixture work area supports the input bar")?;
+        assert_eq!(
+            bounds,
+            SearchGeometry {
+                x: 16,
+                y: 16,
+                width: 568.0,
+                height: 428.0
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn narrow_mixed_dpi_work_areas_bound_size_and_position() {
+        for scale in [1.0, 1.25, 1.5, 2.0] {
+            for (width, height) in [(1920, 1040), (600, 460), (480, 240), (272, 88)] {
+                let area = WorkArea {
+                    x: -2560,
+                    y: 120,
+                    width,
+                    height,
+                };
+                let Some(bounds) = search_geometry(area, scale, 5000.0) else {
+                    assert!(
+                        f64::from(width) / scale < SEARCH_MIN_WIDTH + 32.0
+                            || f64::from(height) / scale < SEARCH_MIN_HEIGHT + 32.0
+                    );
+                    continue;
+                };
+                assert!(bounds.width >= SEARCH_MIN_WIDTH && bounds.width <= SEARCH_WIDTH);
+                assert!(bounds.height >= SEARCH_MIN_HEIGHT && bounds.height <= SEARCH_HEIGHT);
+                let margin = SEARCH_MARGIN * scale;
+                assert!(f64::from(bounds.x - area.x) >= margin - 0.5);
+                assert!(f64::from(bounds.y - area.y) >= margin - 0.5);
+                assert!(
+                    f64::from(bounds.x - area.x) + (bounds.width * scale).round()
+                        <= f64::from(width) - margin + 1.0
+                );
+                assert!(
+                    f64::from(bounds.y - area.y) + (bounds.height * scale).round()
+                        <= f64::from(height) - margin + 1.0
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn fitting_content_does_not_shift_the_anchor_or_alternate_sizes() -> Result<(), &'static str> {
+        let area = WorkArea {
+            x: 50,
+            y: -700,
+            width: 780,
+            height: 600,
+        };
+        let original = search_geometry(area, 1.5, SEARCH_HEIGHT)
+            .ok_or("fixture work area supports the input bar")?;
+        for height in [56.0, 120.0, 440.0, f64::NAN, 800.0] {
+            let bounds = search_geometry(area, 1.5, height)
+                .ok_or("fixture work area supports the input bar")?;
+            assert_eq!(
+                (bounds.x, bounds.y, bounds.width),
+                (original.x, original.y, original.width)
+            );
+            assert_eq!(Some(bounds), search_geometry(area, 1.5, bounds.height));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn unsupported_work_areas_and_invalid_scales_are_explicit() -> Result<(), &'static str> {
+        for scale in [0.0, -1.0, f64::NAN, f64::INFINITY, f64::MIN_POSITIVE] {
+            assert_eq!(search_geometry(FULL_HD, scale, SEARCH_HEIGHT), None);
+        }
+        for (width, height) in [(271, 1000), (1920, 87), (0, 0)] {
+            assert_eq!(
+                search_geometry(
+                    WorkArea {
+                        x: 0,
+                        y: 0,
+                        width,
+                        height
+                    },
+                    1.0,
+                    SEARCH_HEIGHT
+                ),
+                None
+            );
+        }
+        assert_eq!(
+            search_geometry(
+                WorkArea {
+                    x: 0,
+                    y: 0,
+                    width: 272,
+                    height: 88
+                },
+                1.0,
+                1.0
+            )
+            .ok_or("fixture work area supports the input bar")?
+            .height,
+            SEARCH_MIN_HEIGHT
+        );
+        Ok(())
     }
 }

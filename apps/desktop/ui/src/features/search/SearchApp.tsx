@@ -32,7 +32,10 @@ export function SearchApp() {
     setSession((current) => current + 1);
   }, [queryClient]);
 
-  const fit = useCallback((height: number) => void ipc.fitSearch(height), []);
+  const fit = useCallback(
+    (height: number) => void ipc.fitSearch(height, window.devicePixelRatio),
+    [],
+  );
 
   useEffect(() => ipc.subscribeSearchWindowShown(reset), [reset]);
   useEffect(() => {

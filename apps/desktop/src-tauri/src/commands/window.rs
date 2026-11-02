@@ -108,11 +108,12 @@ pub async fn hide_search<R: Runtime>(app: AppHandle<R>) {
     crate::windows::search::dismiss(&app, true);
 }
 
-/// 全局搜索框：按内容的自然高度（logical px）调整窗口高度，结果少时窗口变矮；后端会限制在允许的范围内。
+/// 全局搜索框：按内容自然高度调整；可选渲染比例将 CSS px 换算为原生 logical px。
+/// 旧调用省略 `content_scale` 时保留原来的原生 logical px 语义。
 #[tauri::command]
 #[specta::specta]
-pub async fn fit_search<R: Runtime>(app: AppHandle<R>, height: f64) {
-    crate::windows::search::fit(&app, height);
+pub async fn fit_search<R: Runtime>(app: AppHandle<R>, height: f64, content_scale: Option<f64>) {
+    crate::windows::search::fit(&app, height, content_scale);
 }
 
 /// 取走悬浮窗请求主窗口打开的视图（主窗口启动时调用一次）；没有请求时为 `None`。
@@ -165,13 +166,14 @@ fn grab_aligned_position(
 ///
 /// 系统的拖动以它接手那一刻的光标为基准；那时光标已经移过了判定阈值，还可能在 IPC 期间继续移动。
 /// 给了 `grab`（按下的位置）时，先把窗口挪到「按下的那一点在光标下」再交给系统，徽标不会从光标下滑开。
+/// 同步 Command 在 UI 线程执行：读取光标、对齐与开始拖动不能分成跨线程排队的窗口消息。
 ///
 /// # Errors
 ///
 /// `grab` 不合法返回 `INVALID_INPUT`；系统无法开始拖动（窗口已销毁等）时返回 `WINDOW_UNAVAILABLE`。
 #[tauri::command]
 #[specta::specta]
-pub async fn start_floating_drag<R: Runtime>(
+pub fn start_floating_drag<R: Runtime>(
     window: WebviewWindow<R>,
     grab: Option<DragGrabPoint>,
 ) -> Result<(), IpcError> {

@@ -1,0 +1,3188 @@
+{
+  "samples": [
+    {
+      "text": "Navigation",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Automation",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Automation",
+      "tag": "H1",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Rules",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 11.946,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Recent runs",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Import",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "New rule",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Captured content goes to the first matching rule: the higher priority number matches first, and the more specific rule wins a tie. Built-in ",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Built-in",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "On",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 5.666,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Web pages (fill in title and summary)",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 11.946,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "A URL becomes a note right away; the page title and summary are read in the background and filled in. If that fails or you're offline, the n",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 5.666,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "−",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 11.946,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "1",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 11.946,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "+",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 11.946,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "On",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Files",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Each captured file (several at once is fine) becomes a note. Only a reference is kept; the file is not copied.",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "−",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "+",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "On",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Images",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Captured images (such as pasted screenshots) become notes with the image saved as an attachment.",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "−",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "+",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "On",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Text",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Captured text becomes a to-do: the first line is the title, multi-line text goes into the description, and it waits in the Inbox to be sorte",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "−",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "+",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Web links",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Web pages (fill in title and summary)",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "builtin.web-page",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "✕",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "A URL becomes a note right away; the page title and summary are read in the background and filled in. If that fails or you're offline, the n",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Built-in rules can't be edited directly. Click “Duplicate” to get a copy; the copy has a higher priority, so it takes effect before the orig",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 11.946,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Matches",
+      "tag": "DT",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "input.type equals url",
+      "tag": "DD",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 400,
+    "height": 600,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "banner",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "main",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Navigation",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Automation",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Automation",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Automation",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Automation",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "tablist",
+      "name": "Automation sections",
+      "properties": [
+        {
+          "name": "multiselectable",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "horizontal"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Import",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "New rule",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Built-in",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "list",
+      "name": "Built-in",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Mine",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "DescriptionList",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Duplicate",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Export",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "region",
+      "name": "Dry run",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Automation",
+      "properties": []
+    },
+    {
+      "role": "tab",
+      "name": "Rules",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "tab",
+      "name": "Recent runs",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Import",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "New rule",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Captured content goes to the first matching rule: the higher priority number matches first, and the more specific rule wins a tie. Built-in rules are read-only — duplicate one to customize it.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Built-in",
+      "properties": []
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Mine",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "None yet. Pick a built-in rule and click “Duplicate” to start customizing.",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Web pages (fill in title and summary)",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Close",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "A URL becomes a note right away; the page title and summary are read in the background and filled in. If that fails or you're offline, the note keeps its “domain/path” title.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Built-in rules can't be edited directly. Click “Duplicate” to get a copy; the copy has a higher priority, so it takes effect before the original.",
+      "properties": []
+    },
+    {
+      "role": "term",
+      "name": "Matches",
+      "properties": []
+    },
+    {
+      "role": "definition",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "term",
+      "name": "Priority",
+      "properties": []
+    },
+    {
+      "role": "definition",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "{\n  \"schemaVersion\": 1,\n  \"id\": \"builtin.web-page\",\n  \"name\": \"网页（补全标题和摘要）\",\n  \"description\": \"网址先立刻变成笔记，随后在后台读取网页的标题和摘要补全进去。读取失败或没有网络时，笔记保持「域名/路径」标题，不受影响。\",\n  \"version\": 1,\n  \"priority\": 1,\n  \"enabled\": true,\n  \"source\": \"builtin\",\n  \"matcher\": {\n    \"field\": \"input.type\",\n    \"op\": \"equals\",\n    \"value\": \"url\"\n  },\n  \"permissions\": {\n    \"network\": true,\n    \"hosts\": [\n      \"*\"\n    ]\n  },\n  \"steps\": [\n    {\n      \"type\": \"http\",\n      \"url\": \"{{ input.url }}\",\n      \"into\": \"page\",\n      \"optional\": true\n    },\n    {\n      \"type\": \"htmlMeta\",\n      \"from\": \"vars.page\",\n      \"into\": \"meta\",\n      \"optional\": true\n    },\n    {\n      \"type\": \"createItem\",\n      \"itemType\": \"note\",\n      \"title\": \"{{ vars.meta_title | default(input.title) | truncate(120) }}\",\n      \"content\": \"{{ input.url }}\",\n      \"inInbox\": true\n    }\n  ]\n}",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Duplicate",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Export",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Dry run",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 3
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "combobox",
+      "name": "Sample type",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "textbox",
+      "name": "Sample",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Dry run",
+      "properties": [
+        {
+          "name": "disabled",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Automation",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Rules",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Recent runs",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Import",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "New rule",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Captured content goes to the first matching rule: the higher ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "priority number matches first, and the more specific rule wins ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "a tie. Built-in rules are read-only — duplicate one to customize ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "it.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Built-in",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Enable Web pages (fill in title and summary)",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Web pages (fill in title and summary) A URL becomes a note right away; the page title and summary are read in the background and filled in. If that fails or you're offline, the note keeps its “domain/path” title.",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Priority of Web pages (fill in title and summary)",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Enable Files",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Files Each captured file (several at once is fine) becomes a note. Only a reference is kept; the file is not copied.",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Priority of Files",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Enable Images",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Images Captured images (such as pasted screenshots) become notes with the image saved as an attachment.",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Priority of Images",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Enable Text",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Text Captured text becomes a to-do: the first line is the title, multi-line text goes into the description, and it waits in the Inbox to be sorted.",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Priority of Text",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Enable Web links",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Web links Captured URLs become notes titled “domain/path”, with the URL in the content, waiting in the Inbox to be sorted.",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Priority of Web links",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Mine",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "None yet. Pick a built-in rule and click “Duplicate” to ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "start customizing.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Web pages (fill in title and summary)",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "builtin.web-page",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "✕",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "A URL becomes a note right away; the page title and ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "summary are read in the background and filled in. If ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "that fails or you're offline, the note keeps its ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "“domain/path” title.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Built-in rules can't be edited directly. Click ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "“Duplicate” to get a copy; the copy has a higher ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "priority, so it takes effect before the original.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Matches",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "input.type equals url",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Priority",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "{",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"schemaVersion\": 1,",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"id\": \"builtin.web-page\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"name\": \"网页（补全标题和摘要）\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"description\": \"网址先立刻变成笔记，随后在后台读取网页的标题和摘要补全进去。读取失败或没有网络时，笔记保持「域名/路径」标题，不受影响。\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"version\": 1,",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"priority\": 1,",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"enabled\": true,",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"source\": \"builtin\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"matcher\": {",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    \"field\": \"input.type\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    \"op\": \"equals\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    \"value\": \"url\"",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  },",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"permissions\": {",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    \"network\": true,",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    \"hosts\": [",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"*\"",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    ]",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  },",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  \"steps\": [",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    {",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"type\": \"http\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"url\": \"{{ input.url }}\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"into\": \"page\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"optional\": true",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    },",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    {",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"type\": \"htmlMeta\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"from\": \"vars.page\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"into\": \"meta\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"optional\": true",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    },",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    {",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"type\": \"createItem\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"itemType\": \"note\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"title\": \"{{ vars.meta_title | default(input.title) | truncate(120) }}\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"content\": \"{{ input.url }}\",",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "      \"inInbox\": true",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "    }",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "  ]",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "}",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Duplicate",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Export",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Dry run",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Enter a sample to see what this rule would create. Nothing is created and no run record is kept.",
+      "properties": []
+    },
+    {
+      "role": "MenuListPopup",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Dry run",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Rules",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Recent runs",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Web pages (fill in title and summary)",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "A URL becomes a note right away; the page title and summary are read in the background and filled in. If that fails or you're offline, the note keeps its “domain/path” title.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Lower the priority of Web pages (fill in title and summary)",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Raise the priority of Web pages (fill in title and summary)",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Files",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Each captured file (several at once is fine) becomes a note. Only a reference is kept; the file is not copied.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Lower the priority of Files",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Raise the priority of Files",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Images",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Captured images (such as pasted screenshots) become notes with the image saved as an attachment.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Lower the priority of Images",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Raise the priority of Images",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Text",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Captured text becomes a to-do: the first line is the title, multi-line text goes into the description, and it waits in the Inbox to be sorted.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Lower the priority of Text",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Raise the priority of Text",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "On",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Web links",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Captured URLs become notes titled “domain/path”, with the URL in the content, waiting in the Inbox to be sorted.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Lower the priority of Web links",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Raise the priority of Web links",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Web pages (fill in title and summary)",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "builtin.web-page",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "✕",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Matches",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "input.type equals url",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Priority",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Dry run",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Enter a sample to see what this rule would create. Nothing is ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "created and no run record is kept.",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "Text / URL",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "File path",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Dry run",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Web pages (fill in title and ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "summary)",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "A URL becomes a note right away; ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "the page title and summary are ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "read in the background and filled ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "in. If that fails or you're offline, the ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "note keeps its “domain/path” title.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Files",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Each captured file (several at once ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "is fine) becomes a note. Only a ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "reference is kept; the file is not ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "copied.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Images",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Captured images (such as pasted ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "screenshots) become notes with ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "the image saved as an attachment.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Text",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Captured text becomes a to-do: the ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "first line is the title, multi-line text ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "goes into the description, and it ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "waits in the Inbox to be sorted.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Web links",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Captured URLs become notes titled ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "“domain/path”, with the URL in the ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "“domain/path”, with the URL in th",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "content, waiting in the Inbox to be ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "sorted.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "−",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

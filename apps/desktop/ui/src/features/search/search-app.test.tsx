@@ -29,6 +29,25 @@ function input(): HTMLElement {
 }
 
 describe("全局搜索窗口", () => {
+  it("内容缩放改变但自然高度不变时，重新报告渲染比例并保留搜索输入", async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, "devicePixelRatio");
+    try {
+      Object.defineProperty(window, "devicePixelRatio", { value: 1.25, configurable: true });
+      const ipc = createMemoryIpc();
+      const fit = vi.spyOn(ipc, "fitSearch");
+      renderWithProviders(<SearchApp />, ipc);
+      await waitFor(() => expect(fit).toHaveBeenLastCalledWith(expect.any(Number), 1.25));
+      fireEvent.change(input(), { target: { value: "保留缩放草稿" } });
+      Object.defineProperty(window, "devicePixelRatio", { value: 2.5, configurable: true });
+      fireEvent(window, new Event("resize"));
+      await waitFor(() => expect(fit).toHaveBeenLastCalledWith(expect.any(Number), 2.5));
+      expect(input()).toHaveValue("保留缩放草稿");
+      expect(input()).toHaveFocus();
+    } finally {
+      if (descriptor) Object.defineProperty(window, "devicePixelRatio", descriptor);
+    }
+  });
+
   it("输入框自动聚焦；还没有任何条目时提示回车会在主窗口打开", async () => {
     renderWithProviders(<SearchApp />, createMemoryIpc());
     expect(input()).toHaveFocus();

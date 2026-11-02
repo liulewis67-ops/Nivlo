@@ -3,7 +3,7 @@ import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { useShortcutQuery } from "@/features/shortcut";
-import { trapTab } from "@/lib/focus-trap";
+import { trapTab, restoreModalFocus } from "@/lib/focus-trap";
 import type { ShortcutActionDto } from "@/lib/ipc";
 
 /** [`ShortcutsDialog`] 的 Props。 */
@@ -21,6 +21,7 @@ const SECTIONS: readonly Section[] = [
     title: "shortcuts.section.main",
     rows: [
       ["Ctrl+K", "shortcuts.main.search"],
+      ["Ctrl+ + / − / 0", "shortcuts.main.zoom"],
       ["Ctrl+1 … 5", "shortcuts.main.views"],
       ["Ctrl+,", "shortcuts.main.settings"],
       ["Ctrl+Z", "shortcuts.main.undo"],
@@ -180,8 +181,9 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
     // 聚焦对话框本身（而不是底部的「关闭」按钮），打开时停在顶部，不会滚到最后一组。
     dialogRef.current?.focus();
     const target = previouslyFocused.current;
+    const surface = dialogRef.current;
     return () => {
-      if (target instanceof HTMLElement) target.focus();
+      restoreModalFocus(target, surface);
     };
   }, []);
 

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components";
 import { useShortcutQuery } from "@/features/shortcut";
 import { cx } from "@/lib/cx";
-import { trapTab } from "@/lib/focus-trap";
+import { trapTab, restoreModalFocus } from "@/lib/focus-trap";
 
 /** 引导一共几步。 */
 export const ONBOARDING_STEPS = 4;
@@ -114,6 +114,12 @@ export function OnboardingDialog({ onFinish }: OnboardingDialogProps) {
   const search = useShortcutQuery("search").data;
   const primaryRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const origin = useRef(document.activeElement);
+  useEffect(() => {
+    const surface = dialogRef.current;
+    const opener = origin.current;
+    return () => restoreModalFocus(opener, surface);
+  }, []);
   const last = step === ONBOARDING_STEPS - 1;
 
   // 每次换步，焦点回到主按钮，键盘用户可以连续按 Enter。

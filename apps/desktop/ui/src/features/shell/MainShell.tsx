@@ -83,7 +83,7 @@ function NavButton({ view, isActive, count, onSelect, shortcut }: NavButtonProps
         <span
           className={cx(
             "min-w-5 rounded-full px-1.5 text-center text-xs tabular-nums",
-            isActive ? "bg-primary-contrast/20" : "bg-surface-hover text-muted",
+            isActive ? "bg-primary-contrast text-primary" : "bg-surface-hover text-muted",
           )}
         >
           {count}
@@ -116,6 +116,12 @@ export function MainShell() {
   const [searching, setSearching] = useState(false);
   /** 键盘快捷键一览是否打开。 */
   const [showingShortcuts, setShowingShortcuts] = useState(false);
+  const settings = useQuery({
+    queryKey: queryKeys.appSettings(),
+    queryFn: () => ipc.getAppSettings(),
+    staleTime: Infinity,
+  });
+  const onboarding = settings.data?.onboardingCompleted === false;
   const shellRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const navTriggerRef = useRef<HTMLButtonElement>(null);
@@ -123,8 +129,9 @@ export function MainShell() {
   const width = useContainerWidth(shellRef);
   const compact = width < LAYOUT.compactShell;
   const detailSheet = openId !== null && width < LAYOUT.dockedDetail;
-  const detailModal = detailSheet && !searching && !showingShortcuts;
-  const navModal = compact && navigationOpen && !detailModal && !searching && !showingShortcuts;
+  const detailModal = detailSheet && !searching && !showingShortcuts && !onboarding;
+  const navModal =
+    compact && navigationOpen && !detailModal && !searching && !showingShortcuts && !onboarding;
   /** 选择当前页面也要退出导航抽屉，避免把本页留在遮罩后。 */
   function selectView(target: MainView): void {
     setView(target);
@@ -148,11 +155,6 @@ export function MainShell() {
   }, [navModal]);
   useUpdateCheckOnStart();
   const queryClient = useQueryClient();
-  const settings = useQuery({
-    queryKey: queryKeys.appSettings(),
-    queryFn: () => ipc.getAppSettings(),
-    staleTime: Infinity,
-  });
 
   const notificationsPaused = settings.data?.notificationsPaused ?? false;
   const searchShortcut = useShortcutQuery("search").data;
@@ -272,10 +274,12 @@ export function MainShell() {
      * @param event 键盘事件。
      */
     function handleKeyDown(event: KeyboardEvent): void {
+      if (event.defaultPrevented || event.isComposing || onboarding) return;
       const command = (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
       const position = Number.parseInt(event.key, 10);
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setShowingShortcuts(false);
         setSearching((open) => !open);
       } else if (command && position >= 1 && position <= NAV_VIEWS.length) {
         event.preventDefault();
@@ -300,12 +304,13 @@ export function MainShell() {
       ) {
         // 「?」打开快捷键一览（常见的约定）；正在输入时它只是一个问号。
         event.preventDefault();
+        setSearching(false);
         setShowingShortcuts(true);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setView]);
+  }, [setView, onboarding]);
 
   // 悬浮窗请求打开某个视图：窗口刚创建时从后端取走待处理的请求，已经在运行时由事件通知。
   useEffect(() => {
@@ -345,7 +350,7 @@ export function MainShell() {
       >
         <header
           hidden={!compact}
-          inert={detailModal || navModal || searching || showingShortcuts}
+          inert={detailModal || navModal || searching || showingShortcuts || onboarding}
           className={cx(
             "col-span-full items-center gap-3 border-b border-border bg-surface px-3 py-2",
             compact ? "flex" : "hidden",
@@ -381,7 +386,7 @@ export function MainShell() {
           role={navModal ? "dialog" : undefined}
           aria-modal={navModal ? true : undefined}
           aria-label={navModal ? t("shell.navigation") : undefined}
-          inert={detailModal || searching || showingShortcuts}
+          inert={detailModal || searching || showingShortcuts || onboarding}
           onKeyDown={(event) => {
             if (!navModal || event.defaultPrevented) return;
             if (event.key === "Escape") {
@@ -462,7 +467,7 @@ export function MainShell() {
           </div>
         </aside>
         <main
-          inert={detailModal || navModal || searching || showingShortcuts}
+          inert={detailModal || navModal || searching || showingShortcuts || onboarding}
           className="row-start-2 min-h-0 min-w-0 overflow-hidden"
         >
           {view === "inbox" && <InboxPage />}
@@ -479,7 +484,7 @@ export function MainShell() {
           {view === "settings" && <SettingsPage />}
           {view === "calendar" && <CalendarPage />}
         </main>
-        {settings.data?.onboardingCompleted === false && (
+        {onboarding && (
           <OnboardingDialog
             onFinish={() => {
               // 先在界面上收起，再保存；保存失败也不会再次弹出打扰（下次启动才会重试）。
@@ -491,21 +496,23 @@ export function MainShell() {
             }}
           />
         )}
-        {searching && (
+        {searching && !onboarding && (
           <CommandPalette
             onClose={() => setSearching(false)}
             onOpenItem={setOpenId}
             commands={paletteCommands}
           />
         )}
-        {showingShortcuts && <ShortcutsDialog onClose={() => setShowingShortcuts(false)} />}
+        {showingShortcuts && !onboarding && (
+          <ShortcutsDialog onClose={() => setShowingShortcuts(false)} />
+        )}
         {openId !== null && (
           <ItemDetailPanel
             key={openId}
             id={openId}
             onClose={() => setOpenId(null)}
             modal={detailSheet}
-            suspended={searching || showingShortcuts}
+            suspended={searching || showingShortcuts || onboarding}
           />
         )}
       </div>

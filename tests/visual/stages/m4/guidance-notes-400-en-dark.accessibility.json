@@ -1,0 +1,1265 @@
+{
+  "samples": [
+    {
+      "text": "Navigation",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Notes",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Notes",
+      "tag": "H1",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "+ New note",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        11,
+        16,
+        32,
+        1
+      ],
+      "background": [
+        91,
+        141,
+        239,
+        1
+      ],
+      "ratio": 5.861,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Filter notes",
+      "tag": "INPUT",
+      "placeholder": true,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "季度 报告 final.pdf",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 11.973,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 seconds",
+      "tag": "TIME",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 5.678,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "No content",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 5.678,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "https://www.example.com/blog/local-first-software",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 seconds",
+      "tag": "TIME",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "No content",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "读书笔记：Local-first",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 seconds",
+      "tag": "TIME",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "No content",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 characters",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Plain text",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Markdown",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Archive",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Delete",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "季度 报告 final.pdf",
+      "tag": "INPUT",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 400,
+    "height": 600,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "banner",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "main",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Navigation",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Notes",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Notes",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Notes",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "list",
+      "name": "Note list",
+      "properties": []
+    },
+    {
+      "role": "article",
+      "name": "Note editor",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Notes",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "+ New note",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+N"
+          }
+        }
+      ]
+    },
+    {
+      "role": "searchbox",
+      "name": "Filter notes",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+F"
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "textbox",
+      "name": "Title",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "textbox",
+      "name": "Description",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Notes",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+ New note",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "季度 报告 final.pdf 0 seconds No content",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "https://www.example.com/blog/local-first-software 0 seconds No content",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "读书笔记：Local-first 0 seconds No content",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "0 characters",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Format",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Archive",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Delete",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Notes",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+ New note",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "time",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "No content",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "time",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "No content",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "time",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "No content",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 characters",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Plain text",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Markdown",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Archive",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Delete",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "季度 报告 final.pdf",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "0 seconds",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "No content",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "https://www.example.com/blog/local-first",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "0 seconds",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "No content",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "0 seconds",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "No content",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Plain text",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Markdown",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Archive",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Delete",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "季度 报告 final.pdf",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 seconds",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 seconds",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 seconds",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Plain text",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Markdown",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

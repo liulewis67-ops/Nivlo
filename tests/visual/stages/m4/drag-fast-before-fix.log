@@ -1,0 +1,5 @@
+  … 1 应用启动
+  … 1 Hover 悬浮窗
+  … 1 打开主窗口
+  … 1 isolated native badge drag
+✗ 第 1 次：[isolated native badge drag] 徽标没有落在松手的位置：开始 {"scale":1.25,"x":1840,"y":77.5,"w":80,"h":41.25,"right":1920,"panel":false}，现在 {"scale":1.25,"x":1840,"y":77.5,"w":80,"h":41.25,"right":1920,"panel":false}（应移动 375px）；指针记录 [{"type":"pointermove","x":32,"y":16,"buttons":0,"target":"circle"},{"type":"pointerdown","x":32,"y":16,"buttons":1,"target":"circle"},{"type":"pointermove","x":32,"y":16,"buttons":1,"target":"circle"},{"type":"pointermove","x":-17.600000381469727,"y":16,"buttons":1,"target":"HTML"},{"type":"pointermove","x":-68,"y":16,"buttons":1,"target":"HTML"},{"type":"pointermove","x":-117.5999984741211,"y":16,"buttons":1,"target":"HTML"},{"type":"pointermove","x":-168,"y":16,"buttons":1,"target":"HTML"},{"type":"pointermove","x":-217.60000610351562,"y":16,"buttons":1,"target":"HTML"},{"type":"pointermove","x":-268,"y":16,"buttons":1,"target":"HTML"},{"type":"pointerup","x":-268,"y":16,"buttons":0,"target":"HTML"}]

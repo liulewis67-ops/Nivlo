@@ -1,0 +1,2021 @@
+{
+  "samples": [
+    {
+      "text": "拾序",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "搜索",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Ctrl K",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "收集箱",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "3",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "今天",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "3",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "日历",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "笔记",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "background": [
+        37,
+        99,
+        235,
+        1
+      ],
+      "ratio": 5.169,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "项目",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "开发控制台",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "自动化",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "回收站",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "设置",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "快速创建：Ctrl+Shift+Space",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "主题 · 浅色",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "笔记",
+      "tag": "H1",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "+ 新笔记",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "background": [
+        37,
+        99,
+        235,
+        1
+      ],
+      "ratio": 5.169,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "筛选笔记",
+      "tag": "INPUT",
+      "placeholder": true,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "季度 报告 final.pdf",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 14.331,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 秒",
+      "tag": "TIME",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 5.172,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "没有内容",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 5.172,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "https://www.example.com/blog/local-first-software",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 秒",
+      "tag": "TIME",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "没有内容",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "读书笔记：Local-first",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 秒",
+      "tag": "TIME",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "没有内容",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "0 字",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "纯文本",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Markdown",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "归档",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "删除",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "季度 报告 final.pdf",
+      "tag": "INPUT",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 960,
+    "height": 640,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "complementary",
+      "name": "",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "main",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "拾序",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "搜索 Ctrl K",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "navigation",
+      "name": "主导航",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "自动化",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "回收站",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "设置",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+,"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "主题 · 浅色",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "region",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "拾序",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "搜索",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "收集箱 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+1"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "今天 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+2"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "日历",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+3"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "笔记",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+4"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "项目",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+5"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "开发控制台",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "自动化",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "主题 · 浅色",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "list",
+      "name": "笔记列表",
+      "properties": []
+    },
+    {
+      "role": "article",
+      "name": "笔记编辑区",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "搜索",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Ctrl K",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "日历",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "项目",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "开发控制台",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "自动化",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "主题 · 浅色",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "笔记",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "+ 新笔记",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+N"
+          }
+        }
+      ]
+    },
+    {
+      "role": "searchbox",
+      "name": "筛选笔记",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+F"
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "textbox",
+      "name": "标题",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "textbox",
+      "name": "描述",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl K",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "日历",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "项目",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "开发控制台",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+ 新笔记",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "季度 报告 final.pdf 0 秒 没有内容",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "https://www.example.com/blog/local-first-software 0 秒 没有内容",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "读书笔记：Local-first 0 秒 没有内容",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "0 字",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "格式",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "归档",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "删除",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+ 新笔记",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "time",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "没有内容",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "time",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "没有内容",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "time",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "没有内容",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 字",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "纯文本",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Markdown",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "归档",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "删除",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "季度 报告 final.pdf",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "0 秒",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "没有内容",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "https://www.example.com/blo",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "0 秒",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "没有内容",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "0 秒",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "没有内容",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "纯文本",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Markdown",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "归档",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "删除",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "季度 报告 final.pdf",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 秒",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 秒",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "0 秒",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "纯文本",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Markdown",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

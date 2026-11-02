@@ -5,6 +5,9 @@
 // 从命令打开主窗口的视图。
 //
 // 用法：node tests/e2e/e2e.mjs [--runs N] [--native]    需要先构建：pnpm tauri build --no-bundle（仅 Windows / WebView2）
+// M4 evidence: --native --runs 3 --warm-runs 20 --zoom --badge-matrix
+// Saves native screenshots, source/executable hashes and timings under tests/visual/stages/m4/native.
+// Focused native repros: --native --zoom-only / --ole-only / --badge-only.
 // --native：额外用真实按键（SendInput）按全局快捷键，检查全局搜索框的原生行为（出现、拿到键盘焦点、位置、
 // Esc 隐藏、再次出现时是干净的）。会向系统发送一次 Ctrl+Alt+Shift+F9（被测程序注册的组合，别的程序收不到），
 // 所以默认不跑，CI 也不跑。
@@ -16,12 +19,29 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
+import { PNG } from "pngjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const EXE = process.env.NIVLO_EXE ?? join(ROOT, "target", "release", process.platform === "win32" ? "nivlo-desktop.exe" : "nivlo-desktop");
 const PORT = 9244;
 const RUNS = Number(process.argv[process.argv.indexOf("--runs") + 1]) || 1;
 const NATIVE = process.argv.includes("--native");
+const WARM_RUNS = process.argv.includes("--warm-runs") ? Math.max(0,Number(process.argv[process.argv.indexOf("--warm-runs")+1])||0) : 0;
+const DRAG_ONLY = process.argv.includes("--drag-only");
+const DRAG_STEPS = process.argv.includes("--drag-steps") ? Math.max(1,Number(process.argv[process.argv.indexOf("--drag-steps")+1])||6) : 6;
+const SEARCH_ZOOM_ONLY = process.argv.includes("--search-zoom-only");
+const OLE_ONLY = process.argv.includes("--ole-only");
+const BADGE_ONLY = process.argv.includes("--badge-only");
+const ZOOM_ONLY = process.argv.includes("--zoom-only");
+const CHECK_ZOOM = process.argv.includes("--zoom") || ZOOM_ONLY;
+const BADGE_MATRIX = process.argv.includes("--badge-matrix") || BADGE_ONLY;
+const warmActivations = [];
+const zoomRecords = [];
+const badgeRecords = [];
+const runtimeEnvironments = [];
+const EVIDENCE = join(ROOT,'tests','visual','stages','m4','native');
+if (CHECK_ZOOM || WARM_RUNS || BADGE_MATRIX || SEARCH_ZOOM_ONLY) mkdirSync(EVIDENCE,{recursive:true});
 /** --native 测得的唤出耗时（毫秒）：从按键发出到输入框拿到焦点。 */
 const hotkeyTimings = { first: [], again: [] };
 /** Quick Create 从点「+ 待办」/ 按快捷键到输入框可以打字（毫秒），实施计划 1.5「Hover → Enter 3 秒内」里系统自己的那部分。 */
@@ -67,11 +87,10 @@ function realMouse(x, y, click = false) {
 }
 
 /**
- * 用真实鼠标从 `from` 拖到 `to`（物理像素）：按下、分 12 步移动、停一下再松开。
+ * 用真实鼠标从 `from` 拖到 `to`（物理像素）：默认分 12 步；快速拖动复现用 6 步。
  * 整个过程在一次 PowerShell 里完成（每次启动 PowerShell 约 2 秒，分开调用会让拖动停顿太久）。
  */
-function realDrag(from, to) {
-  const steps = 12;
+function realDrag(from, to, steps = 12) {
   const moves = Array.from({ length: steps }, (_, i) => {
     const t = (i + 1) / steps;
     return `[void][E2E.Native]::SetCursorPos(${Math.round(from[0] + (to[0] - from[0]) * t)}, ${Math.round(from[1] + (to[1] - from[1]) * t)}); Start-Sleep -Milliseconds 40`;
@@ -232,6 +251,159 @@ function ensureNoForeignInstance() {
   }
 }
 
+async function checkNativeSearchZoom({main,floating}) {
+  await main.invoke('quick_create',{request:{itemType:'todo',title:'zoom-search-fixture',scheduled:null}});
+  await main.invoke('set_shortcut',{action:'search',accelerator:'Ctrl+Alt+Shift+F9'});
+  pressSearchHotkey();
+  const target=await until(async()=>(await listPages()).find(p=>p.id!==main.pageId&&p.id!==floating.pageId),'search zoom page');
+  const search=await connect(target.webSocketDebuggerUrl);
+  try {
+    await until(()=>search.evaluate('document.hasFocus() && document.activeElement?.getAttribute("role")==="combobox"'),'search zoom focus');
+    await search.send('Input.insertText',{text:'zoom-search-fixture'});
+    await until(()=>search.evaluate('!!document.querySelector("[role=option]")'),'search zoom result');
+    const before=await search.evaluate('({width:innerWidth,height:innerHeight,dpr:devicePixelRatio})');
+    win32('for($n=0;$n -lt 5;$n++){ [E2E.Native]::keybd_event(0x11,0,0,[System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x6B,0,0,[System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x6B,0,2,[System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x11,0,2,[System.UIntPtr]::Zero); Start-Sleep -Milliseconds 100 }');
+    await until(()=>search.evaluate('devicePixelRatio >= '+before.dpr*1.99),'search native 200% zoom');
+    await sleep(600);
+    const frames=[];
+    for(let i=0;i<10;i++){frames.push(await search.evaluate(`(() => {const row=document.querySelector('[role=option][aria-selected=true]');const r=row.getBoundingClientRect();const viewport=row.closest('.nv-scroll-hover').getBoundingClientRect();return {width:innerWidth,height:innerHeight,dpr:devicePixelRatio,input:document.querySelector('input').getBoundingClientRect().bottom,footer:document.querySelector('footer').getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth>innerWidth,focus:document.activeElement===document.querySelector('input'),value:document.querySelector('input').value,row:{top:r.top,bottom:r.bottom},list:{top:viewport.top,bottom:viewport.bottom}}})()`));await sleep(100);}
+    const screenshot=await search.send('Page.captureScreenshot',{format:'png'});
+    writeFileSync(join(EVIDENCE,'search-200pct.png'),Buffer.from(screenshot.result.data,'base64'));
+    const after=frames.at(-1);
+    if(after.row.top<after.list.top-1||after.row.bottom>after.list.bottom+1||after.overflow||after.footer>after.height+1||after.input>after.height+1||!after.focus||after.value!=='zoom-search-fixture'||new Set(frames.slice(-5).map(f=>f.height)).size!==1)throw Error('Search zoom clipping/focus/fitting: '+JSON.stringify({before,frames}));
+    zoomRecords.push({surface:'search',before,frames});
+  } finally {pressHotkey([0x11,0x30]);await search.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});search.close();}
+}
+
+async function checkNativeBadgeDrag({main,floating,child,index}) {
+        const original = cursorPosition();
+        try {
+          /** 悬浮窗与工作区的物理像素几何。 */
+          const geometry = () =>
+            floating.evaluate("(() => { const k = devicePixelRatio; return { scale:k, x: screenX * k, y: screenY * k, w: outerWidth * k, h: outerHeight * k, right: (screen.availLeft + screen.availWidth) * k, panel: !!document.querySelector(\"[aria-label='今日面板'],[aria-label='Today panel']\") }; })()");
+          /** 指针移到远处，等面板收起回徽标大小（松手时指针停在徽标上，面板会展开），再读几何。 */
+          const collapsed = async (what) => {
+            realMouse(200, 200);
+            return until(async () => {
+              const g = await geometry();
+              return !g.panel && g.w < 200 ? g : null;
+            }, `${what}：面板收起`, 8000);
+          };
+          // 先拖离边缘 300px（远超吸附范围）：徽标落在松手的位置（按下的那一点始终在光标下），不被吸回去。
+          const start = await collapsed("开始之前");
+          const scale = start.scale;
+          await floating.evaluate(`(() => { window.__dragTrace=[]; for(const type of ['pointerdown','pointermove','pointerup','pointercancel']) window.addEventListener(type,e=>{window.__dragTrace.push({type,x:e.clientX,y:e.clientY,buttons:e.buttons,target:e.target.tagName});window.__dragTrace=window.__dragTrace.slice(-30)},true); })()`);
+          realDrag([start.x + start.w / 2, start.y + start.h / 2], [start.x + start.w / 2 - 300 * scale, start.y + start.h / 2], DRAG_ONLY ? DRAG_STEPS : 12);
+          await sleep(800);
+          const before = await collapsed("拖离边缘之后");
+          if (Math.abs(before.x - (start.x - 300 * scale)) > 3 * scale) {
+            throw new Error(`徽标没有落在松手的位置：开始 ${JSON.stringify(start)}，现在 ${JSON.stringify(before)}（应移动 ${300 * scale}px）；指针记录 ${JSON.stringify(await floating.evaluate('window.__dragTrace'))}`);
+          }
+          if (Math.abs(before.x + before.w - before.right) <= 1) throw new Error("拖离 300px 之后仍贴在右边缘");
+          // 再拖到离右边 10px 处：松开后吸附，贴到右边缘、竖直位置不变。
+          const grab = [before.x + before.w / 2, before.y + before.h / 2];
+          realDrag(grab, [grab[0] + (before.right - 10 * scale - (before.x + before.w)), grab[1]]);
+          await sleep(800);
+          const after = await collapsed("拖近边缘之后");
+          if (Math.abs(after.x + after.w - after.right) > 1 || Math.abs(after.y - before.y) > 2 * scale) {
+            throw new Error(`松开后没有贴到工作区右边缘：拖之前 ${JSON.stringify(before)}，现在 ${JSON.stringify(after)}`);
+          }
+
+          if (DRAG_ONLY) return;
+          // 单击收起的徽标（按下后没有移动）：打开主窗口并把它放到前台——这是用户要去的地方。
+          focusWindow(USER_FOREGROUND);
+          await until(() => foregroundWindow() === USER_FOREGROUND, "点击之前前台在别的应用", 5000);
+          realMouse(after.x + after.w / 2, after.y + after.h / 2, true);
+          await until(() => foregroundOwner().startsWith(`${child.pid} `), "单击徽标后主窗口到了前台", 5000).catch((e) => {
+            throw new Error(`${e.message}（现在的前台：${foregroundOwner()}）`);
+          });
+          await until(() => main.evaluate("document.hasFocus()"), "主窗口拿到焦点", 5000);
+
+          // 在拾序自己的主窗口里按 Quick Create 快捷键：记下的「原来的窗口」是主窗口，Enter 之后焦点回到主窗口
+          // （此前只测过别的应用在前台的情况）。
+          const mainHandle = foregroundWindow();
+          pressHotkey([0x11, 0x12, 0x10, 0x77]);
+          await until(() => floating.evaluate("document.hasFocus() && ['标题', 'Title'].includes(document.activeElement?.getAttribute('aria-label')) && !document.activeElement.disabled"), "主窗口里按快捷键呼出 Quick Create", 10000);
+          const fromMain = `e2e-from-main-${index}`;
+          await floating.send("Input.insertText", { text: fromMain });
+          await floating.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+          await floating.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+          await until(async () => (await main.invoke("get_today")).todos.some((i) => i.title === fromMain), "从主窗口快捷键创建了待办");
+          await until(() => foregroundWindow() === mainHandle, "创建后焦点回到主窗口", 5000).catch(() => {
+            throw new Error(`创建后焦点没有回到主窗口：应为 ${mainHandle}，现在 ${foregroundWindow()}（${foregroundOwner()}）`);
+          });
+        } finally {
+          realMouse(original[0], original[1]);
+        }
+}
+
+async function checkNativeOle({main,floating,data,index}) {
+        const original = cursorPosition();
+        try {
+          await floating.evaluate(`(() => {window.__oleTrace=[];for(const type of ['dragenter','dragover','drop','dragleave'])window.addEventListener(type,e=>{window.__oleTrace.push({type,x:e.clientX,y:e.clientY,types:[...e.dataTransfer.types],target:e.target.tagName});window.__oleTrace=window.__oleTrace.slice(-12)},true)})()`);
+          // 一个普通文件、一个带中文与空格的文件、一个文件夹（拖放矩阵里文件夹一项此前未验证）。
+          const names = [`e2e-ole-a-${index}.txt`, `e2e-ole-b-${index} 中文 名.txt`, `e2e-ole-dir-${index}`];
+          const paths = names.map((name) => join(data, name));
+          writeFileSync(paths[0], "ole drop");
+          writeFileSync(paths[1], "ole drop");
+          mkdirSync(paths[2]);
+          realMouse(200,200);
+          await until(()=>floating.evaluate(`innerWidth < 200 && !document.querySelector('[aria-label="今日面板"],[aria-label="Today panel"]')`),'stable collapsed OLE target',8000);
+          const target = await until(
+            () => floating.evaluate("(() => { const k = window.devicePixelRatio; return [(window.screenX + window.innerWidth / 2) * k, (window.screenY + window.innerHeight / 2) * k]; })()"),
+            "悬浮窗的位置",
+          );
+          // 从悬浮窗左边（放不下就右边）开始拖。
+          const from = [target[0] > 400 ? target[0] - 300 : target[0] + 300, target[1]];
+          const quote = (text) => `'${text.replaceAll("'", "''")}'`;
+          /** 用 ole-drag.ps1 做一次真实拖放；`payload` 是它的数据参数（如 `-Files 'a','b'`）。 */
+          const oleDrag = async (payload) => {
+            // The previous accepted drop expands the panel over the helper's
+            // source point. Collapse before every new drag, not just the first.
+            realMouse(200,200);
+            await until(()=>floating.evaluate(`innerWidth < 200 && !document.querySelector('[aria-label="今日面板"],[aria-label="Today panel"]')`),'OLE helper source is outside the collapsed target',8000);
+            const result = execFileSync(
+              "powershell",
+              [
+                "-NoProfile",
+                "-NonInteractive",
+                "-STA",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+                `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} ${payload} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])}`,
+              ],
+              { encoding: "utf8", timeout: 30000, windowsHide: true },
+            ).trim();
+            if (result === "None" || result === "NotStarted") throw new Error(`拖放没有被接受（${payload}）：${result}`);
+          };
+          await oleDrag(`-Files ${paths.map(quote).join(",")}`);
+          // 每一项都建成条目，并且附件引用的是磁盘上的真实路径（不是只拿到了文件名）。
+          for (const [i, name] of names.entries()) {
+            const key = name.split(" ")[0].replace(".txt", "");
+            const item = await until(async () => (await main.invoke("search_items", { query: key }))[0], `拖入的 ${name} 建成了条目`, 10000).catch(async error=>{throw Error(error.message+' '+JSON.stringify({target,state:await floating.evaluate(`({x:screenX,y:screenY,w:innerWidth,h:innerHeight,dpr:devicePixelRatio,text:document.body.innerText.slice(-200),events:window.__oleTrace})`)}));});
+            const detail = await main.invoke("get_item_detail", { id: item.id });
+            const attached = detail.attachments.map((a) => a.path.toLowerCase());
+            if (!attached.includes(paths[i].toLowerCase())) {
+              throw new Error(`${name} 的附件路径不对：${JSON.stringify(detail.attachments.map((a) => a.path))}，应为 ${paths[i]}`);
+            }
+          }
+
+          // 编辑器里拖选中的文字（CF_UNICODETEXT）→ 待办；浏览器拖链接（UniformResourceLocatorW）→ 笔记。
+          const text = `e2eoletext${index} 回复邮件`;
+          await oleDrag(`-Text ${quote(text)}`);
+          const todo = await until(async () => (await main.invoke("search_items", { query: `e2eoletext${index}` }))[0], "拖入的文字建成了条目", 10000);
+          if (todo.itemType !== "todo" || todo.title !== text) throw new Error(`拖入的文字应建成同名待办：${JSON.stringify([todo.itemType, todo.title])}`);
+          const url = `https://example.com/e2eolelink${index}`;
+          await oleDrag(`-Url ${quote(url)}`);
+          const note = await until(async () => (await main.invoke("search_items", { query: `e2eolelink${index}` }))[0], "拖入的链接建成了条目", 10000);
+          if (note.itemType !== "note") throw new Error(`拖入的链接应建成笔记：${JSON.stringify([note.itemType, note.title])}`);
+        } finally {
+          realMouse(original[0], original[1]);
+        }
+
+}
+
 async function runOnce(index) {
   ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
@@ -241,6 +413,7 @@ async function runOnce(index) {
   const env = {
       ...process.env,
       NIVLO_DATA_DIR: join(data, "data"),
+      WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
       NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
       // 前台记忆 / 还原的调试日志：焦点相关的失败可以从日志里看出记住了谁、还给了谁。
       NIVLO_LOG: "info,nivlo_platform::foreground=debug,nivlo_desktop_lib::windows=debug",
@@ -270,6 +443,10 @@ async function runOnce(index) {
       floating = await connect(pages[0].webSocketDebuggerUrl);
       floating.pageId = pages[0].id;
       await until(() => floating.evaluate("document.getElementById('root')?.children.length > 0"), "界面渲染");
+      if (!existsSync(env.WEBVIEW2_USER_DATA_FOLDER)) throw Error('WebView2 did not create the isolated fixture profile');
+      if (await floating.evaluate(`localStorage.getItem('nivlo.skin') !== null`)) throw Error('Fresh fixture unexpectedly inherited a skin preference');
+      const browserVersion=await floating.send('Browser.getVersion');
+      runtimeEnvironments.push({run:index,browserVersion:browserVersion.result,...await floating.evaluate(`({userAgent:navigator.userAgent,platform:navigator.platform,dpr:devicePixelRatio,screen:{width:screen.width,height:screen.height,availableWidth:screen.availWidth,availableHeight:screen.availHeight}})`) });
       main = floating;
     });
 
@@ -288,8 +465,16 @@ async function runOnce(index) {
       main = await connect(page.webSocketDebuggerUrl);
       main.pageId = page.id;
       await until(() => main.evaluate("document.getElementById('root')?.children.length > 0"), "主窗口渲染");
+      // A fresh native profile owns focus in onboarding. Dismiss it through the
+      // visible UI before exercising the workspace, rather than clicking inert
+      // background controls programmatically and mistaking them for user access.
+      const skip = await until(() => main.evaluate(`(() => {const b=[...document.querySelectorAll('[role=dialog] button')].find(b=>['跳过','Skip'].includes(b.textContent.trim()));if(!b)return null;const r=b.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`), 'first-run Skip action');
+      await main.send('Input.dispatchMouseEvent',{type:'mousePressed',...skip,button:'left',clickCount:1});
+      await main.send('Input.dispatchMouseEvent',{type:'mouseReleased',...skip,button:'left',clickCount:1});
+      await until(()=>main.evaluate(`!document.querySelector('[role=dialog]')`),'onboarding dismissed');
     });
 
+    if (!ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
     // 3. Quick Add：创建一个 Todo，今天的视图里出现它。
     const title = `e2e-todo-${index}`;
     let todo;
@@ -630,126 +815,11 @@ async function runOnce(index) {
 
       // 11.8（--native）资源管理器式拖放（实施计划 10.1 / 发布阻塞项 A2）：真实的 OLE 拖放把两个文件
       // （CF_HDROP，资源管理器拖文件用的格式）放到悬浮窗上，页面拿到磁盘路径，各建一条带文件附件的条目。
-      await step("拖入文件（真实 OLE 拖放）", async () => {
-        const original = cursorPosition();
-        try {
-          // 一个普通文件、一个带中文与空格的文件、一个文件夹（拖放矩阵里文件夹一项此前未验证）。
-          const names = [`e2e-ole-a-${index}.txt`, `e2e-ole-b-${index} 中文 名.txt`, `e2e-ole-dir-${index}`];
-          const paths = names.map((name) => join(data, name));
-          writeFileSync(paths[0], "ole drop");
-          writeFileSync(paths[1], "ole drop");
-          mkdirSync(paths[2]);
-          const target = await until(
-            () => floating.evaluate("(() => { const k = window.devicePixelRatio; return [(window.screenX + window.innerWidth / 2) * k, (window.screenY + window.innerHeight / 2) * k]; })()"),
-            "悬浮窗的位置",
-          );
-          // 从悬浮窗左边（放不下就右边）开始拖。
-          const from = [target[0] > 400 ? target[0] - 300 : target[0] + 300, target[1]];
-          const quote = (text) => `'${text.replaceAll("'", "''")}'`;
-          /** 用 ole-drag.ps1 做一次真实拖放；`payload` 是它的数据参数（如 `-Files 'a','b'`）。 */
-          const oleDrag = (payload) => {
-            const result = execFileSync(
-              "powershell",
-              [
-                "-NoProfile",
-                "-NonInteractive",
-                "-STA",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-Command",
-                `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} ${payload} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])}`,
-              ],
-              { encoding: "utf8", timeout: 30000, windowsHide: true },
-            ).trim();
-            if (result === "None" || result === "NotStarted") throw new Error(`拖放没有被接受（${payload}）：${result}`);
-          };
-          oleDrag(`-Files ${paths.map(quote).join(",")}`);
-          // 每一项都建成条目，并且附件引用的是磁盘上的真实路径（不是只拿到了文件名）。
-          for (const [i, name] of names.entries()) {
-            const key = name.split(" ")[0].replace(".txt", "");
-            const item = await until(async () => (await main.invoke("search_items", { query: key }))[0], `拖入的 ${name} 建成了条目`, 10000);
-            const detail = await main.invoke("get_item_detail", { id: item.id });
-            const attached = detail.attachments.map((a) => a.path.toLowerCase());
-            if (!attached.includes(paths[i].toLowerCase())) {
-              throw new Error(`${name} 的附件路径不对：${JSON.stringify(detail.attachments.map((a) => a.path))}，应为 ${paths[i]}`);
-            }
-          }
-
-          // 编辑器里拖选中的文字（CF_UNICODETEXT）→ 待办；浏览器拖链接（UniformResourceLocatorW）→ 笔记。
-          const text = `e2eoletext${index} 回复邮件`;
-          oleDrag(`-Text ${quote(text)}`);
-          const todo = await until(async () => (await main.invoke("search_items", { query: `e2eoletext${index}` }))[0], "拖入的文字建成了条目", 10000);
-          if (todo.itemType !== "todo" || todo.title !== text) throw new Error(`拖入的文字应建成同名待办：${JSON.stringify([todo.itemType, todo.title])}`);
-          const url = `https://example.com/e2eolelink${index}`;
-          oleDrag(`-Url ${quote(url)}`);
-          const note = await until(async () => (await main.invoke("search_items", { query: `e2eolelink${index}` }))[0], "拖入的链接建成了条目", 10000);
-          if (note.itemType !== "note") throw new Error(`拖入的链接应建成笔记：${JSON.stringify([note.itemType, note.title])}`);
-        } finally {
-          realMouse(original[0], original[1]);
-        }
-      });
+      await step("拖入文件（真实 OLE 拖放）", () => checkNativeOle({ main, floating, data, index }));
 
       // 11.9（--native）拖动徽标并吸附（产品文档 §28「拖动、吸附」）：真实鼠标把收起的徽标拖到离工作区右边
       // 10px 处松开，窗口贴到右边缘、竖直位置不变。
-      await step("拖动徽标吸附到边缘（真实鼠标）", async () => {
-        const original = cursorPosition();
-        try {
-          /** 悬浮窗与工作区的物理像素几何。 */
-          const geometry = () =>
-            floating.evaluate("(() => { const k = devicePixelRatio; return { x: screenX * k, y: screenY * k, w: outerWidth * k, h: outerHeight * k, right: (screen.availLeft + screen.availWidth) * k, panel: !!document.querySelector(\"[aria-label='今日面板'],[aria-label='Today panel']\") }; })()");
-          /** 指针移到远处，等面板收起回徽标大小（松手时指针停在徽标上，面板会展开），再读几何。 */
-          const collapsed = async (what) => {
-            realMouse(200, 200);
-            return until(async () => {
-              const g = await geometry();
-              return !g.panel && g.w < 200 ? g : null;
-            }, `${what}：面板收起`, 8000);
-          };
-          // 先拖离边缘 300px（远超吸附范围）：徽标落在松手的位置（按下的那一点始终在光标下），不被吸回去。
-          const start = await collapsed("开始之前");
-          const scale = start.w / 88;
-          realDrag([start.x + start.w / 2, start.y + start.h / 2], [start.x + start.w / 2 - 300 * scale, start.y + start.h / 2]);
-          await sleep(800);
-          const before = await collapsed("拖离边缘之后");
-          if (Math.abs(before.x - (start.x - 300 * scale)) > 3 * scale) {
-            throw new Error(`徽标没有落在松手的位置：开始 ${JSON.stringify(start)}，现在 ${JSON.stringify(before)}（应移动 ${300 * scale}px）`);
-          }
-          if (Math.abs(before.x + before.w - before.right) <= 1) throw new Error("拖离 300px 之后仍贴在右边缘");
-          // 再拖到离右边 10px 处：松开后吸附，贴到右边缘、竖直位置不变。
-          const grab = [before.x + before.w / 2, before.y + before.h / 2];
-          realDrag(grab, [grab[0] + (before.right - 10 * scale - (before.x + before.w)), grab[1]]);
-          await sleep(800);
-          const after = await collapsed("拖近边缘之后");
-          if (Math.abs(after.x + after.w - after.right) > 1 || Math.abs(after.y - before.y) > 2 * scale) {
-            throw new Error(`松开后没有贴到工作区右边缘：拖之前 ${JSON.stringify(before)}，现在 ${JSON.stringify(after)}`);
-          }
-
-          // 单击收起的徽标（按下后没有移动）：打开主窗口并把它放到前台——这是用户要去的地方。
-          focusWindow(USER_FOREGROUND);
-          await until(() => foregroundWindow() === USER_FOREGROUND, "点击之前前台在别的应用", 5000);
-          realMouse(after.x + after.w / 2, after.y + after.h / 2, true);
-          await until(() => foregroundOwner().startsWith(`${child.pid} `), "单击徽标后主窗口到了前台", 5000).catch((e) => {
-            throw new Error(`${e.message}（现在的前台：${foregroundOwner()}）`);
-          });
-          await until(() => main.evaluate("document.hasFocus()"), "主窗口拿到焦点", 5000);
-
-          // 在拾序自己的主窗口里按 Quick Create 快捷键：记下的「原来的窗口」是主窗口，Enter 之后焦点回到主窗口
-          // （此前只测过别的应用在前台的情况）。
-          const mainHandle = foregroundWindow();
-          pressHotkey([0x11, 0x12, 0x10, 0x77]);
-          await until(() => floating.evaluate("document.hasFocus() && ['标题', 'Title'].includes(document.activeElement?.getAttribute('aria-label')) && !document.activeElement.disabled"), "主窗口里按快捷键呼出 Quick Create", 10000);
-          const fromMain = `e2e-from-main-${index}`;
-          await floating.send("Input.insertText", { text: fromMain });
-          await floating.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-          await floating.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-          await until(async () => (await main.invoke("get_today")).todos.some((i) => i.title === fromMain), "从主窗口快捷键创建了待办");
-          await until(() => foregroundWindow() === mainHandle, "创建后焦点回到主窗口", 5000).catch(() => {
-            throw new Error(`创建后焦点没有回到主窗口：应为 ${mainHandle}，现在 ${foregroundWindow()}（${foregroundOwner()}）`);
-          });
-        } finally {
-          realMouse(original[0], original[1]);
-        }
-      });
+      await step("拖动徽标吸附到边缘（真实鼠标）",()=>checkNativeBadgeDrag({main,floating,child,index}));
     }
 
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。
@@ -791,13 +861,24 @@ async function runOnce(index) {
           await until(() => search.evaluate(`document.hasFocus() && document.activeElement?.value === '' && ${inputFocused}`), "再次出现时输入已清空并聚焦", 20000, 5);
           hotkeyTimings.again.push(Date.now() - againStarted);
           await until(() => visibleWindowCount(child.pid) === shown, "再次出现");
+          if (warmActivations.length === 0 && WARM_RUNS > 0) {
+            for (let attempt=0;attempt<WARM_RUNS;attempt++) {
+              await search.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+              await search.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+              await until(()=>search.evaluate('!document.hasFocus()'),'warm activation: previous app focus',5000,5);
+              const started=pressSearchHotkey();
+              await until(()=>search.evaluate(`document.hasFocus() && ${inputFocused}`),'warm activation input focus',5000,5);
+              warmActivations.push(Date.now()-started);
+              await sleep(150);
+            }
+          }
 
           // Ctrl+D（P1.3）：在搜索框里直接完成选中的待办，窗口不关；提示还在时 Ctrl+Z 撤销。
           // 走真实的 search.json 权限，缺了 complete_item / reopen_item 会在这里失败。
           const doneTitle = `e2e-search-done-${index}`;
           await main.invoke("quick_create", { request: { itemType: "todo", title: doneTitle, scheduled: null } });
           await search.send("Input.insertText", { text: doneTitle });
-          await until(() => search.evaluate(`[...document.querySelectorAll("[role=option]")].some((o) => o.textContent.includes(${JSON.stringify(doneTitle)}))`), "Ctrl+D：结果出现");
+          await until(() => search.evaluate(`document.hasFocus() && document.activeElement===document.querySelector('input') && document.querySelector('[role=option][aria-selected=true]')?.textContent.includes(${JSON.stringify(doneTitle)}) && [...document.querySelectorAll('footer button')].some(b=>!b.disabled && b.textContent.includes('Ctrl+D'))`), "Ctrl+D：当前结果与完成操作就绪");
           /** Ctrl + 字母（CDP 的 modifiers 2 是 Ctrl）。 */
           const ctrlLetter = async (letter) => {
             const event = { key: letter, code: `Key${letter.toUpperCase()}`, windowsVirtualKeyCode: letter.toUpperCase().charCodeAt(0), modifiers: 2 };
@@ -807,7 +888,7 @@ async function runOnce(index) {
           const doneStatus = async () => (await main.invoke("search_items", { query: doneTitle })).find((i) => i.title === doneTitle)?.status;
           await ctrlLetter("d");
           // 撤销提示只留 5 秒（DONE_UNDO_MS）：出现之后立刻按 Ctrl+Z，慢的 Win32 检查（每次约 2 秒）放到后面。
-          await until(() => search.evaluate("document.body.innerText.includes('Ctrl+Z')"), "Ctrl+D 之后出现撤销");
+          await until(() => search.evaluate("document.body.innerText.includes('Ctrl+Z')"), "Ctrl+D 之后出现撤销").catch(async error=>{throw Error(error.message+' '+JSON.stringify({status:await doneStatus(),ui:await search.evaluate(`({focus:document.hasFocus(),active:document.activeElement?.outerHTML,footer:document.querySelector('footer')?.innerText,error:document.querySelector('[role=alert]')?.innerText})`)}));});
           if ((await doneStatus()) !== "done") throw new Error("出现了撤销提示，但待办没有完成");
           await ctrlLetter("z");
           await until(async () => (await doneStatus()) !== "done", "Ctrl+Z 撤销了完成", 5000).catch(async (e) => {
@@ -858,11 +939,64 @@ async function runOnce(index) {
         }
       });
     }
+    }
+    if (NATIVE && (SEARCH_ZOOM_ONLY || CHECK_ZOOM)) await step("200% search zoom and stable fitting",()=>checkNativeSearchZoom({main,floating}));
+    if (DRAG_ONLY) await step("isolated native badge drag",()=>checkNativeBadgeDrag({main,floating,child,index}));
+    if (OLE_ONLY) await step("isolated native OLE drop",()=>checkNativeOle({main,floating,data,index}));
+    if (ZOOM_ONLY) await main.invoke('quick_create',{request:{itemType:'todo',title:'zoom fixture',scheduled:null}});
+    if (NATIVE && CHECK_ZOOM) await step('200% WebView2 content zoom',async()=>{
+      await floating.invoke('open_main_at',{view:'today'});
+      focusLargestWindow(child.pid);
+      const before=await main.evaluate('({width:innerWidth,height:innerHeight,dpr:devicePixelRatio})');
+      const floatingDprBefore=await floating.evaluate('devicePixelRatio');
+      await main.evaluate(`document.querySelector('main li button.text-left').click()`);
+      await until(()=>main.evaluate('!!document.querySelector(".nv-detail-panel input")'),'item editor before zoom');
+      await main.evaluate(`(() => {window.__zoomInput=document.querySelector('.nv-detail-panel input');window.__zoomTitle=window.__zoomInput.value;window.__zoomInput.focus();window.__zoomInput.setSelectionRange(1,2)})()`);
+      try {
+        win32(`for($n=0;$n -lt 5;$n++){ [E2E.Native]::keybd_event(0x11,0,0,[System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x6B,0,0,[System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x6B,0,2,[System.UIntPtr]::Zero); [E2E.Native]::keybd_event(0x11,0,2,[System.UIntPtr]::Zero); Start-Sleep -Milliseconds 100 }`);
+        await until(()=>main.evaluate(`devicePixelRatio >= ${before.dpr*1.99}`),'WebView2 zoom reaches 200%',5000);
+        const after=await main.evaluate('({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,overflow:document.documentElement.scrollWidth>innerWidth})');
+        if(after.overflow||Math.abs(after.width*2-before.width)>4)throw Error('Zoom did not reflow: '+JSON.stringify({before,after}));
+        const editor=await main.evaluate(`(() => {const panel=document.querySelector('.nv-detail-panel');const input=panel.querySelector('input');return {modal:panel.getAttribute('aria-modal'),title:input.value,stable:input===window.__zoomInput&&input.value===window.__zoomTitle,selection:[input.selectionStart,input.selectionEnd],focus:document.activeElement===input,dates:panel.querySelectorAll('input[type=date]').length}})()`);
+        const floatingDprAfter=await floating.evaluate('devicePixelRatio');
+        if(editor.modal!=='true'||!editor.focus||!editor.stable||editor.dates!==2||floatingDprAfter!==floatingDprBefore)throw Error('Zoomed editor/badge lost its state: '+JSON.stringify({before,after,editor,floatingDprBefore,floatingDprAfter,dialog:await main.evaluate("[...document.querySelectorAll('[role=dialog]')].map(e=>({name:e.getAttribute('aria-label'),text:e.innerText.slice(0,120)}))")}));
+        const screenshot=await main.send('Page.captureScreenshot',{format:'png'});
+        writeFileSync(join(EVIDENCE,`main-200pct-${index}.png`),Buffer.from(screenshot.result.data,'base64'));
+        zoomRecords.push({run:index,before,after,editor,floatingDprBefore,floatingDprAfter,screenshotSha256:createHash('sha256').update(Buffer.from(screenshot.result.data,'base64')).digest('hex'),method:'Real Win32 Ctrl+NumpadAdd; DOM viewport/DPR measured, not a resized browser mock'});
+      } finally {
+        pressHotkey([0x11,0x30]);
+      }
+    });
+    if (NATIVE && BADGE_MATRIX && index===1) await step('Native badge size matrix',async()=>{
+      const original=cursorPosition();
+      try {
+        await floating.invoke('open_main_at',{view:'settings'});
+        await until(()=>main.evaluate('!!document.querySelector("#settings-appearance")'),'appearance settings');
+        const cases=[{name:'pill',label:['胶囊','Pill'],width:64,height:32},{name:'circle',label:['数字','Number'],width:36,height:36},{name:'dot',label:['圆点','Dot'],width:28,height:28},{name:'skin',width:88,height:40}];
+        for (const entry of cases) {
+          if(entry.name==='skin') {
+            const path=join(data,'fixture-pixel.png');
+            const pixel=new PNG({width:4,height:4});pixel.data.fill(255);
+            writeFileSync(path,PNG.sync.write(pixel));
+            const doc=await main.send('DOM.getDocument');
+            const field=await main.send('DOM.querySelector',{nodeId:doc.result.root.nodeId,selector:'#settings-appearance input[type=file]'});
+            await main.send('DOM.setFileInputFiles',{nodeId:field.result.nodeId,files:[path]});
+          } else await main.evaluate(`(() => {const section=document.querySelector('#settings-appearance');const b=[...section.querySelectorAll('button')].find(b=>${JSON.stringify(entry.label)}.includes(b.textContent.trim()));if(!b)throw Error('Missing badge option');b.click();})()`);
+          realMouse(200,200);
+          const measured=await until(()=>floating.evaluate(`(() => {if(document.querySelector('[aria-label="今日面板"],[aria-label="Today panel"]'))return null;return innerWidth===${entry.width}&&innerHeight===${entry.height}?{width:innerWidth,height:innerHeight,dpr:devicePixelRatio,outerWidth,outerHeight,button:(()=>{const r=document.querySelector('button').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}})()}:null})()`),'native '+entry.name+' bounds',10000).catch(async error=>{throw Error(error.message+' '+JSON.stringify(await floating.evaluate(`({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,text:document.body.innerText.slice(-300),focused:document.hasFocus()})`)))});
+          if(Math.abs(measured.button.width-entry.width)>1||Math.abs(measured.button.height-entry.height)>1)throw Error('Invisible badge hit area: '+JSON.stringify(measured));
+          const frame=await floating.send('Page.captureScreenshot',{format:'png'});
+          const bytes=Buffer.from(frame.result.data,'base64');
+          writeFileSync(join(EVIDENCE,`badge-${entry.name}.png`),bytes);
+          badgeRecords.push({...entry,measured,sha256:createHash('sha256').update(bytes).digest('hex'),scope:'Real WebView2 client/button bounds on current monitor; not proof of per-pixel OS click-through or mixed DPI'});
+        }
+      } finally { realMouse(original[0],original[1]); }
+    });
     return steps;
   } finally {
     // 等进程真正退出再删数据目录：退出中的进程仍持有单实例锁，下一轮的启动会被转交给它。
     await stopInstance(child);
-    rmSync(data, { recursive: true, force: true });
+    rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
   }
 }
 
@@ -893,6 +1027,7 @@ async function coldMainScenario() {
   const env = {
     ...process.env,
     NIVLO_DATA_DIR: join(data, "data"),
+      WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
     NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
@@ -952,7 +1087,7 @@ async function coldMainScenario() {
       await stopInstance(child);
     }
   } finally {
-    rmSync(data, { recursive: true, force: true });
+    rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
   }
 }
 
@@ -979,6 +1114,7 @@ async function badgeColdMainScenario() {
   const env = {
     ...process.env,
     NIVLO_DATA_DIR: join(data, "data"),
+      WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
     NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
@@ -1012,7 +1148,7 @@ async function badgeColdMainScenario() {
   } finally {
     realMouse(original[0], original[1]);
     await stopInstance(child);
-    rmSync(data, { recursive: true, force: true });
+    rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
   }
 }
 
@@ -1023,6 +1159,7 @@ async function prewarmScenario() {
   const env = {
     ...process.env,
     NIVLO_DATA_DIR: join(data, "data"),
+      WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
     NIVLO_SKIP_FIRST_RUN_PROMPTS: "1",
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
@@ -1081,7 +1218,7 @@ async function prewarmScenario() {
       await stopInstance(child);
     }
   } finally {
-    rmSync(data, { recursive: true, force: true });
+    rmSync(data, { recursive: true, force: true, maxRetries: 10, retryDelay: 250 });
   }
 }
 
@@ -1109,7 +1246,7 @@ for (let i = 1; i <= RUNS; i++) {
     console.error(`✗ 第 ${i} 次：${e.message}`);
   }
 }
-if (NATIVE) {
+if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
   try {
     await coldMainScenario();
     console.log("✓ 主窗口未创建时从全局搜索框回车打开结果");
@@ -1118,7 +1255,7 @@ if (NATIVE) {
     console.error(`✗ 主窗口未创建时从全局搜索框回车打开结果：${e.message}`);
   }
 }
-if (NATIVE) {
+if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
   try {
     await badgeColdMainScenario();
     console.log("✓ 主窗口未创建时点徽标：主窗口到前台并留在前台");
@@ -1127,7 +1264,7 @@ if (NATIVE) {
     console.error(`✗ 主窗口未创建时点徽标：${e.message}`);
   }
 }
-if (NATIVE) {
+if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
   try {
     const { firstMs, extraMb } = await prewarmScenario();
     console.log(`✓ 预先准备全局搜索框：第一次唤出 ${firstMs} ms，进程树多占约 ${extraMb} MB`);
@@ -1137,6 +1274,15 @@ if (NATIVE) {
   }
 }
 const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+if (WARM_RUNS || CHECK_ZOOM || BADGE_MATRIX || SEARCH_ZOOM_ONLY) {
+  const sorted=[...warmActivations].sort((a,b)=>a-b);
+  const sourceFiles=Object.fromEntries(execFileSync('git',['diff','--name-only','--','apps/desktop','crates'],{cwd:ROOT,encoding:'utf8'}).trim().split(/\r?\n/).filter(file=>/\.(rs|tsx?|json|css)$/.test(file)).map(file=>[file,createHash('sha256').update(readFileSync(join(ROOT,file))).digest('hex')]));
+  const metrics={runtimeEnvironments,profileIsolation:'Temporary NIVLO_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),sourceFiles,executableSha256:createHash('sha256').update(readFileSync(EXE)).digest('hex'),timestamp:new Date().toISOString(),cold:hotkeyTimings.first,warm:warmActivations,warmMedian:sorted.length?median(sorted):null,warmP95:sorted.length?sorted[Math.ceil(sorted.length*.95)-1]:null,budgetMs:150,quickCreate:quickCreateTimings,zoom:zoomRecords,badges:badgeRecords,failedScenarios:failed};
+  metrics.warmBudgetPassed=sorted.length>=20&&metrics.warmP95<metrics.budgetMs;
+  writeFileSync(join(EVIDENCE,'measurements.json'),JSON.stringify(metrics,null,2)+'\n');
+  console.log(`Warm search focus: ${sorted.length} runs, median ${metrics.warmMedian}ms, p95 ${metrics.warmP95}ms`);
+  if(WARM_RUNS>=20&&!metrics.warmBudgetPassed){failed+=1;console.error('Warm search focus budget failed (at least 20 samples; p95 below 150ms).');}
+}
 if (NATIVE && quickCreateTimings.click.length > 0) {
   console.log(`Quick Create 输入就绪：点「+ 待办」中位数 ${median(quickCreateTimings.click)} ms ${JSON.stringify(quickCreateTimings.click)}；快捷键 中位数 ${median(quickCreateTimings.hotkey)} ms ${JSON.stringify(quickCreateTimings.hotkey)}`);
 }

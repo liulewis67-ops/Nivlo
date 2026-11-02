@@ -1,0 +1,4889 @@
+{
+  "samples": [
+    {
+      "text": "Navigation",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Settings",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Creates the search box in the background after start-up so the first press of the shortcut opens it faster (about 0.3 s → 0.12 s), at the co",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Appearance",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "16px",
+      "fontWeight": "600",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Badge shape",
+      "tag": "LEGEND",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Badge shape",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "How the collapsed badge looks.",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Pill",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        11,
+        16,
+        32,
+        1
+      ],
+      "background": [
+        91,
+        141,
+        239,
+        1
+      ],
+      "ratio": 5.861,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Number",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Dot",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Corners",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Corner radius of the panel.",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Soft",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Round",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        11,
+        16,
+        32,
+        1
+      ],
+      "background": [
+        91,
+        141,
+        239,
+        1
+      ],
+      "ratio": 5.861,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Surface, accent and opacity",
+      "tag": "LEGEND",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Accent color",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Colors the badge dot, buttons and highlights.",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Surface",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Glass is softly translucent; Solid is fully opaque.",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Solid",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Glass",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        11,
+        16,
+        32,
+        1
+      ],
+      "background": [
+        91,
+        141,
+        239,
+        1
+      ],
+      "ratio": 5.861,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 400,
+    "height": 600,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "banner",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "main",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Navigation",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Settings",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Settings",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Settings",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Settings",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "navigation",
+      "name": "Jump to a settings group",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "General",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Floating badge",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Shortcuts",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Appearance",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Notifications",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Getting started",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Schedule",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Integrations",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "About",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Data and diagnostics",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Settings",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "General",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Floating badge",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Shortcuts",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Appearance",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Notifications",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Getting started",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Schedule",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Integrations",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "About",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Data and diagnostics",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "General",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Theme",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Floating badge",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Shortcuts",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Quick Create: Ctrl+Shift+Space",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Search: Ctrl+Alt+Space",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Appearance",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Badge shape",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 223,
+                "text": "Badge shape"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Surface, accent and opacity",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 242,
+                "text": "Surface, accent and opacity"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Custom skin",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 281,
+                "text": "Custom skin"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "Skin motion",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 312,
+                "text": "Skin motion"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "Notifications",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Getting started",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Schedule",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "Which day is “Later”",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "Week starts on",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "Integrations",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "group",
+      "name": "GitHub",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Jira",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "About",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Check for updates",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "Data and diagnostics",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "combobox",
+      "name": "Export format",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Export notes and to-dos",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Settings",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "General",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Floating badge",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Shortcuts",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Appearance",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Notifications",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Getting started",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Schedule",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Integrations",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "About",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Data and diagnostics",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "General",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Launch at startup",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Nivlo stays at the edge of your screen after startup, ready to catch ideas and to-dos.",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Launch at startup",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Language",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Takes effect immediately.",
+      "properties": []
+    },
+    {
+      "role": "combobox",
+      "name": "Language",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Theme",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Match the system, or fix it to light / dark.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Match system",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Light",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Dark",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Floating badge",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Keep badge on top",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "When on, the floating badge always stays above other windows.",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Keep badge on top",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Shortcuts",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Quick Create shortcut",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Press it in any app to jot down a to-do right away.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Quick Create: Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Active",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Global search shortcut",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Press it in any app to pop up search and jump straight to a to-do, note or tip.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Search: Ctrl+Alt+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Active",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Prepare global search in advance",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Creates the search box in the background after start-up so the first press of the shortcut opens it faster (about 0.3 s → 0.12 s), at the cost of roughly 90 MB of extra memory.",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Prepare global search in advance",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Appearance",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Badge shape",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Corners",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "Accent color",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Surface",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "slider",
+      "name": "Window opacity",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "horizontal"
+          }
+        },
+        {
+          "name": "valuemin",
+          "value": {
+            "type": "number",
+            "value": 40
+          }
+        },
+        {
+          "name": "valuemax",
+          "value": {
+            "type": "number",
+            "value": 100
+          }
+        },
+        {
+          "name": "valuetext",
+          "value": {
+            "type": "string",
+            "value": "100"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "100%",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "No skin",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Add images…",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Remove skin",
+      "properties": [
+        {
+          "name": "disabled",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "Legend",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Playback",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "slider",
+      "name": "Speed",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "horizontal"
+          }
+        },
+        {
+          "name": "valuemin",
+          "value": {
+            "type": "number",
+            "value": 1
+          }
+        },
+        {
+          "name": "valuemax",
+          "value": {
+            "type": "number",
+            "value": 24
+          }
+        },
+        {
+          "name": "valuetext",
+          "value": {
+            "type": "string",
+            "value": "6"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "6",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Extra motion",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Notifications",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Pause notifications",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "No reminders pop up while paused; due reminders aren't lost — you'll get a summary when you resume. The tray menu has this switch too.",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Pause notifications",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Getting started",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Getting started",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "See the basics of Nivlo again.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Replay",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Schedule",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Which day is “Later”",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "The “Later” buttons on the badge and in the Inbox schedule items for this day.",
+      "properties": []
+    },
+    {
+      "role": "radio",
+      "name": "Next Monday",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "In 3 days",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "In 7 days",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Hide completed to-dos",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Hide to-dos you finished today from the Today list and the floating panel.",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Hide completed to-dos",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Week starts on",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Affects the calendar's week and month views.",
+      "properties": []
+    },
+    {
+      "role": "radio",
+      "name": "Monday",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "Sunday",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Integrations",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "form",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "form",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "About",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Updates",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Updates are signed. Your data is backed up automatically before an update is installed.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Check for updates",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Data and diagnostics",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Export diagnostics",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Bundles the runtime environment and recent logs (with content and tokens removed) into one archive to attach when reporting a problem. Your notes, to-dos, clipboard and files are not included.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Export diagnostics",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Export notes and to-dos",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Exports plain files any editor can open, including source information. Items in the trash are not exported.",
+      "properties": []
+    },
+    {
+      "role": "MenuListPopup",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Export",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Backup",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Bundles all your data (including workflows and settings) and pasted images into one archive. Your original files and any secrets are not included.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Create backup",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Restore from backup",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Choose a backup archive. Your current data is backed up automatically first; the restore takes effect after a restart, and the replaced data stays in the data folder.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Choose backup…",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "General",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Floating badge",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Shortcuts",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Appearance",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Notifications",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Getting started",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Schedule",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Integrations",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "About",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Data and diagnostics",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "General",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Launch at startup",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Nivlo stays at the edge of your screen after ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "startup, ready to catch ideas and to-dos.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Language",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Takes effect immediately.",
+      "properties": []
+    },
+    {
+      "role": "MenuListPopup",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Theme",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Match the system, or fix it to light / dark.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Match system",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Light",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Dark",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Floating badge",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Keep badge on top",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "When on, the floating badge always stays ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "above other windows.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Shortcuts",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Quick Create shortcut",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Press it in any app to jot down a to-do right away.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Quick Create: Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Active",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Global search shortcut",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Press it in any app to pop up search and jump straight to ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "a to-do, note or tip.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Search: Ctrl+Alt+Space",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Active",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Prepare global search in advance",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Creates the search box in the background ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "after start-up so the first press of the shortcut ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "opens it faster (about 0.3 s → 0.12 s), at the ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "cost of roughly 90 MB of extra memory.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Appearance",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Badge shape",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Badge shape",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "How the collapsed badge looks.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Pill",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Number",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Dot",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Corners",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Corner radius of the panel.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Soft",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Round",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Surface, accent and opacity",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Accent color",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Colors the badge dot, buttons and highlights.",
+      "properties": []
+    },
+    {
+      "role": "radio",
+      "name": "Blue",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "Violet",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "Teal",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "Rose",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "Amber",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Surface",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Glass is softly translucent; Solid is fully opaque.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Solid",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Glass",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Window opacity",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Lower it to let what is behind show through.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "100%",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Reset appearance",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Restore the default look.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Reset",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Custom skin",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Custom skin",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Pick several images or pixel art; they play as frames on the collapsed badge. Up to 16 frames, shrunk to fit. A GIF contributes its first frame.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "No skin",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Add images…",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Remove skin",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Pixel art mode",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Keeps hard pixel edges instead of smoothing. Turn it on before adding images.",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Pixel art mode",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Show count",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Keep the number of remaining to-dos next to the skin.",
+      "properties": []
+    },
+    {
+      "role": "switch",
+      "name": "Show count",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Skin motion",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Playback",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "How the frames play.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Loop",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Ping-pong",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "On hover",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Still",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Speed",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Frames per second.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "6",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Extra motion",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Gentle movement layered on the image.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "None",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Float",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Breathe",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Bounce",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Notifications",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Pause notifications",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "No reminders pop up while paused; due ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "reminders aren't lost — you'll get a summary ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "when you resume. The tray menu has this ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "switch too.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Getting started",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Getting started",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "See the basics of Nivlo again.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Replay",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Schedule",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Which day is “Later”",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "The “Later” buttons on the badge and in the Inbox ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "schedule items for this day.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Next Monday",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "In 3 days",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "In 7 days",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Hide completed to-dos",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Hide to-dos you finished today from the ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Today list and the floating panel.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Week starts on",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Affects the calendar's week and month views.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Monday",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Sunday",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Integrations",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "GitHub",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Not connected",
+      "properties": []
+    },
+    {
+      "role": "textbox",
+      "name": "Personal access token",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Jira",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Not connected",
+      "properties": []
+    },
+    {
+      "role": "textbox",
+      "name": "Jira address",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "textbox",
+      "name": "Personal access token (PAT)",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "About",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Updates",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Updates are signed. Your data is backed up automatically ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "before an update is installed.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Check for updates",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Data and diagnostics",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Export diagnostics",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Bundles the runtime environment and ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "recent logs (with content and tokens ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "removed) into one archive to attach when ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "reporting a problem. Your notes, to-dos, ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "clipboard and files are not included.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Export",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Export notes and to-dos",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Exports plain files any editor can open, including source ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "information. Items in the trash are not exported.",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "JSON (complete)",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "Markdown (single file)",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "Markdown (one file per item)",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Export",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Backup",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Bundles all your data (including ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "workflows and settings) and pasted ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "images into one archive. Your ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "original files and any secrets are not ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "included.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Create backup",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Restore from backup",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Choose a backup archive. Your current data is backed up ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "automatically first; the restore takes effect after a restart, ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "and the replaced data stays in the data folder.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Choose backup…",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "简体中文",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "English",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Match system",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Light",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Dark",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Badge shape",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Badge shape",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "How the collapsed badge looks.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Pill",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Number",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Dot",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Corners",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Corner radius of the panel.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Soft",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Round",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Surface, accent and opacity",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Accent color",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Colors the badge dot, buttons and highlights.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Surface",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Glass is softly translucent; Solid is fully opaque.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Solid",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Glass",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Window opacity",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Lower it to let what is behind show through.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Reset appearance",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Restore the default look.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Reset",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Custom skin",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Custom skin",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Pick several images or pixel art; they play as frames ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "on the collapsed badge. Up to 16 frames, shrunk to ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "fit. A GIF contributes its first frame.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Add images…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Remove skin",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Pixel art mode",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Keeps hard pixel edges instead of ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "smoothing. Turn it on before adding ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "images.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Show count",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Keep the number of remaining to-dos ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "next to the skin.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Skin motion",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Playback",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "How the frames play.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Loop",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Ping-pong",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "On hover",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Still",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Speed",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Frames per second.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Extra motion",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Gentle movement layered on the image.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "None",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Float",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Breathe",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Bounce",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Replay",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Next Monday",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "In 3 days",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "In 7 days",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Monday",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Sunday",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "GitHub",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Not connected",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Needs a token with read access to the repositories you capture links from. It is saved in the system credential store and can’t be read back.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Connect",
+      "properties": [
+        {
+          "name": "disabled",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Jira",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Not connected",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Jira Cloud: your account email plus an API token. Self-hosted Jira: a personal access token. Saved in the system credential store and can’t be read back.",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Connect",
+      "properties": [
+        {
+          "name": "disabled",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Export",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Create backup",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Choose backup…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Pill",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Number",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Dot",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Soft",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Round",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Solid",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Glass",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Reset",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Loop",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ping-pong",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "On hover",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Still",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "None",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Float",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Breathe",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Bounce",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Needs a token with read access to the repositories you ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "capture links from. It is saved in the system credential ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "store and can’t be read back.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Connect",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Jira Cloud: your account email plus an API token. Self-",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "hosted Jira: a personal access token. Saved in the system ",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "credential store and can’t be read back.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Connect",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Connect",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Connect",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

@@ -166,7 +166,7 @@ function Marked({ segments }: MarkedProps) {
     <>
       {segments.map((segment, index) =>
         segment.match ? (
-          <mark key={index} className="rounded-sm bg-primary/15 font-medium text-primary">
+          <mark key={index} className="rounded-sm bg-primary/15 font-medium text-text">
             {segment.text}
           </mark>
         ) : (
@@ -275,21 +275,25 @@ export function SearchPanel({
     if (onContentHeight === undefined || panel === null || scroll === null || content === null) {
       return;
     }
-    let last = -1;
+    let last = "";
     /** 量一次，高度变了才通知（ResizeObserver 回调很频繁）。 */
     const measure = () => {
       const height = Math.ceil(panel.offsetHeight - scroll.clientHeight + content.offsetHeight);
-      if (height !== last) {
-        last = height;
+      const measurement = `${height}:${window.devicePixelRatio}`;
+      if (measurement !== last) {
+        last = measurement;
         onContentHeight(height);
       }
     };
     measure();
-    if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measure);
-    observer.observe(content);
-    observer.observe(panel);
-    return () => observer.disconnect();
+    window.addEventListener("resize", measure);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(content);
+    observer?.observe(panel);
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
   }, [onContentHeight]);
 
   useEffect(() => {
@@ -458,9 +462,18 @@ export function SearchPanel({
         !search.isPlaceholderData &&
         debounced === query;
 
-  // 选中项滚进可见区域。
+  // 选中项与可用列表高度改变时都滚进可见区域；缩放、帮助和反馈会改变视口。
   useEffect(() => {
-    activeRef.current?.scrollIntoView?.({ block: "nearest" });
+    /** 保留当前键盘选中项在实际滚动视口内。 */
+    const reveal = () => activeRef.current?.scrollIntoView?.({ block: "nearest" });
+    reveal();
+    window.addEventListener("resize", reveal);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(reveal);
+    if (scrollRef.current) observer?.observe(scrollRef.current);
+    return () => {
+      window.removeEventListener("resize", reveal);
+      observer?.disconnect();
+    };
   }, [activeOptionId]);
 
   // 提前按下的回车：这次输入的结果到了就打开第一条；没有结果就作罢。
@@ -605,7 +618,7 @@ export function SearchPanel({
             openWhenReady.current = false;
           }}
           className={cx(
-            "min-w-0 flex-1 bg-transparent text-text placeholder:text-muted/80 focus-visible:outline-none",
+            "min-w-0 flex-1 bg-transparent text-text placeholder:text-muted focus-visible:outline-none",
             isWindow ? "h-14 text-base" : "h-12 text-base",
           )}
         />

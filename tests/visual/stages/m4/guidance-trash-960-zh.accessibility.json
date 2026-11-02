@@ -1,0 +1,1043 @@
+{
+  "samples": [
+    {
+      "text": "拾序",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "搜索",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Ctrl K",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "收集箱",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "3",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "今天",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "3",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "日历",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "笔记",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "项目",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "开发控制台",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "自动化",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "回收站",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "background": [
+        37,
+        99,
+        235,
+        1
+      ],
+      "ratio": 5.169,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "设置",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "快速创建：Ctrl+Shift+Space",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "主题 · 浅色",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "回收站",
+      "tag": "H1",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "回收站是空的",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "16px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 15.403,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "删除的条目会在这里保留 30 天，期间可以随时恢复。",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        246,
+        247,
+        249,
+        1
+      ],
+      "ratio": 5.558,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 960,
+    "height": 640,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "complementary",
+      "name": "",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "main",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "拾序",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "搜索 Ctrl K",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "navigation",
+      "name": "主导航",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "自动化",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "回收站",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "设置",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+,"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "主题 · 浅色",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "region",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "拾序",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "搜索",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "收集箱 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+1"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "今天 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+2"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "日历",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+3"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "笔记",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+4"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "项目",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "keyshortcuts",
+          "value": {
+            "type": "string",
+            "value": "Control+5"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "开发控制台",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "自动化",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "主题 · 浅色",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "搜索",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Ctrl K",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "日历",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "项目",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "开发控制台",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "自动化",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "设置",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "快速创建：Ctrl+Shift+Space",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "主题 · 浅色",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "回收站",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "回收站是空的",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "删除的条目会在这里保留 30 天，期间可以随时恢复。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl K",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "日历",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "项目",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "开发控制台",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "回收站",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回收站是空的",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "删除的条目会在这里保留 30 天，期间可以随时恢复。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回收站",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

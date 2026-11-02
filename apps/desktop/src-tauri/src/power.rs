@@ -34,6 +34,7 @@ pub fn start(app: &tauri::AppHandle<tauri::Wry>) {
                 PowerEvent::Resumed => "resumed",
                 PowerEvent::TimeChanged => "time_changed",
                 PowerEvent::DisplayChanged => {
+                    crate::windows::search::reflow(&handle);
                     if let Some(floating) = state.runtime.floating() {
                         let floating = floating.clone();
                         tauri::async_runtime::spawn(async move {

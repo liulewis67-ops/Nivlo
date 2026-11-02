@@ -1,0 +1,1170 @@
+{
+  "samples": [
+    {
+      "text": "Navigation",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Projects",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Projects",
+      "tag": "H1",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "600",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "+",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "新版本发布",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 11.973,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "1",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 5.678,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "增长实验",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "1",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Tags",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "600",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "# 产品",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "1",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "# 沟通",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "2",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "新版本发布",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "18px",
+      "fontWeight": "600",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "1 open",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "回复产品评审的邮件",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 15.046,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "High",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        239,
+        107,
+        107,
+        1
+      ],
+      "background": [
+        30.96078431372549,
+        25.87450980392157,
+        30.619607843137253,
+        1
+      ],
+      "ratio": 5.706,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "10-10",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        20,
+        22,
+        27,
+        1
+      ],
+      "ratio": 7.136,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 400,
+    "height": 600,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "banner",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "main",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Navigation",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Projects",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Projects and tags",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Projects",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "list",
+      "name": "Item list",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Navigation",
+      "properties": []
+    },
+    {
+      "role": "navigation",
+      "name": "Projects and tags navigation",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "新版本发布",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "1 open",
+      "properties": []
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "list",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Tags",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "list",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "新版本发布",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "1 open",
+      "properties": []
+    },
+    {
+      "role": "checkbox",
+      "name": "Complete “回复产品评审的邮件”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "回复产品评审的邮件",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "High",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "10-10",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Projects",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "New project",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Tags",
+      "properties": []
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "新版本发布",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "回复产品评审的邮件",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "High",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "10-10",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Projects",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "新版本发布 1 open",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "More actions for “新版本发布”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "增长实验 1 open",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "More actions for “增长实验”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Tags",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "# 产品 1",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "More actions for “产品”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "# 沟通 2",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "More actions for “沟通”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回复产品评审的邮件",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Projects",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "+",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "新版本发布",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "1 open",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "增长实验",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "1 open",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "# 产品",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "# 沟通",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "2",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "新版本发布",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "增长实验",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "# 产品",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "# 沟通",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "2",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "…",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "1",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "2",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

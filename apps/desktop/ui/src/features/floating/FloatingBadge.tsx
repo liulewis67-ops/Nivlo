@@ -132,6 +132,8 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
     draggedRef.current = false;
     grabRef.current = { x: event.clientX, y: event.clientY };
     trackerRef.current.press({ x: event.clientX, y: event.clientY });
+    // 首个合并后的移动可能已经越过整个小徽标，仍需由按钮接到它以判定拖动。
+    event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
   /**
@@ -142,12 +144,26 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
   function handlePointerMove(event: PointerEvent<HTMLButtonElement>): void {
     if (trackerRef.current.move({ x: event.clientX, y: event.clientY })) {
       draggedRef.current = true;
+      releasePointer(event);
       void ipc.startFloatingDrag(grabRef.current ?? undefined);
     }
   }
 
-  /** 手势结束或被取消：回到空闲，但保留 `draggedRef` 以便吞掉随后可能到来的 `click`。 */
-  function handlePointerEnd(): void {
+  /**
+   * 释放 DOM 捕获，让原生拖动接管，或结束本次点击。
+   * @param event 本次手势的指针事件。
+   */
+  function releasePointer(event: PointerEvent<HTMLButtonElement>): void {
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+
+  /**
+   * 手势结束或被取消：回到空闲，保留 `draggedRef` 以吞掉随后可能到来的 click。
+   * @param event 本次手势的指针事件。
+   */
+  function handlePointerEnd(event: PointerEvent<HTMLButtonElement>): void {
+    releasePointer(event);
     trackerRef.current.cancel();
   }
 

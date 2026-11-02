@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { guidanceScenes } from "./guidance-scenes.mjs";
+import { accessibilityAudit } from "./accessibility-audit.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const PLATFORM = process.platform;
@@ -26,8 +27,10 @@ const DETAIL_STAGE = process.argv.includes("--detail-stage");
 const CALENDAR_STAGE = process.argv.includes("--calendar-stage");
 const FOCUS_AUDIT = process.argv.includes("--search-focus-audit");
 const GUIDANCE_STAGE = process.argv.includes("--guidance-stage");
-const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE || FOCUS_AUDIT || GUIDANCE_STAGE;
-const BASELINES = GUIDANCE_STAGE ? join(ROOT, "tests", "visual", "stages", "m3") : FOCUS_AUDIT ? join(ROOT, "tests", "visual", "stages", "m3", "before-focus") : CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
+const ACCESSIBILITY_STAGE = process.argv.includes("--accessibility-stage");
+let contrastFailures = 0;
+const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE || FOCUS_AUDIT || GUIDANCE_STAGE || ACCESSIBILITY_STAGE;
+const BASELINES = ACCESSIBILITY_STAGE ? join(ROOT,"tests","visual","stages","m4") : GUIDANCE_STAGE ? join(ROOT, "tests", "visual", "stages", "m3") : FOCUS_AUDIT ? join(ROOT, "tests", "visual", "stages", "m3", "before-focus") : CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
   ? join(ROOT, "tests", "visual", "implementation-baseline")
   : join(ROOT, "tests", "visual", "baselines", PLATFORM);
 const DIFFS = join(ROOT, "tests", "visual", "diff");
@@ -83,9 +86,13 @@ async function connect(wsUrl) {
     if (d.method) listeners.get(d.method)?.(d.params);
   };
   const send = (method, params = {}) =>
-    new Promise((res) => {
+    new Promise((res, reject) => {
       const id = ++n;
-      pending.set(id, res);
+      const timeout = setTimeout(() => {
+        pending.delete(id);
+        reject(new Error(`CDP request timed out: ${method}`));
+      }, 30000);
+      pending.set(id, result => { clearTimeout(timeout); res(result); });
       ws.send(JSON.stringify({ id, method, params }));
     });
   const evaluate = async (expression) => {
@@ -364,6 +371,28 @@ if (GUIDANCE_STAGE) {
   SCENARIOS.push(...guidanceScenes({ app: APP, click: clickWhenReady, sleep }));
 }
 
+if (ACCESSIBILITY_STAGE) {
+  SCENARIOS.length=0;
+  const scenes=guidanceScenes({app:APP,click:clickWhenReady,sleep});
+  const failedUndo=scenes.find(scene=>scene.name==='guidance-global-error-undo-zh');
+  scenes.push({...failedUndo,name:'guidance-global-error-undo-320-zh',w:320,h:220});
+  SCENARIOS.push(...scenes.map(scene=>({...scene,steps:async page=>{
+    await scene.steps(page);
+    if (scene.name === 'guidance-global-zh' || scene.name === 'guidance-palette-zh') {
+      await page.evaluate(`document.querySelector('button[aria-pressed="true"]').click()`);
+      await sleep(200);
+    }
+    const audit=await accessibilityAudit(page);
+    contrastFailures += audit.failures.length;
+    writeFileSync(join(BASELINES,scene.name+'.accessibility.json'),JSON.stringify(audit,null,2)+'\n');
+    console.log(scene.name+': '+audit.samples.length+' contrast samples, '+audit.failures.length+' failures, '+audit.unmeasured.length+' gradient samples unmeasured');
+    if(scene.name==='guidance-global-error-undo-320-zh') {
+      const bounds=await page.evaluate(`({height:innerHeight,footer:document.querySelector('footer').getBoundingClientRect().bottom,alert:document.querySelector('[role=alert]').getBoundingClientRect().bottom})`);
+      if(bounds.footer>bounds.height+1||bounds.alert>bounds.height+1)throw Error('Compact search recovery clipped: '+JSON.stringify(bounds));
+    }
+  }})));
+}
+
 async function main() {
   mkdirSync(BASELINES, { recursive: true });
   let server = null;
@@ -396,7 +425,7 @@ async function main() {
       await page.send("Emulation.setDeviceMetricsOverride", { width: scenario.w, height: scenario.h, deviceScaleFactor: 1, mobile: false });
       await page.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-color-scheme", value: "light" }, { name: "prefers-reduced-motion", value: "reduce" }] });
       await page.send("Page.enable");
-      if (CALENDAR_STAGE || GUIDANCE_STAGE || FOCUS_AUDIT) await page.send("Page.bringToFront");
+      if (CALENDAR_STAGE || GUIDANCE_STAGE || FOCUS_AUDIT || ACCESSIBILITY_STAGE) await page.send("Page.bringToFront");
       if (IMPLEMENTATION) {
         await page.send("Emulation.setTimezoneOverride", { timezoneId: "Asia/Shanghai" });
         await page.send("Page.addScriptToEvaluateOnNewDocument", { source: `
@@ -494,9 +523,13 @@ async function main() {
   if (IMPLEMENTATION) writeFileSync(join(BASELINES, "manifest.json"), JSON.stringify({
     sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: ROOT, encoding: "utf8" }).trim(),
     branch: execFileSync("git", ["branch", "--show-current"], { cwd: ROOT, encoding: "utf8" }).trim(),
-    fixtureRevision: GUIDANCE_STAGE ? "m3-v1: dev-seed; paired locale/theme, supported commands, failed floating capture" : CALENDAR_STAGE ? "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure" : DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
-    sourceFiles: DETAIL_STAGE || CALENDAR_STAGE || GUIDANCE_STAGE ? Object.fromEntries([
+    fixtureRevision: ACCESSIBILITY_STAGE ? "m4-v1: M3 paired fixtures; flat composited contrast/AX audit and empty light search placeholders" : GUIDANCE_STAGE ? "m3-v1: dev-seed; paired locale/theme, supported commands, failed floating capture" : CALENDAR_STAGE ? "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure" : DETAIL_STAGE ? "m1-v1: dev-seed; pending/failing update wrappers" : "w0-v1: dev-seed + 20 similar-prefix calendar entries", clock: CLOCK,
+    sourceFiles: DETAIL_STAGE || CALENDAR_STAGE || GUIDANCE_STAGE || ACCESSIBILITY_STAGE ? Object.fromEntries([
+      "scripts/visual/accessibility-audit.mjs",
+      "apps/desktop/ui/src/features/floating/FloatingBadge.tsx",
+      "apps/desktop/ui/src/features/projects/ProjectItemRow.tsx",
       "scripts/visual/guidance-scenes.mjs", "apps/desktop/ui/src/features/search/SearchPanel.tsx", "apps/desktop/ui/src/features/search/CommandPalette.tsx",
+      "apps/desktop/ui/src/features/search/SearchApp.tsx", "apps/desktop/ui/src/lib/ipc.ts", "apps/desktop/ui/src/bindings/index.ts",
       "apps/desktop/ui/src/features/quick-create/QuickCreateForm.tsx", "apps/desktop/ui/src/features/quick-create/model/quick-create.ts",
       "apps/desktop/ui/src/features/inbox/InboxRow.tsx", "apps/desktop/ui/src/features/settings/SettingsPage.tsx", "apps/desktop/ui/src/features/settings/SkinSetting.tsx",
       "apps/desktop/ui/src/features/workflows/WorkflowsPage.tsx", "apps/desktop/ui/src/features/workflows/WorkflowEditor.tsx",
@@ -514,11 +547,11 @@ async function main() {
       "apps/desktop/ui/src/styles/tokens.css", "apps/desktop/ui/src/styles/global.css",
       "apps/desktop/ui/src/i18n/en.json", "apps/desktop/ui/src/i18n/zh-CN.json",
     ].map(file => [file, createHash("sha256").update(readFileSync(join(ROOT, file))).digest("hex")])) : undefined,
-    acceptance: GUIDANCE_STAGE ? "M3: paired language/theme renders, default/narrow layouts, no horizontal overflow or sub-12px guidance, command scope, focus, visible organization/capture routes, retained failed capture; browser mock only" : FOCUS_AUDIT ? "Pre-search-edit focus observations; no native acceptance" : CALENDAR_STAGE ? "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only" : DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
+    acceptance: ACCESSIBILITY_STAGE ? "M4 rendered audit: inspect per-scene contrast failures and unmeasured gradients; browser AX trees are not NVDA evidence; native zoom and focus use separate release E2E" : GUIDANCE_STAGE ? "M3: paired language/theme renders, default/narrow layouts, no horizontal overflow or sub-12px guidance, command scope, focus, visible organization/capture routes, retained failed capture; browser mock only" : FOCUS_AUDIT ? "Pre-search-edit focus observations; no native acceptance" : CALENDAR_STAGE ? "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only" : DETAIL_STAGE ? "M1: both date controls visible, modal/inert semantics, no page overflow; stable input while saving across 1200px; failed close retains recoverable draft" : "W0 baseline only",
     platform: PLATFORM, timezone: "Asia/Shanghai", motion: "reduce; animations/transitions disabled",
     environment: "Chrome browser mock; OS scale and native WebView2 not certified", artifacts, recordings,
   }, null, 2) + "\n");
-  process.exit(failed > 0 ? 1 : 0);
+  process.exit(failed > 0 || contrastFailures > 0 ? 1 : 0);
 }
 
 main().catch((error) => {

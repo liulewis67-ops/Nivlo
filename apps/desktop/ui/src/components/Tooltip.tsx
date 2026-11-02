@@ -36,16 +36,24 @@ export type TooltipProps = {
  * @returns Tooltip 元素。
  */
 export function Tooltip({ content, children }: TooltipProps) {
+  const [open, setOpen] = useState(false);
   const [container, setContainer] = useState<HTMLElement | undefined>(undefined);
   return (
     <RadixTooltip.Root
+      open={open}
       onOpenChange={(open) => {
+        setOpen(open);
         if (open) setContainer(document.querySelector<HTMLElement>("dialog[open]") ?? undefined);
       }}
     >
       <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
       <RadixTooltip.Portal container={container}>
         <RadixTooltip.Content
+          onEscapeKeyDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen(false);
+          }}
           sideOffset={6}
           className="z-(--nv-z-tooltip) max-w-[min(24rem,calc(100vw-32px))] rounded-md border border-border bg-surface px-2 py-1 text-xs wrap-anywhere text-text shadow-md"
         >

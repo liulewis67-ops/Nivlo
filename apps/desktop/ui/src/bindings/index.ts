@@ -739,6 +739,7 @@ export const commands = {
 	 * 
 	 *  系统的拖动以它接手那一刻的光标为基准；那时光标已经移过了判定阈值，还可能在 IPC 期间继续移动。
 	 *  给了 `grab`（按下的位置）时，先把窗口挪到「按下的那一点在光标下」再交给系统，徽标不会从光标下滑开。
+	 *  同步 Command 在 UI 线程执行：读取光标、对齐与开始拖动不能分成跨线程排队的窗口消息。
 	 * 
 	 *  # Errors
 	 * 
@@ -802,8 +803,11 @@ export const commands = {
 	openItemInMain: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_item_in_main", { id })),
 	/**  隐藏全局搜索框（Esc）：焦点还给打开搜索之前正在使用的窗口。 */
 	hideSearch: () => __TAURI_INVOKE<void>("hide_search"),
-	/**  全局搜索框：按内容的自然高度（logical px）调整窗口高度，结果少时窗口变矮；后端会限制在允许的范围内。 */
-	fitSearch: (height: number | null) => __TAURI_INVOKE<void>("fit_search", { height }),
+	/**
+	 *  全局搜索框：按内容自然高度调整；可选渲染比例将 CSS px 换算为原生 logical px。
+	 *  旧调用省略 `content_scale` 时保留原来的原生 logical px 语义。
+	 */
+	fitSearch: (height: number | null, contentScale: number | null) => __TAURI_INVOKE<void>("fit_search", { height, contentScale }),
 };
 
 /** Events */

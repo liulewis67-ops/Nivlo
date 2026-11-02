@@ -68,7 +68,7 @@ export function ProjectItemRow({ item }: ProjectItemRowProps) {
         <span
           className={cx(
             "shrink-0 rounded-full px-2 py-0.5 text-xs",
-            item.priority === "high" && "bg-danger/10 text-danger",
+            item.priority === "high" && "bg-danger/5 text-danger",
             item.priority === "medium" && "bg-primary/10 text-primary",
             item.priority === "low" && "bg-surface-hover text-muted",
           )}

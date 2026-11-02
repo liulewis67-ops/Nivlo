@@ -1,0 +1,141 @@
+
+ RUN  v5.0.3 E:/personal_projects/Nivlo/apps/desktop/ui
+
+ ❯ src/features/search/search-app.test.tsx (20 tests | 1 failed) 3517ms
+   ❯ 全局搜索窗口 (20)
+     × 内容缩放改变但自然高度不变时，重新报告渲染比例并保留搜索输入 1192ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/features/search/search-app.test.tsx > 全局搜索窗口 > 内容缩放改变但自然高度不变时，重新报告渲染比例并保留搜索输入
+AssertionError: expected last "fitSearch" call to have been called with [ Any<Number>, 1.25 ]
+
+Ignored nodes: comments, script, style
+<html
+  data-theme="light"
+  lang="zh-CN"
+>
+  <head />
+  <body>
+    <div>
+      <div
+        class="h-screen"
+      >
+        <div
+          class="flex flex-col overflow-hidden bg-surface h-full w-full"
+        >
+          <div
+            class="flex shrink-0 items-center gap-3 border-b border-border/70 px-5"
+          >
+            <button
+              aria-pressed="false"
+              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border font-medium whitespace-nowrap transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) disabled:cursor-not-allowed disabled:opacity-50 bg-transparent text-text border-transparent hover:bg-surface-hover h-7 px-2 text-xs"
+              type="button"
+            >
+              命令
+            </button>
+            <svg
+              aria-hidden="true"
+              class="shrink-0 size-5 text-primary"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-width="1.5"
+              viewBox="0 0 16 16"
+            >
+              <circle
+                cx="7"
+                cy="7"
+                r="4.5"
+              />
+              <path
+                d="M10.5 10.5L14 14"
+              />
+            </svg>
+            <input
+              aria-autocomplete="list"
+              aria-controls="_r_0_"
+              aria-expanded="false"
+              aria-label="搜索关键词"
+              autocomplete="off"
+              class="min-w-0 flex-1 bg-transparent text-text placeholder:text-muted focus-visible:outline-none h-14 text-base"
+              placeholder="搜索待办、笔记和提示…"
+              role="combobox"
+              spellcheck="false"
+              value=""
+            />
+            <kbd
+              class="shrink-0 rounded-md bg-surface-hover px-1.5 py-0.5 font-sans text-xs text-muted"
+            >
+              Esc
+            </kbd>
+          </div>
+          <div
+            class="nv-scroll-hover min-h-0 flex-1 overflow-y-auto"
+          >
+            <div>
+              <p
+                class="px-6 py-8 text-center text-sm text-muted"
+              >
+                输入关键词或拼音首字母，搜索标题、正文和来源；回车在主窗口中打开。
+              </p>
+            </div>
+          </div>
+          <footer
+            class="flex max-h-40 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 overflow-y-auto border-t px-4 py-2 text-xs text-muted border-border/70 bg-surface-hover/40"
+          >
+            <span
+              class="min-w-0 flex-1 basis-40 wrap-anywhere tabular-nums"
+              role="status"
+            >
+              ↑↓ 选择 · Enter 打开
+            </span>
+            <button
+              aria-controls="_r_1_"
+              aria-expanded="false"
+              class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md border font-medium whitespace-nowrap transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) disabled:cursor-not-allowed disabled:opacity-50 bg-transparent text-text border-transparent hover:bg-surface-hover h-7 px-2 text-xs"
+              type="button"
+            >
+              键盘帮助
+            </button>
+          </footer>
+        </div>
+      </div>
+      <div
+        class="pointer-events-none fixed right-3 bottom-3 z-(--nv-z-toast) flex flex-col gap-2"
+      />
+    </div>
+  </body>
+</html>
+
+- Expected
++ Received
+
+  [
+    0,
+-   1.25,
+  ]
+
+ ❯ src/features/search/search-app.test.tsx:39:39
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 19 passed (20)
+   Start at  09:18:59
+   Duration  7.57s (tests 47%, environment 27%, import 12%, setup 12%, worker 1%)
+     37|       const fit = vi.spyOn(ipc, "fitSearch");
+     38|       renderWithProviders(<SearchApp />, ipc);
+     39|       await waitFor(() => expect(fit).toHaveBeenLastCalledWith(expect.…
+       |                                       ^
+     40|       fireEvent.change(input(), { target: { value: "保留缩放草稿" } });
+     41|       Object.defineProperty(window, "devicePixelRatio", { value: 2.5, …
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ checkRealTimersCallback ../../../node_modules/.pnpm/@testing-library+dom@10.4.2/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+ ❯ Timeout.task [as _onTimeout] ../../../node_modules/.pnpm/jsdom@30.1.2/node_modules/jsdom/lib/jsdom/browser/Window.js:541:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+undefined
+E:\personal_projects\Nivlo\apps\desktop\ui:
+[ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/features/search/search-app.test.tsx

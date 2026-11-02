@@ -1,0 +1,7 @@
+  … 1 应用启动
+  … 1 Hover 悬浮窗
+  … 1 打开主窗口
+  … 1 200% WebView2 content zoom
+  … 1 Native badge size matrix
+✓ 第 1 次：应用启动 → Hover 悬浮窗 → 打开主窗口 → 200% WebView2 content zoom → Native badge size matrix
+Warm search focus: 0 runs, median nullms, p95 nullms

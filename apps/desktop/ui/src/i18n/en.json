@@ -1062,7 +1062,8 @@
       "help": "Show this sheet",
       "views": "Go to Inbox / Today / Calendar / Notes / Projects",
       "settings": "Open Settings",
-      "undo": "Undo the last action (while its notice shows)"
+      "undo": "Undo the last action (while its notice shows)",
+      "zoom": "Zoom in / out / reset (Windows main and search windows)"
     },
     "search": {
       "move": "Previous / next result",

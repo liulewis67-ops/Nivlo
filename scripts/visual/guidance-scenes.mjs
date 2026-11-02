@@ -12,6 +12,11 @@ export function guidanceScenes({ app, click, sleep }) {
   definitions.push({ name: 'guidance-global-error-undo-zh', route: 'Global', w: 640, h: 440, error: true });
   return definitions.map(scene => ({ ...scene, url: scene.route === 'Global' ? `${app}/?window=search` : scene.route === 'Capture' ? `${app}/?window=floating` : app, steps: async page => {
     await page.send('Page.bringToFront');
+    // Wait for application bootstrap instead of racing a fixed navigation sleep.
+    for (let ready=0; !await page.evaluate(`!!document.querySelector('#root')?.children.length`); ready++) {
+      if(ready>=100) throw Error('Application bootstrap did not render');
+      await sleep(100);
+    }
     await page.evaluate(`import('/src/i18n/index.ts').then(m => m.setLanguage('${scene.en ? 'en' : 'zh-CN'}'))`);
     if (scene.dark) await page.evaluate("import('/src/stores/theme-store.ts').then(m => m.useThemeStore.getState().setPreference('dark'))");
     const label = (en, zh) => scene.en ? en : zh;
@@ -35,7 +40,10 @@ export function guidanceScenes({ app, click, sleep }) {
     } else if (scene.route === 'Global' || scene.route === 'Palette') {
       if (scene.route === 'Palette') await click(page, label('Search', '搜索'));
       await sleep(200);
-      if (!await page.evaluate(`document.activeElement === document.querySelector('[role=combobox]')`)) throw Error('Search did not focus');
+      for(let attempt=0;!await page.evaluate(`document.activeElement === document.querySelector('[role=combobox]')`);attempt++) {
+        if(attempt>=50)throw Error(`Search did not focus: ${await page.evaluate('document.hasFocus()+" "+document.activeElement?.outerHTML')}`);
+        await sleep(100);
+      }
       if (scene.error) {
         await page.send('Input.insertText', {text:'邮件'});
         await sleep(350);

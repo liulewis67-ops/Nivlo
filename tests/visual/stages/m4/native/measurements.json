@@ -1,0 +1,885 @@
+{
+  "runtimeEnvironments": [
+    {
+      "run": 1,
+      "browserVersion": {
+        "protocolVersion": "1.3",
+        "product": "Edg/156.0.4314.58",
+        "revision": "@7806b68d20d1c1273d5b07b4f4de18e8f5852581",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+        "jsVersion": "15.6.12.10"
+      },
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+      "platform": "Win32",
+      "dpr": 1.25,
+      "screen": {
+        "width": 1536,
+        "height": 864,
+        "availableWidth": 1536,
+        "availableHeight": 816
+      }
+    },
+    {
+      "run": 2,
+      "browserVersion": {
+        "protocolVersion": "1.3",
+        "product": "Edg/156.0.4314.58",
+        "revision": "@7806b68d20d1c1273d5b07b4f4de18e8f5852581",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+        "jsVersion": "15.6.12.10"
+      },
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+      "platform": "Win32",
+      "dpr": 1.25,
+      "screen": {
+        "width": 1536,
+        "height": 864,
+        "availableWidth": 1536,
+        "availableHeight": 816
+      }
+    },
+    {
+      "run": 3,
+      "browserVersion": {
+        "protocolVersion": "1.3",
+        "product": "Edg/156.0.4314.58",
+        "revision": "@7806b68d20d1c1273d5b07b4f4de18e8f5852581",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+        "jsVersion": "15.6.12.10"
+      },
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36 Edg/156.0.0.0",
+      "platform": "Win32",
+      "dpr": 1.25,
+      "screen": {
+        "width": 1536,
+        "height": 864,
+        "availableWidth": 1536,
+        "availableHeight": 816
+      }
+    }
+  ],
+  "profileIsolation": "Temporary NIVLO_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted",
+  "sourceCommit": "2b347550a7dfde141a4cd0b7d8be5db62f75da53",
+  "sourceFiles": {
+    "apps/desktop/src-tauri/src/commands/window.rs": "422eda3e20a09265154f33ecf103dae18402d2301f67746c21c08fffbd99a380",
+    "apps/desktop/src-tauri/src/power.rs": "5d8e5209cd4d2d4f71323f74178cd4bad693f673f284d91451daf3d8dd9eb682",
+    "apps/desktop/src-tauri/src/windows/mod.rs": "b917fa0a7d636e54f313db7371ef5185a4cb0bacb7d931ae8412f7505b7af467",
+    "apps/desktop/src-tauri/src/windows/search.rs": "c5bd5cd4c6d087daac5e28b3aa4616b5e7df64201e9e9add1f0329937615f461",
+    "apps/desktop/ui/src/bindings/index.ts": "7b7b8f0076a0919cd18f64d39f8ca8d0ab8af693e19d9a11c95ad360f6941295",
+    "apps/desktop/ui/src/components/Tooltip.tsx": "4263740c4348f253b462bb43534cf7ee1984f59fbd5a2f093ac74bf1f2d98908",
+    "apps/desktop/ui/src/features/floating/FloatingBadge.tsx": "4ec107956050e4f411f10be19ab5d94da4bfde42b3f448147f685fdd546acc78",
+    "apps/desktop/ui/src/features/floating/floating-badge.test.tsx": "72b0faba8d9982dda4606911a76f4c07eb23836ae5f6bdc85c0926d97fb1987c",
+    "apps/desktop/ui/src/features/onboarding/OnboardingDialog.tsx": "6aef089f68fa42edb360b61dd2174abc169182635f2772b889e7326511d1a184",
+    "apps/desktop/ui/src/features/projects/ProjectItemRow.tsx": "007173dab156ad987fc40b80411b18276a67db2c1adbf0d301c0f5d5807a2c53",
+    "apps/desktop/ui/src/features/search/SearchApp.tsx": "ce21b06e0967b3f8a738a5cc6c520d86fd35ab0908769125bc1be70490c329ab",
+    "apps/desktop/ui/src/features/search/SearchPanel.tsx": "6a2f5d856f40ec332c7b11715c9b4c2bceaec8963ed44968feeebb67e462bd30",
+    "apps/desktop/ui/src/features/search/search-app.test.tsx": "23f989b24c0429fbd8613f458fb2104c9b96113661cd4cc3afb82f701a37abe4",
+    "apps/desktop/ui/src/features/shell/MainShell.tsx": "6223e91b1618a1d9722182b384077ac2bd062ae92d42c4f62a418c9678d3d294",
+    "apps/desktop/ui/src/features/shell/ShortcutsDialog.tsx": "3a591921cf15952c3f68e55ea65b62ba7bfd45604c625fb7b2b7209b18558560",
+    "apps/desktop/ui/src/features/shell/onboarding.test.tsx": "660b0809e0d7a5e400d04cf3640111523dcf0d238ea5a714df0250b85a647ce1",
+    "apps/desktop/ui/src/i18n/en.json": "245758fd8e94a636abab0461c75e78c3176cc87421769597d6ea408996f7df40",
+    "apps/desktop/ui/src/i18n/zh-CN.json": "e6d815b1a8d920b9b29ade285adaf06b988f3d7c79f826ab8d3ef0e1e2b2c519",
+    "apps/desktop/ui/src/lib/focus-trap.test.tsx": "b661a7e2a1364367ddcf0a7e262402f3ee39d2bc704bab04444139e7806c5ff9",
+    "apps/desktop/ui/src/lib/focus-trap.ts": "be7466c2cb938e260b7f573459f8eb9ee23fd9a7a7c6078f3b58e57c420c7617",
+    "apps/desktop/ui/src/lib/ipc.ts": "8f873c504340c041a54370881c5ac19a249469b9e5da9e997fd83ec3be079551"
+  },
+  "executableSha256": "3cb44a5bd76da72858cc9410002b7aa5c84eba49a758bd6b556ccbc037e0e0d4",
+  "timestamp": "2026-11-02T04:40:05.528Z",
+  "cold": [
+    238,
+    310,
+    287
+  ],
+  "warm": [
+    54,
+    47,
+    38,
+    47,
+    33,
+    46,
+    77,
+    49,
+    41,
+    50,
+    43,
+    46,
+    50,
+    39,
+    67,
+    49,
+    48,
+    35,
+    34,
+    37
+  ],
+  "warmMedian": 47,
+  "warmP95": 67,
+  "budgetMs": 150,
+  "quickCreate": {
+    "click": [
+      50,
+      50,
+      37
+    ],
+    "hotkey": [
+      28,
+      29,
+      30
+    ]
+  },
+  "zoom": [
+    {
+      "surface": "search",
+      "before": {
+        "width": 640,
+        "height": 440,
+        "dpr": 1.25
+      },
+      "frames": [
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        }
+      ]
+    },
+    {
+      "run": 1,
+      "before": {
+        "width": 960,
+        "height": 640,
+        "dpr": 1.25
+      },
+      "after": {
+        "width": 480,
+        "height": 320,
+        "dpr": 2.5,
+        "overflow": false
+      },
+      "editor": {
+        "modal": "true",
+        "title": "e2e-drag-b-1",
+        "stable": true,
+        "selection": [
+          1,
+          2
+        ],
+        "focus": true,
+        "dates": 2
+      },
+      "floatingDprBefore": 1.25,
+      "floatingDprAfter": 1.25,
+      "screenshotSha256": "f518dff5cd31b1e52f8e5c75983bc7b35cd78e28281956d38e4a14cfeeeb9d8a",
+      "method": "Real Win32 Ctrl+NumpadAdd; DOM viewport/DPR measured, not a resized browser mock"
+    },
+    {
+      "surface": "search",
+      "before": {
+        "width": 640,
+        "height": 440,
+        "dpr": 1.25
+      },
+      "frames": [
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "before": {
+        "width": 960,
+        "height": 640,
+        "dpr": 1.25
+      },
+      "after": {
+        "width": 480,
+        "height": 320,
+        "dpr": 2.5,
+        "overflow": false
+      },
+      "editor": {
+        "modal": "true",
+        "title": "e2e-drag-b-2",
+        "stable": true,
+        "selection": [
+          1,
+          2
+        ],
+        "focus": true,
+        "dates": 2
+      },
+      "floatingDprBefore": 1.25,
+      "floatingDprAfter": 1.25,
+      "screenshotSha256": "f28487db1a3b32b2b27b8a111a83a8b4a4d0c206f743a897b5969daf2709c188",
+      "method": "Real Win32 Ctrl+NumpadAdd; DOM viewport/DPR measured, not a resized browser mock"
+    },
+    {
+      "surface": "search",
+      "before": {
+        "width": 640,
+        "height": 440,
+        "dpr": 1.25
+      },
+      "frames": [
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        },
+        {
+          "width": 320,
+          "height": 220,
+          "dpr": 2.5,
+          "input": 56,
+          "footer": 220.00000762939453,
+          "overflow": false,
+          "focus": true,
+          "value": "zoom-search-fixture",
+          "row": {
+            "top": 59.19375228881836,
+            "bottom": 95.19375228881836
+          },
+          "list": {
+            "top": 56.79999923706055,
+            "bottom": 103.20000076293945
+          }
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "before": {
+        "width": 960,
+        "height": 640,
+        "dpr": 1.25
+      },
+      "after": {
+        "width": 480,
+        "height": 320,
+        "dpr": 2.5,
+        "overflow": false
+      },
+      "editor": {
+        "modal": "true",
+        "title": "e2e-drag-b-3",
+        "stable": true,
+        "selection": [
+          1,
+          2
+        ],
+        "focus": true,
+        "dates": 2
+      },
+      "floatingDprBefore": 1.25,
+      "floatingDprAfter": 1.25,
+      "screenshotSha256": "e231d4ec0a945c27b0c96cabedad7633c3ea1c7f84ebd7a78f159e6fc463f7ae",
+      "method": "Real Win32 Ctrl+NumpadAdd; DOM viewport/DPR measured, not a resized browser mock"
+    }
+  ],
+  "badges": [
+    {
+      "name": "pill",
+      "label": [
+        "胶囊",
+        "Pill"
+      ],
+      "width": 64,
+      "height": 32,
+      "measured": {
+        "width": 64,
+        "height": 32,
+        "dpr": 1.25,
+        "outerWidth": 64,
+        "outerHeight": 33,
+        "button": {
+          "x": 0,
+          "y": 0,
+          "width": 64,
+          "height": 32
+        }
+      },
+      "sha256": "20d02ebb60c69de57d02e7bc1537322b462c10263bbb5e65dc1f6de3dbda478e",
+      "scope": "Real WebView2 client/button bounds on current monitor; not proof of per-pixel OS click-through or mixed DPI"
+    },
+    {
+      "name": "circle",
+      "label": [
+        "数字",
+        "Number"
+      ],
+      "width": 36,
+      "height": 36,
+      "measured": {
+        "width": 36,
+        "height": 36,
+        "dpr": 1.25,
+        "outerWidth": 36,
+        "outerHeight": 37,
+        "button": {
+          "x": 0,
+          "y": 0,
+          "width": 36,
+          "height": 36
+        }
+      },
+      "sha256": "898186713a6d71b29489fe54dcb666987613d5335436cbf10dfbd5ef007d1bf2",
+      "scope": "Real WebView2 client/button bounds on current monitor; not proof of per-pixel OS click-through or mixed DPI"
+    },
+    {
+      "name": "dot",
+      "label": [
+        "圆点",
+        "Dot"
+      ],
+      "width": 28,
+      "height": 28,
+      "measured": {
+        "width": 28,
+        "height": 28,
+        "dpr": 1.25,
+        "outerWidth": 28,
+        "outerHeight": 29,
+        "button": {
+          "x": 0,
+          "y": 0,
+          "width": 28,
+          "height": 28
+        }
+      },
+      "sha256": "8bac4bcbe8bc13118eb0e5def2827e677c8076db01e69473eaa0325c746c6500",
+      "scope": "Real WebView2 client/button bounds on current monitor; not proof of per-pixel OS click-through or mixed DPI"
+    },
+    {
+      "name": "skin",
+      "width": 88,
+      "height": 40,
+      "measured": {
+        "width": 88,
+        "height": 40,
+        "dpr": 1.25,
+        "outerWidth": 88,
+        "outerHeight": 41,
+        "button": {
+          "x": 0,
+          "y": 0,
+          "width": 88,
+          "height": 40
+        }
+      },
+      "sha256": "8effe1ca44495dc1bf8a21050f358635b2f6b77a7d2e2b7aa501861af7e43cd3",
+      "scope": "Real WebView2 client/button bounds on current monitor; not proof of per-pixel OS click-through or mixed DPI"
+    }
+  ],
+  "failedScenarios": 0,
+  "warmBudgetPassed": true
+}

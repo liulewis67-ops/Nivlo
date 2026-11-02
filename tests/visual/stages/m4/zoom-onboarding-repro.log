@@ -1,0 +1,6 @@
+  … 1 应用启动
+  … 1 Hover 悬浮窗
+  … 1 打开主窗口
+  … 1 200% WebView2 content zoom
+✗ 第 1 次：[200% WebView2 content zoom] Zoomed editor/badge lost its state: {"before":{"width":960,"height":640,"dpr":1.25},"after":{"width":480,"height":320,"dpr":2.5,"overflow":false},"editor":{"modal":null,"title":"zoom fixture","stable":true,"selection":[1,2],"focus":false,"dates":2},"floatingDprBefore":1.25,"floatingDprAfter":1.25,"dialog":[{"name":"欢迎使用拾序","text":"3\n欢迎使用拾序\n\n拾序住在屏幕边缘：先收下想到的事，再慢慢整理。在屏幕边缘找到小徽标就能开始。\n\n跳过\n下一步"}]}
+Warm search focus: 0 runs, median nullms, p95 nullms

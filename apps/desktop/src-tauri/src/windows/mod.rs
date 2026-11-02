@@ -140,6 +140,7 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
             WebviewWindowBuilder::new(app, MAIN_WINDOW_LABEL, WebviewUrl::App("index.html".into()))
                 .title("Nivlo")
                 .inner_size(MAIN_WIDTH, MAIN_HEIGHT)
+                .zoom_hotkeys_enabled(cfg!(target_os = "windows"))
                 .build()
                 .inspect(suppress_bare_alt_menu)?
         }
@@ -224,6 +225,12 @@ pub fn on_window_event<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
         }
         (search::SEARCH_WINDOW_LABEL, WindowEvent::Focused(false)) => {
             search::dismiss(window.app_handle(), false);
+        }
+        (
+            search::SEARCH_WINDOW_LABEL,
+            WindowEvent::ScaleFactorChanged { .. } | WindowEvent::Moved(_),
+        ) => {
+            search::reflow(window.app_handle());
         }
         (search::SEARCH_WINDOW_LABEL, WindowEvent::CloseRequested { api, .. }) => {
             api.prevent_close();

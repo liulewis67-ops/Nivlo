@@ -24,6 +24,10 @@ describe("首次运行引导", () => {
     fresh.showOnboarding();
     const view = renderWithProviders(<MainShell />, fresh);
     expect(await screen.findByRole("dialog", { name: "欢迎使用拾序" })).toBeInTheDocument();
+    expect(document.querySelector("main")).toHaveAttribute("inert");
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    fireEvent.keyDown(window, { key: "?" });
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
     view.unmount();
 
     renderWithProviders(<MainShell />, createMemoryIpc());
@@ -60,6 +64,7 @@ describe("首次运行引导", () => {
     await user.click(screen.getByRole("button", { name: "开始使用" }));
     expect(screen.queryByRole("dialog", { name: "欢迎使用拾序" })).not.toBeInTheDocument();
     await waitFor(() => expect(ipc.appSettings.onboardingCompleted).toBe(true));
+    expect(screen.getByRole("heading", { name: "今天" })).toHaveFocus();
   });
 
   it("快捷键被别的程序占用时，最后一步说明按了没反应、去哪里换，而不是教一个用不了的组合", async () => {
@@ -127,6 +132,7 @@ describe("首次运行引导", () => {
     expect(await screen.findByRole("dialog", { name: "欢迎使用拾序" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "跳过" }));
+    expect(screen.getByRole("button", { name: "重新查看" })).toHaveFocus();
     expect(screen.queryByRole("dialog", { name: "欢迎使用拾序" })).not.toBeInTheDocument();
     await waitFor(() => expect(ipc.appSettings.onboardingCompleted).toBe(true));
   });

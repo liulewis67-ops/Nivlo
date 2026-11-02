@@ -27,6 +27,40 @@ function doneTodo(id: string): TodayItemDto {
 }
 
 describe("FloatingBadge", () => {
+  it("按下后捕获指针，在原生拖动交接、松开和取消时释放", () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingBadge />, ipc);
+    const button = badge();
+    let captured = false;
+    const capture = vi.fn(() => {
+      captured = true;
+    });
+    const release = vi.fn(() => {
+      captured = false;
+    });
+    Object.assign(button, {
+      setPointerCapture: capture,
+      hasPointerCapture: () => captured,
+      releasePointerCapture: release,
+    });
+    fireEvent.pointerDown(button, { button: 0, pointerId: 7, clientX: 32, clientY: 16 });
+    expect(capture).toHaveBeenCalledWith(7);
+    fireEvent.pointerMove(button, { pointerId: 7, clientX: -20, clientY: 16 });
+    expect(ipc.dragStarts).toBe(1);
+    expect(captured).toBe(false);
+    expect(release).toHaveBeenCalledWith(7);
+
+    fireEvent.pointerDown(button, { button: 0, pointerId: 8, clientX: 32, clientY: 16 });
+    fireEvent.pointerUp(button, { pointerId: 8 });
+    expect(captured).toBe(false);
+    fireEvent.pointerDown(button, { button: 0, pointerId: 9, clientX: 32, clientY: 16 });
+    fireEvent.pointerCancel(button, { pointerId: 9 });
+    expect(captured).toBe(false);
+    expect(release).toHaveBeenCalledTimes(3);
+    fireEvent.pointerMove(button, { pointerId: 9, clientX: -100, clientY: 16 });
+    expect(ipc.dragStarts).toBe(1);
+  });
+
   it("显示剩余数量；全部完成时改为「都做完了」的对勾", async () => {
     const ipc = createMemoryIpc();
     ipc.setToday({

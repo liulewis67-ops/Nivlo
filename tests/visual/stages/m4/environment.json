@@ -1,0 +1,60 @@
+{
+  "timezone": "Asia/Shanghai",
+  "limitations": [
+    "DPI API snapshot is not a mixed-monitor movement test",
+    "Missing application paths do not prove no portable installation exists",
+    "No NVDA announcement record or participant session is inferred"
+  ],
+  "clientDate": "2026-11-02",
+  "monitors": [
+    {
+      "workArea": {
+        "width": 1920,
+        "x": 0,
+        "height": 1020,
+        "y": 0
+      },
+      "primary": true,
+      "bounds": {
+        "width": 1920,
+        "x": 0,
+        "height": 1080,
+        "y": 0
+      }
+    }
+  ],
+  "installedAtKnownPaths": [
+    {
+      "path": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+      "version": "156.0.8078.74",
+      "name": "Google Chrome"
+    },
+    {
+      "path": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+      "version": "156.0.4314.58",
+      "name": "Microsoft Edge"
+    },
+    {
+      "path": "C:/Program Files/Microsoft Office/root/Office16/WINWORD.EXE",
+      "version": "16.0.20527.20112",
+      "name": "Microsoft Office"
+    },
+    {
+      "path": "C:/Windows/explorer.exe",
+      "version": "10.0.26100.1710",
+      "name": "Microsoft® Windows® Operating System"
+    }
+  ],
+  "primarySystemDpi": 120,
+  "monitorCount": 1,
+  "hardware": {
+    "system": {
+      "TotalPhysicalMemory": 17024741376
+    },
+    "cpu": {
+      "Name": "AMD Ryzen 7 5800H with Radeon Graphics         ",
+      "NumberOfCores": 8,
+      "NumberOfLogicalProcessors": 16
+    }
+  }
+}
