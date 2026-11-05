@@ -74,6 +74,11 @@ export type CalendarChipProps = {
   loose?: CalendarItemDto;
   /** 是否显示时间前缀（周视图）。 */
   showTime?: boolean;
+  /**
+   * 月视图的紧凑尺寸：单行 24px 高、更窄的内边距；标签窄于 8rem 时只用旗标与虚线框表示截止，
+   * 「截止」文字留在无障碍名称与提示里，把宽度让给标题。
+   */
+  compact?: boolean;
 };
 
 /**
@@ -85,7 +90,12 @@ export type CalendarChipProps = {
  * @param props 条目与显示选项。
  * @returns 标签元素。
  */
-export function CalendarChip({ entry, loose, showTime = false }: CalendarChipProps) {
+export function CalendarChip({
+  entry,
+  loose,
+  showTime = false,
+  compact = false,
+}: CalendarChipProps) {
   const { t } = useTranslation();
   const openItem = useOpenItem();
   const item = entry?.item ?? loose;
@@ -128,7 +138,8 @@ export function CalendarChip({ entry, loose, showTime = false }: CalendarChipPro
         aria-label={isDue ? t("calendar.dueChip", { title: item.title }) : item.title}
         aria-description={action}
         className={cx(
-          "flex min-h-7 w-full min-w-0 shrink-0 flex-wrap items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs",
+          "flex w-full min-w-0 shrink-0 items-center rounded-md text-left text-xs",
+          compact ? "@container h-6 gap-1 px-1" : "min-h-7 flex-wrap gap-1.5 px-1.5 py-1",
           "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
           "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus",
           isDue
@@ -163,7 +174,11 @@ export function CalendarChip({ entry, loose, showTime = false }: CalendarChipPro
         >
           {item.title}
         </span>
-        {isDue && <span className="shrink-0 text-xs">{t("calendar.due")}</span>}
+        {isDue && (
+          <span className={cx("shrink-0 text-xs", compact && "hidden @[8rem]:inline")}>
+            {t("calendar.due")}
+          </span>
+        )}
       </button>
     </Tooltip>
   );

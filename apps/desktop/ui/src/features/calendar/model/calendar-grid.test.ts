@@ -6,6 +6,7 @@ import {
   buildWeeks,
   dayLabel,
   groupByDate,
+  monthCellVisibleCount,
   shiftAnchor,
   titleFor,
   visibleRange,
@@ -118,5 +119,31 @@ describe("标题与表头", () => {
   it("每月 1 日带月份", () => {
     expect(dayLabel("2026-11-01")).toBe("11月1日");
     expect(dayLabel("2026-11-02")).toBe("2");
+  });
+});
+
+describe("monthCellVisibleCount", () => {
+  it("没量到高度时最多显示三条", () => {
+    expect(monthCellVisibleCount(2, null)).toBe(2);
+    expect(monthCellVisibleCount(5, null)).toBe(3);
+  });
+
+  it("默认窗口（960×640，五行月份约 110px 高）的格子能直接放下三条", () => {
+    expect(monthCellVisibleCount(3, 110.5)).toBe(3);
+  });
+
+  it("放不下时最后一行留给「还有 N 项」", () => {
+    expect(monthCellVisibleCount(4, 110.5)).toBe(2);
+    // 六行月份约 92px：两行条目 + 一行折叠。
+    expect(monthCellVisibleCount(2, 92)).toBe(2);
+    expect(monthCellVisibleCount(3, 92)).toBe(1);
+  });
+
+  it("高的格子也不超过三条", () => {
+    expect(monthCellVisibleCount(6, 400)).toBe(3);
+  });
+
+  it("太矮时只显示折叠行", () => {
+    expect(monthCellVisibleCount(3, 40)).toBe(0);
   });
 });

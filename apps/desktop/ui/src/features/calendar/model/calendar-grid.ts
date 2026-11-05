@@ -145,3 +145,27 @@ export function dayLabel(date: string): string {
   const parsed = parseISO(date);
   return parsed.getDate() === 1 ? formatDate(parsed, "monthDay") : String(parsed.getDate());
 }
+
+/** 月视图每个格子最多直接显示几个条目，其余折叠成「还有 N 项」。 */
+export const MONTH_CELL_LIMIT = 3;
+
+/**
+ * 月视图格子的纵向尺寸（CSS px），与 `DayCell` / `CalendarChip` 的紧凑样式一一对应：
+ * 上内边距 4、日期行 24、与列表间隔 2、下内边距 2、底边框 1；每行条目 24，行间隔 2。
+ */
+export const MONTH_CELL_METRICS = { chrome: 33, row: 24, gap: 2 } as const;
+
+/**
+ * 月视图一格能直接显示几个条目。放不下时最后一行留给「还有 N 项」。
+ *
+ * @param count 这一天的条目数。
+ * @param cellHeight 格子的实际高度；还没量到时为 `null`。
+ * @returns 直接显示的条目数（0…[`MONTH_CELL_LIMIT`]）。
+ */
+export function monthCellVisibleCount(count: number, cellHeight: number | null): number {
+  if (cellHeight === null) return Math.min(count, MONTH_CELL_LIMIT);
+  const { chrome, row, gap } = MONTH_CELL_METRICS;
+  const rows = Math.max(0, Math.floor((cellHeight - chrome + gap) / (row + gap)));
+  if (count <= Math.min(rows, MONTH_CELL_LIMIT)) return count;
+  return Math.max(0, Math.min(MONTH_CELL_LIMIT, rows - 1));
+}

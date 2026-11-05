@@ -34,6 +34,7 @@ import {
   buildWeeks,
   dayLabel,
   groupByDate,
+  monthCellVisibleCount,
   shiftAnchor,
   titleFor,
   toIsoDate,
@@ -55,9 +56,6 @@ function timeInDay(title: string, date: string): { title: string; time: string }
     return null;
   return { title: parsed.title, time: parsed.schedule.time.slice(0, 5) };
 }
-
-/** 月视图每个格子最多直接显示几个条目，其余折叠成「还有 N 项」。 */
-const MONTH_CELL_LIMIT = 3;
 
 /** 拖动超过这个距离（px）才算开始拖拽，避免点击被误判成拖拽。 */
 const DRAG_ACTIVATION_DISTANCE_PX = 5;
@@ -127,14 +125,12 @@ function DayCell({
   const isToday = date === today;
   const outside = view === "month" && parsed.getMonth() !== parseISO(anchor).getMonth();
   const weekend = parsed.getDay() === 0 || parsed.getDay() === 6;
-  // 日期行/内边距 44px，条目与间隔 32px；拥挤时先为「还有 N 项」留出同样空间。
-  const capacity =
-    cellHeight === null ? MONTH_CELL_LIMIT : Math.max(0, Math.floor((cellHeight - 44) / 32));
-  const limit = Math.min(
-    MONTH_CELL_LIMIT,
-    cellHeight !== null && entries.length > capacity ? Math.max(0, capacity - 1) : capacity,
-  );
-  const visible = view === "month" ? entries.slice(0, limit) : entries;
+  // 月视图格子窄而矮（默认窗口约 106×110px），用紧凑尺寸让标题和条目数都尽量放得下。
+  const compact = view === "month";
+  const visible =
+    view === "month"
+      ? entries.slice(0, monthCellVisibleCount(entries.length, cellHeight))
+      : entries;
   const hidden = entries.length - visible.length;
   /** 输入里认出的时间：在格子里给个小提示，回车后就是这一天的这个时间。 */
   const recognised = adding ? timeInDay(title, date) : null;
@@ -179,7 +175,8 @@ function DayCell({
       aria-label={formatDate(parsed, "monthDayWeekday")}
       aria-current={isToday ? "date" : undefined}
       className={cx(
-        "group relative flex min-h-0 min-w-0 flex-col gap-1 border-r border-b border-border p-1.5",
+        "group relative flex min-h-0 min-w-0 flex-col border-r border-b border-border",
+        compact ? "gap-0.5 px-1 pt-1 pb-0.5" : "gap-1 p-1.5",
         "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
         weekend && !outside && "bg-surface-hover/40",
         outside && "bg-bg text-muted",
@@ -205,7 +202,10 @@ function DayCell({
           data-day-add=""
           aria-label={t("calendar.addOn", { date: formatDate(parsed, "monthDay") })}
           onClick={() => onAdd(true)}
-          className="flex size-7 items-center justify-center rounded text-muted hover:bg-surface-hover hover:text-text"
+          className={cx(
+            "flex items-center justify-center rounded text-muted hover:bg-surface-hover hover:text-text",
+            compact ? "size-6" : "size-7",
+          )}
         >
           {"+"}
         </button>
@@ -214,20 +214,27 @@ function DayCell({
         role="region"
         aria-label={formatDate(parsed, "monthDayWeekday")}
         tabIndex={0}
-        className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto"
+        className={cx(
+          "flex min-h-0 flex-1 flex-col overflow-y-auto",
+          compact ? "gap-0.5" : "gap-1",
+        )}
       >
         {visible.map((entry) => (
           <CalendarChip
             key={`${entry.kind}:${entry.item.id}`}
             entry={entry}
             showTime={view === "week"}
+            compact={compact}
           />
         ))}
         {hidden > 0 && (
           <button
             type="button"
             onClick={() => onExpand(date)}
-            className="min-h-7 shrink-0 rounded px-1.5 text-left text-xs text-muted hover:text-text"
+            className={cx(
+              "shrink-0 rounded text-left text-xs text-muted hover:text-text",
+              compact ? "h-6 px-1" : "min-h-7 px-1.5",
+            )}
           >
             {t("calendar.more", { count: hidden })}
           </button>
