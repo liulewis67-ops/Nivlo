@@ -1126,5 +1126,24 @@
       "move": "在各项的同一个按钮之间移动",
       "filter": "跳到筛选框（项多时才有）"
     }
+  },
+  "createConfiguration": {
+    "title": "新增事项",
+    "hint": "把内容和安排一起记下，点击创建后保存。",
+    "titleLabel": "标题（必填）",
+    "titlePlaceholder": "输入事项标题",
+    "contentPlaceholder": "补充详细说明、步骤或参考资料…",
+    "schedule": "时间安排",
+    "organize": "归类",
+    "discardPrompt": "放弃这次填写的内容？",
+    "keepEditing": "继续编辑",
+    "discard": "放弃内容",
+    "cancel": "取消",
+    "create": "创建",
+    "creating": "创建中…",
+    "retry": "重试创建",
+    "shortcut": "Ctrl + Enter 创建",
+    "keepOpen": "创建后继续新增",
+    "created": "已创建「{{title}}」，可以继续新增。"
   }
 }

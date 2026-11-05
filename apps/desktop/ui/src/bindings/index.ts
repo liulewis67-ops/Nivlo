@@ -784,7 +784,7 @@ export const commands = {
 	 * 
 	 *  窗口无法聚焦时返回 `WINDOW_UNAVAILABLE`，此时悬浮窗已恢复为不可聚焦。
 	 */
-	beginFloatingInput: () => typedError<null, IpcError>(__TAURI_INVOKE("begin_floating_input")),
+	beginFloatingInput: (configuration: boolean | null) => typedError<null, IpcError>(__TAURI_INVOKE("begin_floating_input", { configuration })),
 	/**
 	 *  结束悬浮窗的文本输入：恢复不可聚焦，并把焦点还给用户之前的应用。可以重复调用。
 	 * 

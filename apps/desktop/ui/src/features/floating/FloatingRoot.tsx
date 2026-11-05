@@ -4,11 +4,12 @@ import { MenuModalContext } from "@/components";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
-import { useDropCapture } from "@/features/capture";
+import { CaptureFeedbackBar, useDropCapture } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
 import { useTodayQuery } from "@/features/today";
 import { useAppearanceStore } from "@/stores/appearance-store";
 import { useSkinStore } from "@/stores/skin-store";
+import { CreateConfiguration } from "@/features/quick-create";
 import { FloatingBadge } from "./FloatingBadge";
 import { TodayPanel } from "./TodayPanel";
 import { DEFAULT_BADGE_SIZE, badgeSize } from "./model/badge-size";
@@ -38,7 +39,7 @@ export function FloatingRoot() {
   const { t } = useTranslation();
   // 悬浮窗启动时取一次 Today 并保持缓存（staleTime 为无穷）；之后只由后端事件刷新。
   // 放在根组件而不是面板里：面板在 Hover 时才挂载，必须直接读缓存而不是在 Hover 时取数。
-  useTodayQuery();
+  const today = useTodayQuery();
   // Inbox 数量同理：启动时取一次，之后只由后端事件刷新。
   useInboxCountQuery();
   // 焦点会被马上还给用户之前的应用：菜单不能因此关闭。
@@ -47,6 +48,8 @@ export function FloatingRoot() {
   const drop = useDropCapture(send);
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
   const [quickCreateKind, setQuickCreateKind] = useState<ItemTypeDto | null>(null);
+  /** 配置页已打开时托盘 / 快捷键再次请求新增的次数：让配置页重新取回焦点。 */
+  const [createFocusRequest, setCreateFocusRequest] = useState(0);
   const isPanel = needsPanelWindow(state);
   const shape = useAppearanceStore((s) => s.appearance.badgeShape);
   const hasSkin = useSkinStore((s) => s.skin.frames.length > 0);
@@ -58,6 +61,10 @@ export function FloatingRoot() {
 
   useEffect(() => {
     let cancelled = false;
+    if (quickCreateKind !== null) {
+      hasExpandedRef.current = true;
+      return;
+    }
     if (isPanel) {
       hasExpandedRef.current = true;
       ipc
@@ -80,7 +87,7 @@ export function FloatingRoot() {
     return () => {
       cancelled = true;
     };
-  }, [isPanel, badgeWidth, badgeHeight]);
+  }, [isPanel, badgeWidth, badgeHeight, quickCreateKind]);
 
   /**
    * 进入快速创建：状态机切到 QuickCreate（此时指针离开不会收起面板），并显示输入行。
@@ -98,11 +105,12 @@ export function FloatingRoot() {
     send("quickCreateFinished");
   }
 
-  // 托盘「快速添加」：不管当前是收起还是展开，直接进入待办的快速创建。
+  // 托盘「快速添加」：不管当前是收起还是展开，直接进入待办的配置页；已打开时保留草稿和类型，只取回焦点。
   useEffect(
     () =>
       ipc.subscribeQuickAddRequested(() => {
-        setQuickCreateKind("todo");
+        setQuickCreateKind((current) => current ?? "todo");
+        setCreateFocusRequest((count) => count + 1);
         send("quickCreateRequested");
       }),
     [send],
@@ -139,10 +147,33 @@ export function FloatingRoot() {
         }}
         {...drop.handlers}
       >
-        {isPanel ? (
+        {quickCreateKind !== null ? (
+          <CreateConfiguration
+            kind={quickCreateKind}
+            today={today.data?.date}
+            onDone={finishQuickCreate}
+            focusRequest={createFocusRequest}
+            onPasteNonText={drop.pasteFromClipboard}
+            feedback={
+              drop.feedback === null ? null : (
+                <CaptureFeedbackBar
+                  inline
+                  feedback={drop.feedback}
+                  onUndo={drop.undo}
+                  onEdit={() => {
+                    drop.dismiss();
+                    void ipc.openMain();
+                  }}
+                  onDismiss={drop.dismiss}
+                  onHoldChange={drop.pauseDismiss}
+                />
+              )
+            }
+          />
+        ) : isPanel ? (
           <TodayPanel
             layout={layout}
-            quickCreateKind={quickCreateKind}
+            quickCreateKind={null}
             onQuickCreate={startQuickCreate}
             onQuickCreateKindChange={setQuickCreateKind}
             onQuickCreateDone={finishQuickCreate}

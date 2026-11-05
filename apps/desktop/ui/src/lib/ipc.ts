@@ -373,7 +373,7 @@ export interface IpcClient {
    * 开始悬浮窗的文本输入：后端记住用户当前的前台窗口，悬浮窗临时可聚焦并获得键盘焦点。
    * 必须与 [`IpcClient.endFloatingInput`] 成对使用。
    */
-  beginFloatingInput(): Promise<void>;
+  beginFloatingInput(configuration?: boolean): Promise<void>;
   /** 结束文本输入：悬浮窗恢复不可聚焦，焦点还给用户之前的应用。可重复调用。 */
   endFloatingInput(): Promise<void>;
   /**
@@ -600,8 +600,8 @@ const tauriIpc: IpcClient = {
   collapseFloating: async (width, height) => {
     await call("collapse_floating", commands.collapseFloating({ width, height }));
   },
-  beginFloatingInput: async () => {
-    await call("begin_floating_input", commands.beginFloatingInput());
+  beginFloatingInput: async (configuration) => {
+    await call("begin_floating_input", commands.beginFloatingInput(configuration ?? null));
   },
   endFloatingInput: async () => {
     await call("end_floating_input", commands.endFloatingInput());
@@ -731,7 +731,7 @@ export const ipc: IpcClient = {
   startFloatingDrag: (grab) => current.startFloatingDrag(grab),
   expandFloating: (width, height) => current.expandFloating(width, height),
   collapseFloating: (width, height) => current.collapseFloating(width, height),
-  beginFloatingInput: () => current.beginFloatingInput(),
+  beginFloatingInput: (configuration) => current.beginFloatingInput(configuration),
   endFloatingInput: () => current.endFloatingInput(),
   subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),
   subscribeQuickAddRequested: (onRequested) => current.subscribeQuickAddRequested(onRequested),

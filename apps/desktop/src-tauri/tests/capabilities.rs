@@ -15,6 +15,8 @@ use serde_json::Value;
 const FLOATING_ALLOWED: &[&str] = &[
     "get_today",
     "quick_create",
+    "create_item",
+    "list_projects",
     "complete_item",
     // 完成的撤销（D-12 的 `undo` 在 Item 完成场景的具体命令）。
     "reopen_item",
@@ -123,7 +125,7 @@ fn floating_only_has_whitelisted_commands() {
 #[test]
 fn main_only_commands_are_not_exposed_to_floating() {
     let floating = allowed_commands(&parse(include_str!("../capabilities/floating.json")));
-    for command in ["create_item", "get_item", "list_items", "quit_app"] {
+    for command in ["get_item", "list_items", "quit_app"] {
         assert!(
             !floating.iter().any(|c| c == command),
             "{command} 不得出现在悬浮窗权限中"

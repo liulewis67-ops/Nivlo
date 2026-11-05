@@ -274,8 +274,19 @@ fn window_error(error: PlatformError) -> IpcError {
 /// 窗口无法聚焦时返回 `WINDOW_UNAVAILABLE`，此时悬浮窗已恢复为不可聚焦。
 #[tauri::command]
 #[specta::specta]
-pub async fn begin_floating_input(state: State<'_, AppState>) -> Result<(), IpcError> {
-    floating_handle(&state)?.begin_input().map_err(window_error)
+pub async fn begin_floating_input(
+    state: State<'_, AppState>,
+    configuration: Option<bool>,
+) -> Result<(), IpcError> {
+    let handle = floating_handle(&state)?;
+    handle.begin_input().map_err(window_error)?;
+    if configuration.unwrap_or(false)
+        && let Err(error) = handle.configure_input()
+    {
+        let _ = handle.end_input();
+        return Err(window_error(error));
+    }
+    Ok(())
 }
 
 /// 结束悬浮窗的文本输入：恢复不可聚焦，并把焦点还给用户之前的应用。可以重复调用。

@@ -172,6 +172,89 @@ fn single() -> Vec<MonitorInfo> {
     vec![monitor("DISPLAY1", 0, 1920, true)]
 }
 
+#[tokio::test]
+async fn configuration_is_centered_and_restores_the_original_badge() {
+    let f = fixture(single(), (1800, 80), &[]).await;
+    f.controller.expand((300.0, 380.0)).unwrap();
+    f.controller.begin_input().unwrap();
+    f.controller.configure_input().unwrap();
+    assert_eq!(
+        f.port.bounds().unwrap(),
+        Rect {
+            x: 640,
+            y: 160,
+            width: 640,
+            height: 720
+        }
+    );
+    f.controller.end_input().unwrap();
+    f.controller.collapse(BADGE).unwrap();
+    assert_eq!(
+        f.port.bounds().unwrap(),
+        Rect {
+            x: 1800,
+            y: 80,
+            width: 88,
+            height: 40
+        }
+    );
+}
+
+#[tokio::test]
+async fn configuration_fits_scaled_small_work_area_and_survives_display_change() {
+    let mut display = monitor("small", -900, 900, true);
+    display.work_area.y = 40;
+    display.work_area.height = 700;
+    display.scale_factor = 1.5;
+    let f = fixture(vec![display], (-100, 80), &[]).await;
+    f.controller.begin_input().unwrap();
+    f.controller.configure_input().unwrap();
+    assert_eq!(
+        f.port.bounds().unwrap(),
+        Rect {
+            x: -876,
+            y: 64,
+            width: 852,
+            height: 652
+        }
+    );
+    f.controller.display_changed().await;
+    assert_eq!(
+        f.port.bounds().unwrap(),
+        Rect {
+            x: -876,
+            y: 64,
+            width: 852,
+            height: 652
+        }
+    );
+    assert!(f.controller.input_active.load(Ordering::SeqCst));
+
+    // 模拟原显示器拔除，窗口迁移到不同缩放的新工作区。
+    let mut replacement = monitor("replacement", 0, 2560, true);
+    replacement.work_area.height = 1400;
+    replacement.scale_factor = 2.0;
+    lock(&f.port.state).monitors = vec![replacement];
+    f.controller.display_changed().await;
+    assert_eq!(
+        f.port.bounds().unwrap(),
+        Rect {
+            x: 640,
+            y: 32,
+            width: 1280,
+            height: 1336
+        }
+    );
+    assert!(f.controller.input_active.load(Ordering::SeqCst));
+    assert!(f.controller.configuring.load(Ordering::SeqCst));
+    f.controller.end_input().unwrap();
+    f.controller.collapse(BADGE).unwrap();
+    let restored = f.port.bounds().unwrap();
+    assert!(restored.x >= 0 && restored.y >= 0);
+    assert!(restored.x + i32::try_from(restored.width).unwrap() <= 2560);
+    assert!(restored.y + i32::try_from(restored.height).unwrap() <= 1400);
+}
+
 /// 控制器夹具。
 struct Fixture {
     controller: Arc<FloatingController<FakePort>>,

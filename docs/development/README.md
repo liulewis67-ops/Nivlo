@@ -2,6 +2,8 @@
 
 本文档说明如何在本机搭建环境、运行、测试，以及新增 Migration / IPC Command 的步骤。规范性要求见 [前端开发规范](Nivlo_Frontend_Development_Guide.md) 与 [后端开发规范](Nivlo_Backend_Development_Guide.md)，执行计划见 [实施计划](../architecture/Nivlo_Implementation_Plan.md)。
 
+桌面界面与交互的后续优化见 [UI/UX 实施指南](ui-ux-implementation-guide.md)，评估依据与验收方法见 [UI/UX 评估计划](ui-ux-evaluation-plan.md)。
+
 ## 1. 环境要求
 
 | 项 | 要求 |

@@ -221,7 +221,7 @@ describe("拖放捕获（悬浮窗）", () => {
     expect(ipc.calls).not.toContain("captureFromClipboard");
   });
 
-  it("快速创建输入框里：粘贴文字是普通输入；粘贴文件 / 图片则收进收集箱并结束快速创建", async () => {
+  it("配置页粘贴文字是普通输入；文件 / 图片收进收集箱并保留配置页", async () => {
     const ipc = createMemoryIpc();
     ipc.setClipboard({ files: ["C:\\资料\\报告.pdf"] });
     renderWithProviders(<FloatingRoot />, ipc);
@@ -246,6 +246,6 @@ describe("拖放捕获（悬浮窗）", () => {
     expect(filePaste.defaultPrevented).toBe(true);
     expect(ipc.calls).toContain("captureFromClipboard");
     expect(ipc.captures[0]?.input).toMatchObject({ kind: "files" });
-    expect(screen.queryByLabelText("标题")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("标题")).toBeInTheDocument();
   });
 });

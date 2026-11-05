@@ -1131,5 +1131,24 @@
       "move": "Move to the same button on the next / previous entry",
       "filter": "Jump to the filter (shown for a long trash)"
     }
+  },
+  "createConfiguration": {
+    "title": "Create an item",
+    "hint": "Add the details and a schedule, then choose Create to save.",
+    "titleLabel": "Title (required)",
+    "titlePlaceholder": "Enter an item title",
+    "contentPlaceholder": "Add details, steps, or reference material…",
+    "schedule": "Schedule",
+    "organize": "Organization",
+    "discardPrompt": "Discard the details you entered?",
+    "keepEditing": "Keep editing",
+    "discard": "Discard",
+    "cancel": "Cancel",
+    "create": "Create",
+    "creating": "Creating…",
+    "retry": "Retry creation",
+    "shortcut": "Ctrl + Enter to create",
+    "keepOpen": "Keep open to add another",
+    "created": "Created “{{title}}”. You can add another."
   }
 }

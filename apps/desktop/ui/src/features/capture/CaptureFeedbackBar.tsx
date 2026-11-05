@@ -14,6 +14,8 @@ export type CaptureFeedbackBarProps = {
   onDismiss: () => void;
   /** 指针进入 / 离开反馈条：停留时不自动消失。 */
   onHoldChange: (held: boolean) => void;
+  /** 编辑器内流式布局，不覆盖固定操作栏。 */
+  inline?: boolean;
 };
 
 /**
@@ -31,6 +33,7 @@ export function CaptureFeedbackBar({
   onEdit,
   onDismiss,
   onHoldChange,
+  inline = false,
 }: CaptureFeedbackBarProps) {
   const { t } = useTranslation();
   const first = feedback.status === "created" ? feedback.items[0] : undefined;
@@ -41,7 +44,11 @@ export function CaptureFeedbackBar({
       aria-live="polite"
       onPointerEnter={() => onHoldChange(true)}
       onPointerLeave={() => onHoldChange(false)}
-      className="nv-panel-in absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 shadow-lg"
+      className={
+        inline
+          ? "flex flex-wrap items-center gap-2 text-sm"
+          : "nv-panel-in absolute inset-x-2 bottom-2 flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 shadow-lg"
+      }
     >
       {feedback.status === "saving" && <p className="text-sm text-muted">{t("capture.saving")}</p>}
       {feedback.status === "created" && (

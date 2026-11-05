@@ -8,6 +8,8 @@
     "allow-get-today",
     "allow-reorder-today",
     "allow-quick-create",
+    "allow-create-item",
+    "allow-list-projects",
     "allow-capture",
     "allow-undo-capture",
     "allow-capture-from-clipboard",

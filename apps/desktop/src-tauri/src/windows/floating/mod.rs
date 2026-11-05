@@ -70,6 +70,13 @@ pub trait FloatingHandle: Send + Sync {
     /// 窗口无法聚焦时返回 [`PlatformError`]；此时悬浮窗已恢复为不可聚焦，调用方应放弃输入。
     fn begin_input(&self) -> Result<(), PlatformError>;
 
+    /// 将配置页置于当前显示器工作区中央，保留徽标位置。
+    ///
+    /// # Errors
+    ///
+    /// 显示器或窗口不可用时返回平台错误。
+    fn configure_input(&self) -> Result<(), PlatformError>;
+
     /// 立即修改悬浮窗是否置顶（设置页）。持久化由调用方负责。
     ///
     /// # Errors
@@ -135,6 +142,8 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     last_saved: Mutex<Option<String>>,
     /// 正在 Quick Create 输入：这期间悬浮窗本来就应该拿着焦点，不做「还回去」。
     input_active: AtomicBool,
+    /// 完整配置页正在显示，显示器变化时保持配置几何。
+    configuring: AtomicBool,
     /// 「把焦点还回去」的代数：每次激活加一，取消时也加一；延迟到了代数没变才还。
     focus_return: AtomicU64,
 }
@@ -169,6 +178,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
             expected: Mutex::new(None),
             last_saved: Mutex::new(None),
             input_active: AtomicBool::new(false),
+            configuring: AtomicBool::new(false),
             focus_return: AtomicU64::new(0),
         })
     }
@@ -238,6 +248,25 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
 
     /// 显示器配置变化后重新定位（见 [`FloatingHandle::on_display_changed`]）。
     pub async fn display_changed(&self) {
+        if self.configuring.load(Ordering::SeqCst) {
+            // 配置页保持打开，但关闭时的徽标也必须能回到仍然存在的工作区。
+            let original = *lock(&self.collapsed);
+            if let (Some(original), Ok(monitors)) = (original, self.port.monitors())
+                && let Some(placement) = placement_for_bounds(original, &monitors)
+                && let Some((position, _)) =
+                    resolve_position(&placement, *lock(&self.badge), &monitors)
+            {
+                *lock(&self.collapsed) = Some(Rect {
+                    x: position.x,
+                    y: position.y,
+                    ..original
+                });
+            }
+            if let Err(error) = self.configure_input() {
+                tracing::warn!(event = "floating_configuration_reposition_failed", %error, "重新定位配置页失败");
+            }
+            return;
+        }
         // 展开着的面板外框是按旧的显示器布局算的：先收起，再按保存的位置重新定位。
         // 先把尺寸取出来：条件里的锁守卫会活到整个 if 结束，而 collapse 还要再锁一次。
         let badge = *lock(&self.badge);
@@ -445,6 +474,44 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
         Ok(())
     }
 
+    /// 完整配置页按工作区和缩放居中，停止 Hover 看门狗。
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_possible_wrap
+    )]
+    fn configure_input(&self) -> Result<(), PlatformError> {
+        let monitor = self.port.current_monitor()?;
+        let area = monitor.work_area;
+        let margin = (16.0 * monitor.scale_factor).round() as u32;
+        let width = ((640.0 * monitor.scale_factor).round() as u32)
+            .min(area.width.saturating_sub(margin * 2).max(1));
+        let height = ((720.0 * monitor.scale_factor).round() as u32)
+            .min(area.height.saturating_sub(margin * 2).max(1));
+        let original = self.port.bounds()?;
+        let was_expanded = lock(&self.collapsed).is_some();
+        if !was_expanded {
+            *lock(&self.collapsed) = Some(original);
+        }
+        self.generation.fetch_add(1, Ordering::SeqCst);
+        self.watchdog.fetch_add(1, Ordering::SeqCst);
+        let target = Rect {
+            x: area.x + ((area.width - width) / 2) as i32,
+            y: area.y + ((area.height - height) / 2) as i32,
+            width,
+            height,
+        };
+        if let Err(error) = self.move_to_rect(target) {
+            let _ = self.move_to_rect(original);
+            if !was_expanded {
+                *lock(&self.collapsed) = None;
+            }
+            return Err(error);
+        }
+        self.configuring.store(true, Ordering::SeqCst);
+        Ok(())
+    }
+
     /// 开始文本输入：先记住前台窗口，再让悬浮窗可聚焦并聚焦。
     ///
     /// 任何一步失败都把窗口恢复为不可聚焦，避免悬浮窗留在"可被激活"的状态里，
@@ -516,6 +583,7 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
 
     /// 结束文本输入：恢复不可聚焦，再把焦点还给之前的窗口。
     fn end_input(&self) -> Result<(), PlatformError> {
+        self.configuring.store(false, Ordering::SeqCst);
         self.input_active.store(false, Ordering::SeqCst);
         let result = self.port.set_focusable(false);
         // 还原失败（用户已关闭那个应用、系统拒绝等）不影响悬浮窗本身，只记录。

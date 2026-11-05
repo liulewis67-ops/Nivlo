@@ -91,8 +91,9 @@ describe("FloatingRoot", () => {
     fireEvent.contextMenu(screen.getByRole("button", { name: /打开拾序主窗口/ }));
     await advance(0);
 
-    expect(ipc.calls).toContain("expandFloating");
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(ipc.calls).toContain("beginFloatingInput");
+    expect(screen.getByRole("dialog", { name: "新增事项" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "标题" })).toBeInTheDocument();
   });
 
   it("Hover 延迟之后展开为面板，并请求 Rust 把窗口调整为面板大小", async () => {
@@ -182,7 +183,7 @@ describe("FloatingRoot", () => {
     expect(screen.getByRole("radio", { name: "提示" })).toHaveFocus();
 
     fireEvent.change(input, { target: { value: "喝水" } });
-    fireEvent.keyDown(input, { key: "Enter" });
+    fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
     await advance(0);
     expect(ipc.items[0]).toMatchObject({ itemType: "tip", title: "喝水" });
   });
@@ -321,7 +322,7 @@ describe("FloatingRoot", () => {
     await advance(HOVER_ENTER_DELAY_MS);
   }
 
-  it("点击「+ 待办」进入快速创建，Enter 创建后回到展开态，面板保持展开", async () => {
+  it("新增打开完整配置，Ctrl+Enter 创建后恢复 Today 面板", async () => {
     const ipc = createMemoryIpc();
     await openPanel(ipc);
 
@@ -329,15 +330,18 @@ describe("FloatingRoot", () => {
     await advance(0);
     const input = screen.getByRole("textbox", { name: "标题" });
     fireEvent.change(input, { target: { value: "写周报" } });
-    fireEvent.keyDown(input, { key: "Enter" });
+    fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
     await advance(0);
 
     // 除了 Today 的刷新之外，调用顺序是：展开 → 申请焦点 → 创建 → 归还焦点。
-    expect(ipc.calls.filter((call) => call !== "getToday" && call !== "getInboxCount")).toEqual([
+    expect(
+      ipc.calls.filter((call) => !["getToday", "getInboxCount", "listProjects"].includes(call)),
+    ).toEqual([
       "expandFloating",
       "beginFloatingInput",
-      "quickCreate",
+      "createItem",
       "endFloatingInput",
+      "expandFloating",
     ]);
     // Today 在启动时取一次，创建成功后由数据变更事件触发再取一次。
     expect(ipc.calls.filter((call) => call === "getToday")).toHaveLength(2);
@@ -348,7 +352,7 @@ describe("FloatingRoot", () => {
     expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
   });
 
-  it("快速创建时点了别处（窗口 blur）就取消输入，不创建任何条目", async () => {
+  it("配置页失焦时保留输入，不创建任何条目", async () => {
     const ipc = createMemoryIpc();
     await openPanel(ipc);
     fireEvent.click(screen.getByRole("button", { name: "+ 待办" }));
@@ -362,8 +366,8 @@ describe("FloatingRoot", () => {
     });
     await advance(0);
 
-    expect(screen.queryByRole("textbox", { name: "标题" })).not.toBeInTheDocument();
-    expect(ipc.calls).toContain("endFloatingInput");
+    expect(screen.getByRole("textbox", { name: "标题" })).toHaveValue("半句话");
+    expect(ipc.calls).not.toContain("endFloatingInput");
     expect(ipc.items).toHaveLength(0);
   });
 
@@ -379,7 +383,7 @@ describe("FloatingRoot", () => {
       await advance(0);
       const input = screen.getByRole("textbox", { name: "标题" });
       fireEvent.change(input, { target: { value: title } });
-      fireEvent.keyDown(input, { key: "Enter" });
+      fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
       await advance(0);
     }
 
@@ -397,7 +401,7 @@ describe("FloatingRoot", () => {
 
     fireEvent.pointerLeave(root());
     await advance(10_000);
-    expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "新增事项" })).toBeInTheDocument();
     expect(ipc.calls).not.toContain("collapseFloating");
 
     fireEvent.keyDown(screen.getByRole("textbox", { name: "标题" }), { key: "Escape" });
@@ -432,8 +436,29 @@ describe("托盘快速添加", () => {
     });
     await advance(0);
 
-    expect(screen.getByRole("region", { name: "今日面板" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "新增事项" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "标题" })).toBeInTheDocument();
     expect(ipc.calls).toContain("beginFloatingInput");
+  });
+
+  it("配置页已打开时再次请求只取回焦点，保留草稿与所选类型", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    act(() => ipc.emitQuickAddRequested());
+    await advance(0);
+    fireEvent.click(screen.getByRole("radio", { name: "笔记" }));
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "进行中的草稿" } });
+    screen.getByRole("radio", { name: "笔记" }).focus();
+    const begin = vi.spyOn(ipc, "beginFloatingInput");
+    const hasFocus = vi.spyOn(document, "hasFocus").mockReturnValue(false);
+
+    act(() => ipc.emitQuickAddRequested());
+    await advance(0);
+
+    expect(begin).toHaveBeenCalledWith(true);
+    expect(screen.getByLabelText("标题")).toHaveFocus();
+    expect(screen.getByLabelText("标题")).toHaveValue("进行中的草稿");
+    expect(screen.getByRole("radio", { name: "笔记" })).toBeChecked();
+    hasFocus.mockRestore();
   });
 });
