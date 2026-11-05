@@ -1151,7 +1151,17 @@
     "retry": "重试创建",
     "shortcut": "Ctrl + Enter 创建",
     "keepOpen": "创建后继续新增",
-    "created": "已创建「{{title}}」，可以继续新增。"
+    "created": "已创建「{{title}}」，可以继续新增。",
+    "noteTitle": "新增笔记",
+    "noteHint": "正文可以写很长，草稿会一直保留到创建或放弃。",
+    "noteTitlePlaceholder": "笔记标题",
+    "noteBodyPlaceholder": "开始记录…",
+    "markdownHint": "Markdown：Ctrl+B 加粗 · Ctrl+I 斜体 · - 列表 · - [ ] 任务 · 粘贴网址变链接",
+    "plainHint": "纯文本：按原样保存换行与空格",
+    "noteStats": "{{characters}} 字 · {{lines}} 行",
+    "noteDetails": "笔记信息",
+    "linksHeading": "关联资料",
+    "linksEmpty": "把网页或文件拖到这个窗口，就会关联到这条笔记（文件只记录位置）。"
   },
   "dropCreate": {
     "links": "关联资料（{{count}}）",

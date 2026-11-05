@@ -150,6 +150,8 @@ export interface MemoryIpc extends IpcClient, WorkflowMock {
   emitFloatingPointerLeft(): void;
   /** 最近一次 `expandFloating` 请求的尺寸。 */
   readonly lastExpand: { width: number; height: number } | null;
+  /** 每次 `beginFloatingInput` 请求的配置页布局：`document` 是笔记的文档布局。 */
+  readonly floatingInputLayouts: ("none" | "form" | "document")[];
   /** 最近一次 `collapseFloating` 告知的徽标尺寸。 */
   readonly lastCollapse: { width: number; height: number } | null;
 }
@@ -342,6 +344,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   /** 捕获时记录的来源与附件，供 `listInbox` 返回。 */
   const provenance = new Map<string, { sources: SourceDto[]; attachments: AttachmentDto[] }>();
   let lastExpand: { width: number; height: number } | null = null;
+  const floatingInputLayouts: ("none" | "form" | "document")[] = [];
   let lastCollapse: { width: number; height: number } | null = null;
 
   /** 某个 Item 的标签，按名称排序。 */
@@ -823,8 +826,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         projectId: null,
       });
     },
-    beginFloatingInput: () => {
+    beginFloatingInput: (configuration?: boolean, document?: boolean) => {
       calls.push("beginFloatingInput");
+      floatingInputLayouts.push(configuration ? (document ? "document" : "form") : "none");
       if (beginInputFailure !== undefined) {
         const failure = beginInputFailure;
         beginInputFailure = undefined;
@@ -872,6 +876,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       return () => {
         pointerLeftListeners.delete(onLeft);
       };
+    },
+    get floatingInputLayouts() {
+      return floatingInputLayouts;
     },
     get lastExpand() {
       return lastExpand;

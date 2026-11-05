@@ -177,7 +177,9 @@ async fn configuration_is_centered_and_restores_the_original_badge() {
     let f = fixture(single(), (1800, 80), &[]).await;
     f.controller.expand((300.0, 380.0)).unwrap();
     f.controller.begin_input().unwrap();
-    f.controller.configure_input().unwrap();
+    f.controller
+        .configure_input(ConfigurationLayout::Form)
+        .unwrap();
     assert_eq!(
         f.port.bounds().unwrap(),
         Rect {
@@ -208,7 +210,9 @@ async fn configuration_fits_scaled_small_work_area_and_survives_display_change()
     display.scale_factor = 1.5;
     let f = fixture(vec![display], (-100, 80), &[]).await;
     f.controller.begin_input().unwrap();
-    f.controller.configure_input().unwrap();
+    f.controller
+        .configure_input(ConfigurationLayout::Form)
+        .unwrap();
     assert_eq!(
         f.port.bounds().unwrap(),
         Rect {
@@ -832,4 +836,49 @@ async fn a_display_change_while_the_panel_is_expanded_collapses_it_first() {
     assert!(lock(&f.controller.collapsed).is_none());
     let position = f.port.position();
     assert!(position.x >= 0 && position.x + 88 <= 1920);
+}
+
+#[tokio::test]
+async fn document_layout_is_larger_switches_back_and_survives_display_change() {
+    let f = fixture(single(), (1800, 80), &[]).await;
+    f.controller.begin_input().unwrap();
+    f.controller
+        .configure_input(ConfigurationLayout::Document)
+        .unwrap();
+    let document = Rect {
+        x: 480,
+        y: 90,
+        width: 960,
+        height: 860,
+    };
+    assert_eq!(f.port.bounds().unwrap(), document);
+
+    // 显示器变化后仍按文档布局重新定位。
+    f.controller.display_changed().await;
+    assert_eq!(f.port.bounds().unwrap(), document);
+
+    // 切回表单布局：只改尺寸，收起后回到徽标原来的位置。
+    f.controller
+        .configure_input(ConfigurationLayout::Form)
+        .unwrap();
+    assert_eq!(
+        f.port.bounds().unwrap(),
+        Rect {
+            x: 640,
+            y: 160,
+            width: 640,
+            height: 720
+        }
+    );
+    f.controller.end_input().unwrap();
+    f.controller.collapse(BADGE).unwrap();
+    assert_eq!(
+        f.port.bounds().unwrap(),
+        Rect {
+            x: 1800,
+            y: 80,
+            width: 88,
+            height: 40
+        }
+    );
 }

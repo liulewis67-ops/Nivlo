@@ -455,7 +455,7 @@ describe("托盘快速添加", () => {
     act(() => ipc.emitQuickAddRequested());
     await advance(0);
 
-    expect(begin).toHaveBeenCalledWith(true);
+    expect(begin).toHaveBeenCalledWith(true, true);
     expect(screen.getByLabelText("标题")).toHaveFocus();
     expect(screen.getByLabelText("标题")).toHaveValue("进行中的草稿");
     expect(screen.getByRole("radio", { name: "笔记" })).toBeChecked();

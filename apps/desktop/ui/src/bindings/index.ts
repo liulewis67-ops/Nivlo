@@ -782,11 +782,14 @@ export const commands = {
 	 *  会先记住用户当前的前台窗口，输入结束后由 [`end_floating_input`] 把焦点还回去；
 	 *  这是悬浮窗唯一会主动抢焦点的时刻（架构文档 §61 风险 3）。
 	 * 
+	 *  `configuration` 打开居中的新增配置页；`document` 用笔记的文档布局（更大的窗口）。
+	 *  配置页已打开时再次调用只调整尺寸并重新取回焦点，不影响徽标原来的位置。
+	 * 
 	 *  # Errors
 	 * 
 	 *  窗口无法聚焦时返回 `WINDOW_UNAVAILABLE`，此时悬浮窗已恢复为不可聚焦。
 	 */
-	beginFloatingInput: (configuration: boolean | null) => typedError<null, IpcError>(__TAURI_INVOKE("begin_floating_input", { configuration })),
+	beginFloatingInput: (configuration: boolean | null, document: boolean | null) => typedError<null, IpcError>(__TAURI_INVOKE("begin_floating_input", { configuration, document })),
 	/**
 	 *  结束悬浮窗的文本输入：恢复不可聚焦，并把焦点还给用户之前的应用。可以重复调用。
 	 * 

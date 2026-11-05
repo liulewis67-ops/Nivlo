@@ -12,7 +12,7 @@ use crate::dto::{
     CollapseFloatingRequest, DragGrabPoint, ExpandFloatingRequest, ExpandedLayoutDto, IpcError,
 };
 use crate::events::MainViewRequestedEvent;
-use crate::windows::floating::FloatingHandle;
+use crate::windows::floating::{ConfigurationLayout, FloatingHandle};
 use crate::windows::show_main_window;
 
 /// 打开（必要时创建）并聚焦主窗口。悬浮窗与主窗口都可以调用。
@@ -269,6 +269,9 @@ fn window_error(error: PlatformError) -> IpcError {
 /// 会先记住用户当前的前台窗口，输入结束后由 [`end_floating_input`] 把焦点还回去；
 /// 这是悬浮窗唯一会主动抢焦点的时刻（架构文档 §61 风险 3）。
 ///
+/// `configuration` 打开居中的新增配置页；`document` 用笔记的文档布局（更大的窗口）。
+/// 配置页已打开时再次调用只调整尺寸并重新取回焦点，不影响徽标原来的位置。
+///
 /// # Errors
 ///
 /// 窗口无法聚焦时返回 `WINDOW_UNAVAILABLE`，此时悬浮窗已恢复为不可聚焦。
@@ -277,11 +280,17 @@ fn window_error(error: PlatformError) -> IpcError {
 pub async fn begin_floating_input(
     state: State<'_, AppState>,
     configuration: Option<bool>,
+    document: Option<bool>,
 ) -> Result<(), IpcError> {
     let handle = floating_handle(&state)?;
     handle.begin_input().map_err(window_error)?;
+    let layout = if document.unwrap_or(false) {
+        ConfigurationLayout::Document
+    } else {
+        ConfigurationLayout::Form
+    };
     if configuration.unwrap_or(false)
-        && let Err(error) = handle.configure_input()
+        && let Err(error) = handle.configure_input(layout)
     {
         let _ = handle.end_input();
         return Err(window_error(error));

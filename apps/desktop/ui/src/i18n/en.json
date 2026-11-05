@@ -1156,7 +1156,17 @@
     "retry": "Retry creation",
     "shortcut": "Ctrl + Enter to create",
     "keepOpen": "Keep open to add another",
-    "created": "Created “{{title}}”. You can add another."
+    "created": "Created “{{title}}”. You can add another.",
+    "noteTitle": "New note",
+    "noteHint": "Write as much as you need; the draft is kept until you create or discard it.",
+    "noteTitlePlaceholder": "Note title",
+    "noteBodyPlaceholder": "Start writing…",
+    "markdownHint": "Markdown: Ctrl+B bold · Ctrl+I italic · - list · - [ ] task · paste a URL to link",
+    "plainHint": "Plain text: line breaks and spacing are kept as typed",
+    "noteStats": "{{characters}} chars · {{lines}} lines",
+    "noteDetails": "Note details",
+    "linksHeading": "Linked materials",
+    "linksEmpty": "Drag a web page or file onto this window to link it to the note (files are linked by location)."
   },
   "dropCreate": {
     "links": "Linked materials ({{count}})",

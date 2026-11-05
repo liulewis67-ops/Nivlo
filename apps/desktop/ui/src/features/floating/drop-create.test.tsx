@@ -59,7 +59,7 @@ describe("拖放新建事项（悬浮窗）", () => {
     await dropOnCreate(page);
 
     expect(ipc.captures).toHaveLength(0);
-    expect(screen.getByRole("dialog", { name: "新增事项" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "新增笔记" })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "笔记" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByLabelText("标题")).toHaveValue("使用指南");
     const links = screen.getByRole("region", { name: "关联资料（1）" });

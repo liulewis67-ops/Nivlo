@@ -70,12 +70,13 @@ pub trait FloatingHandle: Send + Sync {
     /// 窗口无法聚焦时返回 [`PlatformError`]；此时悬浮窗已恢复为不可聚焦，调用方应放弃输入。
     fn begin_input(&self) -> Result<(), PlatformError>;
 
-    /// 将配置页置于当前显示器工作区中央，保留徽标位置。
+    /// 将配置页按布局的尺寸置于当前显示器工作区中央，保留徽标位置。
+    /// 已经在配置页时再次调用只改变尺寸（如切换到笔记的文档布局）。
     ///
     /// # Errors
     ///
     /// 显示器或窗口不可用时返回平台错误。
-    fn configure_input(&self) -> Result<(), PlatformError>;
+    fn configure_input(&self, layout: ConfigurationLayout) -> Result<(), PlatformError>;
 
     /// 立即修改悬浮窗是否置顶（设置页）。持久化由调用方负责。
     ///
@@ -144,8 +145,31 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     input_active: AtomicBool,
     /// 完整配置页正在显示，显示器变化时保持配置几何。
     configuring: AtomicBool,
+    /// 配置页当前的布局；显示器变化后按它重新定位。
+    layout: Mutex<ConfigurationLayout>,
     /// 「把焦点还回去」的代数：每次激活加一，取消时也加一；延迟到了代数没变才还。
     focus_return: AtomicU64,
+}
+
+/// 新增配置页的布局：决定居中窗口的 logical 尺寸（再按工作区缩小）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ConfigurationLayout {
+    /// 表单：待办、提示，640×720。
+    #[default]
+    Form,
+    /// 文档：笔记的长文编辑，960×860。
+    Document,
+}
+
+impl ConfigurationLayout {
+    /// logical 宽高。
+    #[must_use]
+    pub fn logical_size(self) -> (f64, f64) {
+        match self {
+            Self::Form => (640.0, 720.0),
+            Self::Document => (960.0, 860.0),
+        }
+    }
 }
 
 /// 获取互斥锁；锁中毒只会发生在其他线程 panic 之后，数据本身仍有效。
@@ -179,6 +203,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
             last_saved: Mutex::new(None),
             input_active: AtomicBool::new(false),
             configuring: AtomicBool::new(false),
+            layout: Mutex::new(ConfigurationLayout::Form),
             focus_return: AtomicU64::new(0),
         })
     }
@@ -262,7 +287,8 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
                     ..original
                 });
             }
-            if let Err(error) = self.configure_input() {
+            let layout = *lock(&self.layout);
+            if let Err(error) = self.configure_input(layout) {
                 tracing::warn!(event = "floating_configuration_reposition_failed", %error, "重新定位配置页失败");
             }
             return;
@@ -480,13 +506,14 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
         clippy::cast_sign_loss,
         clippy::cast_possible_wrap
     )]
-    fn configure_input(&self) -> Result<(), PlatformError> {
+    fn configure_input(&self, layout: ConfigurationLayout) -> Result<(), PlatformError> {
         let monitor = self.port.current_monitor()?;
         let area = monitor.work_area;
         let margin = (16.0 * monitor.scale_factor).round() as u32;
-        let width = ((640.0 * monitor.scale_factor).round() as u32)
+        let (logical_width, logical_height) = layout.logical_size();
+        let width = ((logical_width * monitor.scale_factor).round() as u32)
             .min(area.width.saturating_sub(margin * 2).max(1));
-        let height = ((720.0 * monitor.scale_factor).round() as u32)
+        let height = ((logical_height * monitor.scale_factor).round() as u32)
             .min(area.height.saturating_sub(margin * 2).max(1));
         let original = self.port.bounds()?;
         let was_expanded = lock(&self.collapsed).is_some();
@@ -508,6 +535,7 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
             }
             return Err(error);
         }
+        *lock(&self.layout) = layout;
         self.configuring.store(true, Ordering::SeqCst);
         Ok(())
     }

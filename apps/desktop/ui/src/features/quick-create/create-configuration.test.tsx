@@ -14,7 +14,7 @@ async function ready(ipc = createMemoryIpc()) {
   const begin = vi.spyOn(ipc, "beginFloatingInput");
   renderWithProviders(<CreateConfiguration kind="todo" today="2026-11-04" onDone={onDone} />, ipc);
   await waitFor(() => expect(screen.getByLabelText("标题")).toHaveFocus());
-  expect(begin).toHaveBeenCalledWith(true);
+  expect(begin).toHaveBeenCalledWith(true, false);
   return { ipc, onDone };
 }
 
@@ -250,5 +250,75 @@ describe("完整新增配置", () => {
   it("标题长度与后端上限一致", async () => {
     await ready();
     expect(screen.getByLabelText("标题")).toHaveAttribute("maxLength", "500");
+  });
+});
+
+describe("笔记的文档布局", () => {
+  /** 打开一个笔记配置页并等到拿到焦点。 */
+  async function openNote(ipc = createMemoryIpc()) {
+    const onDone = vi.fn();
+    renderWithProviders(
+      <CreateConfiguration kind="note" today="2026-11-04" onDone={onDone} />,
+      ipc,
+    );
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveFocus());
+    return { ipc, onDone };
+  }
+
+  it("用更大的文档窗口打开：大标题、整页正文、字数统计和右侧的笔记信息", async () => {
+    const { ipc } = await openNote();
+    expect(ipc.floatingInputLayouts).toEqual(["document"]);
+    expect(screen.getByRole("dialog", { name: "新增笔记" })).toBeInTheDocument();
+    const details = screen.getByRole("complementary", { name: "笔记信息" });
+    expect(details).toContainElement(screen.getByLabelText("项目"));
+    expect(details).toHaveTextContent("把网页或文件拖到这个窗口");
+    expect(screen.queryByLabelText("简述")).not.toBeInTheDocument();
+
+    // 标题里按 Enter 直接开始写正文。
+    fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Enter" });
+    expect(screen.getByLabelText("描述")).toHaveFocus();
+    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "第一行\n第二行" } });
+    expect(screen.getByText("7 字 · 2 行")).toBeInTheDocument();
+  });
+
+  it("在待办和笔记之间切换：窗口换成对应布局，草稿保留", async () => {
+    const { ipc } = await ready();
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "会议记录" } });
+    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "很长的正文" } });
+    fireEvent.click(screen.getByRole("radio", { name: "笔记" }));
+    await waitFor(() => expect(ipc.floatingInputLayouts).toEqual(["form", "document"]));
+    expect(screen.getByLabelText("标题")).toHaveValue("会议记录");
+    expect(screen.getByLabelText("描述")).toHaveValue("很长的正文");
+
+    fireEvent.click(screen.getByRole("radio", { name: "待办" }));
+    await waitFor(() => expect(ipc.floatingInputLayouts).toEqual(["form", "document", "form"]));
+    expect(screen.getByLabelText("描述")).toHaveValue("很长的正文");
+  });
+
+  it("Markdown：任务行上 Ctrl+Enter 勾选而不是创建；其他位置照常创建", async () => {
+    const { ipc } = await openNote();
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "清单" } });
+    fireEvent.click(screen.getByRole("button", { name: "Markdown" }));
+    expect(screen.getByRole("button", { name: "Markdown" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByText(/Ctrl\+B 加粗/)).toBeInTheDocument();
+
+    const body = screen.getByLabelText<HTMLTextAreaElement>("描述");
+    fireEvent.change(body, { target: { value: "- [ ] 买菜" } });
+    body.setSelectionRange(3, 3);
+    fireEvent.keyDown(body, { key: "Enter", ctrlKey: true });
+    await waitFor(() => expect(body).toHaveValue("- [x] 买菜"));
+    expect(ipc.items).toHaveLength(0);
+
+    fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Enter", ctrlKey: true });
+    await waitFor(() => expect(ipc.items).toHaveLength(1));
+    expect(ipc.items[0]).toMatchObject({
+      itemType: "note",
+      title: "清单",
+      content: "- [x] 买菜",
+      contentFormat: "markdown",
+    });
   });
 });

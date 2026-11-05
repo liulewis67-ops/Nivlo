@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { ClipboardEvent, ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Textarea } from "@/components";
@@ -9,6 +9,7 @@ import type { DraftLink, DropDraft } from "@/features/capture";
 import { ProjectSelect } from "@/features/organize";
 import { reminderToUtc } from "@/features/detail";
 import { trapTab } from "@/lib/focus-trap";
+import { handleMarkdownKeyDown, handleMarkdownPaste } from "@/lib/markdown-keys";
 import { ipc } from "@/lib/ipc";
 import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { errorMessage } from "@/lib/error-message";
@@ -214,6 +215,7 @@ export function CreateConfiguration({
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const keepRef = useRef<HTMLButtonElement>(null);
   const submitting = useRef(false);
@@ -293,10 +295,13 @@ export function CreateConfiguration({
     },
   });
 
+  /** 笔记用文档布局（更大的窗口、整页正文）；待办与提示用表单。 */
+  const isDocument = kind === "note";
+  const documentRef = useRef(isDocument);
   useEffect(() => {
     let cancelled = false;
     ipc
-      .beginFloatingInput(true)
+      .beginFloatingInput(true, documentRef.current)
       .then(() => {
         if (!cancelled) setReady(true);
       })
@@ -321,6 +326,13 @@ export function CreateConfiguration({
     if (ready && !create.isPending && lastCreated !== null) inputRef.current?.focus();
   }, [ready, create.isPending, lastCreated]);
 
+  // 切换到 / 离开笔记：窗口换成对应布局的尺寸（只调整尺寸，草稿和焦点都保留）。
+  useEffect(() => {
+    if (!ready || documentRef.current === isDocument) return;
+    documentRef.current = isDocument;
+    ipc.beginFloatingInput(true, isDocument).catch(reportError);
+  }, [ready, isDocument]);
+
   // 页面已打开时又拖入了内容：追加到当前草稿，不另开一页。
   useEffect(() => {
     if (seed === null || seed.id === handledSeed.current) return;
@@ -337,7 +349,7 @@ export function CreateConfiguration({
     /** 放弃确认打开时聚焦「继续编辑」，否则回到标题。 */
     const focusDraft = () => (confirmDiscard ? keepRef : inputRef).current?.focus();
     if (document.hasFocus()) focusDraft();
-    else ipc.beginFloatingInput(true).then(focusDraft).catch(reportError);
+    else ipc.beginFloatingInput(true, documentRef.current).then(focusDraft).catch(reportError);
   }, [focusRequest, confirmDiscard]);
 
   /** 切换类型；计划日期未被改过时按新类型补上默认值。 */
@@ -372,6 +384,110 @@ export function CreateConfiguration({
     create.mutate(draft);
   }
 
+  /** 类型切换（单选组，方向键切换）；文档布局里用小号按钮放在工具栏上。 */
+  const kindSwitch = (
+    <div
+      role="radiogroup"
+      aria-label={t("quickCreate.typeLabel")}
+      className={isDocument ? "flex gap-1" : "flex flex-wrap gap-2"}
+      onKeyDown={(event) => {
+        if (event.nativeEvent.isComposing) return;
+        if (!["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "Home", "End"].includes(event.key))
+          return;
+        event.preventDefault();
+        const next =
+          event.key === "Home"
+            ? "todo"
+            : event.key === "End"
+              ? "tip"
+              : cycleKind(kind, event.key === "ArrowLeft" || event.key === "ArrowUp");
+        changeKind(next);
+        event.currentTarget.querySelector<HTMLElement>(`[data-kind="${next}"]`)?.focus();
+      }}
+    >
+      {QUICK_CREATE_KINDS.map((option) => (
+        <Button
+          key={option}
+          role="radio"
+          aria-checked={kind === option}
+          tabIndex={kind === option ? 0 : -1}
+          data-kind={option}
+          size={isDocument ? "sm" : "md"}
+          variant={kind === option ? "primary" : isDocument ? "ghost" : "secondary"}
+          onClick={() => changeKind(option)}
+        >
+          {t(`quickCreate.kind.${option}`)}
+        </Button>
+      ))}
+    </div>
+  );
+
+  /** 标题变化：同时清掉「已创建」提示。 */
+  const onTitleChange = (value: string) => {
+    patch({ title: value });
+    setLastCreated(null);
+  };
+
+  /** 标题里粘贴的不是文字（文件 / 图片）：收进收集箱，保留草稿。 */
+  const onTitlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
+    if (onPasteNonText && !event.clipboardData.getData("text/plain")) {
+      event.preventDefault();
+      onPasteNonText();
+    }
+  };
+
+  /** 关联资料列表（拖入的网页、本地文件引用）。 */
+  const linksSection = links.length > 0 && (
+    <section className="flex flex-col gap-2" aria-labelledby={linksId}>
+      <h2 id={linksId} className="text-sm font-medium text-text">
+        {t("dropCreate.links", { count: links.length })}
+      </h2>
+      <ul className="flex flex-col gap-2">
+        {links.map((link) => (
+          <li
+            key={linkKey(link)}
+            className="flex min-w-0 items-center gap-3 rounded-md border border-border bg-surface px-3 py-2"
+          >
+            <LinkIcon link={link} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-text" title={linkLabel(link)}>
+                {linkLabel(link)}
+              </p>
+              <p
+                className="truncate text-xs text-muted"
+                title={link.kind === "web" ? link.url : link.path}
+              >
+                {linkDetail(link)}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              aria-label={t("dropCreate.remove", { name: linkLabel(link) })}
+              onClick={() =>
+                patch({ links: links.filter((other) => linkKey(other) !== linkKey(link)) })
+              }
+            >
+              {t("dropCreate.removeShort")}
+            </Button>
+          </li>
+        ))}
+      </ul>
+      {links.some((link) => link.kind === "file") && (
+        <p className="text-xs text-muted">{t("dropCreate.referenceNote")}</p>
+      )}
+    </section>
+  );
+
+  const projectField = (
+    <Field label={t("detail.field.project")}>
+      <ProjectSelect value={projectId} onChange={(value) => patch({ projectId: value })} />
+    </Field>
+  );
+
+  const characters = [...content].length;
+  const lines = content === "" ? 0 : content.split("\n").length;
+
   return (
     <form
       ref={formRef}
@@ -385,7 +501,8 @@ export function CreateConfiguration({
         submit();
       }}
       onKeyDown={(event) => {
-        if (event.nativeEvent.isComposing) return;
+        // 正文的 Markdown 按键已经处理（列表缩进的 Tab、勾选任务的 Ctrl+Enter）：不再当作切换焦点或创建。
+        if (event.nativeEvent.isComposing || event.defaultPrevented) return;
         trapTab(event, event.currentTarget);
         if (event.key === "Escape") {
           event.preventDefault();
@@ -402,262 +519,280 @@ export function CreateConfiguration({
           event.preventDefault();
       }}
     >
-      <header className="shrink-0 border-b border-border px-6 py-4">
-        <h1 id={headingId} className="text-xl font-semibold">
-          {t("createConfiguration.title")}
-        </h1>
-        <p id={hintId} className="mt-1 text-sm text-muted">
-          {t("createConfiguration.hint")}
-        </p>
-      </header>
-      <fieldset
-        disabled={!ready || create.isPending || confirmDiscard}
-        className="min-h-0 flex-1 overflow-y-auto border-0 p-6"
-      >
-        <div className="flex flex-col gap-5">
-          <div
-            role="radiogroup"
-            aria-label={t("quickCreate.typeLabel")}
-            className="flex flex-wrap gap-2"
-            onKeyDown={(event) => {
-              if (event.nativeEvent.isComposing) return;
-              if (
-                !["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "Home", "End"].includes(
-                  event.key,
-                )
-              )
-                return;
-              event.preventDefault();
-              const next =
-                event.key === "Home"
-                  ? "todo"
-                  : event.key === "End"
-                    ? "tip"
-                    : cycleKind(kind, event.key === "ArrowLeft" || event.key === "ArrowUp");
-              changeKind(next);
-              event.currentTarget.querySelector<HTMLElement>(`[data-kind="${next}"]`)?.focus();
-            }}
-          >
-            {QUICK_CREATE_KINDS.map((option) => (
-              <Button
-                key={option}
-                role="radio"
-                aria-checked={kind === option}
-                tabIndex={kind === option ? 0 : -1}
-                data-kind={option}
-                variant={kind === option ? "primary" : "secondary"}
-                onClick={() => changeKind(option)}
+      {isDocument ? (
+        <>
+          <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-5 py-3">
+            <div className="mr-auto min-w-0">
+              <h1 id={headingId} className="text-base font-semibold">
+                {t("createConfiguration.noteTitle")}
+              </h1>
+              <p id={hintId} className="text-xs text-muted">
+                {t("createConfiguration.noteHint")}
+              </p>
+            </div>
+            <fieldset
+              disabled={!ready || create.isPending || confirmDiscard}
+              className="flex flex-wrap items-center gap-3 border-0 p-0"
+            >
+              {kindSwitch}
+              <div
+                role="group"
+                aria-label={t("detail.field.format")}
+                className="flex gap-0.5 rounded-md border border-border p-0.5"
               >
-                {t(`quickCreate.kind.${option}`)}
-              </Button>
-            ))}
-          </div>
-          <Field label={t("createConfiguration.titleLabel")}>
-            <Input
-              ref={inputRef}
-              aria-label={t("detail.field.title")}
-              value={title}
-              required
-              placeholder={t("createConfiguration.titlePlaceholder")}
-              maxLength={MAX_TITLE_CHARS}
-              onChange={(event) => {
-                patch({ title: event.target.value });
-                setLastCreated(null);
-              }}
-              onPaste={(event) => {
-                if (onPasteNonText && !event.clipboardData.getData("text/plain")) {
-                  event.preventDefault();
-                  onPasteNonText();
-                }
-              }}
-            />
-          </Field>
-          {kind !== "note" && (
-            <Field label={t("detail.field.brief")}>
-              <Input
-                aria-label={t("detail.field.brief")}
-                value={brief}
-                placeholder={t("detail.briefPlaceholder")}
-                onChange={(event) => patch({ brief: event.target.value })}
-              />
-            </Field>
-          )}
-          <Field label={t("detail.field.content")}>
-            <Textarea
-              aria-label={t("detail.field.content")}
-              value={content}
-              rows={4}
-              placeholder={t("createConfiguration.contentPlaceholder")}
-              onChange={(event) => patch({ content: event.target.value })}
-            />
-          </Field>
-          {links.length > 0 && (
-            <section className="flex flex-col gap-2" aria-labelledby={linksId}>
-              <h2 id={linksId} className="text-sm font-medium text-text">
-                {t("dropCreate.links", { count: links.length })}
-              </h2>
-              <ul className="flex flex-col gap-2">
-                {links.map((link) => (
-                  <li
-                    key={linkKey(link)}
-                    className="flex min-w-0 items-center gap-3 rounded-md border border-border px-3 py-2"
+                {(["plain", "markdown"] as const).map((option) => (
+                  <Button
+                    key={option}
+                    size="sm"
+                    variant={format === option ? "secondary" : "ghost"}
+                    aria-pressed={format === option}
+                    onClick={() => patch({ format: option })}
                   >
-                    <LinkIcon link={link} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-text" title={linkLabel(link)}>
-                        {linkLabel(link)}
-                      </p>
-                      <p
-                        className="truncate text-xs text-muted"
-                        title={link.kind === "web" ? link.url : link.path}
-                      >
-                        {linkDetail(link)}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      aria-label={t("dropCreate.remove", { name: linkLabel(link) })}
-                      onClick={() =>
-                        patch({ links: links.filter((other) => linkKey(other) !== linkKey(link)) })
-                      }
-                    >
-                      {t("dropCreate.removeShort")}
-                    </Button>
-                  </li>
+                    {t(`detail.format.${option}`)}
+                  </Button>
                 ))}
-              </ul>
-              {links.some((link) => link.kind === "file") && (
-                <p className="text-xs text-muted">{t("dropCreate.referenceNote")}</p>
-              )}
-            </section>
-          )}
-          <Field label={t("detail.field.format")}>
-            <select
-              aria-label={t("detail.field.format")}
-              className="h-9 rounded-md border border-border bg-surface px-3 text-sm"
-              value={format}
-              onChange={(event) =>
-                patch({ format: event.target.value === "markdown" ? "markdown" : "plain" })
-              }
-            >
-              <option value="plain">{t("detail.format.plain")}</option>
-              <option value="markdown">{t("detail.format.markdown")}</option>
-            </select>
-          </Field>
-          {kind !== "note" && (
-            <section
-              className="border-t border-border pt-5"
-              aria-label={t("createConfiguration.schedule")}
-            >
-              <h2 className="mb-4 text-base font-semibold">{t("createConfiguration.schedule")}</h2>
-              <div className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2">
-                <Field label={t("detail.field.scheduled")}>
-                  <Input
-                    type="date"
-                    aria-label={t("detail.field.scheduledDate")}
-                    value={scheduledDate}
-                    onChange={(event) => {
-                      dateTouched.current = true;
-                      patch(
-                        event.target.value
-                          ? { scheduledDate: event.target.value }
-                          : { scheduledDate: "", scheduledTime: "" },
-                      );
-                    }}
-                  />
-                </Field>
-                <Field label={t("detail.field.scheduledTime")}>
-                  <Input
-                    type="time"
-                    aria-label={t("detail.field.scheduledTime")}
-                    value={scheduledTime}
-                    disabled={!scheduledDate}
-                    onChange={(event) => patch({ scheduledTime: event.target.value })}
-                  />
-                </Field>
-                {kind === "todo" && (
-                  <>
-                    <Field label={t("detail.field.due")}>
-                      <Input
-                        type="date"
-                        aria-label={t("detail.field.dueDate")}
-                        value={dueDate}
-                        onChange={(event) => {
-                          patch(
-                            event.target.value
-                              ? { dueDate: event.target.value }
-                              : { dueDate: "", dueTime: "" },
-                          );
-                        }}
-                      />
-                    </Field>
-                    <Field label={t("detail.field.dueTime")}>
-                      <Input
-                        type="time"
-                        aria-label={t("detail.field.dueTime")}
-                        value={dueTime}
-                        disabled={!dueDate}
-                        onChange={(event) => patch({ dueTime: event.target.value })}
-                      />
-                    </Field>
-                  </>
-                )}
-                <div className="min-w-0 min-[460px]:col-span-2">
-                  <Field label={t("detail.field.reminder")}>
-                    <Input
-                      type="datetime-local"
-                      aria-label={t("detail.reminder.input")}
-                      value={reminder}
-                      onChange={(event) => patch({ reminder: event.target.value })}
-                    />
-                    <p className="text-xs text-muted">{t("detail.reminder.hint")}</p>
-                  </Field>
-                </div>
               </div>
-            </section>
-          )}
-          <section
-            className="border-t border-border pt-5"
-            aria-label={t("createConfiguration.organize")}
+            </fieldset>
+          </header>
+          <fieldset
+            disabled={!ready || create.isPending || confirmDiscard}
+            className="flex min-h-0 flex-1 flex-col border-0 p-0 min-[760px]:flex-row"
           >
-            <h2 className="mb-4 text-base font-semibold">{t("createConfiguration.organize")}</h2>
-            <div className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2">
-              <Field label={t("detail.field.project")}>
-                <ProjectSelect
-                  value={projectId}
-                  onChange={(value) => patch({ projectId: value })}
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+              <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col gap-2 px-8 pt-6">
+                <input
+                  ref={inputRef}
+                  aria-label={t("detail.field.title")}
+                  value={title}
+                  required
+                  placeholder={t("createConfiguration.noteTitlePlaceholder")}
+                  maxLength={MAX_TITLE_CHARS}
+                  onChange={(event) => onTitleChange(event.target.value)}
+                  onPaste={onTitlePaste}
+                  onKeyDown={(event) => {
+                    // 标题里按 Enter 直接开始写正文。
+                    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+                    if (event.ctrlKey || event.metaKey) return;
+                    event.preventDefault();
+                    bodyRef.current?.focus();
+                  }}
+                  className="w-full bg-transparent text-2xl font-semibold text-text placeholder:text-muted focus-visible:outline-none"
+                />
+                <textarea
+                  ref={bodyRef}
+                  aria-label={t("detail.field.content")}
+                  value={content}
+                  placeholder={t("createConfiguration.noteBodyPlaceholder")}
+                  onChange={(event) => patch({ content: event.target.value })}
+                  onKeyDown={(event) => {
+                    if (format === "markdown")
+                      handleMarkdownKeyDown(event, (next) => patch({ content: next }));
+                  }}
+                  onPaste={(event) => {
+                    if (format === "markdown")
+                      handleMarkdownPaste(event, (next) => patch({ content: next }));
+                  }}
+                  className="min-h-48 w-full flex-1 resize-none bg-transparent py-1 text-[15px] leading-relaxed text-text placeholder:text-muted focus-visible:outline-none disabled:opacity-50"
+                />
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-border px-8 py-2 text-xs text-muted">
+                <span>
+                  {format === "markdown"
+                    ? t("createConfiguration.markdownHint")
+                    : t("createConfiguration.plainHint")}
+                </span>
+                <span className="tabular-nums" aria-live="off">
+                  {t("createConfiguration.noteStats", { characters, lines })}
+                </span>
+              </div>
+            </div>
+            <aside
+              aria-label={t("createConfiguration.noteDetails")}
+              className="grid max-h-40 shrink-0 grid-cols-1 content-start gap-4 overflow-y-auto border-t border-border bg-bg px-5 py-4 min-[560px]:grid-cols-2 min-[760px]:flex min-[760px]:max-h-none min-[760px]:w-72 min-[760px]:flex-col min-[760px]:gap-5 min-[760px]:border-t-0 min-[760px]:border-l min-[760px]:p-5"
+            >
+              {projectField}
+              {linksSection || (
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-sm font-medium text-text">
+                    {t("createConfiguration.linksHeading")}
+                  </h2>
+                  <p className="text-xs text-muted">{t("createConfiguration.linksEmpty")}</p>
+                </div>
+              )}
+            </aside>
+          </fieldset>
+        </>
+      ) : (
+        <>
+          <header className="shrink-0 border-b border-border px-6 py-4">
+            <h1 id={headingId} className="text-xl font-semibold">
+              {t("createConfiguration.title")}
+            </h1>
+            <p id={hintId} className="mt-1 text-sm text-muted">
+              {t("createConfiguration.hint")}
+            </p>
+          </header>
+          <fieldset
+            disabled={!ready || create.isPending || confirmDiscard}
+            className="min-h-0 flex-1 overflow-y-auto border-0 p-6"
+          >
+            <div className="flex flex-col gap-5">
+              {kindSwitch}
+              <Field label={t("createConfiguration.titleLabel")}>
+                <Input
+                  ref={inputRef}
+                  aria-label={t("detail.field.title")}
+                  value={title}
+                  required
+                  placeholder={t("createConfiguration.titlePlaceholder")}
+                  maxLength={MAX_TITLE_CHARS}
+                  onChange={(event) => onTitleChange(event.target.value)}
+                  onPaste={onTitlePaste}
                 />
               </Field>
-              {kind === "todo" && (
-                <Field label={t("detail.field.priority")}>
-                  <select
-                    aria-label={t("detail.field.priority")}
-                    className="h-9 rounded-md border border-border bg-surface px-3 text-sm"
-                    value={priority}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      if (
-                        value === "none" ||
-                        value === "low" ||
-                        value === "medium" ||
-                        value === "high"
-                      )
-                        patch({ priority: value });
-                    }}
-                  >
-                    {(["none", "low", "medium", "high"] as const).map((option) => (
-                      <option key={option} value={option}>
-                        {t(`detail.priority.${option}`)}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-              )}
+              <Field label={t("detail.field.brief")}>
+                <Input
+                  aria-label={t("detail.field.brief")}
+                  value={brief}
+                  placeholder={t("detail.briefPlaceholder")}
+                  onChange={(event) => patch({ brief: event.target.value })}
+                />
+              </Field>
+              <Field label={t("detail.field.content")}>
+                <Textarea
+                  aria-label={t("detail.field.content")}
+                  value={content}
+                  rows={4}
+                  placeholder={t("createConfiguration.contentPlaceholder")}
+                  onChange={(event) => patch({ content: event.target.value })}
+                />
+              </Field>
+              {linksSection}
+              <Field label={t("detail.field.format")}>
+                <select
+                  aria-label={t("detail.field.format")}
+                  className="h-9 rounded-md border border-border bg-surface px-3 text-sm"
+                  value={format}
+                  onChange={(event) =>
+                    patch({ format: event.target.value === "markdown" ? "markdown" : "plain" })
+                  }
+                >
+                  <option value="plain">{t("detail.format.plain")}</option>
+                  <option value="markdown">{t("detail.format.markdown")}</option>
+                </select>
+              </Field>
+              <section
+                className="border-t border-border pt-5"
+                aria-label={t("createConfiguration.schedule")}
+              >
+                <h2 className="mb-4 text-base font-semibold">
+                  {t("createConfiguration.schedule")}
+                </h2>
+                <div className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2">
+                  <Field label={t("detail.field.scheduled")}>
+                    <Input
+                      type="date"
+                      aria-label={t("detail.field.scheduledDate")}
+                      value={scheduledDate}
+                      onChange={(event) => {
+                        dateTouched.current = true;
+                        patch(
+                          event.target.value
+                            ? { scheduledDate: event.target.value }
+                            : { scheduledDate: "", scheduledTime: "" },
+                        );
+                      }}
+                    />
+                  </Field>
+                  <Field label={t("detail.field.scheduledTime")}>
+                    <Input
+                      type="time"
+                      aria-label={t("detail.field.scheduledTime")}
+                      value={scheduledTime}
+                      disabled={!scheduledDate}
+                      onChange={(event) => patch({ scheduledTime: event.target.value })}
+                    />
+                  </Field>
+                  {kind === "todo" && (
+                    <>
+                      <Field label={t("detail.field.due")}>
+                        <Input
+                          type="date"
+                          aria-label={t("detail.field.dueDate")}
+                          value={dueDate}
+                          onChange={(event) => {
+                            patch(
+                              event.target.value
+                                ? { dueDate: event.target.value }
+                                : { dueDate: "", dueTime: "" },
+                            );
+                          }}
+                        />
+                      </Field>
+                      <Field label={t("detail.field.dueTime")}>
+                        <Input
+                          type="time"
+                          aria-label={t("detail.field.dueTime")}
+                          value={dueTime}
+                          disabled={!dueDate}
+                          onChange={(event) => patch({ dueTime: event.target.value })}
+                        />
+                      </Field>
+                    </>
+                  )}
+                  <div className="min-w-0 min-[460px]:col-span-2">
+                    <Field label={t("detail.field.reminder")}>
+                      <Input
+                        type="datetime-local"
+                        aria-label={t("detail.reminder.input")}
+                        value={reminder}
+                        onChange={(event) => patch({ reminder: event.target.value })}
+                      />
+                      <p className="text-xs text-muted">{t("detail.reminder.hint")}</p>
+                    </Field>
+                  </div>
+                </div>
+              </section>
+              <section
+                className="border-t border-border pt-5"
+                aria-label={t("createConfiguration.organize")}
+              >
+                <h2 className="mb-4 text-base font-semibold">
+                  {t("createConfiguration.organize")}
+                </h2>
+                <div className="grid grid-cols-1 gap-4 min-[460px]:grid-cols-2">
+                  {projectField}
+                  {kind === "todo" && (
+                    <Field label={t("detail.field.priority")}>
+                      <select
+                        aria-label={t("detail.field.priority")}
+                        className="h-9 rounded-md border border-border bg-surface px-3 text-sm"
+                        value={priority}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          if (
+                            value === "none" ||
+                            value === "low" ||
+                            value === "medium" ||
+                            value === "high"
+                          )
+                            patch({ priority: value });
+                        }}
+                      >
+                        {(["none", "low", "medium", "high"] as const).map((option) => (
+                          <option key={option} value={option}>
+                            {t(`detail.priority.${option}`)}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+                </div>
+              </section>
             </div>
-          </section>
-        </div>
-      </fieldset>
+          </fieldset>
+        </>
+      )}
       <footer className="flex shrink-0 flex-col gap-3 border-t border-border bg-bg px-6 py-4">
         {feedback}
         {lastCreated !== null && !create.isError && (
