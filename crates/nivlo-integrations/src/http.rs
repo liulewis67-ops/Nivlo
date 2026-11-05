@@ -35,6 +35,11 @@ impl ReqwestHttp {
     ///
     /// TLS 后端无法初始化时返回 [`HttpError::Network`]。
     pub fn new() -> Result<Self, HttpError> {
+        // reqwest 以 rustls-no-provider 构建（只链接 ring，与更新插件共用），
+        // 须先安装进程级默认 CryptoProvider；已有人装过（如更新插件）时返回 Err，忽略即可。
+        if rustls::crypto::CryptoProvider::get_default().is_none() {
+            let _ = rustls::crypto::ring::default_provider().install_default();
+        }
         let client = reqwest::Client::builder()
             .user_agent(USER_AGENT)
             .redirect(Policy::none())

@@ -54,7 +54,10 @@ url = "2"
 encoding_rs = "0.8"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 sha2 = "0.10"
-reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
+# TLS 只链接 ring 一套加密后端：与 tauri-plugin-updater 共用，不再额外链接 aws-lc。
+# 用 rustls-no-provider 时须先安装进程级 CryptoProvider，见 nivlo-integrations `ReqwestHttp::new`。
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 regex = "1"
 mime_guess = "2"
 base64 = "0.22"
