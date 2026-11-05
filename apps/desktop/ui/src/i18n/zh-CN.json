@@ -638,6 +638,15 @@
       "readyBody": "备份创建于 {{created}}（拾序 {{version}}）。重启后会换上这份数据；当前数据已先备份到：{{safety}}",
       "restart": "立即重启"
     },
+    "reset": {
+      "label": "删除所有数据",
+      "hint": "清空所有条目、设置与附件，Nivlo 将从头开始。会先自动备份当前数据；卸载 Nivlo 永远不会删除数据。",
+      "action": "删除所有数据…",
+      "confirm": "再点一次确认删除",
+      "readyTitle": "重启后将删除数据",
+      "readyBody": "已把全部数据备份到：{{safety}}",
+      "restart": "立即重启"
+    },
     "appearance": {
       "accent": {
         "label": "强调色",
@@ -767,8 +776,8 @@
       "checking": "正在检查…",
       "latest": "已经是最新版本。",
       "available": "有新版本 {{version}}。",
-      "install": "安装并重启",
-      "installing": "正在安装，Nivlo 将自动重启…",
+      "install": "立即更新",
+      "installing": "正在后台下载并安装，完成后 Nivlo 会自动重启…",
       "error": "更新失败，当前版本没有变化。"
     },
     "searchShortcut": {

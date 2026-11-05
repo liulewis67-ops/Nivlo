@@ -82,6 +82,7 @@ macro_rules! bindings_builder {
                 $crate::commands::data::create_backup_file,
                 $crate::commands::data::export_data,
                 $crate::commands::data::restore_backup::<$runtime>,
+                $crate::commands::data::reset_all_data,
                 $crate::commands::data::restart_app::<$runtime>,
                 $crate::commands::workflow::list_workflows,
                 $crate::commands::workflow::set_workflow_enabled,
@@ -218,6 +219,14 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                     .format("%Y%m%d-%H%M%S")
                     .to_string()
             };
+            // 「删除所有数据」同理：当前数据挪到 replaced-<时间>/，以空库启动。两者互斥（后选的取消先选的）。
+            match backup::apply_pending_reset(&environment.paths, &stamp) {
+                Ok(true) => tracing::info!(event = "reset_applied", "已清空数据（旧数据保留在 replaced- 目录）"),
+                Ok(false) => {}
+                Err(error) => {
+                    tracing::error!(event = "reset_failed", %error, "清空数据失败，继续使用现有数据");
+                }
+            }
             match backup::apply_pending_restore(&environment.paths, &stamp) {
                 Ok(true) => tracing::info!(event = "restore_applied", "已从备份恢复数据"),
                 Ok(false) => {}

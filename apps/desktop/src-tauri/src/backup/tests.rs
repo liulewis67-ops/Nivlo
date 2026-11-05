@@ -13,8 +13,9 @@ use nivlo_storage::Database;
 use uuid::Uuid;
 
 use super::{
-    BACKUP_FORMAT, BACKUP_VERSION, BackupError, Manifest, apply_pending_restore, create_backup,
-    has_pending_restore, stage_restore,
+    BACKUP_FORMAT, BACKUP_VERSION, BackupError, Manifest, apply_pending_reset,
+    apply_pending_restore, create_backup, has_pending_reset, has_pending_restore, stage_reset,
+    stage_restore,
 };
 
 /// 临时数据目录 + 已迁移的数据库。
@@ -165,6 +166,66 @@ async fn nothing_pending_means_nothing_happens() {
     let (_dir, paths, database) = fixture().await;
     database.close().await;
     assert!(!apply_pending_restore(&paths, "x").unwrap());
+    assert!(!apply_pending_reset(&paths, "x").unwrap());
+}
+
+#[tokio::test]
+async fn reset_starts_empty_and_keeps_old_data_aside() {
+    let (_dir, paths, database) = fixture().await;
+    {
+        let mut tx = database.begin().await.unwrap();
+        tx.items().insert(&item(1, "keep me")).await.unwrap();
+        tx.commit().await.unwrap();
+    }
+    std::fs::write(paths.attachments_dir().join("shot.png"), b"PNG").unwrap();
+
+    stage_reset(&paths).unwrap();
+    assert!(has_pending_reset(&paths));
+    database.close().await;
+    // sqlx 在后台线程上真正关闭 SQLite 连接，close() 返回后 Windows 上文件可能还被占用片刻。
+    // 真实场景里清空发生在下次启动、数据库打开之前，不存在这个竞争。
+    tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+    assert!(apply_pending_reset(&paths, "20261106-080000").unwrap());
+    assert!(!has_pending_reset(&paths));
+
+    // 新库是空的，附件目录还在但是空的。
+    let fresh = Database::open(&paths.database_file()).await.unwrap();
+    fresh.migrate().await.unwrap();
+    assert!(titles(&fresh).await.is_empty());
+    assert_eq!(
+        std::fs::read_dir(paths.attachments_dir()).unwrap().count(),
+        0
+    );
+    fresh.close().await;
+
+    // 旧数据没有删除，挪到了 replaced- 目录，能完整打开。
+    let aside = paths.root().join("replaced-20261106-080000");
+    assert_eq!(
+        std::fs::read(aside.join("attachments").join("shot.png")).unwrap(),
+        b"PNG"
+    );
+    let old = Database::open(&aside.join("nivlo.db")).await.unwrap();
+    assert_eq!(titles(&old).await.len(), 1);
+    old.close().await;
+}
+
+#[tokio::test]
+async fn the_last_choice_between_restore_and_reset_wins() {
+    let (dir, paths, database) = fixture().await;
+    let backup = create_backup(&database, &paths, "b.zip", "2026-11-06T08:00:00Z", "0.1.0")
+        .await
+        .unwrap();
+    // 先恢复后清空：恢复被取消。
+    stage_restore(&backup, &paths).await.unwrap();
+    stage_reset(&paths).unwrap();
+    assert!(!has_pending_restore(&paths));
+    assert!(has_pending_reset(&paths));
+    // 先清空后恢复：清空被取消。
+    stage_restore(&backup, &paths).await.unwrap();
+    assert!(has_pending_restore(&paths));
+    assert!(!has_pending_reset(&paths));
+    database.close().await;
+    drop(dir);
 }
 
 /// 写一个 zip，条目为 (名称, 内容)。

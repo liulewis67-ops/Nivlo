@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Switch, LoadFeedback } from "@/components";
+import { Button, ConfirmButton, Switch, LoadFeedback } from "@/components";
 import { isLanguage, setLanguage } from "@/i18n";
 import { ShortcutSetting } from "@/features/shortcut";
 import { useNavStore } from "@/features/shell";
@@ -201,6 +201,8 @@ export function SettingsPage() {
   const [exportFormat, setExportFormat] = useState<(typeof EXPORT_FORMATS)[number]>("json");
   /** 已暂存、等待重启生效的恢复。 */
   const [staged, setStaged] = useState<RestoreStagedDto | null>(null);
+  /** 已暂存「删除所有数据」时，自动备份的路径。 */
+  const [resetSafety, setResetSafety] = useState<string | null>(null);
   const appearance = useAppearanceStore((state) => state.appearance);
   const updateAppearance = useAppearanceStore((state) => state.update);
   const resetAppearance = useAppearanceStore((state) => state.reset);
@@ -755,7 +757,14 @@ export function SettingsPage() {
               size="sm"
               variant="secondary"
               onClick={() => {
-                ipc.restoreBackup().then(setStaged).catch(reportError);
+                ipc
+                  .restoreBackup()
+                  .then((result) => {
+                    setStaged(result);
+                    // 后端以最后一次选择为准：恢复会取消已暂存的清空。
+                    if (result !== null) setResetSafety(null);
+                  })
+                  .catch(reportError);
               }}
             >
               {t("settings.restore.action")}
@@ -775,6 +784,42 @@ export function SettingsPage() {
               </div>
               <Button size="sm" onClick={() => void ipc.restartApp().catch(reportError)}>
                 {t("settings.restore.restart")}
+              </Button>
+            </div>
+          )}
+          <Row label={t("settings.reset.label")} hint={t("settings.reset.hint")}>
+            <ConfirmButton
+              size="sm"
+              variant="secondary"
+              label={t("settings.reset.action")}
+              confirmLabel={t("settings.reset.confirm")}
+              onConfirm={() => {
+                ipc
+                  .resetAllData()
+                  .then((safety) => {
+                    // 浮窗的语言 / 主题偏好存在 WebView 的 localStorage 里，一并清掉。
+                    try {
+                      localStorage.clear();
+                    } catch {
+                      // 存储不可用时无事可清。
+                    }
+                    setStaged(null);
+                    setResetSafety(safety);
+                  })
+                  .catch(reportError);
+              }}
+            />
+          </Row>
+          {resetSafety !== null && (
+            <div role="status" className="flex items-center justify-between gap-4 px-4 py-3">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-text">{t("settings.reset.readyTitle")}</p>
+                <p className="mt-0.5 break-all text-xs text-muted">
+                  {t("settings.reset.readyBody", { safety: resetSafety })}
+                </p>
+              </div>
+              <Button size="sm" onClick={() => void ipc.restartApp().catch(reportError)}>
+                {t("settings.reset.restart")}
               </Button>
             </div>
           )}

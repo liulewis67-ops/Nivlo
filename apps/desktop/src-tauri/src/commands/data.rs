@@ -219,6 +219,39 @@ pub async fn restore_backup<R: Runtime>(
     }))
 }
 
+/// 删除所有数据：**先为当前数据自动做一份备份**，再暂存清空；下次启动（调用 `restart_app` 立即重启）时
+/// 当前数据库与附件挪到 `replaced-<时间>/`，应用以全新的空库启动。返回那份备份的路径。
+///
+/// 卸载程序不删除数据目录，这里是清空数据的入口。
+///
+/// # Errors
+///
+/// 备份或暂存失败返回 `EXPORT_FAILED`，此时什么都不会被清空。
+#[tauri::command]
+#[specta::specta]
+pub async fn reset_all_data(state: State<'_, AppState>) -> Result<String, IpcError> {
+    let paths = state
+        .runtime
+        .paths()
+        .cloned()
+        .ok_or_else(|| failed(&"应用目录尚未就绪"))?;
+    let now = state.runtime.clock.now_utc();
+    let safety_name = format!("nivlo-before-reset-{}.zip", now.format("%Y%m%d-%H%M%S"));
+    // 没能保住当前数据的备份就不清空。
+    let safety = backup::create_backup(
+        &state.runtime.database(),
+        &paths,
+        &safety_name,
+        &now.to_rfc3339(),
+        env!("CARGO_PKG_VERSION"),
+    )
+    .await
+    .map_err(|e| failed(&e))?;
+    backup::stage_reset(&paths).map_err(|e| failed(&e))?;
+    tracing::info!(event = "reset_staged", "已暂存删除所有数据，重启后执行");
+    Ok(safety.to_string_lossy().into_owned())
+}
+
 /// 重启应用（恢复备份后使用）。
 #[tauri::command]
 #[specta::specta]

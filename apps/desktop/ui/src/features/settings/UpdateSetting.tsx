@@ -10,7 +10,8 @@ import { useToastStore } from "@/stores/toast-store";
 const STARTUP_CHECK_DELAY_MS = 8000;
 
 /**
- * 安装更新并重启：后端会先为当前数据做备份，再下载、校验签名、安装。
+ * 安装更新并重启：后端会先为当前数据做备份，再在后台下载、校验签名，并以静默模式安装
+ * （`tauri.conf.json` 的 `plugins.updater.windows.installMode = "quiet"`：没有任何安装界面），装完自动重启。
  *
  * @param onError 失败时的处理（界面提示；当前版本保持不变）。
  */
@@ -34,7 +35,11 @@ export function useUpdateCheckOnStart(): void {
             .getState()
             .push("info", t("settings.update.available", { version: update.version }), 30000, {
               label: t("settings.update.install"),
-              onClick: () => install(reportError),
+              onClick: () => {
+                // 后台下载、静默安装（无安装界面），完成后自动重启；这里只告诉用户正在进行。
+                useToastStore.getState().push("info", t("settings.update.installing"), 60000);
+                install(reportError);
+              },
             });
         })
         .catch(() => undefined);

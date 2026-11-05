@@ -13,6 +13,10 @@
 //!    解到 `restore-staging/`，并写下就绪标记；调用方在此之前应先做一份当前数据的备份；
 //! 2. [`apply_pending_restore`]：**下次启动、打开数据库之前**把当前数据整体挪到 `replaced-<时间>/`
 //!    （不删除，随时可以找回），再把暂存的数据换上。
+//!
+//! 「删除所有数据」（[`stage_reset`] / [`apply_pending_reset`]）走同一条路：下次启动时把当前数据挪到
+//! `replaced-<时间>/`，但不换上任何数据，应用以全新的空库启动。卸载程序不再删除数据目录，这是清空数据的唯一入口。
+//! 暂存恢复与暂存清空互相取消：以用户最后一次的选择为准。
 
 use std::fs::File;
 use std::io::{Read, Write};
@@ -33,6 +37,9 @@ const STAGING_DIR: &str = "restore-staging";
 
 /// 暂存就绪标记文件名（在暂存目录里；有它才会在下次启动时应用）。
 const READY_MARKER: &str = "READY";
+
+/// 「删除所有数据」待执行标记（在数据根目录下）。
+const RESET_MARKER: &str = "RESET-PENDING";
 
 /// 备份 / 恢复失败。
 #[derive(Debug, thiserror::Error)]
@@ -218,6 +225,8 @@ pub async fn stage_restore(backup: &Path, paths: &AppPaths) -> Result<Manifest, 
         Err(error) => return fail(format!("备份里的数据库已损坏：{error}")),
     }
     std::fs::write(staging.join(READY_MARKER), b"1")?;
+    // 最后的选择为准：恢复取消之前暂存的「删除所有数据」。
+    let _ = std::fs::remove_file(paths.root().join(RESET_MARKER));
     Ok(manifest)
 }
 
@@ -267,6 +276,48 @@ pub fn has_pending_restore(paths: &AppPaths) -> bool {
     paths.root().join(STAGING_DIR).join(READY_MARKER).is_file()
 }
 
+/// 已挪走的路径（原位置, 新位置），用于失败时回滚。
+type Moved = Vec<(PathBuf, PathBuf)>;
+
+/// 把当前数据库文件（含 WAL / SHM）和附件目录挪到 `replaced` 里（不删除）。
+/// 出错时返回已挪走的部分，由调用方回滚。
+fn move_current_aside(
+    paths: &AppPaths,
+    replaced: &Path,
+    moved: &mut Moved,
+) -> Result<(), BackupError> {
+    std::fs::create_dir_all(replaced)?;
+    let mut move_aside = |from: PathBuf, to: PathBuf| -> Result<(), BackupError> {
+        if from.exists() {
+            std::fs::rename(&from, &to)?;
+            moved.push((from, to));
+        }
+        Ok(())
+    };
+    let database_file = paths.database_file();
+    for suffix in ["", "-wal", "-shm"] {
+        let mut name = database_file.clone().into_os_string();
+        name.push(suffix);
+        let from = PathBuf::from(name);
+        let file_name = from
+            .file_name()
+            .map(std::ffi::OsStr::to_os_string)
+            .unwrap_or_default();
+        move_aside(from, replaced.join(file_name))?;
+    }
+    move_aside(paths.attachments_dir(), replaced.join("attachments"))
+}
+
+/// 回滚 [`move_current_aside`]：把挪走的放回去（反向）。
+fn roll_back(moved: Moved) {
+    for (from, to) in moved.into_iter().rev() {
+        if from.exists() {
+            let _ = std::fs::remove_file(&from).or_else(|_| std::fs::remove_dir_all(&from));
+        }
+        let _ = std::fs::rename(&to, &from);
+    }
+}
+
 /// 应用暂存的恢复：**必须在打开数据库之前调用**。当前数据整体挪到 `replaced-<stamp>/`（不删除）。
 ///
 /// # Errors
@@ -278,32 +329,12 @@ pub fn apply_pending_restore(paths: &AppPaths, stamp: &str) -> Result<bool, Back
     }
     let staging = paths.root().join(STAGING_DIR);
     let replaced = paths.root().join(format!("replaced-{stamp}"));
-    std::fs::create_dir_all(&replaced)?;
-
-    // 1. 把当前数据库文件（含 WAL / SHM）和附件目录挪走。
-    let database_file = paths.database_file();
-    let mut moved: Vec<(PathBuf, PathBuf)> = Vec::new();
-    let mut move_aside = |from: PathBuf, to: PathBuf| -> Result<(), BackupError> {
-        if from.exists() {
-            std::fs::rename(&from, &to)?;
-            moved.push((from, to));
-        }
-        Ok(())
-    };
+    let mut moved = Moved::new();
     let outcome = (|| -> Result<(), BackupError> {
-        for suffix in ["", "-wal", "-shm"] {
-            let mut name = database_file.clone().into_os_string();
-            name.push(suffix);
-            let from = PathBuf::from(name);
-            let file_name = from
-                .file_name()
-                .map(std::ffi::OsStr::to_os_string)
-                .unwrap_or_default();
-            move_aside(from, replaced.join(file_name))?;
-        }
-        move_aside(paths.attachments_dir(), replaced.join("attachments"))?;
+        // 1. 把当前数据挪走。
+        move_current_aside(paths, &replaced, &mut moved)?;
         // 2. 换上暂存的数据。
-        std::fs::rename(staging.join("nivlo.db"), &database_file)?;
+        std::fs::rename(staging.join("nivlo.db"), paths.database_file())?;
         let staged_attachments = staging.join("attachments");
         if staged_attachments.is_dir() {
             std::fs::rename(staged_attachments, paths.attachments_dir())?;
@@ -313,16 +344,49 @@ pub fn apply_pending_restore(paths: &AppPaths, stamp: &str) -> Result<bool, Back
         Ok(())
     })();
     if let Err(error) = outcome {
-        // 回滚：把挪走的放回去（反向）。
-        for (from, to) in moved.into_iter().rev() {
-            if from.exists() {
-                let _ = std::fs::remove_file(&from).or_else(|_| std::fs::remove_dir_all(&from));
-            }
-            let _ = std::fs::rename(&to, &from);
-        }
+        roll_back(moved);
         return Err(error);
     }
     let _ = std::fs::remove_dir_all(&staging);
+    Ok(true)
+}
+
+/// 暂存「删除所有数据」：下次启动时执行（调用方应先做一份当前数据的备份）。
+/// 同时取消已暂存的恢复——以用户最后一次的选择为准。
+///
+/// # Errors
+///
+/// 写不了标记文件时返回 [`BackupError::Io`]。
+pub fn stage_reset(paths: &AppPaths) -> Result<(), BackupError> {
+    let _ = std::fs::remove_dir_all(paths.root().join(STAGING_DIR));
+    std::fs::write(paths.root().join(RESET_MARKER), b"1")?;
+    Ok(())
+}
+
+/// 是否有等待执行的「删除所有数据」。
+#[must_use]
+pub fn has_pending_reset(paths: &AppPaths) -> bool {
+    paths.root().join(RESET_MARKER).is_file()
+}
+
+/// 执行暂存的「删除所有数据」：**必须在打开数据库之前调用**。当前数据库与附件挪到
+/// `replaced-<stamp>/`（不删除），随后应用以全新的空库启动。
+///
+/// # Errors
+///
+/// 文件操作失败时返回 [`BackupError::Io`]；失败时回滚，标记保留以便下次重试。
+pub fn apply_pending_reset(paths: &AppPaths, stamp: &str) -> Result<bool, BackupError> {
+    if !has_pending_reset(paths) {
+        return Ok(false);
+    }
+    let replaced = paths.root().join(format!("replaced-{stamp}"));
+    let mut moved = Moved::new();
+    if let Err(error) = move_current_aside(paths, &replaced, &mut moved) {
+        roll_back(moved);
+        return Err(error);
+    }
+    std::fs::create_dir_all(paths.attachments_dir())?;
+    let _ = std::fs::remove_file(paths.root().join(RESET_MARKER));
     Ok(true)
 }
 

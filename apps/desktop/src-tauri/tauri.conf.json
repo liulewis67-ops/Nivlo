@@ -51,7 +51,7 @@
         "https://REPLACE-WITH-YOUR-UPDATE-HOST/nivlo/latest.json"
       ],
       "windows": {
-        "installMode": "passive"
+        "installMode": "quiet"
       }
     }
   }

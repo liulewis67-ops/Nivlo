@@ -182,6 +182,20 @@ describe("设置页：导出、备份与恢复", () => {
     expect(await screen.findByText(/导出失败/)).toBeInTheDocument();
     expect(screen.queryByText("备份已准备好")).not.toBeInTheDocument();
   });
+
+  it("删除所有数据要点两次；之后提示备份位置，点「立即重启」才重启", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    await userEvent.click(await screen.findByRole("button", { name: "删除所有数据…" }));
+    expect(ipc.calls).not.toContain("resetAllData");
+    await userEvent.click(screen.getByRole("button", { name: "再点一次确认删除" }));
+    expect(await screen.findByText("重启后将删除数据")).toBeInTheDocument();
+    expect(screen.getByText(/nivlo-before-reset-test\.zip/)).toBeInTheDocument();
+    expect(ipc.calls).toContain("resetAllData");
+    expect(ipc.calls).not.toContain("restartApp");
+    await userEvent.click(screen.getByRole("button", { name: "立即重启" }));
+    await waitFor(() => expect(ipc.calls).toContain("restartApp"));
+  });
 });
 
 describe("设置页：语言", () => {

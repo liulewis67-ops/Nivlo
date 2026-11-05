@@ -242,6 +242,8 @@ export interface IpcClient {
   restoreBackup(): Promise<RestoreStagedDto | null>;
   /** 重启应用（让暂存的恢复生效）。 */
   restartApp(): Promise<void>;
+  /** 先自动备份，再暂存「删除所有数据」（重启后执行）。返回备份路径。 */
+  resetAllData(): Promise<string>;
   /** 全部 Workflow：内置在前，其次是用户的，各自按优先级从大到小。 */
   listWorkflows(): Promise<WorkflowDto[]>;
   /** 启用 / 禁用一个 Workflow（内置的也可以）。 */
@@ -504,6 +506,7 @@ const tauriIpc: IpcClient = {
   exportData: (format) => call("export_data", commands.exportData(format)),
   restoreBackup: () => call("restore_backup", commands.restoreBackup()),
   restartApp: () => commands.restartApp(),
+  resetAllData: () => call("reset_all_data", commands.resetAllData()),
   listWorkflows: () => call("list_workflows", commands.listWorkflows()),
   setWorkflowEnabled: async (id, enabled) => {
     await call("set_workflow_enabled", commands.setWorkflowEnabled(id, enabled));
@@ -673,6 +676,7 @@ export const ipc: IpcClient = {
   exportData: (format) => current.exportData(format),
   restoreBackup: () => current.restoreBackup(),
   restartApp: () => current.restartApp(),
+  resetAllData: () => current.resetAllData(),
   listWorkflows: () => current.listWorkflows(),
   setWorkflowEnabled: (id, enabled) => current.setWorkflowEnabled(id, enabled),
   setWorkflowPriority: (id, priority) => current.setWorkflowPriority(id, priority),

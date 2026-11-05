@@ -641,6 +641,15 @@
       "readyBody": "Backup created {{created}} (Nivlo {{version}}). After restarting, this data replaces the current data; your current data was backed up to: {{safety}}",
       "restart": "Restart now"
     },
+    "reset": {
+      "label": "Delete all data",
+      "hint": "Starts Nivlo over with no items, settings or attachments. Your current data is backed up automatically first, and uninstalling Nivlo never deletes it.",
+      "action": "Delete all data…",
+      "confirm": "Click again to delete",
+      "readyTitle": "Data will be deleted on restart",
+      "readyBody": "A backup of everything was saved to: {{safety}}",
+      "restart": "Restart now"
+    },
     "appearance": {
       "accent": {
         "label": "Accent color",
@@ -771,8 +780,8 @@
       "checking": "Checking…",
       "latest": "You’re up to date.",
       "available": "Version {{version}} is available.",
-      "install": "Install and restart",
-      "installing": "Installing — Nivlo will restart…",
+      "install": "Update now",
+      "installing": "Updating in the background — Nivlo will restart by itself…",
       "error": "Couldn’t update. Your current version is unchanged."
     },
     "searchShortcut": {

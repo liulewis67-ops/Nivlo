@@ -1408,6 +1408,10 @@ ${(item.content ?? "").toLowerCase()}`;
       calls.push("restartApp");
       return Promise.resolve();
     },
+    resetAllData: () => {
+      calls.push("resetAllData");
+      return Promise.resolve("C:\\Nivlo\\exports\\nivlo-before-reset-test.zip");
+    },
     chooseRestoreFile: (chosen: boolean) => {
       restoreChoice = chosen ? "picked" : null;
     },

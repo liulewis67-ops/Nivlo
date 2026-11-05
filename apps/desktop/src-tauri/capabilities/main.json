@@ -22,6 +22,7 @@
     "allow-create-backup-file",
     "allow-export-data",
     "allow-restore-backup",
+    "allow-reset-all-data",
     "allow-restart-app",
     "allow-list-workflows",
     "allow-set-workflow-enabled",

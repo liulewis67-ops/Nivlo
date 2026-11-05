@@ -162,6 +162,17 @@ export const commands = {
 	/**  恢复前自动为当前数据做的备份的路径。 */
 	safetyBackup: string,
 } | null, IpcError>(__TAURI_INVOKE("restore_backup")),
+	/**
+	 *  删除所有数据：**先为当前数据自动做一份备份**，再暂存清空；下次启动（调用 `restart_app` 立即重启）时
+	 *  当前数据库与附件挪到 `replaced-<时间>/`，应用以全新的空库启动。返回那份备份的路径。
+	 * 
+	 *  卸载程序不删除数据目录，这里是清空数据的入口。
+	 * 
+	 *  # Errors
+	 * 
+	 *  备份或暂存失败返回 `EXPORT_FAILED`，此时什么都不会被清空。
+	 */
+	resetAllData: () => typedError<string, IpcError>(__TAURI_INVOKE("reset_all_data")),
 	/**  重启应用（恢复备份后使用）。 */
 	restartApp: () => __TAURI_INVOKE<void>("restart_app"),
 	/**

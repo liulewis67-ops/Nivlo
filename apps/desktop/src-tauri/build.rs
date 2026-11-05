@@ -20,6 +20,7 @@ const COMMANDS: &[&str] = &[
     "create_backup_file",
     "export_data",
     "restore_backup",
+    "reset_all_data",
     "restart_app",
     "list_workflows",
     "set_workflow_enabled",
