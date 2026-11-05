@@ -635,3 +635,90 @@ async fn quick_create_scheduled_uses_the_given_plan_instead_of_the_default() {
         .unwrap_err();
     assert_eq!(err.code, ErrorCode::ItemTitleEmpty);
 }
+
+/// 测试用的文件引用。
+fn file_link(path: &str, name: &str) -> super::ItemLink {
+    super::ItemLink::File(nivlo_domain::capture::FileRef {
+        path: path.to_owned(),
+        name: name.to_owned(),
+        extension: Some("pdf".to_owned()),
+        size_bytes: Some(42),
+        mime: Some("application/pdf".to_owned()),
+        is_dir: false,
+    })
+}
+
+#[tokio::test]
+async fn create_with_links_writes_sources_and_reference_attachments_in_one_commit() {
+    let f = fixture();
+    let item = f
+        .service
+        .create_item_with_links(
+            NewItem::new(ItemType::Note, "季度复盘"),
+            vec![
+                super::ItemLink::Web {
+                    url: "https://example.com/report".to_owned(),
+                    title: Some("复盘页".to_owned()),
+                },
+                file_link(r"D:\资料\复盘 v2.pdf", "复盘 v2.pdf"),
+            ],
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(f.uow.committed_items(), vec![item.clone()]);
+    let sources = f.uow.committed_sources();
+    assert_eq!(sources.len(), 2);
+    assert!(sources.iter().all(|s| s.item_id == item.id()));
+    assert_eq!(sources[0].source_type.as_str(), "web");
+    assert_eq!(
+        sources[0].source_url.as_deref(),
+        Some("https://example.com/report")
+    );
+    assert_eq!(sources[0].original_title.as_deref(), Some("复盘页"));
+    assert_eq!(sources[1].source_type.as_str(), "file");
+    assert_eq!(
+        sources[1].source_path.as_deref(),
+        Some(r"D:\资料\复盘 v2.pdf")
+    );
+
+    // 文件只是引用：Nivlo 不拥有它，删除事项时也不会删除用户的文件。
+    let attachments = f.uow.committed_attachments();
+    assert_eq!(attachments.len(), 1);
+    assert_eq!(attachments[0].path, r"D:\资料\复盘 v2.pdf");
+    assert_eq!(attachments[0].size_bytes, Some(42));
+    assert!(!attachments[0].owns_file());
+    assert_eq!(
+        f.events.events(),
+        vec![DomainEvent::ItemCreated { item_id: item.id() }]
+    );
+}
+
+#[tokio::test]
+async fn create_with_invalid_link_writes_nothing() {
+    for links in [
+        vec![super::ItemLink::Web {
+            url: "javascript:alert(1)".to_owned(),
+            title: None,
+        }],
+        vec![super::ItemLink::Web {
+            url: "不是网址".to_owned(),
+            title: None,
+        }],
+        vec![file_link("  ", "x")],
+        (0..=super::MAX_ITEM_LINKS)
+            .map(|i| file_link(&format!("D:/{i}.pdf"), "x.pdf"))
+            .collect(),
+    ] {
+        let f = fixture();
+        let error = f
+            .service
+            .create_item_with_links(NewItem::new(ItemType::Note, "x"), links)
+            .await
+            .unwrap_err();
+        assert_eq!(error.code, ErrorCode::InvalidInput);
+        assert!(f.uow.committed_items().is_empty());
+        assert!(f.uow.committed_sources().is_empty());
+        assert!(f.events.events().is_empty());
+    }
+}

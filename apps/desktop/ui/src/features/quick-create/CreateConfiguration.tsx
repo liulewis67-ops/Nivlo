@@ -3,6 +3,9 @@ import type { ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Textarea } from "@/components";
+import type { TFunction } from "i18next";
+import { linkKey, mergeLinks, shortUrl, toLinkDtos } from "@/features/capture";
+import type { DraftLink, DropDraft } from "@/features/capture";
 import { ProjectSelect } from "@/features/organize";
 import { reminderToUtc } from "@/features/detail";
 import { trapTab } from "@/lib/focus-trap";
@@ -27,6 +30,13 @@ type CreateConfigurationProps = {
   feedback?: ReactNode;
   /** 已打开时再次请求新增（托盘、全局快捷键）递增此值：重新取回焦点，不清空草稿。 */
   focusRequest?: number;
+  /**
+   * 拖入悬浮框的内容。打开时带着它就按它预填；页面打开后 `id` 变化表示又拖入了新内容，
+   * 追加到当前草稿（关联资料去重，标题与内容只在为空时补上）。
+   */
+  seed?: { id: number; draft: DropDraft } | null;
+  /** 正有内容拖在页面上：显示「松手添加为关联资料」。 */
+  dropActive?: boolean;
 };
 
 /** 一次新增的全部可编辑字段。 */
@@ -43,6 +53,8 @@ type Draft = {
   reminder: string;
   priority: PriorityDto;
   projectId: string;
+  /** 关联资料：网页与本地文件引用（文件只记位置，不复制）。 */
+  links: DraftLink[];
 };
 
 /** 与后端 `MAX_TITLE_CHARS` 一致，避免输入超长后才在保存时报错。 */
@@ -66,7 +78,77 @@ function blankDraft(kind: ItemTypeDto, today: string | undefined): Draft {
     reminder: "",
     priority: "none",
     projectId: "",
+    links: [],
   };
+}
+
+/** 一条关联资料的主要文字：网页标题或简短网址，文件名。 */
+function linkLabel(link: DraftLink): string {
+  return link.kind === "web" ? (link.title ?? shortUrl(link.url)) : link.name;
+}
+
+/** 一条关联资料的次要文字：网页的主机名，文件所在的文件夹。 */
+function linkDetail(link: DraftLink): string {
+  if (link.kind === "file") return link.path.slice(0, link.path.length - link.name.length);
+  try {
+    return new URL(link.url).hostname.replace(/^www\./, "");
+  } catch {
+    return link.url;
+  }
+}
+
+/**
+ * 把拖入的内容并进草稿：关联资料追加去重；标题、内容只在为空时补上，不覆盖用户已经写的。
+ *
+ * @param current 当前草稿。
+ * @param dropped 拖入内容提取出的草稿。
+ * @param t 翻译函数（多条关联资料的标题「X 等 N 项」）。
+ * @returns 合并后的草稿。
+ */
+function applyDrop(current: Draft, dropped: DropDraft, t: TFunction): Draft {
+  const links = mergeLinks(current.links, dropped.links);
+  const added = links.slice(current.links.length);
+  const first = added[0];
+  const suggested =
+    dropped.title ??
+    (first === undefined
+      ? ""
+      : added.length === 1
+        ? linkLabel(first)
+        : t("dropCreate.titleMany", {
+            first: linkLabel(first),
+            count: added.length,
+          }));
+  return {
+    ...current,
+    links,
+    title: current.title.trim() === "" ? suggested.slice(0, MAX_TITLE_CHARS) : current.title,
+    content: current.content.trim() === "" ? dropped.content : current.content,
+  };
+}
+
+/** 关联资料的类型图标：网页、文件、文件夹（没有扩展名的路径按文件夹显示）。 */
+function LinkIcon({ link }: { link: DraftLink }) {
+  const path =
+    link.kind === "web"
+      ? "M8 14.5a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM1.5 8h13M8 1.5c1.7 1.8 2.5 4 2.5 6.5S9.7 12.7 8 14.5C6.3 12.7 5.5 10.5 5.5 8S6.3 3.3 8 1.5Z"
+      : link.name.includes(".")
+        ? "M9.5 1.5H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5L9.5 1.5ZM9.5 1.5V5H13"
+        : "M1.5 4a1 1 0 0 1 1-1h3.6l1.5 1.5h5.9a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1V4Z";
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      className="size-4 shrink-0 text-muted"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={path} />
+    </svg>
+  );
 }
 
 /** 草稿是否与基线不同（基线是打开时或上一次连续创建后的状态）。 */
@@ -92,12 +174,21 @@ export function CreateConfiguration({
   onPasteNonText,
   feedback,
   focusRequest = 0,
+  seed = null,
+  dropActive = false,
 }: CreateConfigurationProps) {
   const { t } = useTranslation();
   const headingId = useId();
   const hintId = useId();
-  const [draft, setDraft] = useState(() => blankDraft(initialKind, today));
-  const baseline = useRef(draft);
+  const linksId = useId();
+  /** 拖入打开时类型取拖入内容的建议；比较基线仍是空白草稿，预填的内容算作修改，取消前会确认。 */
+  const [initial] = useState(() => {
+    const blank = blankDraft(seed?.draft.kind ?? initialKind, today);
+    return { blank, draft: seed === null ? blank : applyDrop(blank, seed.draft, t) };
+  });
+  const [draft, setDraft] = useState(initial.draft);
+  const baseline = useRef(initial.blank);
+  const handledSeed = useRef(seed?.id);
   /** 用户亲自改过计划日期后，默认日期不再覆盖它。 */
   const dateTouched = useRef(false);
   const [keepOpen, setKeepOpen] = useState(keepOpenPreference);
@@ -115,6 +206,7 @@ export function CreateConfiguration({
     reminder,
     priority,
     projectId,
+    links,
   } = draft;
   /** 修改草稿的部分字段。 */
   const patch = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
@@ -162,6 +254,7 @@ export function CreateConfiguration({
       reminder,
       priority,
       projectId,
+      links,
     }: Draft) =>
       ipc.createItem({
         itemType: kind,
@@ -177,6 +270,7 @@ export function CreateConfiguration({
         due: kind !== "todo" || dueDate === "" ? null : { date: dueDate, time: dueTime || null },
         reminderAt: kind === "note" || reminder === "" ? null : reminderToUtc(reminder),
         projectId: projectId || null,
+        ...(links.length > 0 ? { links: toLinkDtos(links) } : {}),
       }),
     onSuccess: (_item, sent) => {
       if (!keepOpenRef.current) {
@@ -226,6 +320,14 @@ export function CreateConfiguration({
   useEffect(() => {
     if (ready && !create.isPending && lastCreated !== null) inputRef.current?.focus();
   }, [ready, create.isPending, lastCreated]);
+
+  // 页面已打开时又拖入了内容：追加到当前草稿，不另开一页。
+  useEffect(() => {
+    if (seed === null || seed.id === handledSeed.current) return;
+    handledSeed.current = seed.id;
+    setDraft((current) => applyDrop(current, seed.draft, t));
+    setLastCreated(null);
+  }, [seed, t]);
 
   // 页面已打开时再次请求新增：用户可能已切到别的应用，重新取得原生焦点并回到当前草稿。
   const handledFocusRequest = useRef(focusRequest);
@@ -277,7 +379,7 @@ export function CreateConfiguration({
       aria-modal="true"
       aria-labelledby={headingId}
       aria-describedby={hintId}
-      className="flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl bg-surface text-text shadow-lg"
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl bg-surface text-text shadow-lg"
       onSubmit={(event) => {
         event.preventDefault();
         submit();
@@ -389,6 +491,47 @@ export function CreateConfiguration({
               onChange={(event) => patch({ content: event.target.value })}
             />
           </Field>
+          {links.length > 0 && (
+            <section className="flex flex-col gap-2" aria-labelledby={linksId}>
+              <h2 id={linksId} className="text-sm font-medium text-text">
+                {t("dropCreate.links", { count: links.length })}
+              </h2>
+              <ul className="flex flex-col gap-2">
+                {links.map((link) => (
+                  <li
+                    key={linkKey(link)}
+                    className="flex min-w-0 items-center gap-3 rounded-md border border-border px-3 py-2"
+                  >
+                    <LinkIcon link={link} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-text" title={linkLabel(link)}>
+                        {linkLabel(link)}
+                      </p>
+                      <p
+                        className="truncate text-xs text-muted"
+                        title={link.kind === "web" ? link.url : link.path}
+                      >
+                        {linkDetail(link)}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      aria-label={t("dropCreate.remove", { name: linkLabel(link) })}
+                      onClick={() =>
+                        patch({ links: links.filter((other) => linkKey(other) !== linkKey(link)) })
+                      }
+                    >
+                      {t("dropCreate.removeShort")}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              {links.some((link) => link.kind === "file") && (
+                <p className="text-xs text-muted">{t("dropCreate.referenceNote")}</p>
+              )}
+            </section>
+          )}
           <Field label={t("detail.field.format")}>
             <select
               aria-label={t("detail.field.format")}
@@ -574,6 +717,12 @@ export function CreateConfiguration({
           </div>
         )}
       </footer>
+      {dropActive && (
+        <div className="nv-drop-zone pointer-events-none absolute inset-2 flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-primary bg-surface/90">
+          <p className="text-base font-semibold text-primary">{t("dropCreate.appendTitle")}</p>
+          <p className="text-sm text-muted">{t("dropCreate.appendHint")}</p>
+        </div>
+      )}
     </form>
   );
 }

@@ -3,7 +3,7 @@ import { formatDate } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
 import { Button, Tooltip, LoadFeedback } from "@/components";
 import { CaptureFeedbackBar } from "@/features/capture";
-import type { CaptureFeedback } from "@/features/capture";
+import type { CaptureFeedback, DropZone } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
 import { QuickCreateForm } from "@/features/quick-create";
 import { TodayBoard, useTodayQuery } from "@/features/today";
@@ -22,8 +22,10 @@ export type TodayPanelProps = {
   onQuickCreateKindChange?: ((kind: ItemTypeDto) => void) | undefined;
   /** 快速创建结束（成功、取消或失败）时调用。 */
   onQuickCreateDone: () => void;
-  /** 是否有拖拽悬停在面板上：显示「松手即可收集」提示。 */
+  /** 是否有拖拽悬停在面板上：显示「新建事项」「直接收进收集箱」两个放置区。 */
   dropActive?: boolean;
+  /** 指针当前所在的放置区，用来高亮。 */
+  dropZone?: DropZone;
   /** 捕获反馈（「已创建 ✓ 撤销 编辑」）与它的操作；没有反馈时 `feedback` 为 `null`。 */
   capture?: {
     feedback: CaptureFeedback | null;
@@ -55,6 +57,7 @@ export function TodayPanel({
   onQuickCreateKindChange,
   onQuickCreateDone,
   dropActive = false,
+  dropZone = "create",
   capture,
 }: TodayPanelProps) {
   const { t } = useTranslation();
@@ -147,9 +150,29 @@ export function TodayPanel({
         />
       )}
       {dropActive && (
-        <div className="nv-drop-zone pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-[inherit] border-2 border-dashed border-primary bg-surface/90">
-          <p className="text-sm font-semibold text-primary">{t("capture.drop.title")}</p>
-          <p className="text-xs text-muted">{t("capture.drop.hint")}</p>
+        // 两个放置区：松手的位置决定去向。区域之外（边缘）按「新建事项」处理，见 use-drop-capture。
+        <div
+          role="group"
+          aria-label={t("capture.drop.label")}
+          className="nv-drop-zone absolute inset-0 flex flex-col gap-2 rounded-[inherit] bg-surface p-2"
+        >
+          {(["create", "inbox"] as const).map((zone) => (
+            <div
+              key={zone}
+              data-drop-zone={zone}
+              data-active={dropZone === zone}
+              className={`flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed px-3 text-center transition-colors ${
+                zone === "create" ? "flex-1" : "h-20 shrink-0"
+              } ${dropZone === zone ? "border-primary bg-primary/10" : "border-border bg-surface"}`}
+            >
+              <p
+                className={`text-sm font-semibold ${dropZone === zone ? "text-primary" : "text-text"}`}
+              >
+                {t(`capture.drop.${zone}.title`)}
+              </p>
+              <p className="text-xs text-muted">{t(`capture.drop.${zone}.hint`)}</p>
+            </div>
+          ))}
         </div>
       )}
       {capture?.feedback != null && !dropActive && (

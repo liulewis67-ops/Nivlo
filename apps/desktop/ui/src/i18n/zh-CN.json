@@ -263,8 +263,15 @@
   },
   "capture": {
     "drop": {
-      "title": "松手即可收集",
-      "hint": "链接、文字、图片都会先放进收集箱"
+      "label": "放置区",
+      "create": {
+        "title": "新建事项…",
+        "hint": "按内容预填，再选类型、日期和项目"
+      },
+      "inbox": {
+        "title": "直接收进收集箱",
+        "hint": "立即创建，稍后整理"
+      }
     },
     "saving": "正在收集…",
     "paste": "粘贴",
@@ -1145,5 +1152,14 @@
     "shortcut": "Ctrl + Enter 创建",
     "keepOpen": "创建后继续新增",
     "created": "已创建「{{title}}」，可以继续新增。"
+  },
+  "dropCreate": {
+    "links": "关联资料（{{count}}）",
+    "remove": "移除关联资料「{{name}}」",
+    "removeShort": "移除",
+    "referenceNote": "文件只记录位置，不会复制；移动或删除原文件后关联会失效。",
+    "titleMany": "{{first}} 等 {{count}} 项",
+    "appendTitle": "松手添加为关联资料",
+    "appendHint": "网页和文件会加到这条事项里，不会另开一页"
   }
 }

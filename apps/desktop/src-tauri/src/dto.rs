@@ -17,7 +17,7 @@ use nivlo_application::error::{AppError, ErrorCode};
 use nivlo_application::inbox::{
     InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
 };
-use nivlo_application::item::{Patch, RescheduleTarget, UpdateItemInput};
+use nivlo_application::item::{ItemLink, Patch, RescheduleTarget, UpdateItemInput};
 use nivlo_application::organize::{ProjectSummary, TagSummary};
 use nivlo_application::ports::{ItemFilter, ItemOrder};
 use nivlo_application::settings::LaterRule;
@@ -356,6 +356,42 @@ pub struct CreateItemRequest {
     pub reminder_at: Option<String>,
     /// 所属项目 ID。
     pub project_id: Option<String>,
+    /// 一起保存的关联资料（网页、本地文件引用）；缺省为没有。
+    #[serde(default)]
+    pub links: Vec<ItemLinkDto>,
+}
+
+/// 创建时一起保存的关联资料（IPC 表示）。文件只传路径，元数据由后端探测，内容不复制。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+pub enum ItemLinkDto {
+    /// 网页：只接受 http(s)。
+    Web {
+        /// 网址。
+        url: String,
+        /// 页面标题。
+        title: Option<String>,
+    },
+    /// 本地文件或文件夹的路径。
+    File {
+        /// 原始路径。
+        path: String,
+    },
+}
+
+impl From<ItemLinkDto> for ItemLink {
+    /// DTO → Application：文件路径在这里读取元数据（大小、MIME），不读取也不复制内容。
+    fn from(value: ItemLinkDto) -> Self {
+        match value {
+            ItemLinkDto::Web { url, title } => Self::Web {
+                url: url.trim().to_owned(),
+                title: title.map(|t| t.trim().to_owned()).filter(|t| !t.is_empty()),
+            },
+            ItemLinkDto::File { path } => {
+                Self::File(nivlo_capture::file_ref(std::path::Path::new(&path)))
+            }
+        }
+    }
 }
 
 impl TryFrom<CreateItemRequest> for NewItem {
@@ -1425,6 +1461,7 @@ mod tests {
             due: None,
             reminder_at: Some("2026-10-12T01:00:00+08:00".into()),
             project_id: None,
+            links: Vec::new(),
         };
         let new = NewItem::try_from(request).unwrap();
         assert_eq!(new.item_type, ItemType::Todo);

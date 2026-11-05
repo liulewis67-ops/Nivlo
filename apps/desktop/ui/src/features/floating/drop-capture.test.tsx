@@ -28,6 +28,16 @@ function transfer(data: Record<string, string>, files: File[] = []) {
   };
 }
 
+/** 拖入悬浮窗并松在「直接收进收集箱」区（原来的立即捕获）。 */
+async function dropOnInbox(dataTransfer: ReturnType<typeof transfer>): Promise<void> {
+  fireEvent.dragEnter(root(), { dataTransfer });
+  await advance(0);
+  const zone = screen.getByText("直接收进收集箱").closest("[data-drop-zone]");
+  if (zone === null) throw new Error("没有收集箱放置区");
+  fireEvent.dragOver(zone, { dataTransfer });
+  fireEvent.drop(zone, { dataTransfer });
+}
+
 describe("拖放捕获（悬浮窗）", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -37,19 +47,26 @@ describe("拖放捕获（悬浮窗）", () => {
     vi.useRealTimers();
   });
 
-  it("拖入立即展开并显示提示，拖出后提示消失", async () => {
+  it("拖入立即展开并显示两个放置区，指针所在的区域高亮，拖出后消失", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
     const dataTransfer = transfer({ "text/plain": "hi" });
 
     fireEvent.dragEnter(root(), { dataTransfer });
     await advance(0);
-    expect(screen.getByText("松手即可收集")).toBeInTheDocument();
+    const create = screen.getByText("新建事项…").closest("[data-drop-zone]");
+    const inbox = screen.getByText("直接收进收集箱").closest("[data-drop-zone]");
     expect(ipc.lastExpand).not.toBeNull();
+    // 默认高亮「新建事项」；移到收集箱区后换成它。
+    expect(create).toHaveAttribute("data-active", "true");
+    if (inbox === null) throw new Error("没有收集箱放置区");
+    fireEvent.dragOver(inbox, { dataTransfer });
+    expect(inbox).toHaveAttribute("data-active", "true");
+    expect(create).toHaveAttribute("data-active", "false");
 
     fireEvent.dragLeave(root(), { dataTransfer });
     await advance(0);
-    expect(screen.queryByText("松手即可收集")).not.toBeInTheDocument();
+    expect(screen.queryByText("新建事项…")).not.toBeInTheDocument();
   });
 
   it("放下链接：创建笔记并显示「已创建」，面板保持展开直到反馈消失", async () => {
@@ -57,8 +74,7 @@ describe("拖放捕获（悬浮窗）", () => {
     renderWithProviders(<FloatingRoot />, ipc);
     const dataTransfer = transfer({ "text/uri-list": "https://example.com/a" });
 
-    fireEvent.dragEnter(root(), { dataTransfer });
-    fireEvent.drop(root(), { dataTransfer });
+    await dropOnInbox(dataTransfer);
     await advance(0);
 
     expect(ipc.captures).toEqual([
@@ -85,7 +101,7 @@ describe("拖放捕获（悬浮窗）", () => {
   it("放下文本创建待办；点「撤销」后记录被删除、反馈关闭", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
-    fireEvent.drop(root(), { dataTransfer: transfer({ "text/plain": "整理周报" }) });
+    await dropOnInbox(transfer({ "text/plain": "整理周报" }));
     await advance(0);
     expect(ipc.items[0]).toMatchObject({ itemType: "todo", title: "整理周报" });
 
@@ -99,7 +115,7 @@ describe("拖放捕获（悬浮窗）", () => {
   it("点「编辑」打开主窗口并关闭反馈", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
-    fireEvent.drop(root(), { dataTransfer: transfer({ "text/plain": "x" }) });
+    await dropOnInbox(transfer({ "text/plain": "x" }));
     await advance(0);
 
     fireEvent.click(screen.getByRole("button", { name: "编辑" }));
@@ -111,7 +127,7 @@ describe("拖放捕获（悬浮窗）", () => {
   it("指针停在反馈上时不会自动消失，移开后才重新计时", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
-    fireEvent.drop(root(), { dataTransfer: transfer({ "text/plain": "x" }) });
+    await dropOnInbox(transfer({ "text/plain": "x" }));
     await advance(0);
 
     const bar = screen.getByRole("status");
@@ -140,7 +156,7 @@ describe("拖放捕获（悬浮窗）", () => {
     const { AppError } = await import("@/lib/errors");
     ipc.failNextCaptureWith(new AppError("STORAGE_UNAVAILABLE", "磁盘已满"));
     renderWithProviders(<FloatingRoot />, ipc);
-    fireEvent.drop(root(), { dataTransfer: transfer({ "text/plain": "x" }) });
+    await dropOnInbox(transfer({ "text/plain": "x" }));
     await advance(0);
 
     expect(screen.getByRole("status")).toHaveTextContent("没能收集：本地数据库暂时不可用。");
@@ -153,7 +169,7 @@ describe("拖放捕获（悬浮窗）", () => {
     renderWithProviders(<FloatingRoot />, ipc);
     fireEvent.dragEnter(root(), { dataTransfer: transfer({}) });
     await advance(0);
-    expect(screen.queryByText("松手即可收集")).not.toBeInTheDocument();
+    expect(screen.queryByText("新建事项…")).not.toBeInTheDocument();
   });
 
   it("面板上显示收集箱数量，点击后请求主窗口打开收集箱", async () => {

@@ -6,12 +6,14 @@ import * as __TAURI_EVENT from "@tauri-apps/api/event";
 /** Commands */
 export const commands = {
 	/**
-	 *  创建一个 Item。
+	 *  创建一个 Item；请求带 `links` 时在同一个事务里保存关联资料（网页、本地文件引用）。
+	 * 
+	 *  文件只记录路径与元数据，不复制内容；打开来源仍由后端按 Item ID 决定（ADR-010）。
 	 * 
 	 *  # Errors
 	 * 
-	 *  请求格式不合法（`INVALID_INPUT`）、违反领域规则（如 `ITEM_TITLE_EMPTY`）或存储失败时
-	 *  返回 [`IpcError`]。
+	 *  请求格式不合法（`INVALID_INPUT`，含非 http(s) 网址、空路径、关联资料过多）、
+	 *  违反领域规则（如 `ITEM_TITLE_EMPTY`）或存储失败时返回 [`IpcError`]。
 	 */
 	createItem: (request: CreateItemRequest) => typedError<ItemDto, IpcError>(__TAURI_INVOKE("create_item", { request })),
 	/**
@@ -999,6 +1001,8 @@ export type CreateItemRequest = {
 	reminderAt: string | null,
 	/**  所属项目 ID。 */
 	projectId: string | null,
+	/**  一起保存的关联资料（网页、本地文件引用）；缺省为没有。 */
+	links?: ItemLinkDto[],
 };
 
 /**  本地日期，可选带本地时间。 */
@@ -1180,6 +1184,19 @@ export type ItemDto = {
 	/**  归档时间。 */
 	archivedAt: string | null,
 };
+
+/**  创建时一起保存的关联资料（IPC 表示）。文件只传路径，元数据由后端探测，内容不复制。 */
+export type ItemLinkDto = 
+/**  网页：只接受 http(s)。 */
+{ kind: "web"; 
+/**  网址。 */
+url: string; 
+/**  页面标题。 */
+title: string | null } | 
+/**  本地文件或文件夹的路径。 */
+{ kind: "file"; 
+/**  原始路径。 */
+path: string };
 
 /**  列表的排序方式（IPC 表示）。 */
 export type ItemOrderDto = 

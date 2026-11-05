@@ -66,6 +66,7 @@ export type {
   ExpandedLayoutDto,
   InboxEntryDto,
   ItemDto,
+  ItemLinkDto,
   ItemStatusDto,
   ItemTagsDto,
   ItemTypeDto,

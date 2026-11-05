@@ -9,22 +9,30 @@ use crate::dto::{
     RescheduleTargetDto, UpdateItemRequest, parse_item_id,
 };
 
-/// 创建一个 Item。
+/// 创建一个 Item；请求带 `links` 时在同一个事务里保存关联资料（网页、本地文件引用）。
+///
+/// 文件只记录路径与元数据，不复制内容；打开来源仍由后端按 Item ID 决定（ADR-010）。
 ///
 /// # Errors
 ///
-/// 请求格式不合法（`INVALID_INPUT`）、违反领域规则（如 `ITEM_TITLE_EMPTY`）或存储失败时
-/// 返回 [`IpcError`]。
+/// 请求格式不合法（`INVALID_INPUT`，含非 http(s) 网址、空路径、关联资料过多）、
+/// 违反领域规则（如 `ITEM_TITLE_EMPTY`）或存储失败时返回 [`IpcError`]。
 #[tauri::command]
 #[specta::specta]
 pub async fn create_item(
     state: State<'_, AppState>,
-    request: CreateItemRequest,
+    mut request: CreateItemRequest,
 ) -> Result<ItemDto, IpcError> {
+    // 与 `capture` 一致：文件只读取元数据与文件头（最多 20 个），不复制内容。
+    let links = std::mem::take(&mut request.links)
+        .into_iter()
+        .map(Into::into)
+        .collect();
+    let input = request.try_into()?;
     let item = state
         .services
         .items
-        .create_item(request.try_into()?)
+        .create_item_with_links(input, links)
         .await?;
     Ok(ItemDto::from(&item))
 }

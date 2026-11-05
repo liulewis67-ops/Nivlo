@@ -264,8 +264,15 @@
   },
   "capture": {
     "drop": {
-      "title": "Release to capture",
-      "hint": "Links, text and images go to the Inbox first"
+      "label": "Drop targets",
+      "create": {
+        "title": "New item…",
+        "hint": "Prefilled from what you drop; pick type, date and project"
+      },
+      "inbox": {
+        "title": "Straight to Inbox",
+        "hint": "Create now, sort it out later"
+      }
     },
     "saving": "Capturing…",
     "paste": "Paste",
@@ -1150,5 +1157,14 @@
     "shortcut": "Ctrl + Enter to create",
     "keepOpen": "Keep open to add another",
     "created": "Created “{{title}}”. You can add another."
+  },
+  "dropCreate": {
+    "links": "Linked materials ({{count}})",
+    "remove": "Remove linked material “{{name}}”",
+    "removeShort": "Remove",
+    "referenceNote": "Files are linked by location, not copied. Moving or deleting the original breaks the link.",
+    "titleMany": "{{first}} and others ({{count}} items)",
+    "appendTitle": "Release to add as linked material",
+    "appendHint": "Pages and files are added to this item instead of opening a new one"
   }
 }

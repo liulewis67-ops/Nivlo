@@ -436,6 +436,44 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     };
     items.push(item);
     addToToday(item);
+    // 关联资料与后端一致：每条一个来源，文件再加一条引用附件（不复制）。
+    const links = request.links ?? [];
+    if (links.length > 0) {
+      const base = { sourceApp: null, capturedAt: now };
+      provenance.set(item.id, {
+        sources: links.map((link) =>
+          link.kind === "web"
+            ? {
+                ...base,
+                sourceType: "web",
+                sourceUrl: link.url,
+                sourcePath: null,
+                originalTitle: link.title,
+              }
+            : {
+                ...base,
+                sourceType: "file",
+                sourceUrl: null,
+                sourcePath: link.path,
+                originalTitle: null,
+              },
+        ),
+        attachments: links.flatMap((link) =>
+          link.kind === "file"
+            ? [
+                {
+                  kind: "reference" as const,
+                  path: link.path,
+                  name: link.path.split(/[\\/]/).pop() ?? link.path,
+                  mime: null,
+                  sizeBytes: null,
+                  exists: true,
+                },
+              ]
+            : [],
+        ),
+      });
+    }
     for (const notify of listeners) notify();
     return Promise.resolve(item);
   }

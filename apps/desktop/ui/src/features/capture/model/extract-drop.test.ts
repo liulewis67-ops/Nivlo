@@ -4,7 +4,7 @@ import type { DropSnapshot } from "./extract-drop";
 
 /** 构造快照，未指定的格式为空。 */
 function snap(partial: Partial<DropSnapshot>): DropSnapshot {
-  return { uriList: "", mozUrl: "", text: "", files: [], ...partial };
+  return { uriList: "", mozUrl: "", text: "", html: "", files: [], ...partial };
 }
 
 describe("extractCapture", () => {
@@ -75,7 +75,7 @@ describe("snapshotDrop", () => {
       },
       files: [],
     });
-    expect(snapshot).toEqual({ uriList: "", mozUrl: "", text: "hi", files: [] });
+    expect(snapshot).toEqual({ uriList: "", mozUrl: "", text: "hi", html: "", files: [] });
   });
 });
 

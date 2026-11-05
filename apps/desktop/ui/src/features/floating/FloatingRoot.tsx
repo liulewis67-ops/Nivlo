@@ -5,6 +5,7 @@ import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { CaptureFeedbackBar, useDropCapture } from "@/features/capture";
+import type { DropDraft } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
 import { useTodayQuery } from "@/features/today";
 import { useAppearanceStore } from "@/stores/appearance-store";
@@ -45,9 +46,16 @@ export function FloatingRoot() {
   // 焦点会被马上还给用户之前的应用：菜单不能因此关闭。
   useIgnoreWindowBlur();
   const { state, send } = useFloatingMachine();
-  const drop = useDropCapture(send);
-  const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
   const [quickCreateKind, setQuickCreateKind] = useState<ItemTypeDto | null>(null);
+  /** 拖入内容预填出的草稿；`id` 递增，配置页已打开时据此追加。 */
+  const [dropSeed, setDropSeed] = useState<{ id: number; draft: DropDraft } | null>(null);
+  const drop = useDropCapture(send, (draft) => {
+    setDropSeed((current) => ({ id: (current?.id ?? 0) + 1, draft }));
+    // 已打开时保留当前类型与草稿，只追加；否则按拖入内容建议的类型打开配置页。
+    setQuickCreateKind((current) => current ?? draft.kind);
+    send("quickCreateRequested");
+  });
+  const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
   /** 配置页已打开时托盘 / 快捷键再次请求新增的次数：让配置页重新取回焦点。 */
   const [createFocusRequest, setCreateFocusRequest] = useState(0);
   const isPanel = needsPanelWindow(state);
@@ -102,6 +110,7 @@ export function FloatingRoot() {
   /** 快速创建结束：回到展开态；指针已离开时状态机会延迟收起，而不是瞬间消失。 */
   function finishQuickCreate(): void {
     setQuickCreateKind(null);
+    setDropSeed(null);
     send("quickCreateFinished");
   }
 
@@ -153,6 +162,8 @@ export function FloatingRoot() {
             today={today.data?.date}
             onDone={finishQuickCreate}
             focusRequest={createFocusRequest}
+            seed={dropSeed}
+            dropActive={drop.hovering}
             onPasteNonText={drop.pasteFromClipboard}
             feedback={
               drop.feedback === null ? null : (
@@ -178,6 +189,7 @@ export function FloatingRoot() {
             onQuickCreateKindChange={setQuickCreateKind}
             onQuickCreateDone={finishQuickCreate}
             dropActive={drop.hovering}
+            dropZone={drop.zone}
             capture={{
               feedback: drop.feedback,
               onUndo: drop.undo,

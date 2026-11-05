@@ -9,6 +9,8 @@ export type DropSnapshot = {
   mozUrl: string;
   /** `text/plain` 的内容。 */
   text: string;
+  /** `text/html` 的内容（链接文字、图片说明，用来取标题）。 */
+  html: string;
   /** 拖来的文件（资源管理器的文件、浏览器里的图片）。 */
   files: File[];
 };
@@ -42,6 +44,7 @@ export function snapshotDrop(data: DataTransferLike): DropSnapshot {
     uriList: read("text/uri-list"),
     mozUrl: read("text/x-moz-url"),
     text: read("text/plain"),
+    html: read("text/html"),
     files: Array.from(data.files),
   };
 }

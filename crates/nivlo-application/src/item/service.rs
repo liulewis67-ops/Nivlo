@@ -12,13 +12,16 @@ use std::sync::Arc;
 use chrono::{DateTime, Datelike, Duration, NaiveDate, Utc};
 use nivlo_common::clock::Clock;
 use nivlo_common::id::new_uuid_v7;
+use nivlo_domain::attachment::{Attachment, AttachmentKind};
+use nivlo_domain::capture::FileRef;
 use nivlo_domain::error::DomainError;
 use nivlo_domain::event::DomainEvent;
-use nivlo_domain::id::ItemId;
+use nivlo_domain::id::{AttachmentId, ItemId, SourceId};
 use nivlo_domain::item::{DatePoint, Item, ItemType, NewItem};
+use nivlo_domain::source::{Source, SourceType};
 
 use super::input::UpdateItemInput;
-use crate::error::AppError;
+use crate::error::{AppError, ErrorCode};
 use crate::event::EventPublisher;
 use crate::inbox::InboxEntry;
 use crate::ports::{ItemFilter, UnitOfWork};
@@ -29,6 +32,47 @@ pub const SEARCH_LIMIT: u32 = 50;
 
 /// 创建 Item 的输入。直接复用领域的 [`NewItem`]，字段含义见其文档。
 pub type CreateItemInput = NewItem;
+
+/// 一个事项最多带多少条关联资料。
+pub const MAX_ITEM_LINKS: usize = 20;
+
+/// 创建时一起保存的关联资料（拖放到悬浮框新建事项）。
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ItemLink {
+    /// 网页：只接受 http(s)。
+    Web {
+        /// 网址。
+        url: String,
+        /// 页面标题；没有时为 `None`。
+        title: Option<String>,
+    },
+    /// 本地文件或文件夹的**引用**：只记录位置与元数据，不复制内容。
+    File(FileRef),
+}
+
+/// 校验关联资料：数量上限、网址只允许 http(s)、路径非空。
+fn validate_links(links: &[ItemLink]) -> Result<(), AppError> {
+    let invalid = |reason: String| AppError::new(ErrorCode::InvalidInput, reason);
+    if links.len() > MAX_ITEM_LINKS {
+        return Err(invalid(format!("关联资料最多 {MAX_ITEM_LINKS} 条")));
+    }
+    for link in links {
+        match link {
+            ItemLink::Web { url, .. } => {
+                let parsed =
+                    url::Url::parse(url).map_err(|_| invalid(format!("无效的网址：{url}")))?;
+                if !matches!(parsed.scheme(), "http" | "https") {
+                    return Err(invalid(format!("只能关联 http(s) 网址：{url}")));
+                }
+            }
+            ItemLink::File(file) if file.path.trim().is_empty() => {
+                return Err(invalid("文件路径为空".to_owned()));
+            }
+            ItemLink::File(_) => {}
+        }
+    }
+    Ok(())
+}
 
 /// 改期的目标。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -82,6 +126,22 @@ impl ItemService {
     /// * 领域规则错误（标题为空、字段不适用等）映射为对应错误码，数据库不变。
     /// * [`crate::error::ErrorCode::StorageUnavailable`] 等存储错误，事务已回滚。
     pub async fn create_item(&self, input: CreateItemInput) -> Result<Item, AppError> {
+        self.create_item_with_links(input, Vec::new()).await
+    }
+
+    /// 创建一个 Item，并在**同一个事务**里写入它的关联资料：每条一条 Source，
+    /// 文件再加一条 `Reference` 附件（指向用户的文件，Nivlo 不拥有、不复制、不删除）。
+    ///
+    /// # Errors
+    ///
+    /// 同 [`ItemService::create_item`]；关联资料不合法（超过 [`MAX_ITEM_LINKS`] 条、
+    /// 网址不是 http(s)、路径为空）返回 [`ErrorCode::InvalidInput`]，此时什么都不写入。
+    pub async fn create_item_with_links(
+        &self,
+        input: CreateItemInput,
+        links: Vec<ItemLink>,
+    ) -> Result<Item, AppError> {
+        validate_links(&links)?;
         let now = self.clock.now_utc();
         let has_schedule =
             input.scheduled.is_some() || input.due.is_some() || input.reminder_at.is_some();
@@ -90,6 +150,45 @@ impl ItemService {
 
         let mut tx = self.uow.begin().await?;
         tx.items().insert(&item).await?;
+        for link in links {
+            let (source_type, url, path, title, file) = match link {
+                ItemLink::Web { url, title } => (SourceType::WEB, Some(url), None, title, None),
+                ItemLink::File(file) => (
+                    SourceType::FILE,
+                    None,
+                    Some(file.path.clone()),
+                    None,
+                    Some(file),
+                ),
+            };
+            tx.sources()
+                .insert(&Source {
+                    id: SourceId::from_uuid(new_uuid_v7(self.clock.as_ref())),
+                    item_id: id,
+                    source_type: SourceType::new(source_type),
+                    source_app: None,
+                    source_url: url,
+                    source_path: path,
+                    original_title: title,
+                    metadata_json: None,
+                    captured_at: now,
+                })
+                .await?;
+            if let Some(file) = file {
+                tx.attachments()
+                    .insert(&Attachment {
+                        id: AttachmentId::from_uuid(new_uuid_v7(self.clock.as_ref())),
+                        item_id: id,
+                        kind: AttachmentKind::Reference,
+                        path: file.path,
+                        name: file.name,
+                        mime: file.mime,
+                        size_bytes: file.size_bytes,
+                        added_at: now,
+                    })
+                    .await?;
+            }
+        }
         tx.commit().await?;
 
         // 提交成功之后才发布事件，避免订阅者看到随后被回滚的 Item。
