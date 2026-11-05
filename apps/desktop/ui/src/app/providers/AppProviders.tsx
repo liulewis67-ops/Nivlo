@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { I18nextProvider } from "react-i18next";
 import { ToastViewport, TooltipProvider } from "@/components";
 import { initI18n } from "@/i18n";
+import { coalesce } from "@/lib/coalesce";
 import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
@@ -32,6 +33,9 @@ export function createQueryClient(): QueryClient {
     defaultOptions: { queries: { refetchOnWindowFocus: false, retry: false } },
   });
 }
+
+/** 合并后端数据变化事件的窗口（毫秒）：单个事件立即刷新，一串事件在窗口结束时再刷新一次。 */
+const DATA_CHANGE_WINDOW_MS = 50;
 
 /** [`AppProviders`] 的 Props。 */
 export type AppProvidersProps = {
@@ -67,19 +71,23 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
     return () => media.removeEventListener("change", onChange);
   }, [preference]);
 
-  useEffect(
-    () =>
-      ipc.subscribeDataChanges(() => {
-        void client.invalidateQueries({ queryKey: queryKeys.items() });
-        void client.invalidateQueries({ queryKey: queryKeys.today() });
-        void client.invalidateQueries({ queryKey: queryKeys.inbox() });
-        void client.invalidateQueries({ queryKey: queryKeys.itemsOne() });
-        void client.invalidateQueries({ queryKey: queryKeys.projects() });
-        void client.invalidateQueries({ queryKey: queryKeys.tags() });
-        void client.invalidateQueries({ queryKey: queryKeys.trash() });
-      }),
-    [client],
-  );
+  useEffect(() => {
+    // 批量操作会连续到达 N 个事件：合并成「立即一轮 + 窗口结束再一轮」，而不是重取 N 轮。
+    const refresh = coalesce(() => {
+      void client.invalidateQueries({ queryKey: queryKeys.items() });
+      void client.invalidateQueries({ queryKey: queryKeys.today() });
+      void client.invalidateQueries({ queryKey: queryKeys.inbox() });
+      void client.invalidateQueries({ queryKey: queryKeys.itemsOne() });
+      void client.invalidateQueries({ queryKey: queryKeys.projects() });
+      void client.invalidateQueries({ queryKey: queryKeys.tags() });
+      void client.invalidateQueries({ queryKey: queryKeys.trash() });
+    }, DATA_CHANGE_WINDOW_MS);
+    const unsubscribe = ipc.subscribeDataChanges(refresh.signal);
+    return () => {
+      unsubscribe();
+      refresh.cancel();
+    };
+  }, [client]);
 
   return (
     <I18nextProvider i18n={initI18n()}>

@@ -3,10 +3,12 @@
 use std::sync::Arc;
 
 use nivlo_application::event::{EventBus, UiEvent, UiEventMapper};
+use nivlo_domain::event::DomainEvent;
 use tauri::async_runtime::JoinHandle;
 use tauri::{AppHandle, Wry};
 use tauri_specta::Event;
-use tokio::sync::broadcast::error::RecvError;
+use tokio::sync::broadcast::Receiver;
+use tokio::sync::broadcast::error::{RecvError, TryRecvError};
 use tokio_util::sync::CancellationToken;
 
 use super::{DayChangedEvent, ItemCreatedEvent, ItemUpdatedEvent, TodayReorderedEvent};
@@ -44,6 +46,58 @@ fn emit(app: &AppHandle<Wry>, event: &UiEvent) {
     }
 }
 
+/// 一次最多合并多少个已经排队的事件，避免持续的事件流让一批永远收不完。
+const MAX_BATCH: usize = 64;
+
+/// 一批已经排队的领域事件，以及排队期间因为落后被丢弃的数量。
+#[derive(Debug, Default)]
+struct Batch {
+    /// 按到达顺序排列的事件。
+    events: Vec<DomainEvent>,
+    /// 落后被丢弃的事件数。
+    lagged: u64,
+    /// 通道已经关闭（发布方都没了），发完这一批就该退出。
+    closed: bool,
+}
+
+/// 在已经收到 `first` 之后，不等待地取走通道里已经排队的事件（最多 [`MAX_BATCH`] 个）。
+///
+/// 批量操作（整理、恢复、删除、合并标签）提交之后会连续发布 N 个事件；逐个转发会让每个窗口
+/// 收到 N 次刷新信号、把同一组查询重取 N 次。合并成一批之后再去重、发送，
+/// 前端收到的信号数就和真正变化的 Item 数一致，而且不引入任何等待。
+fn drain_ready(receiver: &mut Receiver<DomainEvent>, first: DomainEvent) -> Batch {
+    let mut batch = Batch {
+        events: vec![first],
+        ..Batch::default()
+    };
+    while batch.events.len() < MAX_BATCH {
+        match receiver.try_recv() {
+            Ok(event) => batch.events.push(event),
+            Err(TryRecvError::Lagged(skipped)) => batch.lagged += skipped,
+            Err(TryRecvError::Closed) => {
+                batch.closed = true;
+                break;
+            }
+            Err(TryRecvError::Empty) => break,
+        }
+    }
+    batch
+}
+
+/// 把一批领域事件映射为 UI 事件并去重（保留第一次出现的顺序）。
+///
+/// 一次更新往往同时发布 `ItemUpdated` 与 `ScheduleChanged` 等，它们都映射为同一个
+/// `ItemUpdated { item_id }`；UI 事件只是"该刷新了"的信号，重复的那一个没有任何信息量。
+fn map_batch(mapper: &dyn UiEventMapper, events: &[DomainEvent]) -> Vec<UiEvent> {
+    let mut out: Vec<UiEvent> = Vec::with_capacity(events.len());
+    for ui_event in events.iter().filter_map(|event| mapper.map(event)) {
+        if !out.contains(&ui_event) {
+            out.push(ui_event);
+        }
+    }
+    out
+}
+
 /// 启动转发任务：订阅事件总线，映射后发送给前端，收到取消信号时退出。
 ///
 /// 调用方应通过 `RuntimeHandles::track_task` 登记返回的句柄，以便退出时等待其结束。
@@ -62,9 +116,16 @@ pub fn spawn_forwarder(
                 biased;
                 () = shutdown.cancelled() => break,
                 received = receiver.recv() => match received {
-                    Ok(event) => {
-                        if let Some(ui_event) = mapper.map(&event) {
+                    Ok(first) => {
+                        let batch = drain_ready(&mut receiver, first);
+                        if batch.lagged > 0 {
+                            tracing::warn!(event = "ui_event_lagged", skipped = batch.lagged, "UI 事件转发落后，部分事件被丢弃");
+                        }
+                        for ui_event in map_batch(mapper.as_ref(), &batch.events) {
                             emit(&app, &ui_event);
+                        }
+                        if batch.closed {
+                            break;
                         }
                     }
                     // 订阅者落后太多时旧事件已被丢弃；前端收到下一个事件后会刷新，这里只记录。
@@ -79,8 +140,15 @@ pub fn spawn_forwarder(
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
-    use super::DATA_EVENT_TARGETS;
+    use nivlo_application::event::{EventBus, EventPublisher, UiEvent};
+    use nivlo_domain::event::DomainEvent;
+    use nivlo_domain::id::ItemId;
+    use uuid::Uuid;
+
+    use super::{DATA_EVENT_TARGETS, MAX_BATCH, drain_ready, map_batch};
+    use crate::events::mapper::DefaultUiEventMapper;
     use crate::windows::search::SEARCH_WINDOW_LABEL;
     use crate::windows::{FLOATING_WINDOW_LABEL, MAIN_WINDOW_LABEL};
 
@@ -89,5 +157,57 @@ mod tests {
         assert!(DATA_EVENT_TARGETS.contains(&MAIN_WINDOW_LABEL));
         assert!(DATA_EVENT_TARGETS.contains(&FLOATING_WINDOW_LABEL));
         assert!(!DATA_EVENT_TARGETS.contains(&SEARCH_WINDOW_LABEL));
+    }
+
+    fn id(n: u128) -> ItemId {
+        ItemId::from_uuid(Uuid::from_u128(n))
+    }
+
+    #[tokio::test]
+    async fn a_burst_of_events_is_taken_in_one_batch() {
+        let bus = EventBus::new();
+        let mut receiver = bus.subscribe();
+        for n in 1..=5 {
+            bus.publish(DomainEvent::ItemUpdated { item_id: id(n) });
+        }
+        let first = receiver.recv().await.unwrap();
+        let batch = drain_ready(&mut receiver, first);
+        assert_eq!(batch.events.len(), 5);
+        assert_eq!(batch.lagged, 0);
+        assert!(!batch.closed);
+        assert!(receiver.try_recv().is_err(), "nothing is left behind");
+    }
+
+    #[tokio::test]
+    async fn a_batch_is_capped_and_the_rest_waits_for_the_next_one() {
+        let bus = EventBus::new();
+        let mut receiver = bus.subscribe();
+        for n in 0..(MAX_BATCH as u128 + 10) {
+            bus.publish(DomainEvent::ItemUpdated { item_id: id(n) });
+        }
+        let first = receiver.recv().await.unwrap();
+        assert_eq!(drain_ready(&mut receiver, first).events.len(), MAX_BATCH);
+        let next = receiver.recv().await.unwrap();
+        assert_eq!(drain_ready(&mut receiver, next).events.len(), 10);
+    }
+
+    #[test]
+    fn duplicates_collapse_and_the_order_is_kept() {
+        let events = [
+            DomainEvent::ItemUpdated { item_id: id(1) },
+            DomainEvent::ScheduleChanged { item_id: id(1) },
+            DomainEvent::ItemCreated { item_id: id(2) },
+            DomainEvent::ItemCompleted { item_id: id(1) },
+            DomainEvent::TodayReordered,
+            DomainEvent::TodayReordered,
+        ];
+        assert_eq!(
+            map_batch(&DefaultUiEventMapper, &events),
+            vec![
+                UiEvent::ItemUpdated { item_id: id(1) },
+                UiEvent::ItemCreated { item_id: id(2) },
+                UiEvent::TodayReordered,
+            ]
+        );
     }
 }
