@@ -16,7 +16,7 @@
 
 mod inspector;
 
-pub use inspector::FsFileInspector;
+pub use inspector::{FsFileInspector, is_cloud_only};
 
 use std::collections::HashSet;
 use std::fs::File;
@@ -111,7 +111,7 @@ fn read_head(path: &Path) -> Vec<u8> {
 
 /// 为一个路径构造文件引用并探测元数据。
 ///
-/// 只读取元数据与最多 512 字节的文件头；路径不存在 / 无权限时仍返回引用（名称与扩展名
+/// 只读取元数据与最多 512 字节的文件头（云端占位文件连文件头也不读）；路径不存在 / 无权限时仍返回引用（名称与扩展名
 /// 来自路径本身），大小与 MIME 为 `None`——被引用的文件随时可能被移动，不能因此丢掉捕获。
 #[must_use]
 pub fn file_ref(path: &Path) -> FileRef {
@@ -120,6 +120,8 @@ pub fn file_ref(path: &Path) -> FileRef {
     let metadata = std::fs::metadata(path).ok();
     let is_dir = metadata.as_ref().is_some_and(std::fs::Metadata::is_dir);
     let extension = if is_dir { None } else { extension_of(&name) };
+    // 只在云端的占位文件（OneDrive 等）不读文件头：一读就会触发整份下载。
+    let cloud_only = metadata.as_ref().is_some_and(is_cloud_only);
     let mime = if is_dir {
         None
     } else {
@@ -127,7 +129,12 @@ pub fn file_ref(path: &Path) -> FileRef {
             .as_deref()
             .and_then(|ext| mime_guess::from_ext(ext).first_raw())
             .map(str::to_owned)
-            .or_else(|| sniff_mime(&read_head(path)).map(str::to_owned))
+            .or_else(|| {
+                (!cloud_only)
+                    .then(|| sniff_mime(&read_head(path)))
+                    .flatten()
+                    .map(str::to_owned)
+            })
     };
     FileRef {
         path: path_text,
@@ -201,6 +208,8 @@ pub fn sniff_image(bytes: &[u8]) -> Option<ImageFormat> {
 }
 
 /// 按文件头魔数探测 MIME；认不出时返回 `None`。覆盖常见的无扩展名文件。
+///
+/// 只在文件没有（认识的）扩展名时才用到——有扩展名时按扩展名判断。
 #[must_use]
 pub fn sniff_mime(head: &[u8]) -> Option<&'static str> {
     if let Some(format) = sniff_image(head) {
@@ -209,30 +218,136 @@ pub fn sniff_mime(head: &[u8]) -> Option<&'static str> {
     if head.starts_with(b"%PDF-") {
         Some("application/pdf")
     } else if head.starts_with(b"PK\x03\x04") {
-        // docx / xlsx / jar 等都是 zip 容器，扩展名缺失时只能说"是 zip"。
-        Some("application/zip")
+        Some(zip_container_mime(head))
     } else if head.starts_with(&[0x1F, 0x8B]) {
         Some("application/gzip")
     } else if head.starts_with(b"7z\xBC\xAF\x27\x1C") {
         Some("application/x-7z-compressed")
+    } else if head.starts_with(b"Rar!\x1A\x07") {
+        Some("application/vnd.rar")
+    } else if head.starts_with(&[0xFD, b'7', b'z', b'X', b'Z', 0x00]) {
+        Some("application/x-xz")
     } else if head.starts_with(b"{\\rtf") {
         Some("application/rtf")
-    } else if is_probably_text(head) {
-        Some("text/plain")
+    } else if head.starts_with(&[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) {
+        // 旧版 Office（.doc / .xls / .ppt）与 Outlook .msg 都是这种复合文档。
+        Some("application/x-ole-storage")
+    } else if head.starts_with(b"SQLite format 3\0") {
+        Some("application/vnd.sqlite3")
+    } else if let Some(mime) = media_mime(head) {
+        Some(mime)
+    } else if head.starts_with(b"MZ") && head.contains(&0) {
+        Some("application/vnd.microsoft.portable-executable")
+    } else if let Some(text) = nivlo_common::text::decode_text_file(head) {
+        Some(markup_mime(&text).unwrap_or("text/plain"))
     } else {
         None
     }
 }
 
-/// 文件头像不像文本：非空、没有 NUL 字节，并且是合法 UTF-8（允许末尾被截断的半个字符）。
-fn is_probably_text(head: &[u8]) -> bool {
-    if head.is_empty() || head.contains(&0) {
-        return false;
+/// zip 容器到底是什么：Office Open XML 看条目路径，OpenDocument / EPUB 看第一个条目 `mimetype` 的内容。
+///
+/// 文件头只有 512 字节，看不到的就只能说"是 zip"。
+fn zip_container_mime(head: &[u8]) -> &'static str {
+    let contains = |needle: &[u8]| head.windows(needle.len()).any(|w| w == needle);
+    // 第一个条目：文件名长度在偏移 26，文件名从偏移 30 开始，`mimetype` 不压缩，内容紧跟其后。
+    if head.get(30..38) == Some(b"mimetype") {
+        let extra = head
+            .get(28..30)
+            .map_or(0, |b| usize::from(u16::from_le_bytes([b[0], b[1]])));
+        let body = head.get(38 + extra..).unwrap_or_default();
+        for (prefix, mime) in [
+            (&b"application/epub+zip"[..], "application/epub+zip"),
+            (
+                b"application/vnd.oasis.opendocument.text",
+                "application/vnd.oasis.opendocument.text",
+            ),
+            (
+                b"application/vnd.oasis.opendocument.spreadsheet",
+                "application/vnd.oasis.opendocument.spreadsheet",
+            ),
+            (
+                b"application/vnd.oasis.opendocument.presentation",
+                "application/vnd.oasis.opendocument.presentation",
+            ),
+        ] {
+            if body.starts_with(prefix) {
+                return mime;
+            }
+        }
     }
-    match std::str::from_utf8(head) {
-        Ok(_) => true,
-        // 读取上限可能把一个多字节字符切成两半，只要错误出现在末尾就仍算文本。
-        Err(error) => error.error_len().is_none(),
+    if contains(b"word/") {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    } else if contains(b"xl/") {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    } else if contains(b"ppt/") {
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    } else if contains(b"META-INF/MANIFEST.MF") {
+        "application/java-archive"
+    } else {
+        "application/zip"
+    }
+}
+
+/// 音视频与 [`sniff_image`] 不支持保存、但值得认出来的图片格式。
+fn media_mime(head: &[u8]) -> Option<&'static str> {
+    // ISO 基础媒体文件（MP4 / MOV / HEIC / AVIF）：偏移 4 是 `ftyp`，后面是品牌。
+    if head.get(4..8) == Some(b"ftyp") {
+        return Some(match head.get(8..12)? {
+            b"heic" | b"heix" | b"heim" | b"heis" | b"mif1" | b"msf1" => "image/heic",
+            b"avif" | b"avis" => "image/avif",
+            b"qt  " => "video/quicktime",
+            b"M4A " | b"M4B " => "audio/mp4",
+            _ => "video/mp4",
+        });
+    }
+    if head.len() >= 12 && &head[0..4] == b"RIFF" {
+        match &head[8..12] {
+            b"WAVE" => return Some("audio/wav"),
+            b"AVI " => return Some("video/x-msvideo"),
+            _ => {}
+        }
+    }
+    if head.starts_with(b"ID3")
+        || (head.len() >= 2 && head[0] == 0xFF && matches!(head[1], 0xFB | 0xF3 | 0xF2))
+    {
+        Some("audio/mpeg")
+    } else if head.starts_with(b"OggS") {
+        Some("audio/ogg")
+    } else if head.starts_with(b"fLaC") {
+        Some("audio/flac")
+    } else if head.starts_with(&[0x1A, 0x45, 0xDF, 0xA3]) {
+        let webm = head.windows(4).any(|w| w == b"webm");
+        Some(if webm {
+            "video/webm"
+        } else {
+            "video/x-matroska"
+        })
+    } else if head.starts_with(b"II*\0") || head.starts_with(b"MM\0*") {
+        Some("image/tiff")
+    } else if head.starts_with(&[0x00, 0x00, 0x01, 0x00]) {
+        Some("image/x-icon")
+    } else {
+        None
+    }
+}
+
+/// 看起来是文本时，再看看是不是 SVG / HTML / XML。
+fn markup_mime(text: &str) -> Option<&'static str> {
+    let start = text.trim_start_matches('\u{feff}').trim_start();
+    let lower: String = start
+        .chars()
+        .take(512)
+        .collect::<String>()
+        .to_ascii_lowercase();
+    if lower.starts_with("<svg") || (lower.starts_with("<?xml") && lower.contains("<svg")) {
+        Some("image/svg+xml")
+    } else if lower.starts_with("<!doctype html") || lower.starts_with("<html") {
+        Some("text/html")
+    } else if lower.starts_with("<?xml") {
+        Some("application/xml")
+    } else {
+        None
     }
 }
 

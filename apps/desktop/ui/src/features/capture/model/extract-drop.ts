@@ -68,12 +68,16 @@ function firstUrl(snapshot: DropSnapshot): string | null {
 }
 
 /**
- * 把字节编码为 Base64（分块，避免大图撑爆 `String.fromCharCode` 的参数上限）。
+ * 把字节编码为 Base64：优先用原生的 `Uint8Array.prototype.toBase64`；没有时分块拼接
+ * （避免大图撑爆 `String.fromCharCode` 的参数上限）。
  *
  * @param bytes 原始字节。
  * @returns 标准字母表的 Base64。
  */
 export function toBase64(bytes: Uint8Array): string {
+  // 新版 WebView2（Chromium 140+）有原生实现：一次调用，没有中间的大字符串。
+  const native = (bytes as Uint8Array & { toBase64?: () => string }).toBase64;
+  if (typeof native === "function") return native.call(bytes);
   const chunk = 0x8000;
   let binary = "";
   for (let offset = 0; offset < bytes.length; offset += chunk) {

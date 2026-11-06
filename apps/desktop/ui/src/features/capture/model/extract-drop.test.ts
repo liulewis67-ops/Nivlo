@@ -85,6 +85,12 @@ describe("toBase64", () => {
     const decoded = Uint8Array.from(atob(toBase64(bytes)), (c) => c.charCodeAt(0));
     expect(decoded).toEqual(bytes);
   });
+
+  it("有原生 toBase64 时直接用它", () => {
+    const bytes = new Uint8Array([1, 2, 3]);
+    Object.defineProperty(bytes, "toBase64", { value: () => "native" });
+    expect(toBase64(bytes)).toBe("native");
+  });
 });
 
 describe("拖入文件的磁盘路径（实施计划 10.1）", () => {

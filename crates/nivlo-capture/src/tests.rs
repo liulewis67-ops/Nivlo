@@ -118,6 +118,18 @@ fn files_without_an_extension_are_sniffed_by_magic_bytes() {
 }
 
 #[test]
+fn gbk_and_utf16_files_without_an_extension_are_text() {
+    // 「会议记录」的 GBK 字节。
+    assert_eq!(
+        sniff_mime(&[0xBB, 0xE1, 0xD2, 0xE9, 0xBC, 0xC7, 0xC2, 0xBC]),
+        Some("text/plain")
+    );
+    let mut utf16 = b"\xFF\xFE".to_vec();
+    utf16.extend("会议记录".encode_utf16().flat_map(u16::to_le_bytes));
+    assert_eq!(sniff_mime(&utf16), Some("text/plain"));
+}
+
+#[test]
 fn a_utf8_character_cut_at_the_sniff_limit_still_counts_as_text() {
     // 在 512 字节处把一个三字节汉字切成两半。
     let mut head = "a".repeat(SNIFF_BYTES - 1).into_bytes();
@@ -284,4 +296,89 @@ fn clipboard_recognizes_a_url_and_ignores_blank_text_and_unknown_images() {
         Some(CaptureInput::Image { .. })
     ));
     assert_eq!(normalize_clipboard(&[], None, None), None);
+}
+
+/// 一个 zip 文件头：第一个条目名为 `name`，内容 `body` 不压缩，后面再跟一段内容。
+fn zip_head(name: &str, body: &[u8], rest: &[u8]) -> Vec<u8> {
+    let mut head = b"PK\x03\x04".to_vec();
+    head.extend_from_slice(&[0; 22]);
+    head.extend_from_slice(&u16::try_from(name.len()).unwrap().to_le_bytes());
+    head.extend_from_slice(&0_u16.to_le_bytes());
+    head.extend_from_slice(name.as_bytes());
+    head.extend_from_slice(body);
+    head.extend_from_slice(rest);
+    head
+}
+
+#[test]
+fn zip_containers_are_told_apart() {
+    let docx = zip_head(
+        "[Content_Types].xml",
+        b"<Types/>",
+        b"PK\x03\x04....word/document.xml",
+    );
+    assert_eq!(
+        sniff_mime(&docx),
+        Some("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    );
+    let xlsx = zip_head(
+        "[Content_Types].xml",
+        b"<Types/>",
+        b"PK\x03\x04....xl/workbook.xml",
+    );
+    assert_eq!(
+        sniff_mime(&xlsx),
+        Some("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    );
+    let odt = zip_head(
+        "mimetype",
+        b"application/vnd.oasis.opendocument.text",
+        b"PK",
+    );
+    assert_eq!(
+        sniff_mime(&odt),
+        Some("application/vnd.oasis.opendocument.text")
+    );
+    let epub = zip_head("mimetype", b"application/epub+zip", b"PK");
+    assert_eq!(sniff_mime(&epub), Some("application/epub+zip"));
+    let plain = zip_head("photo.jpg", b"\xFF\xD8\xFF", b"");
+    assert_eq!(sniff_mime(&plain), Some("application/zip"));
+}
+
+#[test]
+fn media_archives_and_markup_are_recognized() {
+    let cases: [(&[u8], &str); 14] = [
+        (b"\0\0\0\x18ftypisom\0\0\0\0", "video/mp4"),
+        (b"\0\0\0\x18ftypheic\0\0\0\0", "image/heic"),
+        (b"\0\0\0\x1cftypavif\0\0\0\0", "image/avif"),
+        (b"\0\0\0\x14ftypqt  \0\0\0\0", "video/quicktime"),
+        (b"RIFF\x24\0\0\0WAVEfmt ", "audio/wav"),
+        (b"ID3\x04\0\0\0\0\0\0", "audio/mpeg"),
+        (b"OggS\0\x02", "audio/ogg"),
+        (b"\x1A\x45\xDF\xA3\x9F\x42\x82\x84webm", "video/webm"),
+        (b"II*\0\x08\0\0\0", "image/tiff"),
+        (b"Rar!\x1A\x07\x01\0", "application/vnd.rar"),
+        (
+            b"\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1\0\0",
+            "application/x-ole-storage",
+        ),
+        (
+            b"MZ\x90\0\x03\0\0\0",
+            "application/vnd.microsoft.portable-executable",
+        ),
+        (
+            b"<?xml version=\"1.0\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\">",
+            "image/svg+xml",
+        ),
+        (b"\n<!DOCTYPE html><html>", "text/html"),
+    ];
+    for (head, mime) in cases {
+        assert_eq!(sniff_mime(head), Some(mime), "{mime}");
+    }
+    assert_eq!(
+        sniff_mime(b"<?xml version=\"1.0\"?><root/>"),
+        Some("application/xml")
+    );
+    // 以 MZ 开头的普通文本还是文本。
+    assert_eq!(sniff_mime(b"MZ notes"), Some("text/plain"));
 }

@@ -398,18 +398,24 @@ pub enum Step {
         /// 请求失败时是否继续（权限不足不算在内：那是配置错误）。
         #[serde(default)]
         optional: bool,
+        /// 正文最多下载多少字节（超出的部分不下载）；不填用默认的 2 MiB。
+        /// 只需要网页 `<head>` 里的元数据时设小一些，省流量也更快。
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        max_bytes: Option<u32>,
     },
-    /// 读取**输入里那个被拖入的文件**（只读、有大小上限），提取文档标题，
-    /// 存进 `vars.<into>_title`（Markdown 首个标题 / PDF Title / Word 标题；没有是空串）、
-    /// `_kind`（markdown / pdf / docx / other）、`_size`（字节）。
+    /// 读取**输入里被拖入的文件**（只读，只读取标题需要的那一小部分），提取文档标题，
+    /// 存进 `vars.<into>_title`（Markdown 首个标题、PDF / Office / EPUB 的标题属性、HTML 标题、
+    /// 纯文本首行；没有是空串）、`_kind`（markdown / pdf / docx / pptx / xlsx / opendocument / epub /
+    /// html / text / other）、`_size`（字节）。
     ///
-    /// 被拖入的文件视为隐式授予读取权限：只能读这一个文件，不能指定别的路径。
-    /// 超过大小上限的文件不读内容，只保存引用。输入不是单个文件（或读取失败）时，
-    /// `optional` 为真则全部字段为空，否则报错。
+    /// 被拖入的文件视为隐式授予读取权限：只能读这些文件，不能指定别的路径。
+    /// 只在云端的占位文件不读（读了会触发下载）。多个文件时逐个读取：`forEach: files` 渲染每个文件时
+    /// 用它自己的结果，公共变量取第一个文件的结果。输入不是文件（或读取失败）时，
+    /// `optional` 为真则字段为空，否则报错。
     ReadFile {
         /// 结果变量前缀。
         into: String,
-        /// 读取失败 / 输入不是单个文件时是否继续。
+        /// 读取失败 / 输入不是文件时是否继续。
         #[serde(default)]
         optional: bool,
     },

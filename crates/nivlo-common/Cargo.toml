@@ -9,6 +9,7 @@ description = "Nivlo common crate"
 [dependencies]
 chrono.workspace = true
 chrono-tz.workspace = true
+encoding_rs.workspace = true
 iana-time-zone.workspace = true
 serde.workspace = true
 thiserror.workspace = true

@@ -52,6 +52,7 @@ tracing-appender = "0.2"
 tempfile = "3"
 url = "2"
 encoding_rs = "0.8"
+flate2 = "1"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 sha2 = "0.10"
 # TLS 只链接 ring 一套加密后端：与 tauri-plugin-updater 共用，不再额外链接 aws-lc。

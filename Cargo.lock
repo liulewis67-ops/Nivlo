@@ -2699,6 +2699,7 @@ dependencies = [
  "async-trait",
  "mime_guess",
  "nivlo-application",
+ "nivlo-common",
  "nivlo-domain",
  "serde",
  "serde_json",
@@ -2714,6 +2715,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "chrono-tz",
+ "encoding_rs",
  "iana-time-zone",
  "serde",
  "serde_json",
@@ -2883,6 +2885,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "flate2",
  "jsonschema",
  "nivlo-application",
  "nivlo-capture",

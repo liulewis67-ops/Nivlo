@@ -24,6 +24,8 @@ struct ScriptedHttp {
     reply: Mutex<Result<HttpResponse, HttpError>>,
     /// 收到的请求地址。
     seen: Mutex<Vec<String>>,
+    /// 每次请求的正文上限。
+    limits: Mutex<Vec<usize>>,
 }
 
 #[async_trait]
@@ -35,6 +37,7 @@ impl HttpPort for ScriptedHttp {
     ) -> Result<HttpResponse, HttpError> {
         policy.check(&request.url)?;
         self.seen.lock().unwrap().push(request.url.clone());
+        self.limits.lock().unwrap().push(request.max_bytes);
         self.reply.lock().unwrap().clone()
     }
 }
@@ -65,6 +68,7 @@ async fn fixture(reply: Result<HttpResponse, HttpError>) -> Fixture {
     let http = Arc::new(ScriptedHttp {
         reply: Mutex::new(reply),
         seen: Mutex::new(Vec::new()),
+        limits: Mutex::new(Vec::new()),
     });
     let engine = Arc::new(WorkflowEngineAdapter::with_http(http.clone()));
     let workflows = WorkflowService::new(
@@ -126,6 +130,8 @@ async fn capture_is_instant_then_enrichment_fills_in_title_and_summary() {
         f.http.seen.lock().unwrap().as_slice(),
         ["https://example.com/post"]
     );
+    // 只要 <head> 里的元数据：正文最多下载 512 KiB，而不是默认的 2 MiB。
+    assert_eq!(f.http.limits.lock().unwrap().as_slice(), [512 * 1024]);
     let stored = &f.uow.committed_items()[0];
     assert_eq!(stored.title().as_str(), "真正的页面标题");
     assert_eq!(
@@ -257,4 +263,100 @@ async fn rerun_overwrites_on_request_and_refuses_sources_it_cannot_replay() {
         .unwrap();
     let error = f.capture.rerun(text.items[0].id()).await.unwrap_err();
     assert_eq!(error.code.as_str(), "WORKFLOW_RUN_FAILED");
+}
+
+#[tokio::test]
+async fn enrichment_is_skipped_when_the_full_run_does_not_line_up_with_the_items() {
+    let mut f = fixture(html(PAGE)).await;
+    f.capture
+        .capture(url_request("https://example.com/post"))
+        .await
+        .unwrap();
+    let mut job = f.jobs.try_recv().unwrap();
+    // 假装即时那次是逐文件产出的：完整运行的草稿对不上号，不能写回。
+    job.file_indexes = vec![Some(3)];
+    f.clock.advance(Duration::seconds(2));
+    assert_eq!(f.capture.enrich(job).await, 0);
+    assert_eq!(
+        f.uow.committed_items()[0].title().as_str(),
+        "example.com/post"
+    );
+}
+
+/// 存一个用户 Workflow。
+async fn add_user_workflow(f: &Fixture, json: &str) {
+    let workflow: nivlo_domain::workflow::Workflow = serde_json::from_str(json).unwrap();
+    workflow.validate().unwrap();
+    let mut tx = f.uow.begin().await.unwrap();
+    tx.workflows()
+        .upsert(&workflow, f.clock.now_utc())
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+}
+
+#[tokio::test]
+async fn rerun_replays_the_source_application_and_the_file_mime_type() {
+    let f = fixture(html(PAGE)).await;
+    add_user_workflow(
+        &f,
+        r#"{"schemaVersion":1,"id":"user.chrome","name":"Chrome 链接","version":1,"priority":100,
+            "enabled":true,"source":"user",
+            "matcher":{"all":[{"field":"input.type","op":"equals","value":"url"},
+                              {"field":"source.application","op":"equals","value":"Chrome"}]},
+            "steps":[{"type":"createItem","itemType":"note","title":"来自 Chrome","inInbox":true}]}"#,
+    )
+    .await;
+    add_user_workflow(
+        &f,
+        r#"{"schemaVersion":1,"id":"user.mime","name":"按 MIME","version":1,"priority":100,
+            "enabled":true,"source":"user",
+            "matcher":{"field":"file.mime","op":"equals","value":"application/x-nivlo-test"},
+            "steps":[{"type":"createItem","itemType":"note","title":"按类型识别","inInbox":true}]}"#,
+    )
+    .await;
+
+    let mut request = url_request("https://example.com/post");
+    request.source_application = Some("Chrome".into());
+    let url = f.capture.capture(request).await.unwrap();
+    assert_eq!(url.items[0].title().as_str(), "来自 Chrome");
+
+    let file = nivlo_domain::capture::FileRef {
+        path: r"D:\a\data.bin".into(),
+        name: "data.bin".into(),
+        extension: Some("bin".into()),
+        size_bytes: Some(4),
+        mime: Some("application/x-nivlo-test".into()),
+        is_dir: false,
+    };
+    let captured = f
+        .capture
+        .capture(CaptureRequest::new(
+            nivlo_domain::capture::CaptureInput::File { file },
+            CaptureOrigin::Drop,
+        ))
+        .await
+        .unwrap();
+    assert_eq!(captured.items[0].title().as_str(), "按类型识别");
+
+    // 用户把两个标题都改掉，再要求重新运行：还原出来的输入要和当初一样匹配同一条规则。
+    f.clock.advance(Duration::seconds(2));
+    for (item, title) in [(&url.items[0], "改过 1"), (&captured.items[0], "改过 2")] {
+        let mut tx = f.uow.begin().await.unwrap();
+        let mut stored = tx.items().get(item.id()).await.unwrap().unwrap();
+        stored.rename(title, f.clock.now_utc()).unwrap();
+        tx.items().update(&stored).await.unwrap();
+        tx.commit().await.unwrap();
+    }
+    f.clock.advance(Duration::seconds(2));
+    assert!(f.capture.rerun(url.items[0].id()).await.unwrap());
+    assert!(f.capture.rerun(captured.items[0].id()).await.unwrap());
+    let titles: Vec<_> = f
+        .uow
+        .committed_items()
+        .iter()
+        .map(|i| i.title().as_str().to_owned())
+        .collect();
+    assert!(titles.contains(&"来自 Chrome".to_owned()), "{titles:?}");
+    assert!(titles.contains(&"按类型识别".to_owned()), "{titles:?}");
 }

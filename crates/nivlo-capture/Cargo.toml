@@ -10,6 +10,7 @@ description = "Nivlo capture crate"
 async-trait.workspace = true
 nivlo-application.workspace = true
 tokio = { workspace = true, features = ["rt"] }
+nivlo-common.workspace = true
 nivlo-domain.workspace = true
 mime_guess.workspace = true
 thiserror.workspace = true

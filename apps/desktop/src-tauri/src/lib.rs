@@ -171,6 +171,9 @@ macro_rules! bindings_builder {
 /// 开了「预先准备全局搜索框」时，启动后等多久再创建它（让启动本身先完成）。
 const SEARCH_PREWARM_DELAY: std::time::Duration = std::time::Duration::from_secs(10);
 
+/// 后台补全最多同时做几件。
+const ENRICH_CONCURRENCY: usize = 3;
+
 /// 运行桌面应用，直到退出。
 ///
 /// 启动顺序见 [`lifecycle`]。数据库 Migration 失败时显示恢复对话框并返回错误，
@@ -355,23 +358,38 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 }
             });
             state.runtime.track_task(wal_guard);
-            // 联网的补全（网页标题与摘要）：一次只做一件，退出时随令牌结束。
+            // 联网的补全（网页标题与摘要）：最多同时做 ENRICH_CONCURRENCY 件——一个慢网站不会让
+            // 后面拖进来的链接都排队等它的超时；退出时随令牌结束（未完成的任务随 JoinSet 一起取消）。
             if let Some(mut queue) = state.runtime.take_enrichment_queue() {
                 let capture = state.services.capture.clone();
                 let shutdown = state.runtime.shutdown_token();
                 let enricher = tauri::async_runtime::spawn(async move {
+                    let mut running = tokio::task::JoinSet::new();
                     loop {
+                        if running.len() >= ENRICH_CONCURRENCY {
+                            tokio::select! {
+                                () = shutdown.cancelled() => return,
+                                _ = running.join_next() => {}
+                            }
+                            continue;
+                        }
                         tokio::select! {
                             () = shutdown.cancelled() => return,
                             job = queue.recv() => match job {
                                 Some(job) => {
-                                    let updated = capture.enrich(job).await;
-                                    tracing::debug!(event = "capture_enriched", updated, "后台补全完成");
+                                    let capture = capture.clone();
+                                    running.spawn(async move {
+                                        let updated = capture.enrich(job).await;
+                                        tracing::debug!(event = "capture_enriched", updated, "后台补全完成");
+                                    });
                                 }
-                                None => return,
+                                None => break,
                             },
+                            Some(_) = running.join_next(), if !running.is_empty() => {}
                         }
                     }
+                    // 队列关闭：做完手上的。
+                    while running.join_next().await.is_some() {}
                 });
                 state.runtime.track_task(enricher);
             }

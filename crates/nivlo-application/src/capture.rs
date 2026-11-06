@@ -522,6 +522,12 @@ impl CaptureService {
                     .iter()
                     .map(|item| (item.id(), item.title().as_str().to_owned()))
                     .collect(),
+                // 只有 Workflow 成功产出时才会补全，此时 Item 与草稿按顺序一一对应。
+                file_indexes: workflow_run
+                    .as_ref()
+                    .and_then(|(run, _)| run.result.as_ref().ok())
+                    .map(|drafts| drafts.iter().map(|d| d.file_index).collect())
+                    .unwrap_or_default(),
             };
             // 队列关闭（应用正在退出）时丢弃：补全只是锦上添花。
             let _ = queue.send(job);

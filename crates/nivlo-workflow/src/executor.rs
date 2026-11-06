@@ -120,6 +120,9 @@ pub struct RunContext<'a> {
     pub tags: Vec<String>,
     /// 输入里的文件（`forEach: files` 用）。
     pub files: Vec<FileRef>,
+    /// 每个文件各自的变量（与 `files` 一一对应，比如 `readFile` 逐个读出的 `vars.doc_title`）；
+    /// `forEach: files` 渲染第 i 个文件时叠加在 `scope` 之上。可以比 `files` 短（缺的视为空）。
+    pub file_scopes: Vec<HashMap<String, String>>,
     /// 正则缓存。
     pub regexes: &'a RegexCache,
     /// Workflow 声明的权限（`http` Step 据此限制可访问的主机）。
@@ -589,6 +592,9 @@ impl StepExecutor for CreateItemExecutor {
                 for (index, file) in files.iter().enumerate() {
                     let mut scope = ctx.scope.clone();
                     put_file(&mut scope, file);
+                    if let Some(own) = ctx.file_scopes.get(index) {
+                        scope.extend(own.iter().map(|(k, v)| (k.clone(), v.clone())));
+                    }
                     let draft = Self::draft(
                         &scope,
                         *item_type,

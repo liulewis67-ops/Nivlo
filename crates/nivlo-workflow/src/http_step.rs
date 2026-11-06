@@ -70,6 +70,7 @@ impl StepExecutor for HttpExecutor {
             url,
             into,
             optional,
+            max_bytes,
         } = step
         else {
             return Err(StepError::fatal(format!(
@@ -90,7 +91,15 @@ impl StepExecutor for HttpExecutor {
         }
         let target = ctx.render(url)?;
         let policy = HostPolicy::new(&ctx.permissions.hosts);
-        let outcome = self.port.get(&HttpRequest::get(target), &policy).await;
+        let mut request = HttpRequest::get(target);
+        if let Some(limit) = max_bytes {
+            // 只能调小，不能超过默认上限。
+            request.max_bytes = request
+                .max_bytes
+                .min(usize::try_from(*limit).unwrap_or(usize::MAX))
+                .max(1);
+        }
+        let outcome = self.port.get(&request, &policy).await;
         let response = match outcome {
             Ok(response) if response.is_success() => response,
             Ok(response) if *optional => {

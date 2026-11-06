@@ -36,9 +36,12 @@ pub async fn capture(
     state: State<'_, AppState>,
     request: CaptureRequestDto,
 ) -> Result<CaptureResultDto, IpcError> {
-    let mut request = CaptureRequest::try_from(request)?;
+    // 规范化会读文件元数据与文件头（网络盘、慢磁盘上可能要等），不放在异步运行时线程上。
+    let request = tauri::async_runtime::spawn_blocking(move || CaptureRequest::try_from(request))
+        .await
+        .map_err(|error| AppError::new(ErrorCode::InvalidInput, error.to_string()))??;
     // 拖放 / 粘贴来自别的应用：捕获发生的这一刻识别一次来源应用（只记录应用名）。
-    request = detect_source_application(request).await;
+    let request = detect_source_application(request).await;
     let result = state.services.capture.capture(request).await?;
     Ok(CaptureResultDto::from(&result))
 }
@@ -78,19 +81,27 @@ pub async fn capture_from_clipboard(
 ) -> Result<CaptureResultDto, IpcError> {
     let unavailable =
         |reason: String| IpcError::from(AppError::new(ErrorCode::ClipboardUnavailable, reason));
-    let content =
-        tauri::async_runtime::spawn_blocking(|| crate::clipboard::platform_clipboard().read())
-            .await
-            .map_err(|error| unavailable(error.to_string()))?
-            .map_err(|error| unavailable(error.to_string()))?;
-    let input =
-        nivlo_capture::normalize_clipboard(&content.files, content.text.as_deref(), content.image)
-            .ok_or_else(|| {
-                IpcError::from(AppError::new(
-                    ErrorCode::ClipboardEmpty,
-                    "剪贴板里没有可收集的内容".to_owned(),
-                ))
-            })?;
+    // 读剪贴板与规范化（读文件元数据与文件头）都在阻塞线程里。
+    let input = tauri::async_runtime::spawn_blocking(|| {
+        crate::clipboard::platform_clipboard()
+            .read()
+            .map(|content| {
+                nivlo_capture::normalize_clipboard(
+                    &content.files,
+                    content.text.as_deref(),
+                    content.image,
+                )
+            })
+    })
+    .await
+    .map_err(|error| unavailable(error.to_string()))?
+    .map_err(|error| unavailable(error.to_string()))?
+    .ok_or_else(|| {
+        IpcError::from(AppError::new(
+            ErrorCode::ClipboardEmpty,
+            "剪贴板里没有可收集的内容".to_owned(),
+        ))
+    })?;
     let result = state
         .services
         .capture

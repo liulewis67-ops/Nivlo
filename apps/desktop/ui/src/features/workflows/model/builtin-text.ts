@@ -3,9 +3,9 @@ import i18next from "i18next";
 /** 内置 Workflow 的英文名称与说明，按 ID（去掉 `builtin.` 前缀）索引。 */
 const BUILTIN_EN: Readonly<Record<string, { name: string; description: string }>> = {
   "file-document": {
-    name: "Documents (Markdown / PDF / Word)",
+    name: "Documents (Markdown / PDF / Office and more)",
     description:
-      "Dropped Markdown, PDF and Word files become notes. The title comes from the document itself (the first Markdown heading, the PDF / Word title property), falling back to the file name. Only a reference to the file is kept; files over 32 MB are referenced without reading their content.",
+      "Dropped documents (several at once is fine) each become a note. The title comes from the document itself: the first Markdown heading; the title property of PDF, Word, PowerPoint, Excel, OpenDocument and EPUB files; the page title of HTML files. It falls back to the file name, and other files dropped alongside are named after the file. Only a reference to the file is kept; reading the title touches only a small part of the file, so big files stay fast.",
   },
   "file-meeting": {
     name: "Meeting notes (meeting-*.md)",

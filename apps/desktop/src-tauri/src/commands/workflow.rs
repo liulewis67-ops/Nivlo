@@ -417,7 +417,10 @@ pub async fn dry_run_workflow(
     definition_json: String,
     input: DryRunInputDto,
 ) -> Result<DryRunResultDto, IpcError> {
-    let sample = sample_input(&input)?;
+    // 文件样例要读元数据与文件头，放在阻塞线程里。
+    let sample = tauri::async_runtime::spawn_blocking(move || sample_input(&input))
+        .await
+        .map_err(|error| AppError::new(ErrorCode::InvalidInput, error.to_string()))??;
     let result = state
         .services
         .workflows

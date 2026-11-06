@@ -239,6 +239,7 @@ impl Engine {
             drafts: Vec::new(),
             tags: Vec::new(),
             files: files_of(facts.input).into_iter().cloned().collect(),
+            file_scopes: Vec::new(),
             regexes: &self.regexes,
             permissions: &workflow.permissions,
             network: options.network,

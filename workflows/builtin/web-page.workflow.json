@@ -3,14 +3,14 @@
   "id": "builtin.web-page",
   "name": "网页（补全标题和摘要）",
   "description": "网址先立刻变成笔记，随后在后台读取网页的标题和摘要补全进去。读取失败或没有网络时，笔记保持「域名/路径」标题，不受影响。",
-  "version": 1,
+  "version": 2,
   "priority": 1,
   "enabled": true,
   "source": "builtin",
   "matcher": { "field": "input.type", "op": "equals", "value": "url" },
   "permissions": { "network": true, "hosts": ["*"] },
   "steps": [
-    { "type": "http", "url": "{{ input.url }}", "into": "page", "optional": true },
+    { "type": "http", "url": "{{ input.url }}", "into": "page", "optional": true, "maxBytes": 524288 },
     { "type": "htmlMeta", "from": "vars.page", "into": "meta", "optional": true },
     {
       "type": "transform",

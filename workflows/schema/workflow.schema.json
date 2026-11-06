@@ -163,7 +163,8 @@
             "type": { "const": "http" },
             "url": { "type": "string", "minLength": 1 },
             "into": { "$ref": "#/$defs/variable" },
-            "optional": { "type": "boolean" }
+            "optional": { "type": "boolean" },
+            "maxBytes": { "type": "integer", "minimum": 1024, "maximum": 2097152 }
           }
         },
         {

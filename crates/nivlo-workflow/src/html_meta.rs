@@ -1,4 +1,4 @@
-//! 页面元数据提取（实施计划 6.3）：`<title>`、`og:*`、`description`、favicon。
+//! 页面元数据提取（实施计划 6.3）：`<title>`、`og:*`、`twitter:*`、`description`、favicon，JSON-LD 兜底。
 //!
 //! 不是完整的 HTML 解析器——只扫描 `<head>` 里的 `<title>` / `<meta>` / `<link>` 标签，
 //! 对真实世界里写得不规范的页面足够宽容：属性顺序、引号风格、大小写都不限，
@@ -118,6 +118,54 @@ fn absolute(raw: &str, base: Option<&Url>) -> String {
         .unwrap_or_default()
 }
 
+/// 第一个非空的值。
+fn first_non_empty<const N: usize>(values: [String; N]) -> String {
+    values
+        .into_iter()
+        .find(|v| !v.trim().is_empty())
+        .unwrap_or_default()
+}
+
+/// JSON-LD（`<script type="application/ld+json">`）里的 `(headline 或 name, description)`：
+/// 只在页面没有任何 `<title>` / `og:*` / `twitter:*` 时兜底（单页应用常这样）。
+fn json_ld(html: &str) -> (String, String) {
+    static SCRIPT: OnceLock<Regex> = OnceLock::new();
+    let re = SCRIPT.get_or_init(|| {
+        Regex::new(
+            r#"(?is)<script[^>]*type\s*=\s*["']?application/ld\+json["']?[^>]*>(.*?)</script\s*>"#,
+        )
+        .expect("ld+json 正则是常量")
+    });
+    /// 在一个 JSON 值里找第一个带标题的对象（顶层可以是数组或 `@graph`）。
+    fn find(value: &serde_json::Value, depth: u8) -> Option<(String, String)> {
+        if depth > 4 {
+            return None;
+        }
+        match value {
+            serde_json::Value::Array(items) => items.iter().find_map(|v| find(v, depth + 1)),
+            serde_json::Value::Object(map) => {
+                let text = |key: &str| {
+                    map.get(key)
+                        .and_then(serde_json::Value::as_str)
+                        .map(|s| squash(&decode_entities(s)))
+                        .unwrap_or_default()
+                };
+                let title = first_non_empty([text("headline"), text("name")]);
+                if title.is_empty() {
+                    map.get("@graph").and_then(|v| find(v, depth + 1))
+                } else {
+                    Some((title, text("description")))
+                }
+            }
+            _ => None,
+        }
+    }
+    re.captures_iter(html)
+        .filter_map(|caps| serde_json::from_str::<serde_json::Value>(caps[1].trim()).ok())
+        .find_map(|value| find(&value, 0))
+        .unwrap_or_default()
+}
+
 /// 从 HTML 里提取元数据。
 #[must_use]
 pub fn extract(html: &str, base: Option<&str>) -> HtmlMetadata {
@@ -144,6 +192,9 @@ pub fn extract(html: &str, base: Option<&str>) -> HtmlMetadata {
     let mut og_title = String::new();
     let mut description = String::new();
     let mut og_description = String::new();
+    let mut twitter_title = String::new();
+    let mut twitter_description = String::new();
+    let mut twitter_image = String::new();
     let mut rel_icon = String::new();
     let mut apple_icon = String::new();
 
@@ -170,22 +221,32 @@ pub fn extract(html: &str, base: Option<&str>) -> HtmlMetadata {
         }
         match key.as_str() {
             "og:title" if og_title.is_empty() => og_title = content,
+            "twitter:title" if twitter_title.is_empty() => twitter_title = content,
             "og:description" if og_description.is_empty() => og_description = content,
+            "twitter:description" if twitter_description.is_empty() => {
+                twitter_description = content;
+            }
             "description" if description.is_empty() => description = content,
             "og:site_name" if meta.site.is_empty() => meta.site = content,
             "og:image" if meta.image.is_empty() => meta.image = absolute(&content, base.as_ref()),
+            "twitter:image" if twitter_image.is_empty() => {
+                twitter_image = absolute(&content, base.as_ref());
+            }
             _ => {}
         }
     }
-    if !og_title.is_empty() {
-        page_title = og_title;
+    let ld = json_ld(html);
+    let social_title = first_non_empty([og_title, twitter_title]);
+    // 有的站点把 og:title 写成站点名（每一页都一样），这时 `<title>` 更具体。
+    let generic = !meta.site.is_empty() && social_title.eq_ignore_ascii_case(meta.site.trim());
+    if !social_title.is_empty() && (!generic || page_title.is_empty()) {
+        page_title = social_title;
     }
-    meta.title = page_title;
-    meta.description = if og_description.is_empty() {
-        description
-    } else {
-        og_description
-    };
+    meta.title = first_non_empty([page_title, ld.0]);
+    meta.description = first_non_empty([og_description, twitter_description, description, ld.1]);
+    if meta.image.is_empty() {
+        meta.image = twitter_image;
+    }
     meta.icon = if rel_icon.is_empty() {
         apple_icon
     } else {
@@ -262,5 +323,50 @@ mod tests {
         html.push_str(&" ".repeat(SCAN_LIMIT));
         html.push_str("<meta property=\"og:title\" content=\"Late\">");
         assert_eq!(extract(&html, None).title, "Early");
+    }
+
+    #[test]
+    fn twitter_cards_fill_in_when_open_graph_is_missing() {
+        let html = r#"<head><title>Plain</title>
+            <meta name="twitter:title" content="Card Title">
+            <meta name="twitter:description" content="Card desc">
+            <meta name="twitter:image" content="/card.png"></head>"#;
+        let meta = extract(html, Some("https://example.com/a"));
+        assert_eq!(meta.title, "Card Title");
+        assert_eq!(meta.description, "Card desc");
+        assert_eq!(meta.image, "https://example.com/card.png");
+    }
+
+    #[test]
+    fn a_generic_og_title_that_is_just_the_site_name_loses_to_the_page_title() {
+        let html = r#"<head><title>如何写好周报 - 示例博客</title>
+            <meta property="og:title" content="示例博客">
+            <meta property="og:site_name" content="示例博客"></head>"#;
+        assert_eq!(extract(html, None).title, "如何写好周报 - 示例博客");
+        // 没有 <title> 时站点名也比什么都没有强。
+        let bare = r#"<meta property="og:title" content="示例博客"><meta property="og:site_name" content="示例博客">"#;
+        assert_eq!(extract(bare, None).title, "示例博客");
+    }
+
+    #[test]
+    fn json_ld_is_the_last_resort() {
+        let html = r#"<head><script type="application/ld+json">
+            {"@context":"https://schema.org","@graph":[{"@type":"WebSite","url":"x"},
+             {"@type":"Article","headline":"单页应用的文章 &amp; 标题","description":"摘要"}]}
+            </script></head>"#;
+        let meta = extract(html, None);
+        assert_eq!(meta.title, "单页应用的文章 & 标题");
+        assert_eq!(meta.description, "摘要");
+        // 有 <title> 时 JSON-LD 不抢。
+        let titled = format!("<title>页面</title>{html}");
+        assert_eq!(extract(&titled, None).title, "页面");
+        assert_eq!(
+            extract(
+                r#"<script type="application/ld+json">{broken</script>"#,
+                None
+            )
+            .title,
+            ""
+        );
     }
 }
