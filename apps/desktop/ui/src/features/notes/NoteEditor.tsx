@@ -6,9 +6,9 @@ import { useOrganize } from "@/features/inbox";
 import { useDeleteItems } from "@/features/trash";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
-import { handleMarkdownKeyDown, handleMarkdownPaste } from "@/lib/markdown-keys";
 import { useDraftTransitionStore } from "@/stores/draft-transition-store";
 import { DraftRecovery } from "@/features/detail";
+import { LiveMarkdownEditor } from "@/components";
 
 /** [`NoteEditor`] 的 Props。 */
 export type NoteEditorProps = {
@@ -37,7 +37,9 @@ function focusAndSelect(input: HTMLInputElement | null): void {
  */
 function enterMovesToBody(event: KeyboardEvent<HTMLInputElement>): void {
   if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
-  const body = event.currentTarget.parentElement?.querySelector("textarea");
+  const body = event.currentTarget.parentElement?.querySelector<HTMLElement>(
+    "textarea, [contenteditable='true']",
+  );
   if (body === null || body === undefined) return;
   event.preventDefault();
   body.focus();
@@ -46,7 +48,9 @@ function enterMovesToBody(event: KeyboardEvent<HTMLInputElement>): void {
 /**
  * 笔记编辑区：大标题输入、整页的正文输入、格式切换，自动保存（和详情面板共用同一套逻辑）。
  *
- * 长文（上万字）也只是一个原生文本框，没有逐字符的渲染工作，所以输入不会卡；
+ * Markdown 笔记边写边渲染（类似 Typora）：标题、加粗、列表、任务项等直接按样式显示，
+ * 记号只在光标碰到时露出来；保存的仍是 Markdown 原文。纯文本笔记是原生文本框。
+ * 渲染只针对可见区域，长文（上万字）输入也不会卡；
  * 保存只发送变化的字段，并且停止输入 700ms 后才发。
  * 保存失败时内容仍在文本框里，顶部显示原因与「重试」。
  *
@@ -142,23 +146,22 @@ export function NoteEditor({ id, focusTitle = false, onLeave }: NoteEditorProps)
           onKeyDown={enterMovesToBody}
           className="w-full bg-transparent text-lg font-semibold text-text placeholder:text-muted focus-visible:outline-none"
         />
-        <Textarea
-          aria-label={t("detail.field.content")}
-          placeholder={t("detail.contentPlaceholder")}
-          value={draft.content}
-          onChange={(event) => edit({ content: event.target.value })}
-          onKeyDown={(event) => {
-            if (draft.contentFormat === "markdown") {
-              handleMarkdownKeyDown(event, (content) => edit({ content }));
-            }
-          }}
-          onPaste={(event) => {
-            if (draft.contentFormat === "markdown") {
-              handleMarkdownPaste(event, (content) => edit({ content }));
-            }
-          }}
-          className="min-h-0 w-full flex-1 resize-none border-transparent bg-transparent px-0 text-[15px] leading-relaxed focus-visible:border-transparent"
-        />
+        {draft.contentFormat === "markdown" ? (
+          <LiveMarkdownEditor
+            label={t("detail.field.content")}
+            placeholder={t("detail.contentPlaceholder")}
+            value={draft.content}
+            onChange={(content) => edit({ content })}
+          />
+        ) : (
+          <Textarea
+            aria-label={t("detail.field.content")}
+            placeholder={t("detail.contentPlaceholder")}
+            value={draft.content}
+            onChange={(event) => edit({ content: event.target.value })}
+            className="min-h-0 w-full flex-1 resize-none border-transparent bg-transparent px-0 text-[15px] leading-relaxed focus-visible:border-transparent"
+          />
+        )}
       </div>
     </article>
   );

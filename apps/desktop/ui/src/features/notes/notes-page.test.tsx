@@ -6,6 +6,7 @@ import { AppError } from "@/lib/errors";
 import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
+import { bodySelection, bodyText, selectBody, setBody } from "@/test/markdown-body";
 import { renderWithProviders } from "@/test/render";
 import { noteMatches } from "./model/note-filter";
 import { noteSnippet } from "./model/note-snippet";
@@ -74,18 +75,17 @@ describe("NotesPage", () => {
     const previousWidth = window.innerWidth;
     renderWithProviders(<NotesPage />, ipc);
     const body = await screen.findByLabelText("描述");
-    if (!(body instanceof HTMLTextAreaElement)) throw Error("Expected textarea");
-    fireEvent.change(body, { target: { value: "resize draft" } });
+    setBody(body, "resize draft");
     body.focus();
-    body.setSelectionRange(2, 5);
+    selectBody(body, 2, 5);
     try {
       for (const width of [400, 1280]) {
         Object.defineProperty(window, "innerWidth", { configurable: true, value: width });
         fireEvent.resize(window);
         expect(screen.getByLabelText("描述")).toBe(body);
         expect(body).toHaveFocus();
-        expect([body.selectionStart, body.selectionEnd]).toEqual([2, 5]);
-        expect(body).toHaveValue("resize draft");
+        expect(bodySelection(body)).toEqual([2, 5]);
+        expect(bodyText(body)).toBe("resize draft");
       }
       await waitForSave(ipc, 1);
       expect(ipc.items[0]?.content).toBe("resize draft");
@@ -143,7 +143,7 @@ describe("NotesPage", () => {
 
     fireEvent.click(within(list).getByRole("button", { name: /旧的笔记/ }));
     await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("旧的笔记"));
-    expect(screen.getByLabelText("描述")).toHaveValue("第一版");
+    expect(bodyText(screen.getByLabelText("描述"))).toBe("第一版");
     // 打开已有的笔记不抢焦点。
     expect(screen.getByLabelText("标题")).not.toHaveFocus();
   });
@@ -241,7 +241,7 @@ describe("NotesPage", () => {
     fireEvent.click(within(list).getByRole("button", { name: /先写的/ }));
     const body = await screen.findByLabelText("描述");
     await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("先写的"));
-    fireEvent.change(body, { target: { value: "改过的内容" } });
+    setBody(body, "改过的内容");
     await waitForSave(ipc, 1);
 
     expect(ipc.updates[0]).toMatchObject({
@@ -263,7 +263,7 @@ describe("NotesPage", () => {
     const text = "这是一段用来测试长文输入的文字。".repeat(700);
     expect([...text].length).toBeGreaterThan(10_000);
     const started = performance.now();
-    fireEvent.change(body, { target: { value: text } });
+    act(() => setBody(body, text));
     const elapsed = performance.now() - started;
     expect(elapsed).toBeLessThan(500);
     expect(screen.getByText(/1[0-9]{4} 字/)).toBeInTheDocument();
@@ -277,77 +277,106 @@ describe("NotesPage", () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "笔记", "写 周报 了");
     renderWithProviders(<NotesPage />, ipc);
-    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+    const body = await screen.findByLabelText("描述");
 
-    body.setSelectionRange(2, 4);
+    selectBody(body, 2, 4);
     fireEvent.keyDown(body, { key: "b", ctrlKey: true });
-    expect(body).toHaveValue("写 **周报** 了");
-    body.setSelectionRange(4, 6);
+    expect(bodyText(body)).toBe("写 **周报** 了");
+    selectBody(body, 4, 6);
     fireEvent.keyDown(body, { key: "b", ctrlKey: true });
-    expect(body).toHaveValue("写 周报 了");
-    body.setSelectionRange(2, 4);
+    expect(bodyText(body)).toBe("写 周报 了");
+    selectBody(body, 2, 4);
     fireEvent.keyDown(body, { key: "i", ctrlKey: true });
-    expect(body).toHaveValue("写 *周报* 了");
+    expect(bodyText(body)).toBe("写 *周报* 了");
 
     fireEvent.click(screen.getByRole("button", { name: "纯文本" }));
-    body.setSelectionRange(0, 1);
-    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
-    expect(body).toHaveValue("写 *周报* 了");
+    const plain = screen.getByLabelText("描述");
+    if (!(plain instanceof HTMLTextAreaElement)) throw Error("Expected textarea");
+    plain.setSelectionRange(0, 1);
+    fireEvent.keyDown(plain, { key: "b", ctrlKey: true });
+    expect(plain).toHaveValue("写 *周报* 了");
   });
 
   it("Markdown 笔记的列表里按 Enter 续上记号，空的一项按 Enter 结束列表", async () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "清单", "- 买牛奶");
     renderWithProviders(<NotesPage />, ipc);
-    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+    const body = await screen.findByLabelText("描述");
 
-    body.setSelectionRange(5, 5);
+    selectBody(body, 5, 5);
     fireEvent.keyDown(body, { key: "Enter" });
-    expect(body).toHaveValue("- 买牛奶\n- ");
-    body.setSelectionRange(8, 8);
+    expect(bodyText(body)).toBe("- 买牛奶\n- ");
+    selectBody(body, 8, 8);
     fireEvent.keyDown(body, { key: "Enter" });
-    expect(body).toHaveValue("- 买牛奶\n");
+    expect(bodyText(body)).toBe("- 买牛奶\n");
   });
 
   it("列表项上 Tab 缩进、Shift+Tab 取消；不在列表里时 Tab 不拦", async () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "清单", "说明\n- 子项");
     renderWithProviders(<NotesPage />, ipc);
-    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
+    const body = await screen.findByLabelText("描述");
 
-    body.setSelectionRange(7, 7);
+    selectBody(body, 7, 7);
     expect(fireEvent.keyDown(body, { key: "Tab" })).toBe(false);
-    expect(body).toHaveValue("说明\n  - 子项");
+    expect(bodyText(body)).toBe("说明\n  - 子项");
     fireEvent.keyDown(body, { key: "Tab", shiftKey: true });
-    expect(body).toHaveValue("说明\n- 子项");
+    expect(bodyText(body)).toBe("说明\n- 子项");
 
-    body.setSelectionRange(1, 1);
+    selectBody(body, 1, 1);
     expect(fireEvent.keyDown(body, { key: "Tab" })).toBe(true);
-    expect(body).toHaveValue("说明\n- 子项");
+    expect(bodyText(body)).toBe("说明\n- 子项");
   });
 
   it("任务项上 Ctrl+Enter 勾选，再按一次取消", async () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "清单", "- [ ] 买牛奶");
     renderWithProviders(<NotesPage />, ipc);
-    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
-    body.setSelectionRange(7, 7);
+    const body = await screen.findByLabelText("描述");
+    selectBody(body, 7, 7);
     fireEvent.keyDown(body, { key: "Enter", ctrlKey: true });
-    expect(body).toHaveValue("- [x] 买牛奶");
+    expect(bodyText(body)).toBe("- [x] 买牛奶");
     fireEvent.keyDown(body, { key: "Enter", ctrlKey: true });
-    expect(body).toHaveValue("- [ ] 买牛奶");
+    expect(bodyText(body)).toBe("- [ ] 买牛奶");
   });
 
   it("选中文字后粘贴网址变成 Markdown 链接", async () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "笔记", "看 文档 吧");
     renderWithProviders(<NotesPage />, ipc);
-    const body = (await screen.findByLabelText("描述")) as HTMLTextAreaElement;
-    body.setSelectionRange(2, 4);
+    const body = await screen.findByLabelText("描述");
+    selectBody(body, 2, 4);
     fireEvent.paste(body, {
       clipboardData: { getData: () => "https://example.com/doc" },
     });
-    expect(body).toHaveValue("看 [文档](https://example.com/doc) 吧");
+    expect(bodyText(body)).toBe("看 [文档](https://example.com/doc) 吧");
+  });
+
+  it("Markdown 正文边写边渲染：记号只在光标所在行露出来，勾选框可直接点", async () => {
+    const ipc = createMemoryIpc();
+    await seedNote(ipc, "渲染", "# 标题\n**加粗** 文字\n- [ ] 买牛奶");
+    renderWithProviders(<NotesPage />, ipc);
+    const body = await screen.findByLabelText("描述");
+
+    // 没有焦点：只看到排好版的文字。
+    expect(body.textContent).not.toContain("#");
+    expect(body.textContent).not.toContain("**");
+    expect(body.querySelector(".cm-md-h1")?.textContent).toBe("标题");
+    expect(body.querySelector(".cm-md-strong")?.textContent).toBe("加粗");
+
+    // 光标进到第一行：那一行的 `#` 露出来，别的行不变。
+    act(() => {
+      body.focus();
+      selectBody(body, 1, 1);
+    });
+    expect(body.querySelector(".cm-md-h1")?.textContent).toBe("# 标题");
+    expect(body.textContent).not.toContain("**");
+
+    const box = body.querySelector<HTMLInputElement>("input.cm-md-task");
+    expect(box?.checked).toBe(false);
+    act(() => box?.click());
+    expect(bodyText(body)).toBe("# 标题\n**加粗** 文字\n- [x] 买牛奶");
+    await waitForSave(ipc, 1);
   });
 
   it("切换格式会保存 content_format", async () => {
@@ -403,17 +432,17 @@ describe("NotesPage", () => {
     expect(await screen.findByDisplayValue("留下的")).toHaveAccessibleName("标题");
   });
 
-  it("保存失败：内容仍在文本框里，显示原因", async () => {
+  it("保存失败：内容仍在编辑区里，显示原因", async () => {
     const ipc = createMemoryIpc();
     await seedNote(ipc, "笔记", "内容");
     renderWithProviders(<NotesPage />, ipc);
     const body = await screen.findByLabelText("描述");
 
     ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "boom"));
-    fireEvent.change(body, { target: { value: "没保存成功的内容" } });
+    setBody(body, "没保存成功的内容");
     expect(
       await screen.findByRole("alert", {}, { timeout: AUTOSAVE_DELAY_MS + 2000 }),
     ).toHaveTextContent("没能保存");
-    expect(screen.getByLabelText("描述")).toHaveValue("没保存成功的内容");
+    expect(bodyText(screen.getByLabelText("描述"))).toBe("没保存成功的内容");
   });
 });

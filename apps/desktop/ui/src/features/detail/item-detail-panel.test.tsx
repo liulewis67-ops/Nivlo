@@ -4,6 +4,7 @@ import { AppError } from "@/lib/errors";
 import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
+import { bodyText, selectBody, setBody } from "@/test/markdown-body";
 import { renderWithProviders } from "@/test/render";
 import { useState } from "react";
 import { AUTOSAVE_DELAY_MS, ItemDetailPanel } from "./ItemDetailPanel";
@@ -191,21 +192,24 @@ describe("ItemDetailPanel", () => {
     });
     renderWithProviders(<ItemDetailPanel id={item.id} onClose={() => undefined} />, ipc);
     await advance(0);
-    const body = screen.getByLabelText("描述") as HTMLTextAreaElement;
+    const body = screen.getByLabelText("描述");
 
-    body.setSelectionRange(0, 2);
+    selectBody(body, 0, 2);
     fireEvent.keyDown(body, { key: "b", ctrlKey: true });
-    expect(body).toHaveValue("**要点**");
+    expect(bodyText(body)).toBe("**要点**");
 
-    fireEvent.change(body, { target: { value: "- 一" } });
-    body.setSelectionRange(3, 3);
+    act(() => setBody(body, "- 一"));
+    selectBody(body, 3, 3);
     fireEvent.keyDown(body, { key: "Enter" });
-    expect(body).toHaveValue("- 一\n- ");
+    expect(bodyText(body)).toBe("- 一\n- ");
 
+    // 纯文本描述是原生文本框，不处理 Markdown 按键。
     fireEvent.click(screen.getByRole("button", { name: "纯文本" }));
-    body.setSelectionRange(0, 1);
-    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
-    expect(body).toHaveValue("- 一\n- ");
+    const plain = screen.getByLabelText("描述");
+    if (!(plain instanceof HTMLTextAreaElement)) throw Error("Expected textarea");
+    plain.setSelectionRange(0, 1);
+    fireEvent.keyDown(plain, { key: "b", ctrlKey: true });
+    expect(plain).toHaveValue("- 一\n- ");
   });
 
   it("Esc 关闭", async () => {

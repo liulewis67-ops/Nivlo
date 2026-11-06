@@ -1,11 +1,10 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Input, Textarea, Menu } from "@/components";
+import { Button, Input, LiveMarkdownEditor, Textarea, Menu } from "@/components";
 import { cx } from "@/lib/cx";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
-import { handleMarkdownKeyDown, handleMarkdownPaste } from "@/lib/markdown-keys";
 import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { useToastStore } from "@/stores/toast-store";
@@ -119,7 +118,7 @@ function Field({ label, children }: FieldProps) {
 }
 
 /**
- * Item 详情面板（实施计划 3.1）：标题、简述（Todo / Tip）、描述（Markdown 纯文本）、类型、计划 / 截止日期、优先级与来源。
+ * Item 详情面板（实施计划 3.1）：标题、简述（Todo / Tip）、描述（Markdown 边写边渲染，或纯文本）、类型、计划 / 截止日期、优先级与来源。
  *
  * * **自动保存**：停止输入 [`AUTOSAVE_DELAY_MS`] 毫秒后保存，只发送真正变化的字段；
  *   关闭面板或切换条目时先把未保存的修改保存掉；
@@ -443,26 +442,28 @@ export function ItemDetailPanel({
               </Field>
             )}
             <Field label={t("detail.field.content")}>
-              <Textarea
-                id={contentId}
-                aria-label={t("detail.field.content")}
-                placeholder={t("detail.contentPlaceholder")}
-                value={draft.content}
-                rows={contentExpanded ? 12 : 3}
-                onChange={(event) => edit({ content: event.target.value })}
-                // Markdown 时与笔记编辑区一样：Ctrl+B / I、列表续行与缩进。
-                onKeyDown={(event) => {
-                  if (draft.contentFormat === "markdown") {
-                    handleMarkdownKeyDown(event, (content) => edit({ content }));
-                  }
-                }}
-                onPaste={(event) => {
-                  if (draft.contentFormat === "markdown") {
-                    handleMarkdownPaste(event, (content) => edit({ content }));
-                  }
-                }}
-                className="resize-y font-mono text-[13px] leading-relaxed"
-              />
+              {draft.contentFormat === "markdown" ? (
+                // 与笔记编辑区一样边写边渲染；Ctrl+B / I、列表续行与缩进也相同。
+                <LiveMarkdownEditor
+                  id={contentId}
+                  variant="field"
+                  rows={contentExpanded ? 12 : 3}
+                  label={t("detail.field.content")}
+                  placeholder={t("detail.contentPlaceholder")}
+                  value={draft.content}
+                  onChange={(content) => edit({ content })}
+                />
+              ) : (
+                <Textarea
+                  id={contentId}
+                  aria-label={t("detail.field.content")}
+                  placeholder={t("detail.contentPlaceholder")}
+                  value={draft.content}
+                  rows={contentExpanded ? 12 : 3}
+                  onChange={(event) => edit({ content: event.target.value })}
+                  className="resize-y font-mono text-[13px] leading-relaxed"
+                />
+              )}
               {!contentExpanded && (
                 <Button
                   size="sm"

@@ -4,6 +4,7 @@ import { MainShell, useNavStore } from "@/features/shell";
 import { AppError } from "@/lib/errors";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
+import { bodySelection, bodyText, selectBody, setBody } from "@/test/markdown-body";
 import { renderWithProviders } from "@/test/render";
 import { AUTOSAVE_DELAY_MS } from "./use-item-draft";
 
@@ -186,11 +187,11 @@ describe("编辑器安全离开", () => {
     useNavStore.setState({ view: "notes", noteId: first });
     renderWithProviders(<MainShell />, ipc);
     await advance();
-    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "长文修改" } });
+    act(() => setBody(screen.getByLabelText("描述"), "长文修改"));
     ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "offline"));
     fireEvent.click(screen.getByRole("button", { name: /第二篇/ }));
     await advance();
-    expect(screen.getByLabelText("描述")).toHaveValue("长文修改");
+    expect(bodyText(screen.getByLabelText("描述"))).toBe("长文修改");
     fireEvent.click(screen.getByRole("button", { name: /第三篇/ }));
     fireEvent.click(screen.getByRole("button", { name: "重试" }));
     await advance();
@@ -233,9 +234,7 @@ describe("编辑器安全离开", () => {
     useNavStore.setState({ view: "notes", noteId: note, detailId: detail });
     renderWithProviders(<MainShell />, ipc);
     await advance();
-    fireEvent.change(within(screen.getByRole("article")).getByLabelText("描述"), {
-      target: { value: "笔记修改" },
-    });
+    act(() => setBody(within(screen.getByRole("article")).getByLabelText("描述"), "笔记修改"));
     fireEvent.change(
       within(screen.getByRole("complementary", { name: "条目详情" })).getByLabelText("标题"),
       { target: { value: "侧页修改" } },
@@ -255,9 +254,9 @@ describe("编辑器安全离开", () => {
     useNavStore.setState({ view: "notes", noteId: note, detailId: detail });
     renderWithProviders(<MainShell />, ipc);
     await advance();
-    fireEvent.change(within(screen.getByRole("article")).getByLabelText("描述"), {
-      target: { value: "还没保存的正文" },
-    });
+    act(() =>
+      setBody(within(screen.getByRole("article")).getByLabelText("描述"), "还没保存的正文"),
+    );
     resize(960);
     ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "offline"));
     act(() => useNavStore.getState().setView("calendar"));
@@ -281,7 +280,7 @@ describe("编辑器安全离开", () => {
     useNavStore.setState({ view: "notes", noteId: note });
     renderWithProviders(<MainShell />, ipc);
     await advance();
-    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "待保存正文" } });
+    act(() => setBody(screen.getByLabelText("描述"), "待保存正文"));
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     await advance();
     const input = screen.getByRole("combobox");
@@ -290,7 +289,7 @@ describe("编辑器安全离开", () => {
     ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "offline"));
     fireEvent.keyDown(input, { key: "Enter" });
     await advance();
-    expect(screen.getByLabelText("描述")).toHaveValue("待保存正文");
+    expect(bodyText(screen.getByLabelText("描述"))).toBe("待保存正文");
     expect(useNavStore.getState().detailId).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "重试" }));
     await advance();
@@ -389,7 +388,7 @@ describe("编辑器安全离开", () => {
     useNavStore.setState({ view: "notes", noteId: note });
     renderWithProviders(<MainShell />, ipc);
     await advance();
-    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "保留正文" } });
+    act(() => setBody(screen.getByLabelText("描述"), "保留正文"));
     ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "offline"));
     act(() => useNavStore.getState().setView("calendar"));
     await advance();
@@ -406,17 +405,19 @@ describe("编辑器安全离开", () => {
     useNavStore.setState({ detailId: id });
     renderWithProviders(<MainShell />, ipc);
     await advance();
-    const body = screen.getByLabelText("描述") as HTMLTextAreaElement;
-    fireEvent.change(body, { target: { value: "描述草稿" } });
-    body.setSelectionRange(1, 3);
+    const body = screen.getByLabelText("描述");
+    // 描述是 Markdown：外框的高度按行数算（3 行，展开后 12 行）。
+    const rows = () => body.closest(".cm-editor")?.parentElement?.dataset.rows;
+    expect(rows()).toBe("3");
+    act(() => setBody(body, "描述草稿"));
+    selectBody(body, 1, 3);
     fireEvent.click(screen.getByRole("button", { name: "展开描述" }));
     expect(screen.getByLabelText("描述")).toBe(body);
-    expect(body.rows).toBe(12);
+    expect(rows()).toBe("12");
     expect(body).toHaveFocus();
-    expect(body.selectionStart).toBe(1);
-    expect(body.selectionEnd).toBe(3);
-    fireEvent.change(body, { target: { value: "继续编辑描述" } });
-    expect(body.rows).toBe(12);
+    expect(bodySelection(body)).toEqual([1, 3]);
+    act(() => setBody(body, "继续编辑描述"));
+    expect(rows()).toBe("12");
     await advance(AUTOSAVE_DELAY_MS);
     expect((await ipc.getItem(id)).content).toBe("继续编辑描述");
   });
