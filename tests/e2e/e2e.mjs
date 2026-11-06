@@ -88,17 +88,21 @@ function realMouse(x, y, click = false) {
   win32(`[void][E2E.Native]::SetProcessDPIAware(); [void][E2E.Native]::SetCursorPos(${Math.round(x)}, ${Math.round(y)})${down}`);
 }
 
+/** 长按选中徽标要按住的时间（毫秒）：比 UI 的 LONG_PRESS_MS（400）多留余量。 */
+const LONG_PRESS_HOLD_MS = 650;
+
 /**
  * 用真实鼠标从 `from` 拖到 `to`（物理像素）：默认分 12 步；快速拖动复现用 6 步。
+ * 按下后先按住 `holdMs` 再移动：徽标要长按选中才能拖动，默认按长按处理。
  * 整个过程在一次 PowerShell 里完成（每次启动 PowerShell 约 2 秒，分开调用会让拖动停顿太久）。
  */
-function realDrag(from, to, steps = 12) {
+function realDrag(from, to, steps = 12, holdMs = LONG_PRESS_HOLD_MS) {
   const moves = Array.from({ length: steps }, (_, i) => {
     const t = (i + 1) / steps;
     return `[void][E2E.Native]::SetCursorPos(${Math.round(from[0] + (to[0] - from[0]) * t)}, ${Math.round(from[1] + (to[1] - from[1]) * t)}); Start-Sleep -Milliseconds 40`;
   }).join("; ");
   win32(
-    `[void][E2E.Native]::SetProcessDPIAware(); [void][E2E.Native]::SetCursorPos(${Math.round(from[0])}, ${Math.round(from[1])}); [E2E.Native]::mouse_event(0x2, 0, 0, 0, [System.UIntPtr]::Zero); Start-Sleep -Milliseconds 150; ${moves}; Start-Sleep -Milliseconds 250; [E2E.Native]::mouse_event(0x4, 0, 0, 0, [System.UIntPtr]::Zero)`,
+    `[void][E2E.Native]::SetProcessDPIAware(); [void][E2E.Native]::SetCursorPos(${Math.round(from[0])}, ${Math.round(from[1])}); [E2E.Native]::mouse_event(0x2, 0, 0, 0, [System.UIntPtr]::Zero); Start-Sleep -Milliseconds ${holdMs}; ${moves}; Start-Sleep -Milliseconds 250; [E2E.Native]::mouse_event(0x4, 0, 0, 0, [System.UIntPtr]::Zero)`,
   );
 }
 
@@ -297,20 +301,45 @@ async function checkNativeBadgeDrag({main,floating,child,index}) {
           const start = await collapsed("开始之前");
           const scale = start.scale;
           await floating.evaluate(`(() => { window.__dragTrace=[]; for(const type of ['pointerdown','pointermove','pointerup','pointercancel']) window.addEventListener(type,e=>{window.__dragTrace.push({type,x:e.clientX,y:e.clientY,buttons:e.buttons,target:e.target.tagName});window.__dragTrace=window.__dragTrace.slice(-30)},true); })()`);
-          realDrag([start.x + start.w / 2, start.y + start.h / 2], [start.x + start.w / 2 - 300 * scale, start.y + start.h / 2], DRAG_ONLY ? DRAG_STEPS : 12);
+          const center = [start.x + start.w / 2, start.y + start.h / 2];
+          // 没有长按就拖：徽标不动，也不打开主窗口（防止点击时手一滑把徽标挪走）。
+          realDrag(center, [center[0] - 300 * scale, center[1]], DRAG_ONLY ? DRAG_STEPS : 12, 120);
+          await sleep(800);
+          const unmoved = await collapsed("没长按就拖之后");
+          if (Math.abs(unmoved.x - start.x) > 1 || Math.abs(unmoved.y - start.y) > 1) {
+            throw new Error(`没有长按就拖动了徽标：开始 ${JSON.stringify(start)}，现在 ${JSON.stringify(unmoved)}`);
+          }
+          // 按住到长按时间：徽标进入选中态（data-selected），松开后取消选中。
+          win32(`[void][E2E.Native]::SetProcessDPIAware(); [void][E2E.Native]::SetCursorPos(${Math.round(center[0])}, ${Math.round(center[1])}); [E2E.Native]::mouse_event(0x2, 0, 0, 0, [System.UIntPtr]::Zero)`);
+          try {
+            await until(() => floating.evaluate("!!document.querySelector('.nv-badge[data-selected]')"), "长按后徽标进入选中态", 3000);
+          } finally {
+            win32("[E2E.Native]::mouse_event(0x4, 0, 0, 0, [System.UIntPtr]::Zero)");
+          }
+          await until(() => floating.evaluate("!document.querySelector('.nv-badge[data-selected]')"), "长按后松开取消选中", 3000);
+          // 长按后拖离边缘 300px：徽标落在松手的位置（按下的那一点始终在光标下）。
+          realDrag(center, [center[0] - 300 * scale, center[1]], DRAG_ONLY ? DRAG_STEPS : 12);
           await sleep(800);
           const before = await collapsed("拖离边缘之后");
           if (Math.abs(before.x - (start.x - 300 * scale)) > 3 * scale) {
             throw new Error(`徽标没有落在松手的位置：开始 ${JSON.stringify(start)}，现在 ${JSON.stringify(before)}（应移动 ${300 * scale}px）；指针记录 ${JSON.stringify(await floating.evaluate('window.__dragTrace'))}`);
           }
           if (Math.abs(before.x + before.w - before.right) <= 1) throw new Error("拖离 300px 之后仍贴在右边缘");
-          // 再拖到离右边 10px 处：松开后吸附，贴到右边缘、竖直位置不变。
+          // 再拖到离右边 10px 处：不吸附，就停在松手的地方。
           const grab = [before.x + before.w / 2, before.y + before.h / 2];
           realDrag(grab, [grab[0] + (before.right - 10 * scale - (before.x + before.w)), grab[1]]);
           await sleep(800);
-          const after = await collapsed("拖近边缘之后");
+          const near = await collapsed("拖近边缘之后");
+          if (Math.abs(near.right - (near.x + near.w) - 10 * scale) > 2 * scale || Math.abs(near.y - before.y) > 2 * scale) {
+            throw new Error(`拖到离右边 10px 处之后没有停在松手的位置：拖之前 ${JSON.stringify(before)}，现在 ${JSON.stringify(near)}`);
+          }
+          // 拖出右边缘 20px：拉回屏幕内，贴住右边缘、竖直位置不变。
+          const grab2 = [near.x + near.w / 2, near.y + near.h / 2];
+          realDrag(grab2, [grab2[0] + 30 * scale, grab2[1]]);
+          await sleep(800);
+          const after = await collapsed("拖出边缘之后");
           if (Math.abs(after.x + after.w - after.right) > 1 || Math.abs(after.y - before.y) > 2 * scale) {
-            throw new Error(`松开后没有贴到工作区右边缘：拖之前 ${JSON.stringify(before)}，现在 ${JSON.stringify(after)}`);
+            throw new Error(`拖出屏幕后没有拉回贴住右边缘：拖之前 ${JSON.stringify(near)}，现在 ${JSON.stringify(after)}`);
           }
 
           if (DRAG_ONLY) return;
@@ -804,7 +833,7 @@ async function runOnce(index) {
           const handle = (dragTitle) => `[...document.querySelectorAll("[aria-label]")].find((e) => /拖动以调整|Drag to reorder/.test(e.getAttribute("aria-label")) && e.getAttribute("aria-label").includes(${JSON.stringify(dragTitle)}))`;
           const from = await hover(handle(second), "第二条的拖动手柄");
           const to = await until(() => screenPoint(handle(first)), "第一条的拖动手柄");
-          realDrag(from, [to[0], to[1] - 6]);
+          realDrag(from, [to[0], to[1] - 6], 12, 150);
           await until(async () => {
             const titles = (await main.invoke("get_today")).todos.map((i) => i.title);
             return titles.indexOf(second) >= 0 && titles.indexOf(second) < titles.indexOf(first);

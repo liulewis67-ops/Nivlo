@@ -6,7 +6,7 @@ import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { useAppearanceStore } from "@/stores/appearance-store";
 import { useSkinStore } from "@/stores/skin-store";
-import { createDragIntentTracker } from "./model/drag-intent";
+import { LONG_PRESS_MS, createDragIntentTracker } from "./model/drag-intent";
 import { SkinSprite } from "./SkinSprite";
 
 /** 待办数尚未加载完成时徽标上显示的占位符。 */
@@ -86,11 +86,12 @@ function CheckGlyph({ className }: { className?: string }) {
  * 形状决定内容：胶囊 = 进度环 + 数字；数字 = 圆形徽标，边缘就是进度环，数字居中；圆点 = 只有进度环。
  * 今天的事全部完成时数字换成对勾。窗口和形状一样大（尺寸见 [`badgeSize`](./model/badge-size.ts)）。
  *
- * 同一个元素承担几种交互：单击打开主窗口；按住并移动超过阈值则请求后端开始拖动窗口；
- * 右键直接进入快速添加。拖动结束后的吸附与位置保存都在 Rust 一侧完成，这里只负责识别手势意图。
+ * 同一个元素承担几种交互：单击打开主窗口；长按选中（徽标进入"拿起"的样子）后移动，
+ * 请求后端开始拖动窗口，松手处就是新位置；右键直接进入快速添加。没有长按就移动不会拖动，
+ * 避免点击时手一滑把徽标挪走。位置保存在 Rust 一侧完成，这里只负责识别手势意图。
  *
- * 开始拖动后系统会接管鼠标，通常不会再收到 `click`；若仍收到，用 `draggedRef` 吞掉这一次，
- * 避免"拖完松手却打开了主窗口"。键盘激活（Enter / 空格）产生的 `click` 不受影响。
+ * 不是点击的手势（拖动、长按后松开、没长按就移动）随后若仍收到 `click`，用 `suppressClickRef`
+ * 吞掉，避免"松手却打开了主窗口"。键盘激活（Enter / 空格）产生的 `click` 不受影响。
  *
  * 数字来自 Today 的查询缓存，由后端事件刷新；渲染徽标不会发起任何 IPC。
  *
@@ -111,7 +112,10 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
   const [hovered, setHovered] = useState(false);
   const hasSkin = skin.frames.length > 0;
   const trackerRef = useRef(createDragIntentTracker());
-  const draggedRef = useRef(false);
+  const suppressClickRef = useRef(false);
+  const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  /** 是否已长按选中：选中时徽标换成"拿起"的样子，提示现在可以拖动。 */
+  const [selected, setSelected] = useState(false);
   /** 按下的位置（窗口内坐标）：开始拖动时交给后端，让徽标保持在光标下。 */
   const grabRef = useRef<{ x: number; y: number } | null>(null);
   /** 数字是否变过：第一次显示时不跳动，之后每次变化轻轻弹一下，让用户注意到"少了一件"。 */
@@ -121,29 +125,54 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
     if (previousRef.current !== null && previousRef.current !== remaining) setChanged(true);
     previousRef.current = remaining;
   }, [remaining]);
+  useEffect(() => () => clearTimeout(longPressRef.current), []);
+
+  /** 结束选中：清掉长按计时并恢复徽标样子。 */
+  function clearSelection(): void {
+    clearTimeout(longPressRef.current);
+    longPressRef.current = undefined;
+    setSelected(false);
+  }
 
   /**
-   * 记录按下位置，开始一次新手势。
+   * 记录按下位置，开始一次新手势，并开始长按计时。
    *
    * @param event 指针事件；只响应主键（左键）。
    */
   function handlePointerDown(event: PointerEvent<HTMLButtonElement>): void {
     if (event.button !== 0) return;
-    draggedRef.current = false;
+    suppressClickRef.current = false;
     grabRef.current = { x: event.clientX, y: event.clientY };
     trackerRef.current.press({ x: event.clientX, y: event.clientY });
+    clearSelection();
+    longPressRef.current = setTimeout(() => {
+      longPressRef.current = undefined;
+      if (trackerRef.current.select()) setSelected(true);
+    }, LONG_PRESS_MS);
     // 首个合并后的移动可能已经越过整个小徽标，仍需由按钮接到它以判定拖动。
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
   /**
-   * 指针移动：跨过阈值的那一刻请求后端开始拖动。
+   * 指针移动：选中后跨过阈值的那一刻请求后端开始拖动；没长按就移动则放弃长按。
+   *
+   * 原生窗口拖动结束时页面收不到 `pointerup`：之后的移动已经没有按键按着，就当作松开了。
    *
    * @param event 指针事件。
    */
   function handlePointerMove(event: PointerEvent<HTMLButtonElement>): void {
-    if (trackerRef.current.move({ x: event.clientX, y: event.clientY })) {
-      draggedRef.current = true;
+    if (event.buttons === 0) {
+      if (selected) clearSelection();
+      return;
+    }
+    const tracker = trackerRef.current;
+    const starts = tracker.move({ x: event.clientX, y: event.clientY });
+    if (tracker.phase === "abandoned") {
+      suppressClickRef.current = true;
+      clearSelection();
+    }
+    if (starts) {
+      suppressClickRef.current = true;
       releasePointer(event);
       void ipc.startFloatingDrag(grabRef.current ?? undefined);
     }
@@ -159,18 +188,19 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
   }
 
   /**
-   * 手势结束或被取消：回到空闲，保留 `draggedRef` 以吞掉随后可能到来的 click。
+   * 手势结束或被取消：回到空闲并取消选中；不是点击的手势记下来，吞掉随后可能到来的 click。
    * @param event 本次手势的指针事件。
    */
   function handlePointerEnd(event: PointerEvent<HTMLButtonElement>): void {
     releasePointer(event);
-    trackerRef.current.cancel();
+    if (trackerRef.current.release() !== "click") suppressClickRef.current = true;
+    clearSelection();
   }
 
-  /** 点击：刚刚拖动过则忽略，否则打开主窗口。 */
+  /** 点击：刚刚拖动过、长按过或滑开过则忽略，否则打开主窗口。 */
   function handleClick(): void {
-    if (draggedRef.current) {
-      draggedRef.current = false;
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
       return;
     }
     void ipc.openMain();
@@ -216,6 +246,7 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
       aria-description={onQuickAdd ? t("floating.quickAddHint") : undefined}
       data-shape={hasSkin ? "skin" : shape}
       data-done={allDone || undefined}
+      data-selected={selected || undefined}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}

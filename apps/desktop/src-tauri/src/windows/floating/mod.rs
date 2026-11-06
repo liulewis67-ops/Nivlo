@@ -1,4 +1,4 @@
-//! 悬浮窗位置控制器：启动时还原位置，拖动结束后吸附并保存。
+//! 悬浮窗位置控制器：启动时还原位置，拖动结束后落位并保存。
 //!
 //! 用户拖动无边框窗口时，系统不会给出"拖动结束"事件，只有连续的 `Moved`。
 //! 因此这里对 `Moved` 做防抖：最后一次移动之后安静一小段时间（`SETTLE_DELAY`），就认为拖动结束，
@@ -320,7 +320,7 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
         })
     }
 
-    /// 拖动结束后的收尾：计算吸附位置、必要时移动窗口、保存位置。
+    /// 拖动结束后的收尾：落在原地（超出屏幕的部分拉回贴边）并保存位置。
     pub async fn settle(&self) {
         if let Err(error) = self.try_settle().await {
             tracing::warn!(event = "floating_settle_failed", %error, "悬浮窗吸附失败");

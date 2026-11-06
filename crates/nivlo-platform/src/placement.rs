@@ -1,6 +1,10 @@
-//! 悬浮窗位置的纯计算：边缘吸附、跨显示器与 DPI（架构文档 §11）。
+//! 悬浮窗位置的纯计算：贴边、跨显示器与 DPI（架构文档 §11）。
 //!
-//! 保存位置时**不保存绝对像素**，而是保存 [`Placement`]：显示器 ID + 吸附边缘 + 在该显示器
+//! 徽标长按选中后可以拖到任意位置，松手处就是新位置，不会被吸到附近的边缘；
+//! 只有真正贴着（或超出）工作区边缘时才记为贴边，这样它换尺寸、换分辨率后仍然贴着那条边，
+//! 超出的部分也会被拉回屏幕内。
+//!
+//! 保存位置时**不保存绝对像素**，而是保存 [`Placement`]：显示器 ID + 贴住的边缘 + 在该显示器
 //! 工作区内的相对位置（比例）。这样分辨率、缩放比例或显示器布局变化后，窗口仍然落在合理位置；
 //! 找不到原显示器时回退到主显示器。
 //!
@@ -9,16 +13,13 @@
 
 use serde::{Deserialize, Serialize};
 
-/// 吸附阈值（logical px）：窗口边缘距离屏幕边缘不超过该值时吸附。
-pub const SNAP_THRESHOLD_LOGICAL_PX: f64 = 24.0;
-
 /// 收起态（徽标）的默认宽度（logical px）：默认的胶囊形状。其他形状由前端在收起时告知尺寸。
 pub const COLLAPSED_WIDTH_LOGICAL_PX: f64 = 64.0;
 
 /// 收起态（徽标）的默认高度（logical px）。
 pub const COLLAPSED_HEIGHT_LOGICAL_PX: f64 = 32.0;
 
-/// 默认位置在吸附边缘（右侧）上的相对高度：靠近顶部但不贴边。
+/// 默认位置在贴住的边缘（右侧）上的相对高度：靠近顶部但不贴边。
 const DEFAULT_Y_RATIO: f64 = 0.08;
 
 /// 屏幕上的一个点（物理像素）。
@@ -95,7 +96,7 @@ pub struct MonitorInfo {
     pub is_primary: bool,
 }
 
-/// 窗口吸附的屏幕边缘。
+/// 窗口贴住的屏幕边缘。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Edge {
@@ -114,7 +115,7 @@ pub enum Edge {
 pub struct Placement {
     /// 所在显示器的标识。
     pub monitor_id: String,
-    /// 吸附的边缘；`None` 表示自由位置。
+    /// 贴住的边缘；`None` 表示自由位置。
     pub edge: Option<Edge>,
     /// 窗口左上角在"工作区宽度 - 窗口宽度"中的位置比例，0 = 贴左，1 = 贴右。
     pub x_ratio: f64,
@@ -139,11 +140,11 @@ pub fn pick_monitor(monitors: &[MonitorInfo], point: Point) -> Option<&MonitorIn
         .min_by_key(|m| m.work_area.distance_squared_to(point))
 }
 
-/// 根据窗口当前的外框计算应保存的位置，并判断是否应当吸附到边缘。
+/// 根据窗口当前的外框计算应保存的位置，并判断它是否贴着边缘。
 ///
-/// 窗口中心所在的显示器决定了归属；窗口边缘距离该显示器工作区边缘在
-/// [`SNAP_THRESHOLD_LOGICAL_PX`]（按该显示器缩放换算）以内时吸附到最近的边缘，
-/// 窗口部分超出工作区也算"在阈值内"。距离相同时按 左、右、上、下 的顺序取先者。
+/// 窗口中心所在的显示器决定了归属；窗口边缘与该显示器工作区边缘重合或超出时记为贴住
+/// 该边缘（超出的部分还原时会被拉回工作区），离边缘哪怕 1px 也是自由位置，不会被吸过去。
+/// 同时贴住两条边（角落）时按 超出最多、再按 左、右、上、下 的顺序取一条。
 ///
 /// 返回 `None` 表示没有可用的显示器。
 pub fn placement_for_bounds(bounds: Rect, monitors: &[MonitorInfo]) -> Option<Placement> {
@@ -162,12 +163,9 @@ pub fn placement_for_bounds(bounds: Rect, monitors: &[MonitorInfo]) -> Option<Pl
         (Edge::Top, rel_y),
         (Edge::Bottom, free_y - rel_y),
     ];
-    // 阈值转为物理像素；取整即可，亚像素精度对吸附手感没有意义。
-    #[allow(clippy::cast_possible_truncation)]
-    let threshold = (SNAP_THRESHOLD_LOGICAL_PX * monitor.scale_factor).round() as i64;
     let mut edge: Option<(Edge, i64)> = None;
     for (candidate, distance) in distances {
-        if distance <= threshold && edge.is_none_or(|(_, best)| distance < best) {
+        if distance <= 0 && edge.is_none_or(|(_, best)| distance < best) {
             edge = Some((candidate, distance));
         }
     }
@@ -185,7 +183,7 @@ pub fn placement_for_bounds(bounds: Rect, monitors: &[MonitorInfo]) -> Option<Pl
     };
     let mut x_ratio = ratio(rel_x, free_x);
     let mut y_ratio = ratio(rel_y, free_y);
-    // 吸附的轴强制贴边，保证"吸附后位置恰好在边缘"。
+    // 贴边的轴强制贴边：超出工作区的窗口被拉回来，恰好贴在边缘上。
     match edge {
         Some(Edge::Left) => x_ratio = 0.0,
         Some(Edge::Right) => x_ratio = 1.0,
@@ -296,7 +294,7 @@ pub struct ExpandedLayout {
 /// 计算悬浮窗展开为 Today 面板后的外框。
 ///
 /// 面板总是朝**屏幕内侧**展开：徽标在工作区右半边就向左展开（面板右缘与徽标右缘对齐），
-/// 在左半边就向右展开；上下方向同理。这样无论徽标吸附在四条边的哪一条、或者在四个角落，
+/// 在左半边就向右展开；上下方向同理。这样无论徽标贴在四条边的哪一条、或者在四个角落，
 /// 展开后的面板都完整位于当前显示器工作区内（产品文档 §5.2、实施计划 1.3）。
 /// 面板尺寸以 logical px 给出，按徽标所在显示器的缩放换算；比工作区还大时收缩到工作区大小。
 ///
@@ -388,7 +386,7 @@ mod tests {
         }
     }
 
-    /// 取吸附结果的屏幕坐标。
+    /// 取松手落位后的屏幕坐标。
     fn settle(bounds: Rect, monitors: &[MonitorInfo]) -> (Point, Option<Edge>) {
         let placement = placement_for_bounds(bounds, monitors).unwrap();
         let (point, _) = resolve_position(&placement, (88.0, 40.0), monitors).unwrap();
@@ -396,45 +394,56 @@ mod tests {
     }
 
     #[test]
-    fn snaps_to_the_left_edge_within_threshold() {
-        let (point, edge) = settle(badge(10, 300), &[primary()]);
-        assert_eq!(edge, Some(Edge::Left));
-        assert_eq!(point, Point { x: 0, y: 300 });
-    }
-
-    #[test]
-    fn snaps_to_the_right_edge() {
-        // 窗口右缘距离屏幕右缘 5px。
-        let (point, edge) = settle(badge(1920 - 88 - 5, 500), &[primary()]);
-        assert_eq!(edge, Some(Edge::Right));
+    fn a_drop_near_an_edge_stays_exactly_where_it_was_dropped() {
+        // 离左边 10px、离右边 5px、离上边 12px：都不会被吸过去。
         assert_eq!(
-            point,
-            Point {
-                x: 1920 - 88,
-                y: 500
-            }
+            settle(badge(10, 300), &[primary()]),
+            (Point { x: 10, y: 300 }, None)
+        );
+        assert_eq!(
+            settle(badge(1920 - 88 - 5, 500), &[primary()]),
+            (
+                Point {
+                    x: 1920 - 88 - 5,
+                    y: 500
+                },
+                None
+            )
+        );
+        assert_eq!(
+            settle(badge(800, 12), &[primary()]),
+            (Point { x: 800, y: 12 }, None)
         );
     }
 
     #[test]
-    fn snaps_to_top_and_bottom() {
-        let (top, edge) = settle(badge(800, 12), &[primary()]);
-        assert_eq!((top, edge), (Point { x: 800, y: 0 }, Some(Edge::Top)));
-
-        let (bottom, edge) = settle(badge(800, 1040 - 40 - 20), &[primary()]);
+    fn a_badge_flush_with_an_edge_is_anchored_to_it() {
         assert_eq!(
-            (bottom, edge),
+            settle(badge(0, 300), &[primary()]),
+            (Point { x: 0, y: 300 }, Some(Edge::Left))
+        );
+        assert_eq!(
+            settle(badge(1920 - 88, 500), &[primary()]),
+            (
+                Point {
+                    x: 1920 - 88,
+                    y: 500
+                },
+                Some(Edge::Right)
+            )
+        );
+        assert_eq!(
+            settle(badge(800, 1040 - 40), &[primary()]),
             (Point { x: 800, y: 1000 }, Some(Edge::Bottom))
         );
     }
 
     #[test]
-    fn corner_snaps_to_the_single_nearest_edge() {
-        // 距离左边 4、距离上边 10：一次只吸附最近的一条边（左边）；
-        // 上边保持用户拖放的位置，不会被"强行"同时吸附。
-        let (point, edge) = settle(badge(4, 10), &[primary()]);
-        assert_eq!(edge, Some(Edge::Left));
-        assert_eq!(point, Point { x: 0, y: 10 });
+    fn corner_anchors_to_the_edge_it_overhangs_most() {
+        // 超出左边 4、超出上边 10：取超出更多的上边；左边那一轴也被拉回屏幕内。
+        let (point, edge) = settle(badge(-4, -10), &[primary()]);
+        assert_eq!(edge, Some(Edge::Top));
+        assert_eq!(point, Point { x: 0, y: 0 });
     }
 
     #[test]
@@ -445,30 +454,10 @@ mod tests {
     }
 
     #[test]
-    fn threshold_scales_with_dpi() {
-        // 150% 缩放：阈值 36 物理像素。距离 30 应吸附；100% 缩放下 30 > 24 不吸附。
-        let hi_dpi = monitor("HIDPI", 0, 0, 2880, 1560, 1.5, true);
-        assert_eq!(
-            settle(
-                Rect {
-                    x: 30,
-                    y: 600,
-                    width: 132,
-                    height: 60
-                },
-                &[hi_dpi]
-            )
-            .1,
-            Some(Edge::Left)
-        );
-        assert_eq!(settle(badge(30, 600), &[primary()]).1, None);
-    }
-
-    #[test]
-    fn window_partially_off_screen_still_snaps() {
+    fn window_partially_off_screen_is_pulled_back_onto_the_edge() {
         let (point, edge) = settle(badge(-30, 300), &[primary()]);
         assert_eq!(edge, Some(Edge::Left));
-        assert_eq!(point.x, 0);
+        assert_eq!(point, Point { x: 0, y: 300 });
     }
 
     #[test]
@@ -533,11 +522,11 @@ mod tests {
     fn handles_monitors_with_negative_coordinates() {
         let left = monitor("LEFT", -1920, 0, 1920, 1040, 1.0, false);
         let monitors = [primary(), left];
-        // 窗口位于左显示器上，靠近其左缘。
-        let (point, edge) = settle(badge(-1920 + 8, 100), &monitors);
+        // 窗口位于左显示器上，略微超出其左缘。
+        let (point, edge) = settle(badge(-1920 - 8, 100), &monitors);
         assert_eq!(edge, Some(Edge::Left));
         assert_eq!(point, Point { x: -1920, y: 100 });
-        let placement = placement_for_bounds(badge(-1920 + 8, 100), &monitors).unwrap();
+        let placement = placement_for_bounds(badge(-1920 - 8, 100), &monitors).unwrap();
         assert_eq!(placement.monitor_id, "LEFT");
     }
 

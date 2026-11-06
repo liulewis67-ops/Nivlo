@@ -388,24 +388,39 @@ async fn restore_applies_always_on_top_and_makes_the_window_unfocusable() {
 }
 
 #[tokio::test(start_paused = true)]
-async fn after_a_drag_the_window_snaps_to_the_edge_and_the_placement_is_saved() {
+async fn a_drop_near_an_edge_stays_where_it_was_dropped_and_is_saved() {
     let f = fixture(single(), (700, 400), &[]).await;
     f.controller.restore().await;
     let before = f.port.move_count();
 
-    // 用户把徽标拖到离左边缘 10px 的位置。
+    // 用户把徽标拖到离左边缘 10px 的位置：不会被吸到边上。
     f.port.drag_to(10, 300);
     f.controller.on_moved(Point { x: 10, y: 300 });
+    advance(Duration::from_millis(300)).await;
+
+    assert_eq!(f.port.position(), Point { x: 10, y: 300 });
+    assert_eq!(f.port.move_count(), before);
+    let saved = saved_placement(&f.uow).unwrap();
+    assert_eq!(saved.edge, None);
+    assert_eq!(saved.monitor_id, "DISPLAY1");
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_drop_hanging_off_the_screen_is_pulled_back_onto_the_edge() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    let before = f.port.move_count();
+
+    f.port.drag_to(-10, 300);
+    f.controller.on_moved(Point { x: -10, y: 300 });
     // 防抖期间不动。
     advance(Duration::from_millis(100)).await;
-    assert_eq!(f.port.position(), Point { x: 10, y: 300 });
+    assert_eq!(f.port.position(), Point { x: -10, y: 300 });
     assert_eq!(f.port.move_count(), before);
 
     advance(Duration::from_millis(100)).await;
     assert_eq!(f.port.position(), Point { x: 0, y: 300 });
-    let saved = saved_placement(&f.uow).unwrap();
-    assert_eq!(saved.edge, Some(Edge::Left));
-    assert_eq!(saved.monitor_id, "DISPLAY1");
+    assert_eq!(saved_placement(&f.uow).unwrap().edge, Some(Edge::Left));
 }
 
 #[tokio::test(start_paused = true)]
@@ -544,8 +559,8 @@ async fn dragging_works_again_after_collapsing() {
     f.controller.expand(PANEL).unwrap();
     f.controller.collapse(BADGE).unwrap();
 
-    f.port.drag_to(10, 300);
-    f.controller.on_moved(Point { x: 10, y: 300 });
+    f.port.drag_to(-10, 300);
+    f.controller.on_moved(Point { x: -10, y: 300 });
     advance(Duration::from_millis(300)).await;
 
     assert_eq!(f.port.position(), Point { x: 0, y: 300 });
