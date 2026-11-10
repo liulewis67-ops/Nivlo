@@ -897,3 +897,51 @@ async fn document_layout_is_larger_switches_back_and_survives_display_change() {
         }
     );
 }
+
+#[tokio::test(start_paused = true)]
+async fn dragging_the_expanded_panel_takes_the_badge_along() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1920 - 88, 500);
+    let before = f.port.bounds().unwrap();
+
+    f.controller.expand(PANEL).unwrap();
+    let panel = f.port.bounds().unwrap();
+    f.controller.begin_drag();
+    f.port.drag_to(panel.x - 600, panel.y - 200);
+    f.controller.collapse(BADGE).unwrap();
+
+    let after = f.port.bounds().unwrap();
+    assert_eq!((after.x, after.y), (before.x - 600, before.y - 200));
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_dragged_panel_reexpands_where_it_was_left() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.port.drag_to(1000, 500);
+
+    f.controller.expand(PANEL).unwrap();
+    let panel = f.port.bounds().unwrap();
+    f.controller.begin_drag();
+    f.port.drag_to(panel.x - 300, panel.y - 100);
+    // 进入 Quick Create 后面板变高：从拖到的位置长高，不跳回去。
+    f.controller.expand((300.0, 460.0)).unwrap();
+
+    let grown = f.port.bounds().unwrap();
+    assert_eq!((grown.x, grown.y), (panel.x - 300, panel.y - 100));
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_badge_drag_is_not_mistaken_for_a_panel_drag() {
+    let f = fixture(single(), (700, 400), &[]).await;
+    f.controller.restore().await;
+    f.controller.begin_drag();
+    f.port.drag_to(1920 - 88, 500);
+    let before = f.port.bounds().unwrap();
+
+    f.controller.expand(PANEL).unwrap();
+    f.controller.collapse(BADGE).unwrap();
+
+    assert_eq!(f.port.bounds().unwrap(), before);
+}

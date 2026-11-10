@@ -174,9 +174,14 @@ fn grab_aligned_position(
 #[tauri::command]
 #[specta::specta]
 pub fn start_floating_drag<R: Runtime>(
+    state: State<'_, AppState>,
     window: WebviewWindow<R>,
     grab: Option<DragGrabPoint>,
 ) -> Result<(), IpcError> {
+    // 展开期间拖的是面板：让控制器记下来，收起时徽标跟着过去。
+    if let Some(floating) = state.runtime.floating() {
+        floating.begin_drag();
+    }
     if let Some(grab) = grab {
         let grab = grab.validated()?;
         // 对齐失败不影响拖动本身：只是回到旧的行为（窗口落后光标几像素）。

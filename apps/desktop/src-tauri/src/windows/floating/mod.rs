@@ -16,7 +16,7 @@ use nivlo_platform::floating_window::FloatingWindowPort;
 use nivlo_platform::foreground::ForegroundPort;
 use nivlo_platform::placement::{
     COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, ExpandedLayout, Placement, Point,
-    Rect, default_placement, expand_bounds, placement_for_bounds, resolve_position,
+    Rect, default_placement, expand_bounds, pick_monitor, placement_for_bounds, resolve_position,
 };
 use tokio::runtime::Handle;
 use tokio_util::sync::CancellationToken;
@@ -77,6 +77,10 @@ pub trait FloatingHandle: Send + Sync {
     ///
     /// 显示器或窗口不可用时返回平台错误。
     fn configure_input(&self, layout: ConfigurationLayout) -> Result<(), PlatformError>;
+
+    /// 用户开始拖动悬浮窗（长按徽标或展开的面板）。展开期间拖动的是面板：记下来，
+    /// 收起时把徽标一起挪过去，而不是跳回展开前的位置。
+    fn begin_drag(&self);
 
     /// 立即修改悬浮窗是否置顶（设置页）。持久化由调用方负责。
     ///
@@ -149,6 +153,12 @@ pub struct FloatingController<P: FloatingWindowPort + 'static> {
     layout: Mutex<ConfigurationLayout>,
     /// 「把焦点还回去」的代数：每次激活加一，取消时也加一；延迟到了代数没变才还。
     focus_return: AtomicU64,
+    /// 展开的面板最近一次所在的位置；用户拖动面板后据此算出挪了多远。配置页期间为 `None`。
+    panel_origin: Mutex<Option<Point>>,
+    /// 展开期间用户拖动过面板，还没把这段位移算进收起态外框。
+    panel_dragged: AtomicBool,
+    /// 这次展开期间用户亲手摆放过面板：再次展开（面板变高）时保持面板的左上角，而不是按徽标重新排。
+    panel_placed: AtomicBool,
 }
 
 /// 新增配置页的布局：决定居中窗口的 logical 尺寸（再按工作区缩小）。
@@ -205,6 +215,9 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
             configuring: AtomicBool::new(false),
             layout: Mutex::new(ConfigurationLayout::Form),
             focus_return: AtomicU64::new(0),
+            panel_origin: Mutex::new(None),
+            panel_dragged: AtomicBool::new(false),
+            panel_placed: AtomicBool::new(false),
         })
     }
 
@@ -429,6 +442,64 @@ impl<P: FloatingWindowPort + 'static> FloatingController<P> {
     }
 }
 
+impl<P: FloatingWindowPort + 'static> FloatingController<P> {
+    /// 面板保持左上角在 `origin`，换成 `panel` 的尺寸；放不下时整体推回所在显示器的工作区。
+    #[allow(clippy::cast_possible_wrap)]
+    fn keep_panel_at(&self, origin: Point, panel: Rect) -> Rect {
+        let mut rect = Rect {
+            x: origin.x,
+            y: origin.y,
+            ..panel
+        };
+        let Ok(monitors) = self.port.monitors() else {
+            return panel;
+        };
+        let Some(monitor) = pick_monitor(&monitors, rect.center()) else {
+            return panel;
+        };
+        let work = monitor.work_area;
+        rect.x = rect
+            .x
+            .min(work.x + work.width as i32 - rect.width as i32)
+            .max(work.x);
+        rect.y = rect
+            .y
+            .min(work.y + work.height as i32 - rect.height as i32)
+            .max(work.y);
+        rect
+    }
+
+    /// 用户拖动过展开的面板：把面板挪动的距离同样加到收起态外框上，徽标回到面板被放下的地方。
+    ///
+    /// 返回收起态外框是否因此变了（变了的话收起后要吸附并保存新位置）。
+    fn fold_panel_drag(&self) -> bool {
+        if !self.panel_dragged.swap(false, Ordering::SeqCst) {
+            return false;
+        }
+        let Some(origin) = *lock(&self.panel_origin) else {
+            return false;
+        };
+        let Ok(bounds) = self.port.bounds() else {
+            return false;
+        };
+        let (dx, dy) = (bounds.x - origin.x, bounds.y - origin.y);
+        if dx == 0 && dy == 0 {
+            return false;
+        }
+        let mut collapsed = lock(&self.collapsed);
+        let Some(rect) = collapsed.as_mut() else {
+            return false;
+        };
+        rect.x += dx;
+        rect.y += dy;
+        *lock(&self.panel_origin) = Some(Point {
+            x: bounds.x,
+            y: bounds.y,
+        });
+        true
+    }
+}
+
 impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
     /// 修改置顶：直接交给窗口 Port。
     fn set_always_on_top(&self, enabled: bool) -> Result<(), PlatformError> {
@@ -452,6 +523,10 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
     /// 重复调用（例如进入 Quick Create 后面板变高）会基于**同一个**收起态外框重新计算，
     /// 因此多次展开 / 调整大小后再收起，位置仍回到最初的徽标处。
     fn expand(&self, panel_logical: (f64, f64)) -> Result<ExpandedLayout, PlatformError> {
+        // 面板被拖动过又要重新展开（如面板变高）：徽标位置跟上，面板留在被放下的地方。
+        if self.fold_panel_drag() {
+            self.panel_placed.store(true, Ordering::SeqCst);
+        }
         let collapsed = {
             let mut slot = lock(&self.collapsed);
             match *slot {
@@ -471,12 +546,22 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
                     .ok_or_else(|| PlatformError::Failed("没有可用的显示器".to_owned()))
             })
             .inspect_err(|_| *lock(&self.collapsed) = None)?;
+        let mut layout = layout;
+        if self.panel_placed.load(Ordering::SeqCst)
+            && let Some(origin) = *lock(&self.panel_origin)
+        {
+            layout.bounds = self.keep_panel_at(origin, layout.bounds);
+        }
         // 取消尚未执行的吸附：展开之前的拖动结算不应在面板展开后才触发。
         self.generation.fetch_add(1, Ordering::SeqCst);
         self.move_to_rect(layout.bounds).inspect_err(|_| {
             // 展开失败时回到收起态，避免控制器误以为窗口已展开而一直忽略拖动。
             *lock(&self.collapsed) = None;
         })?;
+        *lock(&self.panel_origin) = Some(Point {
+            x: layout.bounds.x,
+            y: layout.bounds.y,
+        });
         self.start_watchdog();
         Ok(layout)
     }
@@ -484,6 +569,9 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
     /// 收起：恢复展开前保存的徽标外框；徽标尺寸变了再按新尺寸落位。
     fn collapse(&self, badge_logical: (f64, f64)) -> Result<(), PlatformError> {
         let previous = std::mem::replace(&mut *lock(&self.badge), badge_logical);
+        let dragged = self.fold_panel_drag();
+        *lock(&self.panel_origin) = None;
+        self.panel_placed.store(false, Ordering::SeqCst);
         let expanded = lock(&self.collapsed).take();
         if let Some(collapsed) = expanded {
             self.watchdog.fetch_add(1, Ordering::SeqCst);
@@ -496,6 +584,11 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
             || previous.1.to_bits() != badge_logical.1.to_bits()
         {
             self.resize_badge(badge_logical)?;
+        }
+        // 徽标跟着面板换了地方：像拖动徽标一样落位（超出屏幕的拉回）并保存。
+        if dragged && let Some(this) = self.me.upgrade() {
+            let runtime = this.runtime.clone();
+            runtime.spawn(async move { this.settle().await });
         }
         Ok(())
     }
@@ -515,6 +608,10 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
             .min(area.width.saturating_sub(margin * 2).max(1));
         let height = ((logical_height * monitor.scale_factor).round() as u32)
             .min(area.height.saturating_sub(margin * 2).max(1));
+        // 从拖动过的面板进入配置页：先把位移记进收起态外框，之后配置页的位置与面板无关。
+        self.fold_panel_drag();
+        *lock(&self.panel_origin) = None;
+        self.panel_placed.store(false, Ordering::SeqCst);
         let original = self.port.bounds()?;
         let was_expanded = lock(&self.collapsed).is_some();
         if !was_expanded {
@@ -619,6 +716,13 @@ impl<P: FloatingWindowPort + 'static> FloatingHandle for FloatingController<P> {
             tracing::warn!(event = "floating_foreground_restore_failed", %error, "还原前台窗口失败");
         }
         result
+    }
+
+    /// 展开期间（且不在配置页）开始的拖动是在拖面板。
+    fn begin_drag(&self) {
+        if lock(&self.collapsed).is_some() && lock(&self.panel_origin).is_some() {
+            self.panel_dragged.store(true, Ordering::SeqCst);
+        }
     }
 
     /// 记录一次移动，并（重新）启动防抖定时器。

@@ -9,6 +9,7 @@ import { QuickCreateForm } from "@/features/quick-create";
 import { TodayBoard, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
+import { usePanelDrag } from "./use-panel-drag";
 
 /** [`TodayPanel`] 的 Props。 */
 export type TodayPanelProps = {
@@ -64,10 +65,14 @@ export function TodayPanel({
   const today = useTodayQuery();
   const view = today.data;
   const inboxCount = useInboxCountQuery().data ?? 0;
+  const drag = usePanelDrag();
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
+    // 长按面板的空白处可以拿起整个悬浮窗拖到别处（与长按徽标一样）。
     <section
       aria-label={t("today.panel.label")}
+      data-grabbed={drag.selected || undefined}
+      {...drag.handlers}
       style={{ transformOrigin: origin }}
       className="nv-panel-in nv-float relative flex h-full w-full flex-col overflow-hidden"
     >

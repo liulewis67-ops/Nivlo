@@ -338,7 +338,8 @@ html[data-theme="dark"] .nv-badge {
 /* 长按选中（可以拖动了）：从按下时的缩小弹回原大小，主色描边 + 染色，读作"拿起来了"。
    窗口和徽标一样大，不能放大，否则会被窗口裁掉。 */
 .nv-badge[data-selected],
-.nv-badge[data-selected]:active {
+.nv-badge[data-selected]:active,
+.nv-float[data-grabbed] {
   --nv-float-tint: color-mix(in srgb, var(--nv-primary) 16%, transparent);
   --nv-ring-track: color-mix(in srgb, var(--nv-primary) 30%, transparent);
   cursor: grabbing;
