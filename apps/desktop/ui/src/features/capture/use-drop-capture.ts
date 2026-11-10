@@ -56,6 +56,13 @@ export type DropCapture = {
   zone: DropZone;
   /** 当前反馈；`null` 表示没有。 */
   feedback: CaptureFeedback | null;
+  /**
+   * 不经过 HTML5 Drop 的拖入（浏览器标签页：宿主识别后转交）：按页面坐标所在的放置区处理，与普通拖放一样。
+   *
+   * @param snapshot 拖入内容。
+   * @param point 松手位置（页面坐标，逻辑像素）。
+   */
+  dropExternal: (snapshot: DropSnapshot, point: { x: number; y: number }) => void;
   /** 绑定到窗口根元素的拖放事件处理器。 */
   handlers: {
     onDragEnter: (event: DragEvent) => void;
@@ -244,13 +251,8 @@ export function useDropCapture(
     })();
   };
 
-  /** 放下：同步取出快照，按放置区新建事项或收进收集箱。 */
-  const onDrop = (event: DragEvent): void => {
-    if (!accepts(event)) return;
-    event.preventDefault();
-    // DataTransfer 只在事件回调里有效：先同步取出快照，再做任何异步工作。
-    const snapshot = snapshotDrop(event.dataTransfer);
-    const target = zoneOf(event.target);
+  /** 按放置区处理一次放下：新建事项或收进收集箱。 */
+  const deliver = (snapshot: DropSnapshot, target: DropZone): void => {
     depthRef.current = 0;
     setHovering(false);
     setZone("create");
@@ -258,6 +260,19 @@ export function useDropCapture(
     else captureToInbox(snapshot);
     // 先请求保持（在 run / prepareDraft 里），再告诉状态机放下了：面板据此进入展开态而不是回到收起。
     send("dropped");
+  };
+
+  /** 放下：同步取出快照，按放置区新建事项或收进收集箱。 */
+  const onDrop = (event: DragEvent): void => {
+    if (!accepts(event)) return;
+    event.preventDefault();
+    // DataTransfer 只在事件回调里有效：先同步取出快照，再做任何异步工作。
+    deliver(snapshotDrop(event.dataTransfer), zoneOf(event.target));
+  };
+
+  /** 宿主转交的拖入：按页面坐标下的元素判断放置区。 */
+  const dropExternal = (snapshot: DropSnapshot, point: { x: number; y: number }): void => {
+    deliver(snapshot, zoneOf(document.elementFromPoint(point.x, point.y)));
   };
 
   /**
@@ -292,6 +307,7 @@ export function useDropCapture(
     hovering,
     zone,
     feedback,
+    dropExternal,
     handlers: { onDragEnter, onDragOver, onDragLeave, onDrop },
     pasteFromClipboard,
     undo,

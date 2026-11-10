@@ -29,6 +29,7 @@ pub mod scheduling;
 pub mod script_grants;
 pub mod shortcut;
 pub mod source_app;
+pub mod tab_drop;
 pub mod tray;
 pub mod updates;
 pub mod windows;
@@ -400,6 +401,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             // 拖入文件的磁盘路径：WebView2 把 File 对象的路径交给宿主（实施计划 10.1）。
             #[cfg(target_os = "windows")]
             native_drop::install(app.handle(), &floating);
+            // 浏览器标签页拖到悬浮窗上：不是系统拖放，改为识别窗口移动结束的位置。
+            #[cfg(target_os = "windows")]
+            tab_drop::install(&floating);
             let foreground = windows::foreground_port(&floating);
             let controller = FloatingController::new(
                 Arc::new(TauriFloatingWindow::new(floating)),

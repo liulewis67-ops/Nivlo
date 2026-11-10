@@ -9,6 +9,7 @@
 //! 禁止依赖：其他 Adapter 的内部实现（参见后端规范 §3.1）。
 #![cfg(target_os = "windows")]
 
+pub mod browser_tab;
 pub mod clipboard;
 pub mod credential;
 pub mod foreground;

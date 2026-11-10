@@ -46,7 +46,7 @@ pub fn process_image_stem(pid: u32) -> Option<String> {
 }
 
 /// 窗口所属进程的进程号。
-fn window_process_id(hwnd: isize) -> Option<u32> {
+pub(crate) fn window_process_id(hwnd: isize) -> Option<u32> {
     let mut pid = 0_u32;
     // SAFETY: `GetWindowThreadProcessId` 接受任意窗口句柄值，窗口不存在时返回 0 且不写 `pid`；
     // `pid` 是有效的输出指针。

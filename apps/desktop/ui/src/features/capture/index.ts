@@ -11,3 +11,4 @@ export {
   toLinkDtos,
 } from "./model/drop-draft";
 export type { DraftLink, DropDraft } from "./model/drop-draft";
+export { subscribeTabDrops } from "./tab-drop";

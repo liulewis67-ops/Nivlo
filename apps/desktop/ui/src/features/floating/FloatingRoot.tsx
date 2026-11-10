@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MenuModalContext } from "@/components";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
-import { CaptureFeedbackBar, useDropCapture } from "@/features/capture";
+import { CaptureFeedbackBar, subscribeTabDrops, useDropCapture } from "@/features/capture";
 import type { DropDraft } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
 import { useTodayQuery } from "@/features/today";
@@ -55,6 +55,10 @@ export function FloatingRoot() {
     setQuickCreateKind((current) => current ?? draft.kind);
     send("quickCreateRequested");
   });
+  /** 订阅只装一次，回调里总是用最新渲染的处理器。 */
+  const onTabDrop = useEffectEvent(drop.dropExternal);
+  // 浏览器标签页拖到徽标上：宿主识别后转交，走与普通拖放相同的流程。
+  useEffect(() => subscribeTabDrops((snapshot, point) => onTabDrop(snapshot, point)), []);
   const [layout, setLayout] = useState<ExpandedLayoutDto | null>(null);
   /** 配置页已打开时托盘 / 快捷键再次请求新增的次数：让配置页重新取回焦点。 */
   const [createFocusRequest, setCreateFocusRequest] = useState(0);
