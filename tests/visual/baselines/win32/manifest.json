@@ -20,11 +20,11 @@
       },
       "locale": "zh-CN",
       "theme": "light",
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
       "devicePixelRatio": 1,
       "clock": "2026-10-13T04:00:00.000Z",
       "pageOverflow": false,
-      "sha256": "cdd437772828f07cab2b0652e7fd5ad81ba0364f2366f49a49cfaef97d2a3529"
+      "sha256": "7199dc3f6771a4dd355e47250fdd1777ebd648420277a05f71fe2c59322491d8"
     },
     {
       "name": "floating-expanded",

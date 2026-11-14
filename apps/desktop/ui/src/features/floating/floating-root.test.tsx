@@ -2,6 +2,7 @@ import { act, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { TodayItemDto } from "@/lib/ipc";
 import { useAppearanceStore } from "@/stores/appearance-store";
+import { DEFAULT_SKIN, useSkinStore } from "@/stores/skin-store";
 import { EMPTY_TODAY, createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
 import { FloatingRoot, PANEL_HEIGHT_PX, PANEL_WIDTH_PX } from "./FloatingRoot";
@@ -57,9 +58,10 @@ describe("FloatingRoot", () => {
   afterEach(() => {
     vi.useRealTimers();
     useAppearanceStore.getState().reset();
+    useSkinStore.getState().adopt(DEFAULT_SKIN);
   });
 
-  it("默认形状启动时不调整窗口；换了形状就把窗口收成新形状的大小", async () => {
+  it("默认机器人沿用启动尺寸；切换到经典徽标时使用所选徽标尺寸", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
     await advance(0);
@@ -67,7 +69,10 @@ describe("FloatingRoot", () => {
 
     act(() => useAppearanceStore.getState().update({ badgeShape: "circle" }));
     await advance(0);
+    expect(ipc.lastCollapse).toBeNull();
 
+    act(() => useSkinStore.getState().adopt({ ...DEFAULT_SKIN, mode: "badge" }));
+    await advance(0);
     expect(ipc.lastCollapse).toEqual({ width: 36, height: 36 });
   });
 

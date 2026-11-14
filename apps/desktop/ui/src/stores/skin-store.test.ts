@@ -23,6 +23,17 @@ describe("sanitizeSkin", () => {
     expect(skin.playback).toBe("hover");
     expect(skin.pixel).toBe(true);
   });
+
+  it("migrates an existing image skin while preserving an explicit companion choice", () => {
+    expect(sanitizeSkin({ frames: [PNG] }).mode).toBe("image");
+    expect(sanitizeSkin({ frames: [PNG], mode: "badge" })).toMatchObject({
+      mode: "badge",
+      frames: [PNG],
+    });
+    expect(
+      sanitizeSkin({ frames: [PNG], mode: "robot", robot: "relay", face: "focused" }),
+    ).toMatchObject({ mode: "robot", robot: "relay", face: "focused", frames: [PNG] });
+  });
 });
 
 describe("nextFrame", () => {

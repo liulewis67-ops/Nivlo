@@ -18,7 +18,6 @@ export function SkinSetting() {
   const { t } = useTranslation();
   const skin = useSkinStore((state) => state.skin);
   const update = useSkinStore((state) => state.update);
-  const reset = useSkinStore((state) => state.reset);
   const inputRef = useRef<HTMLInputElement>(null);
 
   /**
@@ -35,7 +34,8 @@ export function SkinSetting() {
           .slice(0, room)
           .map((file) => fileToFrame(file, skin.pixel)),
       );
-      if (!update({ frames: [...skin.frames, ...added] })) {
+      const current = useSkinStore.getState().skin.frames;
+      if (!update({ frames: [...current, ...added] })) {
         useToastStore.getState().push("error", t("settings.skin.saveFailed"));
       } else if (files.length > room) {
         useToastStore.getState().push("info", t("settings.skin.tooMany", { max: MAX_FRAMES }));
@@ -75,7 +75,11 @@ export function SkinSetting() {
         >
           {t("settings.skin.add")}
         </Button>
-        <Button size="sm" disabled={skin.frames.length === 0} onClick={reset}>
+        <Button
+          size="sm"
+          disabled={skin.frames.length === 0}
+          onClick={() => update({ frames: [] })}
+        >
           {t("settings.skin.clear")}
         </Button>
       </div>

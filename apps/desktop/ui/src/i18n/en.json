@@ -689,11 +689,29 @@
         "button": "Reset"
       },
       "group": {
-        "badge": "Badge shape",
+        "badge": "Desktop companion",
         "surface": "Surface, accent and opacity",
         "skin": "Custom skin",
         "motion": "Skin motion"
       }
+    },
+    "companion": {
+      "mode": "Display mode",
+      "robot": "Robot model",
+      "color": "Shell color",
+      "face": "Expression",
+      "modes": { "robot": "Robot", "image": "Custom images", "badge": "Classic badge" },
+      "robots": { "scout": "Scout", "relay": "Mechanic", "memo": "Memo" },
+      "colors": {
+        "original": "Original",
+        "steel": "Steel blue",
+        "mint": "Mint",
+        "amber": "Amber",
+        "lilac": "Lilac",
+        "pearl": "Pearl"
+      },
+      "faces": { "friendly": "Friendly", "focused": "Focused", "playful": "Playful" },
+      "saveFailed": "Could not save the appearance. Try again."
     },
     "skin": {
       "label": "Custom skin",
@@ -732,7 +750,7 @@
       },
       "showCount": {
         "label": "Show count",
-        "hint": "Keep the number of remaining to-dos next to the skin."
+        "hint": "Show today's remaining to-do count when the floating window is collapsed."
       }
     },
     "integrations": {

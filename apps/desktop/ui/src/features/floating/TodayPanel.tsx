@@ -9,6 +9,8 @@ import { QuickCreateForm } from "@/features/quick-create";
 import { TodayBoard, useTodayQuery } from "@/features/today";
 import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
+import { useSkinStore } from "@/stores/skin-store";
+import { RobotAvatar } from "./RobotAvatar";
 import { usePanelDrag } from "./use-panel-drag";
 
 /** [`TodayPanel`] 的 Props。 */
@@ -66,6 +68,7 @@ export function TodayPanel({
   const view = today.data;
   const inboxCount = useInboxCountQuery().data ?? 0;
   const drag = usePanelDrag();
+  const skin = useSkinStore((state) => state.skin);
   const origin = layout === null ? "top right" : `${layout.vertical} ${layout.horizontal}`;
   return (
     // 长按面板的空白处可以拿起整个悬浮窗拖到别处（与长按徽标一样）。
@@ -170,6 +173,11 @@ export function TodayPanel({
                 zone === "create" ? "flex-1" : "h-20 shrink-0"
               } ${dropZone === zone ? "border-primary bg-primary/10" : "border-border bg-surface"}`}
             >
+              {skin.mode === "robot" && zone === "create" && (
+                <span className="mb-2 block h-9 w-12">
+                  <RobotAvatar appearance={skin} expression="ready" />
+                </span>
+              )}
               <p
                 className={`text-sm font-semibold ${dropZone === zone ? "text-primary" : "text-text"}`}
               >

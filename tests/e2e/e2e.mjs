@@ -1005,8 +1005,23 @@ async function runOnce(index) {
       try {
         await floating.invoke('open_main_at',{view:'settings'});
         await until(()=>main.evaluate('!!document.querySelector("#settings-appearance")'),'appearance settings');
-        const cases=[{name:'pill',label:['胶囊','Pill'],width:64,height:32},{name:'circle',label:['数字','Number'],width:36,height:36},{name:'dot',label:['圆点','Dot'],width:28,height:28},{name:'skin',width:88,height:40}];
+        const cases=[
+          {name:'robot',mode:['机器人','Robot'],width:64,height:32},
+          {name:'pill',mode:['经典徽标','Classic badge'],label:['胶囊','Pill'],width:64,height:32},
+          {name:'circle',label:['数字','Number'],width:36,height:36},
+          {name:'dot',label:['圆点','Dot'],width:28,height:28},
+          {name:'skin',mode:['自定义图片','Custom images'],width:88,height:40},
+        ];
+        const clickAppearanceOption = (labels) => main.evaluate(`(() => {
+          const section = document.querySelector('#settings-appearance');
+          const button = [...section.querySelectorAll('button')].find(
+            (option) => ${JSON.stringify(labels)}.includes(option.textContent.trim()),
+          );
+          if (!button) throw Error('Missing appearance option');
+          button.click();
+        })()`);
         for (const entry of cases) {
+          if (entry.mode) await clickAppearanceOption(entry.mode);
           if(entry.name==='skin') {
             const path=join(data,'fixture-pixel.png');
             const pixel=new PNG({width:4,height:4});pixel.data.fill(255);
@@ -1014,7 +1029,7 @@ async function runOnce(index) {
             const doc=await main.send('DOM.getDocument');
             const field=await main.send('DOM.querySelector',{nodeId:doc.result.root.nodeId,selector:'#settings-appearance input[type=file]'});
             await main.send('DOM.setFileInputFiles',{nodeId:field.result.nodeId,files:[path]});
-          } else await main.evaluate(`(() => {const section=document.querySelector('#settings-appearance');const b=[...section.querySelectorAll('button')].find(b=>${JSON.stringify(entry.label)}.includes(b.textContent.trim()));if(!b)throw Error('Missing badge option');b.click();})()`);
+          } else if (entry.label) await clickAppearanceOption(entry.label);
           realMouse(200,200);
           const measured=await until(()=>floating.evaluate(`(() => {if(document.querySelector('[aria-label="今日面板"],[aria-label="Today panel"]'))return null;return innerWidth===${entry.width}&&innerHeight===${entry.height}?{width:innerWidth,height:innerHeight,dpr:devicePixelRatio,outerWidth,outerHeight,button:(()=>{const r=document.querySelector('button').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}})()}:null})()`),'native '+entry.name+' bounds',10000).catch(async error=>{throw Error(error.message+' '+JSON.stringify(await floating.evaluate(`({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,text:document.body.innerText.slice(-300),focused:document.hasFocus()})`)))});
           if(Math.abs(measured.button.width-entry.width)>1||Math.abs(measured.button.height-entry.height)>1)throw Error('Invisible badge hit area: '+JSON.stringify(measured));

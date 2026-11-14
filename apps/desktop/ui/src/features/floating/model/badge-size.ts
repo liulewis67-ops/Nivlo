@@ -24,8 +24,9 @@ const SKIN_SIZE: BadgeSize = { width: 88, height: 40 };
  *
  * @param shape 徽标形状。
  * @param hasSkin 是否使用自定义皮肤（皮肤优先于形状）。
+ * @param classic 是否使用传统徽标。
  * @returns logical 尺寸。
  */
-export function badgeSize(shape: BadgeShape, hasSkin: boolean): BadgeSize {
-  return hasSkin ? SKIN_SIZE : SHAPE_SIZES[shape];
+export function badgeSize(shape: BadgeShape, hasSkin: boolean, classic: boolean): BadgeSize {
+  return hasSkin ? SKIN_SIZE : classic ? SHAPE_SIZES[shape] : DEFAULT_BADGE_SIZE;
 }

@@ -19,9 +19,18 @@ export const MOTIONS = ["none", "float", "breathe", "bounce"] as const;
 /** 附加动效名称。 */
 export type Motion = (typeof MOTIONS)[number];
 
+export const AVATAR_MODES = ["robot", "image", "badge"] as const;
+export const ROBOTS = ["scout", "relay", "memo"] as const;
+export const ROBOT_COLORS = ["original", "steel", "mint", "amber", "lilac", "pearl"] as const;
+export const ROBOT_FACES = ["friendly", "focused", "playful"] as const;
+
 /** 用户自定义的徽标皮肤。 */
 export type Skin = {
-  /** 帧图（PNG data URL），为空表示不使用皮肤。 */
+  mode: (typeof AVATAR_MODES)[number];
+  robot: (typeof ROBOTS)[number];
+  color: (typeof ROBOT_COLORS)[number];
+  face: (typeof ROBOT_FACES)[number];
+  /** 帧图（PNG data URL）。 */
   frames: string[];
   fps: number;
   playback: Playback;
@@ -33,6 +42,10 @@ export type Skin = {
 };
 
 export const DEFAULT_SKIN: Skin = {
+  mode: "robot",
+  robot: "scout",
+  color: "original",
+  face: "friendly",
   frames: [],
   fps: 6,
   // D-13：默认仅悬停时播放，常驻不跑计时器；循环类需用户显式选择。
@@ -44,6 +57,11 @@ export const DEFAULT_SKIN: Skin = {
 
 /** 皮肤在 localStorage 中的 key；悬浮窗与主窗口共用，靠 `storage` 事件同步。 */
 export const SKIN_STORAGE_KEY = "nivlo.skin";
+
+/** 有可用的自定义图片时才使用图片徽标尺寸。 */
+export function hasImageSkin(skin: Skin): boolean {
+  return skin.mode === "image" && skin.frames.length > 0;
+}
 
 /** 按白名单取值，非法时回退。 */
 function pick<T extends string>(list: readonly T[], value: unknown, fallback: T): T {
@@ -70,6 +88,10 @@ export function sanitizeSkin(raw: unknown): Skin {
       ? Math.min(MAX_FPS, Math.max(MIN_FPS, Math.round(o["fps"])))
       : DEFAULT_SKIN.fps;
   return {
+    mode: pick(AVATAR_MODES, o["mode"], frames.length > 0 ? "image" : DEFAULT_SKIN.mode),
+    robot: pick(ROBOTS, o["robot"], DEFAULT_SKIN.robot),
+    color: pick(ROBOT_COLORS, o["color"], DEFAULT_SKIN.color),
+    face: pick(ROBOT_FACES, o["face"], DEFAULT_SKIN.face),
     frames,
     fps,
     playback: pick(PLAYBACKS, o["playback"], DEFAULT_SKIN.playback),

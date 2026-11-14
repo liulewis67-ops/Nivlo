@@ -359,6 +359,49 @@ html[data-theme="dark"] .nv-badge {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--nv-focus-ring);
 }
+.nv-robot-badge {
+  border-radius: 8px;
+  opacity: var(--nv-float-opacity);
+}
+.nv-robot-badge[data-selected]:not(:focus-visible) {
+  box-shadow: none;
+}
+.nv-robot-figure {
+  display: block;
+  width: 42px;
+  height: 32px;
+  flex: none;
+  filter: drop-shadow(0 1px 1px rgb(11 24 39 / 38%));
+}
+.nv-robot-counter {
+  position: absolute;
+  right: 1px;
+  bottom: 2px;
+  display: grid;
+  min-width: 16px;
+  min-height: 16px;
+  padding-inline: 3px;
+  place-items: center;
+  border: 1px solid #b3d4ef;
+  border-radius: 5px;
+  background: #20364d;
+  color: #f5fbff;
+  font-size: 10px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.nv-robot-counter .nv-badge-count {
+  color: inherit;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nv-robot-head {
+    transition: transform var(--nv-duration-fast) var(--nv-ease-standard);
+  }
+  .nv-robot[data-expression="hover"] .nv-robot-head,
+  .nv-robot[data-expression="grabbed"] .nv-robot-head {
+    transform: translateY(-1px);
+  }
+}
 .nv-badge-ring circle {
   fill: none;
 }

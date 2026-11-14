@@ -5,9 +5,10 @@ import { useTodayQuery } from "@/features/today";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
 import { useAppearanceStore } from "@/stores/appearance-store";
-import { useSkinStore } from "@/stores/skin-store";
+import { hasImageSkin, useSkinStore } from "@/stores/skin-store";
 import { LONG_PRESS_MS, createDragIntentTracker } from "./model/drag-intent";
 import { SkinSprite } from "./SkinSprite";
+import { RobotAvatar } from "./RobotAvatar";
 
 /** 待办数尚未加载完成时徽标上显示的占位符。 */
 const PLACEHOLDER = "–";
@@ -110,7 +111,8 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
   const shape = useAppearanceStore((state) => state.appearance.badgeShape);
   const skin = useSkinStore((state) => state.skin);
   const [hovered, setHovered] = useState(false);
-  const hasSkin = skin.frames.length > 0;
+  const hasSkin = hasImageSkin(skin);
+  const robot = skin.mode === "robot" || (skin.mode === "image" && !hasSkin);
   const trackerRef = useRef(createDragIntentTracker());
   const suppressClickRef = useRef(false);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -244,7 +246,7 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
       type="button"
       aria-label={status === null ? t("floating.open") : `${t("floating.open")}，${status}`}
       aria-description={onQuickAdd ? t("floating.quickAddHint") : undefined}
-      data-shape={hasSkin ? "skin" : shape}
+      data-shape={robot ? "robot" : hasSkin ? "skin" : shape}
       data-done={allDone || undefined}
       data-selected={selected || undefined}
       onPointerDown={handlePointerDown}
@@ -256,11 +258,26 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
       onPointerEnter={() => setHovered(true)}
       onPointerLeave={() => setHovered(false)}
       className={cx(
-        "nv-float nv-badge relative flex h-full w-full items-center justify-center rounded-full! text-[13px] leading-none font-semibold text-text select-none",
-        hasSkin ? "gap-2 px-2 py-1" : "gap-1.5",
+        "nv-badge relative flex h-full w-full items-center justify-center text-[13px] leading-none font-semibold text-text select-none",
+        robot ? "nv-robot-badge" : "nv-float rounded-full!",
+        hasSkin ? "gap-2 px-2 py-1" : !robot && "gap-1.5",
       )}
     >
-      {hasSkin ? (
+      {robot ? (
+        <>
+          <span className="nv-robot-figure">
+            <RobotAvatar
+              appearance={skin}
+              expression={selected ? "grabbed" : allDone ? "done" : hovered ? "hover" : "idle"}
+            />
+          </span>
+          {skin.showCount && !allDone && (
+            <span className="nv-robot-counter" aria-hidden="true">
+              {remaining !== null && remaining > 99 ? "99+" : count}
+            </span>
+          )}
+        </>
+      ) : hasSkin ? (
         <>
           <SkinSprite skin={skin} hovered={hovered} />
           {skin.showCount && count}

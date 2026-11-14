@@ -686,11 +686,29 @@
         "button": "恢复"
       },
       "group": {
-        "badge": "徽标形状",
+        "badge": "桌面伙伴",
         "surface": "表面、强调色与透明度",
         "skin": "自定义皮肤",
         "motion": "皮肤动画"
       }
+    },
+    "companion": {
+      "mode": "显示方式",
+      "robot": "机器人款式",
+      "color": "外壳配色",
+      "face": "表情",
+      "modes": { "robot": "机器人", "image": "自定义图片", "badge": "经典徽标" },
+      "robots": { "scout": "巡航", "relay": "机修", "memo": "便签" },
+      "colors": {
+        "original": "原装",
+        "steel": "灰蓝",
+        "mint": "薄荷",
+        "amber": "暖橙",
+        "lilac": "浅紫",
+        "pearl": "珍珠白"
+      },
+      "faces": { "friendly": "友好", "focused": "专注", "playful": "俏皮" },
+      "saveFailed": "外观保存失败，请重试。"
     },
     "skin": {
       "label": "自定义皮肤",
@@ -729,7 +747,7 @@
       },
       "showCount": {
         "label": "显示数字",
-        "hint": "在皮肤旁保留剩余待办数。"
+        "hint": "在悬浮窗收起时显示今天的剩余待办数。"
       }
     },
     "integrations": {

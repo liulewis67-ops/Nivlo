@@ -12,7 +12,19 @@ import type { AppSettingsDto, LaterRuleDto, RestoreStagedDto, WeekStartDto } fro
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
-import { MAX_FPS, MIN_FPS, MOTIONS, PLAYBACKS, useSkinStore } from "@/stores/skin-store";
+import {
+  AVATAR_MODES,
+  MAX_FPS,
+  MIN_FPS,
+  MOTIONS,
+  PLAYBACKS,
+  ROBOTS,
+  ROBOT_COLORS,
+  ROBOT_FACES,
+  useSkinStore,
+} from "@/stores/skin-store";
+import { RobotAvatar } from "@/features/floating";
+import type { Skin } from "@/stores/skin-store";
 import { SkinSetting } from "./SkinSetting";
 import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
@@ -146,7 +158,7 @@ type RowProps = {
   /** 设置名。 */
   label: string;
   /** 一句说明。 */
-  hint: string;
+  hint?: string;
   /** 右侧的控件。 */
   children: ReactNode;
 };
@@ -162,7 +174,7 @@ function Row({ label, hint, children }: RowProps) {
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3.5">
       <div className="min-w-0 flex-1 basis-52">
         <p className="text-sm font-medium text-text">{label}</p>
-        <p className="mt-0.5 text-xs text-muted">{hint}</p>
+        {hint && <p className="mt-0.5 text-xs text-muted">{hint}</p>}
       </div>
       <div className="min-w-0 max-w-full">{children}</div>
     </div>
@@ -207,7 +219,16 @@ export function SettingsPage() {
   const updateAppearance = useAppearanceStore((state) => state.update);
   const resetAppearance = useAppearanceStore((state) => state.reset);
   const skin = useSkinStore((state) => state.skin);
-  const updateSkin = useSkinStore((state) => state.update);
+  const saveSkin = useSkinStore((state) => state.update);
+  /**
+   * 保存外观并在本地写入失败时反馈。
+   * @param patch 更改的外观字段。
+   */
+  function updateSkin(patch: Partial<Skin>): void {
+    if (!saveSkin(patch)) {
+      useToastStore.getState().push("error", t("settings.companion.saveFailed"));
+    }
+  }
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
 
@@ -389,18 +410,88 @@ export function SettingsPage() {
               {t("settings.appearance.group.badge")}
             </legend>
             <div className="divide-y divide-border">
-              <Row
-                label={t("settings.appearance.shape.label")}
-                hint={t("settings.appearance.shape.hint")}
-              >
+              <Row label={t("settings.companion.mode")}>
                 <Segmented
-                  label={t("settings.appearance.shape.label")}
-                  value={appearance.badgeShape}
-                  options={BADGE_SHAPES}
-                  render={(o) => t(`settings.appearance.shape.${o}`)}
-                  onChange={(badgeShape) => updateAppearance({ badgeShape })}
+                  label={t("settings.companion.mode")}
+                  value={skin.mode}
+                  options={AVATAR_MODES}
+                  render={(o) => t(`settings.companion.modes.${o}`)}
+                  onChange={(mode) => updateSkin({ mode })}
                 />
               </Row>
+              {skin.mode === "robot" && (
+                <>
+                  <div
+                    className="flex flex-wrap gap-2 py-3"
+                    role="group"
+                    aria-label={t("settings.companion.robot")}
+                  >
+                    {ROBOTS.map((robot) => (
+                      <button
+                        key={robot}
+                        type="button"
+                        aria-pressed={skin.robot === robot}
+                        onClick={() => updateSkin({ robot })}
+                        className={cx(
+                          "flex min-w-24 flex-col items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium",
+                          skin.robot === robot
+                            ? "border-primary bg-primary/10 text-text"
+                            : "border-border bg-bg text-text hover:bg-surface-hover",
+                        )}
+                      >
+                        <span className="block h-9 w-12">
+                          <RobotAvatar appearance={{ ...skin, robot }} />
+                        </span>
+                        {t(`settings.companion.robots.${robot}`)}
+                      </button>
+                    ))}
+                  </div>
+                  <Row label={t("settings.companion.color")}>
+                    <Segmented
+                      label={t("settings.companion.color")}
+                      value={skin.color}
+                      options={ROBOT_COLORS}
+                      render={(o) => t(`settings.companion.colors.${o}`)}
+                      onChange={(color) => updateSkin({ color })}
+                    />
+                  </Row>
+                  <Row label={t("settings.companion.face")}>
+                    <Segmented
+                      label={t("settings.companion.face")}
+                      value={skin.face}
+                      options={ROBOT_FACES}
+                      render={(o) => t(`settings.companion.faces.${o}`)}
+                      onChange={(face) => updateSkin({ face })}
+                    />
+                  </Row>
+                </>
+              )}
+              {skin.mode === "badge" && (
+                <Row
+                  label={t("settings.appearance.shape.label")}
+                  hint={t("settings.appearance.shape.hint")}
+                >
+                  <Segmented
+                    label={t("settings.appearance.shape.label")}
+                    value={appearance.badgeShape}
+                    options={BADGE_SHAPES}
+                    render={(o) => t(`settings.appearance.shape.${o}`)}
+                    onChange={(badgeShape) => updateAppearance({ badgeShape })}
+                  />
+                </Row>
+              )}
+              {skin.mode !== "badge" && (
+                <Row
+                  label={t("settings.skin.showCount.label")}
+                  hint={t("settings.skin.showCount.hint")}
+                >
+                  <Switch
+                    label={t("settings.skin.showCount.label")}
+                    checked={skin.showCount}
+                    onCheckedChange={(showCount) => updateSkin({ showCount })}
+                  />
+                </Row>
+              )}
               <Row
                 label={t("settings.appearance.corners.label")}
                 hint={t("settings.appearance.corners.hint")}
@@ -490,78 +581,72 @@ export function SettingsPage() {
               </Row>
             </div>
           </fieldset>
-          <fieldset className="min-w-0 p-3">
-            <legend className="px-1 text-sm font-medium text-text">
-              {t("settings.appearance.group.skin")}
-            </legend>
-            <div className="divide-y divide-border">
-              <Row label={t("settings.skin.label")} hint={t("settings.skin.hint")}>
-                <SkinSetting />
-              </Row>
-              <Row label={t("settings.skin.pixel.label")} hint={t("settings.skin.pixel.hint")}>
-                <Switch
-                  label={t("settings.skin.pixel.label")}
-                  checked={skin.pixel}
-                  onCheckedChange={(pixel) => updateSkin({ pixel })}
-                />
-              </Row>
-              <Row
-                label={t("settings.skin.showCount.label")}
-                hint={t("settings.skin.showCount.hint")}
-              >
-                <Switch
-                  label={t("settings.skin.showCount.label")}
-                  checked={skin.showCount}
-                  onCheckedChange={(showCount) => updateSkin({ showCount })}
-                />
-              </Row>
-            </div>
-          </fieldset>
-          <fieldset className="min-w-0 p-3">
-            <legend className="px-1 text-sm font-medium text-text">
-              {t("settings.appearance.group.motion")}
-            </legend>
-            <div className="divide-y divide-border">
-              <Row
-                label={t("settings.skin.playback.label")}
-                hint={t("settings.skin.playback.hint")}
-              >
-                <Segmented
-                  label={t("settings.skin.playback.label")}
-                  value={skin.playback}
-                  options={PLAYBACKS}
-                  render={(o) => t(`settings.skin.playback.${o}`)}
-                  onChange={(playback) => updateSkin({ playback })}
-                />
-              </Row>
-              <Row label={t("settings.skin.fps.label")} hint={t("settings.skin.fps.hint")}>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    aria-label={t("settings.skin.fps.label")}
-                    min={MIN_FPS}
-                    max={MAX_FPS}
-                    step={1}
-                    value={skin.fps}
-                    onChange={(event) => updateSkin({ fps: Number(event.target.value) })}
-                    className="w-32 accent-(--nv-primary)"
+          {skin.mode === "image" && (
+            <fieldset className="min-w-0 p-3">
+              <legend className="px-1 text-sm font-medium text-text">
+                {t("settings.appearance.group.skin")}
+              </legend>
+              <div className="divide-y divide-border">
+                <Row label={t("settings.skin.label")} hint={t("settings.skin.hint")}>
+                  <SkinSetting />
+                </Row>
+                <Row label={t("settings.skin.pixel.label")} hint={t("settings.skin.pixel.hint")}>
+                  <Switch
+                    label={t("settings.skin.pixel.label")}
+                    checked={skin.pixel}
+                    onCheckedChange={(pixel) => updateSkin({ pixel })}
                   />
-                  <span className="w-10 text-right text-xs text-muted tabular-nums">
-                    {skin.fps}
-                  </span>
-                </div>
-              </Row>
-              <Row label={t("settings.skin.motion.label")} hint={t("settings.skin.motion.hint")}>
-                <Segmented
-                  label={t("settings.skin.motion.label")}
-                  value={skin.motion}
-                  options={MOTIONS}
-                  render={(o) => t(`settings.skin.motion.${o}`)}
-                  onChange={(motion) => updateSkin({ motion })}
-                />
-              </Row>
-            </div>
-          </fieldset>
+                </Row>
+              </div>
+            </fieldset>
+          )}
+          {skin.mode === "image" && (
+            <fieldset className="min-w-0 p-3">
+              <legend className="px-1 text-sm font-medium text-text">
+                {t("settings.appearance.group.motion")}
+              </legend>
+              <div className="divide-y divide-border">
+                <Row
+                  label={t("settings.skin.playback.label")}
+                  hint={t("settings.skin.playback.hint")}
+                >
+                  <Segmented
+                    label={t("settings.skin.playback.label")}
+                    value={skin.playback}
+                    options={PLAYBACKS}
+                    render={(o) => t(`settings.skin.playback.${o}`)}
+                    onChange={(playback) => updateSkin({ playback })}
+                  />
+                </Row>
+                <Row label={t("settings.skin.fps.label")} hint={t("settings.skin.fps.hint")}>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      aria-label={t("settings.skin.fps.label")}
+                      min={MIN_FPS}
+                      max={MAX_FPS}
+                      step={1}
+                      value={skin.fps}
+                      onChange={(event) => updateSkin({ fps: Number(event.target.value) })}
+                      className="w-32 accent-(--nv-primary)"
+                    />
+                    <span className="w-10 text-right text-xs text-muted tabular-nums">
+                      {skin.fps}
+                    </span>
+                  </div>
+                </Row>
+                <Row label={t("settings.skin.motion.label")} hint={t("settings.skin.motion.hint")}>
+                  <Segmented
+                    label={t("settings.skin.motion.label")}
+                    value={skin.motion}
+                    options={MOTIONS}
+                    render={(o) => t(`settings.skin.motion.${o}`)}
+                    onChange={(motion) => updateSkin({ motion })}
+                  />
+                </Row>
+              </div>
+            </fieldset>
+          )}
         </Section>
         <Section id="settings-notifications" title={t("settings.section.notifications")}>
           <Row

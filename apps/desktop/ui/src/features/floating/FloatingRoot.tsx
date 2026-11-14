@@ -9,7 +9,7 @@ import type { DropDraft } from "@/features/capture";
 import { useInboxCountQuery } from "@/features/inbox";
 import { useTodayQuery } from "@/features/today";
 import { useAppearanceStore } from "@/stores/appearance-store";
-import { useSkinStore } from "@/stores/skin-store";
+import { hasImageSkin, useSkinStore } from "@/stores/skin-store";
 import { CreateConfiguration } from "@/features/quick-create";
 import { FloatingBadge } from "./FloatingBadge";
 import { TodayPanel } from "./TodayPanel";
@@ -64,8 +64,9 @@ export function FloatingRoot() {
   const [createFocusRequest, setCreateFocusRequest] = useState(0);
   const isPanel = needsPanelWindow(state);
   const shape = useAppearanceStore((s) => s.appearance.badgeShape);
-  const hasSkin = useSkinStore((s) => s.skin.frames.length > 0);
-  const { width: badgeWidth, height: badgeHeight } = badgeSize(shape, hasSkin);
+  const hasSkin = useSkinStore((s) => hasImageSkin(s.skin));
+  const classic = useSkinStore((s) => s.skin.mode === "badge");
+  const { width: badgeWidth, height: badgeHeight } = badgeSize(shape, hasSkin, classic);
   /** 是否曾经展开过：避免启动时对"本来就是收起"的窗口多发一次收起命令。 */
   const hasExpandedRef = useRef(false);
   /** 最近一次告诉后端的徽标尺寸；窗口按默认尺寸创建，形状没变时不必再说一次。 */
