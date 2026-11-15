@@ -177,6 +177,11 @@ fn read_image() -> Option<Vec<u8>> {
 pub struct WindowsClipboard;
 
 impl ClipboardPort for WindowsClipboard {
+    fn read_text(&self) -> Result<Option<String>, PlatformError> {
+        let _clipboard = OpenClipboardGuard::open()?;
+        Ok(read_text())
+    }
+
     /// 读取剪贴板：文件 / 图片 / 文本，可以同时存在多种。
     fn read(&self) -> Result<ClipboardContent, PlatformError> {
         let _clipboard = OpenClipboardGuard::open()?;

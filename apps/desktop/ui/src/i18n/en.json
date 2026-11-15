@@ -131,6 +131,8 @@
         "web": "Web link",
         "file": "File",
         "text": "Text",
+        "clipboard": "Clipboard",
+        "selection": "Text selection",
         "image": "Image",
         "manual": "Created manually"
       },
@@ -203,6 +205,14 @@
       "unsupportedKey": "This key can't be used in a shortcut."
     },
     "action": {
+      "contextCreate": {
+        "label": "Create from selection or clipboard",
+        "hint": "Select text or copy a message, then press the shortcut to prefill a to-do.",
+        "button": "Create from selection or clipboard: {{accelerator}}",
+        "conflict": "{{accelerator}} is already in use. Choose another shortcut to create from selection or clipboard.",
+        "saved": "Create from selection or clipboard shortcut changed to {{accelerator}}",
+        "disabled": "Create from selection or clipboard shortcut turned off"
+      },
       "quickCreate": {
         "label": "Quick Create shortcut",
         "button": "Quick Create: {{accelerator}}",
@@ -237,6 +247,8 @@
       "today": "Today",
       "tomorrow": "Tomorrow",
       "later": "Next Monday",
+      "scheduleDate": "Schedule a date…",
+      "schedule": "Schedule",
       "convert": "Make {{type}}",
       "convertMenu": "Convert to…",
       "leave": "Remove from Inbox",
@@ -257,7 +269,7 @@
     },
     "empty": {
       "title": "Your Inbox is empty",
-      "hint": "Drop links, text or images on the floating badge. They land here first, so you can sort them when you have time."
+      "hint": "Copy a chat message, then press Ctrl+V here. You can also drop links, text or images on the floating badge."
     },
     "filter": "Filter the inbox",
     "noMatch": "No matching items."
@@ -265,17 +277,22 @@
   "capture": {
     "drop": {
       "label": "Drop targets",
+      "badgeHint": "Drop text, links or files",
       "create": {
         "title": "New item…",
+        "active": "Release to prefill a new item",
         "hint": "Prefilled from what you drop; pick type, date and project"
       },
       "inbox": {
         "title": "Straight to Inbox",
+        "active": "Release to collect in Inbox",
         "hint": "Create now, sort it out later"
       }
     },
     "saving": "Capturing…",
     "paste": "Paste",
+    "pasteToInbox": "Paste into Inbox",
+    "view": "View",
     "pasted": "Captured: {{title}}",
     "pastedMany": "Captured {{count}} items",
     "created": "Created: {{title}}",
@@ -826,6 +843,7 @@
     "due": "Due",
     "dueChip": "Due date of “{{title}}”",
     "addOn": "Add a to-do on {{date}}",
+    "pasteOnDay": "Create from clipboard…",
     "newTodo": "New to-do",
     "newTodoPlaceholder": "Write something, Enter to add",
     "timeRecognised": "🕒 {{time}}",
@@ -1168,6 +1186,29 @@
     }
   },
   "createConfiguration": {
+    "importClipboard": "Import from clipboard",
+    "importSource": {
+      "selection": "From the current selection",
+      "clipboard": "From the clipboard",
+      "empty": "Select text or copy a message and try again",
+      "unavailable": "Couldn't read the clipboard"
+    },
+    "importingClipboard": "Reading…",
+    "appendClipboard": "Append to content",
+    "dismissClipboard": "Cancel import",
+    "destination": "Destination",
+    "toInbox": "Inbox",
+    "toToday": "Today",
+    "chooseDate": "Choose date…",
+    "selectedDate": "Planned for {{date}}",
+    "originalMessage_one": "Original message ({{count}} line)",
+    "originalMessage_other": "Original message ({{count}} lines)",
+    "suggestedDates": "Dates found in the content",
+    "applyPlan": "Set planned date",
+    "applyPlanFor": "Set {{date}} as the planned date",
+    "applyDue": "Set deadline",
+    "applyDueFor": "Set {{date}} as the deadline",
+    "skipDateSuggestions": "Skip date suggestions",
     "title": "Create an item",
     "hint": "Add the details and a schedule, then choose Create to save.",
     "titleLabel": "Title (required)",
@@ -1197,6 +1238,7 @@
     "linksEmpty": "Drag a web page or file onto this window to link it to the note (files are linked by location)."
   },
   "dropCreate": {
+    "linksSkipped": "Up to 20 references are supported. {{count}} were skipped. Remove some references and import again.",
     "links": "Linked materials ({{count}})",
     "remove": "Remove linked material “{{name}}”",
     "removeShort": "Remove",

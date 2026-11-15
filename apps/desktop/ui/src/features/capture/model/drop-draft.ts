@@ -19,6 +19,8 @@ export type DropDraft = {
   content: string;
   /** 关联资料，已去重。 */
   links: DraftLink[];
+  /** 因超过关联资料上限而未加入的数量。 */
+  skippedLinks?: number;
 };
 
 /**
@@ -134,6 +136,13 @@ export function mergeLinks(
   return merged;
 }
 
+/** 合并草稿中的链接，并记录超过上限的数量。 */
+function linkDraft(incoming: DraftLink[]): Pick<DropDraft, "links" | "skippedLinks"> {
+  const links = mergeLinks([], incoming);
+  const skippedLinks = new Set(incoming.map(linkKey)).size - links.length;
+  return skippedLinks > 0 ? { links, skippedLinks } : { links };
+}
+
 /**
  * 草稿关联资料 → IPC 请求里的 `links`：文件只传路径，元数据由后端读取。
  *
@@ -165,11 +174,26 @@ export function shortUrl(url: string): string {
 }
 
 /** 多行或超长文字：标题取首行，全文放进内容（与收集箱的默认规则一致）。 */
-function textDraft(text: string): DropDraft {
+export function textDraft(text: string): DropDraft {
   const trimmed = text.trim();
   const firstLine = trimmed.split(/\r?\n/)[0]?.trim() ?? "";
   const title = [...firstLine].slice(0, MAX_TITLE_CHARS).join("");
-  return { kind: "todo", title, content: title === trimmed ? "" : trimmed, links: [] };
+  const links: DraftLink[] = [];
+  const seen = new Set<string>();
+  for (const match of text.matchAll(/https?:\/\/[^\s<>"'，。；！？、）】]+/gi)) {
+    const url = match[0].replace(/[.,;!?]+$/, "");
+    if (!URL.canParse(url) || seen.has(url)) continue;
+    seen.add(url);
+    if (links.length < MAX_DRAFT_LINKS) links.push({ kind: "web", url, title: null });
+  }
+  const skippedLinks = seen.size - links.length;
+  return {
+    kind: "todo",
+    title,
+    content: title === text ? "" : text,
+    links,
+    ...(skippedLinks > 0 ? { skippedLinks } : {}),
+  };
 }
 
 /**
@@ -193,11 +217,8 @@ export async function extractDraft(
   if (snapshot.files.length > 0 && !(onlyImages && web.length > 0)) {
     const paths = await resolvePaths(snapshot.files);
     if (paths !== null) {
-      const links = mergeLinks(
-        [],
-        paths.map((path) => ({ kind: "file" as const, path, name: baseName(path) })),
-      );
-      return { kind: "draft", draft: { kind: "note", title: null, content: "", links } };
+      const linked = linkDraft(paths.map((path) => ({ kind: "file", path, name: baseName(path) })));
+      return { kind: "draft", draft: { kind: "note", title: null, content: "", ...linked } };
     }
     if (onlyImages) return { kind: "inbox" };
     return { kind: "unsupported", reason: "files" };
@@ -205,7 +226,7 @@ export async function extractDraft(
   if (web.length > 0) {
     return {
       kind: "draft",
-      draft: { kind: "note", title: null, content: "", links: mergeLinks([], web) },
+      draft: { kind: "note", title: null, content: "", ...linkDraft(web) },
     };
   }
   if (snapshot.text.trim().length > 0) return { kind: "draft", draft: textDraft(snapshot.text) };

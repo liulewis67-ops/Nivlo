@@ -9,7 +9,7 @@
 
 use std::sync::Arc;
 
-use chrono::NaiveDate;
+use chrono::{DateTime, NaiveDate, Utc};
 use nivlo_common::clock::Clock;
 use nivlo_domain::attachment::Attachment;
 use nivlo_domain::event::DomainEvent;
@@ -18,7 +18,7 @@ use nivlo_domain::item::{DatePoint, Item, ItemType};
 use nivlo_domain::source::Source;
 use nivlo_domain::tag::Tag;
 
-use crate::error::AppError;
+use crate::error::{AppError, ErrorCode};
 use crate::event::EventPublisher;
 use crate::ports::{ItemFilter, UnitOfWork};
 use crate::settings::read_later_rule;
@@ -75,6 +75,8 @@ pub struct PreviousState {
     pub in_inbox: bool,
     /// 原来是否已归档。
     pub archived: bool,
+    /// 整理写入后的版本，避免撤销覆盖后续编辑。
+    pub revision: Option<DateTime<Utc>>,
 }
 
 impl PreviousState {
@@ -86,6 +88,7 @@ impl PreviousState {
             scheduled: item.scheduled(),
             in_inbox: item.in_inbox(),
             archived: item.is_archived(),
+            revision: None,
         }
     }
 }
@@ -193,7 +196,7 @@ impl InboxService {
                 .get(id)
                 .await?
                 .ok_or_else(|| AppError::item_not_found(id))?;
-            previous.push(PreviousState::of(&item));
+            let mut prior = PreviousState::of(&item);
             let event = match action {
                 OrganizeAction::LeaveInbox => item.leave_inbox(now),
                 OrganizeAction::Schedule(target) => {
@@ -209,6 +212,8 @@ impl InboxService {
                 OrganizeAction::Archive => item.archive(now)?,
             };
             tx.items().update(&item).await?;
+            prior.revision = Some(item.updated_at());
+            previous.push(prior);
             if matches!(action, OrganizeAction::Schedule(_)) {
                 // 换了日期，它在 Today 里的旧位置不再有意义。
                 tx.today_order().remove_item(id).await?;
@@ -241,6 +246,14 @@ impl InboxService {
                 .get(state.id)
                 .await?
                 .ok_or_else(|| AppError::item_not_found(state.id))?;
+            if state.revision.is_some_and(|revision| {
+                revision.timestamp_millis() != item.updated_at().timestamp_millis()
+            }) {
+                return Err(AppError::new(
+                    ErrorCode::InvalidInput,
+                    "事项已修改，无法撤销整理",
+                ));
+            }
             item.change_type(state.item_type, now);
             item.set_scheduled(state.scheduled, now);
             if item.is_archived() && !state.archived {

@@ -560,7 +560,15 @@ impl CaptureService {
             let source = Source {
                 id: SourceId::from_uuid(new_uuid_v7(self.clock.as_ref())),
                 item_id,
-                source_type: SourceType::new(planned.source.source_type),
+                source_type: SourceType::new(
+                    if planned.source.source_type == SourceType::TEXT
+                        && request.origin == CaptureOrigin::Paste
+                    {
+                        SourceType::CLIPBOARD
+                    } else {
+                        planned.source.source_type
+                    },
+                ),
                 source_app: request.source_application.clone(),
                 source_url: planned.source.url,
                 source_path: planned.source.path,

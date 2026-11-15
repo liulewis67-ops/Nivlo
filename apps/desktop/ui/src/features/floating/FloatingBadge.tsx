@@ -245,6 +245,7 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
     <button
       type="button"
       aria-label={status === null ? t("floating.open") : `${t("floating.open")}，${status}`}
+      title={t("capture.drop.badgeHint")}
       aria-description={onQuickAdd ? t("floating.quickAddHint") : undefined}
       data-shape={robot ? "robot" : hasSkin ? "skin" : shape}
       data-done={allDone || undefined}

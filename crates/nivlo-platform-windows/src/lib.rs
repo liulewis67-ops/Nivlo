@@ -15,6 +15,7 @@ pub mod credential;
 pub mod foreground;
 pub mod menu_key;
 pub mod power;
+pub mod selection;
 pub mod shortcut;
 pub mod source_app;
 pub mod toast;

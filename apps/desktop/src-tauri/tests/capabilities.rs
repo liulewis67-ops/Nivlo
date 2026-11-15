@@ -14,8 +14,11 @@ use serde_json::Value;
 /// 这里是**上限**：任何不在其中的命令都不得出现在 `floating.json`。
 const FLOATING_ALLOWED: &[&str] = &[
     "get_today",
+    // 悬浮窗用只读界面偏好同步显示配置。
+    "get_ui_pref",
     "quick_create",
     "create_item",
+    "undo_created_item",
     "list_projects",
     "complete_item",
     // 完成的撤销（D-12 的 `undo` 在 Item 完成场景的具体命令）。
@@ -26,7 +29,9 @@ const FLOATING_ALLOWED: &[&str] = &[
     "undo_capture",
     // 用户在悬浮窗上点「粘贴」：只在这个明确的动作里读取剪贴板（架构文档 §17）。
     "capture_from_clipboard",
+    "read_clipboard_text",
     "open_main",
+    "open_item_in_main",
     // 悬浮窗请求主窗口打开某个视图（如收集箱）。
     "open_main_at",
     "reschedule_item",

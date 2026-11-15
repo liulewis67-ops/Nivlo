@@ -37,8 +37,8 @@ export function InboxPage() {
   const entries = inbox.data;
   const { organize } = useOrganize();
   const { remove } = useDeleteItems();
-  const paste = usePasteCapture();
   const openItem = useOpenItem();
+  const paste = usePasteCapture(openItem);
 
   // Ctrl+V（macOS 为 Cmd+V）：焦点不在输入框里时，把剪贴板收进 Inbox。
   // 只响应用户按下的粘贴快捷键，没有任何监听剪贴板的行为。
@@ -49,12 +49,19 @@ export function InboxPage() {
      * @param event 键盘事件。
      */
     const onKeyDown = (event: globalThis.KeyboardEvent): void => {
-      if (event.defaultPrevented || event.key.toLowerCase() !== "v") return;
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        event.isComposing ||
+        event.key.toLowerCase() !== "v"
+      )
+        return;
       if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return;
       const target = event.target;
       if (
         target instanceof HTMLElement &&
-        (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+        (target.isContentEditable ||
+          target.closest("input, textarea, select, [aria-modal='true'], dialog[open]") !== null)
       ) {
         return;
       }
@@ -67,6 +74,7 @@ export function InboxPage() {
   const [picked, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+  const pasteButtonRef = useRef<HTMLButtonElement>(null);
   /** 整理之后要聚焦的那一行（整理前焦点在列表里时才有）；列表更新后由下面的 Effect 聚焦。 */
   const refocusId = useRef<string | null>(null);
 
@@ -230,8 +238,8 @@ export function InboxPage() {
             <span className="text-sm text-muted tabular-nums">
               {count === 0 ? t("inbox.page.allClear") : t("inbox.page.pending", { count })}
             </span>
-            <Button size="sm" onClick={() => void paste()}>
-              {t("capture.paste")}
+            <Button ref={pasteButtonRef} size="sm" onClick={() => void paste()}>
+              {t("capture.pasteToInbox")}
             </Button>
           </div>
         </div>
@@ -347,6 +355,18 @@ export function InboxPage() {
                 selected={selected.has(entry.item.id)}
                 onToggle={(range) => toggle(entry.item.id, range)}
                 onOrganize={(kind) => run([entry.item.id], kind)}
+                onSchedule={async (date) => {
+                  const nextId = nextRemaining(order, [entry.item.id]);
+                  const ok = await organize([entry.item.id], { date }, entry.item.title);
+                  if (ok) {
+                    const next = Array.from(
+                      sectionRef.current?.querySelectorAll<HTMLElement>("[data-inbox-select]") ??
+                        [],
+                    ).find((node) => node.dataset.itemId === nextId);
+                    (next ?? pasteButtonRef.current)?.focus();
+                  }
+                  return ok;
+                }}
                 onDelete={() => deleteItems([entry.item.id], entry.item.title)}
               />
             ))}

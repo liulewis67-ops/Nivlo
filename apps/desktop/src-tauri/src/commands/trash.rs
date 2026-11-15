@@ -3,7 +3,7 @@
 use tauri::State;
 
 use crate::app::AppState;
-use crate::dto::{IpcError, TrashEntryDto, parse_item_id};
+use crate::dto::{IpcError, TrashEntryDto, parse_item_id, parse_utc};
 
 /// 解析一批 Item ID；任何一个格式不合法都整批拒绝。
 fn parse_ids(ids: &[String]) -> Result<Vec<nivlo_domain::id::ItemId>, IpcError> {
@@ -23,6 +23,26 @@ fn parse_ids(ids: &[String]) -> Result<Vec<nivlo_domain::id::ItemId>, IpcError> 
 #[specta::specta]
 pub async fn delete_items(state: State<'_, AppState>, ids: Vec<String>) -> Result<(), IpcError> {
     state.services.trash.delete(&parse_ids(&ids)?).await?;
+    Ok(())
+}
+
+/// 撤销一次创建，将仍处于创建时版本的事项移入回收站。
+///
+/// # Errors
+///
+/// 版本已变化或参数无效时返回 `INVALID_INPUT`。
+#[tauri::command]
+#[specta::specta]
+pub async fn undo_created_item(
+    state: State<'_, AppState>,
+    id: String,
+    revision: String,
+) -> Result<(), IpcError> {
+    state
+        .services
+        .trash
+        .undo_created(parse_item_id(&id)?, parse_utc(&revision)?)
+        .await?;
     Ok(())
 }
 

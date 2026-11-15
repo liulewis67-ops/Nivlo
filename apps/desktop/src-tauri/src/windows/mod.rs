@@ -142,6 +142,8 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
                 .inner_size(MAIN_WIDTH, MAIN_HEIGHT)
                 .visible(false)
                 .zoom_hotkeys_enabled(cfg!(target_os = "windows"))
+                // 日历需要 WebView2 传来的 HTML5 文本拖放。
+                .disable_drag_drop_handler()
                 .build()
                 .inspect(suppress_bare_alt_menu)?
         }

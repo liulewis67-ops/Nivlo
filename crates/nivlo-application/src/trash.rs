@@ -13,7 +13,7 @@ use nivlo_domain::event::DomainEvent;
 use nivlo_domain::id::ItemId;
 use nivlo_domain::item::Item;
 
-use crate::error::AppError;
+use crate::error::{AppError, ErrorCode};
 use crate::event::EventPublisher;
 use crate::ports::{AttachmentFiles, Transaction, UnitOfWork};
 
@@ -80,6 +80,37 @@ impl TrashService {
             self.events
                 .publish(DomainEvent::ItemDeleted { item_id: *id });
         }
+        Ok(())
+    }
+
+    /// 撤销创建：仅把仍处于创建时版本的条目移进回收站。
+    ///
+    /// # Errors
+    ///
+    /// 条目不存在、已被编辑或存储失败时，事务保持原样。
+    pub async fn undo_created(&self, id: ItemId, revision: DateTime<Utc>) -> Result<(), AppError> {
+        let now = self.clock.now_utc();
+        let mut tx = self.uow.begin().await?;
+        let item = tx
+            .items()
+            .get(id)
+            .await?
+            .ok_or_else(|| AppError::item_not_found(id))?;
+        // 存储层的审计时间戳为毫秒精度。
+        let revision = revision.timestamp_millis();
+        if item.created_at().timestamp_millis() != revision
+            || item.updated_at().timestamp_millis() != revision
+        {
+            return Err(AppError::new(
+                ErrorCode::InvalidInput,
+                "事项已修改，无法撤销创建".to_owned(),
+            ));
+        }
+        tx.trash().mark_deleted(id, now).await?;
+        tx.today_order().remove_item(id).await?;
+        tx.commit().await?;
+        self.events
+            .publish(DomainEvent::ItemDeleted { item_id: id });
         Ok(())
     }
 

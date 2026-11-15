@@ -1,7 +1,8 @@
 import { parseISO } from "date-fns";
 import { distanceToNow } from "@/lib/date-format";
 import { useTranslation } from "react-i18next";
-import { Button, Menu } from "@/components";
+import { useEffect, useRef, useState } from "react";
+import { Button, Input, Menu } from "@/components";
 import { useOpenItem } from "@/features/detail";
 import type { MenuItemSpec } from "@/components";
 import type { InboxEntryDto, ItemTypeDto } from "@/lib/ipc";
@@ -23,6 +24,8 @@ export type InboxRowProps = {
   onToggle: (range: boolean) => void;
   /** 对这一条执行整理动作。 */
   onOrganize: (kind: OrganizeKind) => void;
+  /** 为待办安排明确日期。 */
+  onSchedule: (date: string) => Promise<boolean>;
   /** 删除这一条（移进回收站）。 */
   onDelete: () => void;
 };
@@ -36,11 +39,27 @@ export type InboxRowProps = {
  * @param props 条目、选中状态与回调。
  * @returns 列表项。
  */
-export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: InboxRowProps) {
+export function InboxRow({
+  entry,
+  selected,
+  onToggle,
+  onOrganize,
+  onSchedule,
+  onDelete,
+}: InboxRowProps) {
   const { t } = useTranslation();
   const { item } = entry;
   const summary = summarizeEntry(entry);
   const openItem = useOpenItem();
+  const [date, setDate] = useState<string | null>(null);
+  const [scheduling, setScheduling] = useState(false);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const organizeRef = useRef<HTMLButtonElement>(null);
+  const focusDateOnMenuClose = useRef(false);
+  const dateEditorOpen = date !== null;
+  useEffect(() => {
+    if (dateEditorOpen) dateRef.current?.focus();
+  }, [dateEditorOpen]);
   // 标题已经是文件名 / 网址时，不再重复显示同样的来源说明。
   const detail = [summary.detail, summary.app].filter(
     (part) => part !== null && part !== "" && part !== item.title,
@@ -50,6 +69,18 @@ export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: In
     { id: "today", label: t("inbox.action.today"), onSelect: () => onOrganize("today") },
     { id: "tomorrow", label: t("inbox.action.tomorrow"), onSelect: () => onOrganize("tomorrow") },
     { id: "later", label: t("inbox.action.later"), onSelect: () => onOrganize("later") },
+    ...(item.itemType === "todo"
+      ? [
+          {
+            id: "date",
+            label: t("inbox.action.scheduleDate"),
+            onSelect: () => {
+              focusDateOnMenuClose.current = true;
+              setDate(item.scheduled?.date ?? "");
+            },
+          },
+        ]
+      : []),
     ...CONVERT_KINDS.filter((kind) => kind !== item.itemType).map((kind) => ({
       id: `convert-${kind}`,
       label: t("inbox.action.convert", { type: t(`quickCreate.kind.${kind}`) }),
@@ -114,13 +145,64 @@ export function InboxRow({ entry, selected, onToggle, onOrganize, onDelete }: In
       <div className="flex shrink-0 items-center gap-1">
         <Menu
           trigger={
-            <Button size="sm" variant="ghost" aria-label={t("inbox.action.more")}>
+            <Button ref={organizeRef} size="sm" variant="ghost" aria-label={t("inbox.action.more")}>
               {t("inbox.action.organize")}
             </Button>
           }
           items={moreItems}
+          onCloseAutoFocus={(event) => {
+            if (!focusDateOnMenuClose.current) return;
+            focusDateOnMenuClose.current = false;
+            event.preventDefault();
+            dateRef.current?.focus();
+          }}
         />
       </div>
+      {date !== null && (
+        <form
+          className="flex basis-full flex-wrap items-center gap-2 pl-7"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!date || scheduling) return;
+            setScheduling(true);
+            void onSchedule(date).then((ok) => {
+              setScheduling(false);
+              if (ok) setDate(null);
+            });
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || scheduling || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setDate(null);
+            organizeRef.current?.focus();
+          }}
+        >
+          <Input
+            ref={dateRef}
+            type="date"
+            required
+            disabled={scheduling}
+            aria-label={t("detail.field.scheduledDate")}
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+          />
+          <Button type="submit" size="sm" disabled={!date || scheduling}>
+            {t("inbox.action.schedule")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={scheduling}
+            onClick={() => {
+              setDate(null);
+              organizeRef.current?.focus();
+            }}
+          >
+            {t("createConfiguration.cancel")}
+          </Button>
+        </form>
+      )}
     </li>
   );
 }

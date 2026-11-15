@@ -65,6 +65,30 @@ pub struct MainViewRequestedEvent {
 #[tauri_specta(event_name = "quick_add_requested")]
 pub struct QuickAddRequestedEvent {}
 
+/// 仅发送给悬浮窗的本次用户主动捕获结果，保存在未提交草稿中。
+#[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
+#[tauri_specta(event_name = "context_create_requested")]
+pub struct ContextCreateRequestedEvent {
+    /// 本次可用文本。
+    pub text: Option<String>,
+    /// 文本来源或读取状态。
+    pub source: ContextCreateSource,
+}
+
+/// 快捷键读取状态。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum ContextCreateSource {
+    /// 前台应用当前的文本选区。
+    Selection,
+    /// 系统剪贴板。
+    Clipboard,
+    /// 没有可用的文本。
+    Empty,
+    /// 无法读取剪贴板。
+    Unavailable,
+}
+
 /// 全局搜索框刚被显示：页面应清空上一次的输入并聚焦输入框。
 #[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
 #[serde(rename_all = "camelCase")]

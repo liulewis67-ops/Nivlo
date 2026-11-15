@@ -130,6 +130,8 @@
         "web": "网页链接",
         "file": "文件",
         "text": "文字",
+        "clipboard": "剪贴板",
+        "selection": "文字选区",
         "image": "图片",
         "manual": "手动创建"
       },
@@ -202,6 +204,14 @@
       "unsupportedKey": "这个按键不能用作快捷键。"
     },
     "action": {
+      "contextCreate": {
+        "label": "从选区或剪贴板新建",
+        "hint": "选中文字或复制消息，再按快捷键预填待办。",
+        "button": "从选区或剪贴板新建：{{accelerator}}",
+        "conflict": "{{accelerator}} 已被占用，请为从选区或剪贴板新建换一个快捷键。",
+        "saved": "从选区或剪贴板新建的快捷键已改为 {{accelerator}}",
+        "disabled": "已停用从选区或剪贴板新建的快捷键"
+      },
       "quickCreate": {
         "label": "快速创建快捷键",
         "button": "快速创建：{{accelerator}}",
@@ -236,6 +246,8 @@
       "today": "今天",
       "tomorrow": "明天",
       "later": "下周一",
+      "scheduleDate": "安排日期…",
+      "schedule": "安排",
       "convert": "转为{{type}}",
       "convertMenu": "转为…",
       "leave": "移出收集箱",
@@ -256,7 +268,7 @@
     },
     "empty": {
       "title": "收集箱是空的",
-      "hint": "把链接、文字或图片拖到悬浮窗，它们会先落在这里，等你有空再整理。"
+      "hint": "从聊天复制消息，再回到这里按 Ctrl+V。也可以把链接、文字或图片拖到悬浮窗收集。"
     },
     "filter": "筛选收集箱",
     "noMatch": "没有匹配的条目。"
@@ -264,17 +276,22 @@
   "capture": {
     "drop": {
       "label": "放置区",
+      "badgeHint": "拖入文字、链接或文件",
       "create": {
         "title": "新建事项…",
+        "active": "松手预填事项",
         "hint": "按内容预填，再选类型、日期和项目"
       },
       "inbox": {
         "title": "直接收进收集箱",
+        "active": "松手收进收集箱",
         "hint": "立即创建，稍后整理"
       }
     },
     "saving": "正在收集…",
     "paste": "粘贴",
+    "pasteToInbox": "粘贴到收集箱",
+    "view": "查看",
     "pasted": "已收集：{{title}}",
     "pastedMany": "已收集 {{count}} 项",
     "created": "已创建：{{title}}",
@@ -823,6 +840,7 @@
     "dueChip": "「{{title}}」的截止日期",
     "more": "还有 {{count}} 项",
     "addOn": "在{{date}}添加待办",
+    "pasteOnDay": "从剪贴板新建…",
     "newTodo": "新待办",
     "newTodoPlaceholder": "写下一件事，回车添加",
     "timeRecognised": "🕒 {{time}}",
@@ -1163,6 +1181,28 @@
     }
   },
   "createConfiguration": {
+    "importClipboard": "从剪贴板导入",
+    "importSource": {
+      "selection": "来自当前选区",
+      "clipboard": "来自剪贴板",
+      "empty": "选中文字，或复制消息后再试",
+      "unavailable": "暂时无法读取剪贴板"
+    },
+    "importingClipboard": "正在读取…",
+    "appendClipboard": "追加到内容",
+    "dismissClipboard": "取消导入",
+    "destination": "去向",
+    "toInbox": "收集箱",
+    "toToday": "今天",
+    "chooseDate": "选日期…",
+    "selectedDate": "计划 {{date}}",
+    "originalMessage": "原消息（{{count}} 行）",
+    "suggestedDates": "从内容识别到的日期",
+    "applyPlan": "设为计划",
+    "applyPlanFor": "将 {{date}} 设为计划日期",
+    "applyDue": "设为截止",
+    "applyDueFor": "将 {{date}} 设为截止日期",
+    "skipDateSuggestions": "跳过日期建议",
     "title": "新增事项",
     "hint": "把内容和安排一起记下，点击创建后保存。",
     "titleLabel": "标题（必填）",
@@ -1192,6 +1232,7 @@
     "linksEmpty": "把网页或文件拖到这个窗口，就会关联到这条笔记（文件只记录位置）。"
   },
   "dropCreate": {
+    "linksSkipped": "关联资料最多 20 条，本次有 {{count}} 条未加入。移除部分资料后可以重新导入。",
     "links": "关联资料（{{count}}）",
     "remove": "移除关联资料「{{name}}」",
     "removeShort": "移除",

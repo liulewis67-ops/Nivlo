@@ -32,6 +32,8 @@ export type MenuProps = {
   items: MenuItemSpec[];
   /** 对话框内的子菜单必须出现在父表面之上。 */
   withinDialog?: boolean;
+  /** 让菜单发起的编辑动作接管关闭后的焦点。 */
+  onCloseAutoFocus?: (event: Event) => void;
 };
 
 /**
@@ -43,7 +45,7 @@ export type MenuProps = {
  * @param props 触发元素与菜单项。
  * @returns 菜单元素。
  */
-export function Menu({ trigger, items, withinDialog = false }: MenuProps) {
+export function Menu({ trigger, items, withinDialog = false, onCloseAutoFocus }: MenuProps) {
   const modal = useContext(MenuModalContext);
   return (
     <DropdownMenu.Root modal={modal}>
@@ -52,6 +54,7 @@ export function Menu({ trigger, items, withinDialog = false }: MenuProps) {
         <DropdownMenu.Content
           align="end"
           sideOffset={4}
+          onCloseAutoFocus={onCloseAutoFocus}
           className={cx(
             "min-w-36 rounded-md border border-border bg-surface p-1 shadow-md",
             withinDialog ? "z-(--nv-z-tooltip)" : "z-(--nv-z-menu)",

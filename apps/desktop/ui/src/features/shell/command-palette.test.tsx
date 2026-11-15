@@ -190,7 +190,7 @@ describe("全局搜索（Ctrl+K）", () => {
     typeQuery(">pause");
     fireEvent.click(await screen.findByRole("option", { name: /暂停通知/ }));
     await waitFor(() => expect(ipc.appSettings.notificationsPaused).toBe(true));
-    expect(await screen.findByText(/已暂停通知/)).toBeInTheDocument();
+    expect(await screen.findByText(/已暂停通知/, { selector: "span" })).toBeInTheDocument();
 
     pressCtrlK();
     await screen.findByRole("dialog", { name: "搜索" });

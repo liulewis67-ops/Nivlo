@@ -15,6 +15,7 @@ pub mod autostart;
 pub mod backup;
 pub mod clipboard;
 pub mod commands;
+mod context_create;
 pub mod credentials;
 pub mod diagnostics;
 pub mod dto;
@@ -76,6 +77,7 @@ macro_rules! bindings_builder {
                 $crate::commands::item::update_item,
                 $crate::commands::source::open_item_source::<$runtime>,
                 $crate::commands::trash::delete_items,
+                $crate::commands::trash::undo_created_item,
                 $crate::commands::trash::restore_deleted_items,
                 $crate::commands::trash::list_trash,
                 $crate::commands::trash::purge_items,
@@ -129,6 +131,7 @@ macro_rules! bindings_builder {
                 $crate::commands::capture::capture,
                 $crate::commands::capture::undo_capture,
                 $crate::commands::capture::capture_from_clipboard,
+                $crate::commands::capture::read_clipboard_text,
                 $crate::commands::inbox::list_inbox,
                 $crate::commands::inbox::get_inbox_count,
                 $crate::commands::inbox::organize_items,
@@ -164,6 +167,7 @@ macro_rules! bindings_builder {
                 $crate::events::DayChangedEvent,
                 $crate::events::MainViewRequestedEvent,
                 $crate::events::QuickAddRequestedEvent,
+                $crate::events::ContextCreateRequestedEvent,
                 $crate::events::SearchWindowShownEvent
             ])
     };
@@ -438,6 +442,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 let on_pressed: nivlo_platform::shortcut::ShortcutCallback = match action {
                     shortcut::ShortcutAction::QuickCreate => {
                         Arc::new(move || tray::request_quick_add(&handle))
+                    }
+                    shortcut::ShortcutAction::ContextCreate => {
+                        Arc::new(move || context_create::request(&handle))
                     }
                     // 回调在快捷键的消息线程上，必须立刻返回；第一次要创建窗口（会阻塞），放到后台线程。
                     shortcut::ShortcutAction::Search => Arc::new(move || {

@@ -65,7 +65,7 @@ export function CaptureFeedbackBar({
             {t("capture.undo")}
           </Button>
           <Button size="sm" variant="ghost" onClick={onEdit}>
-            {t("capture.edit")}
+            {t("capture.view")}
           </Button>
         </>
       )}

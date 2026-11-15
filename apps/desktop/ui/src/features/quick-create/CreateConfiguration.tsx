@@ -1,22 +1,29 @@
 import { isImeKey } from "@/lib/ime";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import type { ClipboardEvent, ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Textarea } from "@/components";
 import type { TFunction } from "i18next";
-import { linkKey, mergeLinks, shortUrl, toLinkDtos } from "@/features/capture";
+import { linkKey, mergeLinks, shortUrl, textDraft, toLinkDtos } from "@/features/capture";
 import type { DraftLink, DropDraft } from "@/features/capture";
 import { ProjectSelect } from "@/features/organize";
 import { reminderToUtc } from "@/features/detail";
 import { trapTab } from "@/lib/focus-trap";
 import { handleMarkdownKeyDown, handleMarkdownPaste } from "@/lib/markdown-keys";
 import { ipc } from "@/lib/ipc";
-import type { ContentFormatDto, ItemTypeDto, PriorityDto } from "@/lib/ipc";
+import type {
+  ContentFormatDto,
+  ContextCreateRequestedEvent,
+  ItemDto,
+  ItemTypeDto,
+  PriorityDto,
+} from "@/lib/ipc";
 import { errorMessage } from "@/lib/error-message";
 import { toAppError } from "@/lib/errors";
 import { reportError } from "@/lib/report-error";
 import { QUICK_CREATE_KINDS, cycleKind } from "./model/quick-create";
+import { parseDatePhrase } from "./model/date-phrase";
 
 /** 完整新增页的入口类型、默认日期与关闭回调。 */
 type CreateConfigurationProps = {
@@ -24,8 +31,16 @@ type CreateConfigurationProps = {
   kind: ItemTypeDto;
   /** 后端提供的本地今天。 */
   today?: string | undefined;
+  /** 预填日历落点；用户仍可在表单内更改。 */
+  targetDate?: string | undefined;
+  /** 由主窗口对话框承载时，无需请求悬浮窗尺寸和焦点。 */
+  embedded?: boolean;
+  /** 日期入口明确请求导入时，显示弹窗后立即读取一次。 */
+  importOnOpen?: boolean;
   /** 创建成功或明确取消后恢复悬浮框。 */
   onDone: () => void;
+  /** 提交成功后的反馈由承载窗口决定。 */
+  onCreated?: (item: ItemDto) => void;
   /** 文件或图片粘贴沿用收集箱捕获，保留当前草稿。 */
   onPasteNonText?: (() => void) | undefined;
   /** 收集结果及撤销，不覆盖底栏。 */
@@ -37,6 +52,8 @@ type CreateConfigurationProps = {
    * 追加到当前草稿（关联资料去重，标题与内容只在为空时补上）。
    */
   seed?: { id: number; draft: DropDraft } | null;
+  /** 全局快捷键传来的临时选区或剪贴板内容。 */
+  contextSeed?: { id: number; event: ContextCreateRequestedEvent } | null;
   /** 正有内容拖在页面上：显示「松手添加为关联资料」。 */
   dropActive?: boolean;
 };
@@ -50,6 +67,8 @@ type Draft = {
   format: ContentFormatDto;
   scheduledDate: string;
   scheduledTime: string;
+  inInbox: boolean;
+  textSource: "selection" | "clipboard" | null;
   dueDate: string;
   dueTime: string;
   reminder: string;
@@ -57,6 +76,7 @@ type Draft = {
   projectId: string;
   /** 关联资料：网页与本地文件引用（文件只记位置，不复制）。 */
   links: DraftLink[];
+  skippedLinks: number;
 };
 
 /** 与后端 `MAX_TITLE_CHARS` 一致，避免输入超长后才在保存时报错。 */
@@ -75,12 +95,15 @@ function blankDraft(kind: ItemTypeDto, today: string | undefined): Draft {
     format: "plain",
     scheduledDate: kind === "note" ? "" : (today ?? ""),
     scheduledTime: "",
+    inInbox: false,
+    textSource: null,
     dueDate: "",
     dueTime: "",
     reminder: "",
     priority: "none",
     projectId: "",
     links: [],
+    skippedLinks: 0,
   };
 }
 
@@ -110,6 +133,7 @@ function linkDetail(link: DraftLink): string {
 function applyDrop(current: Draft, dropped: DropDraft, t: TFunction): Draft {
   const links = mergeLinks(current.links, dropped.links);
   const added = links.slice(current.links.length);
+  const incomingCount = new Set([...current.links, ...dropped.links].map(linkKey)).size;
   const first = added[0];
   const suggested =
     dropped.title ??
@@ -124,6 +148,7 @@ function applyDrop(current: Draft, dropped: DropDraft, t: TFunction): Draft {
   return {
     ...current,
     links,
+    skippedLinks: (dropped.skippedLinks ?? 0) + incomingCount - links.length,
     title: current.title.trim() === "" ? suggested.slice(0, MAX_TITLE_CHARS) : current.title,
     content: current.content.trim() === "" ? dropped.content : current.content,
   };
@@ -172,11 +197,16 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 export function CreateConfiguration({
   kind: initialKind,
   today,
+  targetDate,
+  embedded = false,
+  importOnOpen = false,
   onDone,
+  onCreated,
   onPasteNonText,
   feedback,
   focusRequest = 0,
   seed = null,
+  contextSeed = null,
   dropActive = false,
 }: CreateConfigurationProps) {
   const { t } = useTranslation();
@@ -185,14 +215,31 @@ export function CreateConfiguration({
   const linksId = useId();
   /** 拖入打开时类型取拖入内容的建议；比较基线仍是空白草稿，预填的内容算作修改，取消前会确认。 */
   const [initial] = useState(() => {
-    const blank = blankDraft(seed?.draft.kind ?? initialKind, today);
-    return { blank, draft: seed === null ? blank : applyDrop(blank, seed.draft, t) };
+    const blank = blankDraft(seed?.draft.kind ?? initialKind, targetDate ?? today);
+    const contextText = contextSeed?.event.text;
+    if (contextSeed && contextText) {
+      const captured = applyDrop(
+        {
+          ...blank,
+          inInbox: true,
+          scheduledDate: "",
+          textSource: contextSeed.event.source === "selection" ? "selection" : "clipboard",
+        },
+        textDraft(contextText),
+        t,
+      );
+      return { blank: captured, draft: captured };
+    }
+    const externalTodo = seed?.draft.kind === "todo" && targetDate === undefined;
+    const incoming = externalTodo ? { ...blank, scheduledDate: "", inInbox: true } : blank;
+    return { blank, draft: seed === null ? blank : applyDrop(incoming, seed.draft, t) };
   });
   const [draft, setDraft] = useState(initial.draft);
   const baseline = useRef(initial.blank);
   const handledSeed = useRef(seed?.id);
+  const handledContextSeed = useRef(contextSeed?.id);
   /** 用户亲自改过计划日期后，默认日期不再覆盖它。 */
-  const dateTouched = useRef(false);
+  const dateTouched = useRef(targetDate !== undefined);
   const [keepOpen, setKeepOpen] = useState(keepOpenPreference);
   const [lastCreated, setLastCreated] = useState<string | null>(null);
   const {
@@ -203,19 +250,31 @@ export function CreateConfiguration({
     format,
     scheduledDate,
     scheduledTime,
+    inInbox,
+    textSource,
     dueDate,
     dueTime,
     reminder,
     priority,
     projectId,
     links,
+    skippedLinks,
   } = draft;
   /** 修改草稿的部分字段。 */
   const patch = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(embedded);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<ContextCreateRequestedEvent | null>(null);
+  const [importSource, setImportSource] = useState(contextSeed?.event.source ?? null);
+  const [showDateSuggestions, setShowDateSuggestions] = useState(true);
+  const readingClipboard = useRef(false);
+  const requestedInitialImport = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const lastEditor = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const importOpener = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const keepRef = useRef<HTMLButtonElement>(null);
@@ -235,7 +294,7 @@ export function CreateConfiguration({
     if (today === undefined || dateTouched.current) return;
     /** 计划日期仍为空的待办 / 提示补上今天。 */
     const fill = (current: Draft) =>
-      current.kind === "note" || current.scheduledDate !== ""
+      current.kind === "note" || current.inInbox || current.scheduledDate !== ""
         ? current
         : { ...current, scheduledDate: today };
     baseline.current = fill(baseline.current);
@@ -252,6 +311,8 @@ export function CreateConfiguration({
       format,
       scheduledDate,
       scheduledTime,
+      inInbox,
+      textSource,
       dueDate,
       dueTime,
       reminder,
@@ -267,15 +328,18 @@ export function CreateConfiguration({
         contentFormat: format,
         priority: kind === "todo" ? priority : "none",
         scheduled:
-          kind === "note" || scheduledDate === ""
+          kind === "note" || inInbox || scheduledDate === ""
             ? null
             : { date: scheduledDate, time: scheduledTime || null },
+        ...(kind === "todo" && inInbox ? { inInbox: true } : {}),
+        ...(textSource === null ? {} : { textSource }),
         due: kind !== "todo" || dueDate === "" ? null : { date: dueDate, time: dueTime || null },
         reminderAt: kind === "note" || reminder === "" ? null : reminderToUtc(reminder),
         projectId: projectId || null,
         ...(links.length > 0 ? { links: toLinkDtos(links) } : {}),
       }),
-    onSuccess: (_item, sent) => {
+    onSuccess: (item, sent) => {
+      onCreated?.(item);
       if (!keepOpenRef.current) {
         onDoneRef.current();
         return;
@@ -285,10 +349,15 @@ export function CreateConfiguration({
         ...blankDraft(sent.kind, today),
         format: sent.format,
         scheduledDate: sent.kind === "note" ? "" : sent.scheduledDate,
+        inInbox: sent.inInbox,
         projectId: sent.projectId,
       };
       baseline.current = next;
       setDraft(next);
+      setPendingImport(null);
+      setImportError(null);
+      setImportSource(null);
+      setShowDateSuggestions(true);
       setLastCreated(sent.title.trim());
     },
     onSettled: () => {
@@ -300,6 +369,7 @@ export function CreateConfiguration({
   const isDocument = kind === "note";
   const documentRef = useRef(isDocument);
   useEffect(() => {
+    if (embedded) return;
     let cancelled = false;
     ipc
       .beginFloatingInput(true, documentRef.current)
@@ -315,7 +385,7 @@ export function CreateConfiguration({
       cancelled = true;
       ipc.endFloatingInput().catch(reportError);
     };
-  }, []);
+  }, [embedded]);
   useEffect(() => {
     if (ready && !confirmDiscard) inputRef.current?.focus();
   }, [ready, confirmDiscard]);
@@ -329,10 +399,10 @@ export function CreateConfiguration({
 
   // 切换到 / 离开笔记：窗口换成对应布局的尺寸（只调整尺寸，草稿和焦点都保留）。
   useEffect(() => {
-    if (!ready || documentRef.current === isDocument) return;
+    if (embedded || !ready || documentRef.current === isDocument) return;
     documentRef.current = isDocument;
     ipc.beginFloatingInput(true, isDocument).catch(reportError);
-  }, [ready, isDocument]);
+  }, [embedded, ready, isDocument]);
 
   // 页面已打开时又拖入了内容：追加到当前草稿，不另开一页。
   useEffect(() => {
@@ -347,11 +417,14 @@ export function CreateConfiguration({
   useEffect(() => {
     if (focusRequest === handledFocusRequest.current) return;
     handledFocusRequest.current = focusRequest;
+    if (contextSeed !== null && contextSeed.id !== handledContextSeed.current) {
+      importOpener.current = lastEditor.current;
+    }
     /** 放弃确认打开时聚焦「继续编辑」，否则回到标题。 */
     const focusDraft = () => (confirmDiscard ? keepRef : inputRef).current?.focus();
     if (document.hasFocus()) focusDraft();
     else ipc.beginFloatingInput(true, documentRef.current).then(focusDraft).catch(reportError);
-  }, [focusRequest, confirmDiscard]);
+  }, [focusRequest, confirmDiscard, contextSeed]);
 
   /** 切换类型；计划日期未被改过时按新类型补上默认值。 */
   function changeKind(next: ItemTypeDto): void {
@@ -359,11 +432,210 @@ export function CreateConfiguration({
       ...current,
       kind: next,
       scheduledDate:
-        !dateTouched.current && next !== "note" && current.scheduledDate === ""
+        !dateTouched.current && !current.inInbox && next !== "note" && current.scheduledDate === ""
           ? (today ?? "")
           : current.scheduledDate,
     }));
   }
+
+  /** 合入导入文本，保留已有标题、正文和用户选定的日期。 */
+  function applyImportedText(
+    current: Draft,
+    text: string,
+    append: boolean,
+    source: ContextCreateRequestedEvent["source"],
+  ): Draft {
+    const imported = textDraft(text);
+    const next = applyDrop(current, imported, t);
+    if (source === "selection" || source === "clipboard") next.textSource = source;
+    if (append && (current.title.trim() !== "" || current.content.trim() !== "")) {
+      next.content = [current.content, text].filter((part) => part.trim()).join("\n\n");
+    }
+    if (current.kind === "todo" && !dateTouched.current && !append) {
+      return { ...next, inInbox: true, scheduledDate: "", scheduledTime: "" };
+    }
+    return next;
+  }
+
+  const applyContextSeed = useEffectEvent((event: ContextCreateRequestedEvent) => {
+    setPendingImport(null);
+    setShowDateSuggestions(true);
+    if (event.text === null) {
+      setImportError(t(`createConfiguration.importSource.${event.source}`));
+    } else if (confirmDiscard || differs(draft, baseline.current)) {
+      setImportError(null);
+      setPendingImport(event);
+    } else {
+      setImportError(null);
+      const next = applyImportedText(
+        { ...draft, title: "", content: "" },
+        event.text,
+        false,
+        event.source,
+      );
+      baseline.current = next;
+      setDraft(next);
+      setImportSource(event.source);
+    }
+  });
+  useEffect(() => {
+    if (contextSeed === null || handledContextSeed.current === contextSeed.id) return;
+    handledContextSeed.current = contextSeed.id;
+    applyContextSeed(contextSeed.event);
+  }, [contextSeed]);
+
+  const clipboardImportMutation = useMutation({
+    meta: { errorPresentation: "inline" },
+    mutationFn: () => ipc.readClipboardText(),
+    onSuccess: (text) => {
+      setShowDateSuggestions(true);
+      if (confirmDiscard || differs(draft, baseline.current)) {
+        setPendingImport({ text, source: "clipboard" });
+      } else {
+        setDraft((current) =>
+          applyImportedText({ ...current, title: "", content: "" }, text, false, "clipboard"),
+        );
+        setImportSource("clipboard");
+        inputRef.current?.focus();
+      }
+    },
+    onError: (error) => setImportError(errorMessage(toAppError(error))),
+    onSettled: () => {
+      readingClipboard.current = false;
+      setImporting(false);
+    },
+  });
+
+  /** 一次显式导入只派发一个剪贴板请求。 */
+  function importClipboard(): void {
+    if (readingClipboard.current) return;
+    importOpener.current = lastEditor.current;
+    readingClipboard.current = true;
+    setImporting(true);
+    setImportError(null);
+    clipboardImportMutation.mutate();
+  }
+
+  /** 取消追加后回到刚才的编辑控件，保留文本选择。 */
+  function dismissImport(): void {
+    setPendingImport(null);
+    const opener = importOpener.current;
+    (opener?.isConnected ? opener : inputRef.current)?.focus();
+  }
+
+  const initialImport = useEffectEvent(importClipboard);
+  useEffect(() => {
+    if (!importOnOpen || requestedInitialImport.current) return;
+    requestedInitialImport.current = true;
+    initialImport();
+  }, [importOnOpen]);
+
+  const clipboardImport = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button disabled={importing || pendingImport !== null} size="sm" onClick={importClipboard}>
+        {t(
+          importing
+            ? "createConfiguration.importingClipboard"
+            : importError !== null
+              ? "common.retry"
+              : "createConfiguration.importClipboard",
+        )}
+      </Button>
+      {importError !== null && (
+        <p role="alert" className="text-sm text-danger">
+          {importError}
+        </p>
+      )}
+      {importSource !== null && (
+        <p role="status" className="text-sm text-muted">
+          {t(`createConfiguration.importSource.${importSource}`)}
+        </p>
+      )}
+      {pendingImport?.text != null && (
+        <>
+          <p className="max-h-24 basis-full overflow-y-auto whitespace-pre-wrap break-words text-sm text-muted">
+            {pendingImport.text}
+          </p>
+          <Button
+            size="sm"
+            onClick={() => {
+              const { text, source } = pendingImport;
+              if (text === null) return;
+              setDraft((current) => applyImportedText(current, text, true, source));
+              setImportSource(source);
+              setPendingImport(null);
+              inputRef.current?.focus();
+            }}
+          >
+            {t("createConfiguration.appendClipboard")}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={dismissImport}>
+            {t("createConfiguration.dismissClipboard")}
+          </Button>
+        </>
+      )}
+    </div>
+  );
+
+  const dateSuggestions = new Map<string, { date: string; time: string | null }>();
+  if (kind === "todo" && today && showDateSuggestions && (content || importSource || seed)) {
+    for (const line of [title, ...content.split(/\r?\n/)].slice(0, 30)) {
+      const parsed = parseDatePhrase(line, today);
+      if (parsed === null) continue;
+      const { date, time } = parsed.schedule;
+      dateSuggestions.set([date, time].filter(Boolean).join(" "), parsed.schedule);
+      if (dateSuggestions.size === 3) break;
+    }
+  }
+
+  const suggestedDates = dateSuggestions.size > 0 && (
+    <Field label={t("createConfiguration.suggestedDates")}>
+      {[...dateSuggestions].map(([label, { date, time }]) => (
+        <div key={label} className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-text">{label}</span>
+          <Button
+            size="sm"
+            aria-label={t("createConfiguration.applyPlanFor", { date: label })}
+            aria-pressed={scheduledDate === date && scheduledTime === (time ?? "") && !inInbox}
+            onClick={() => {
+              dateTouched.current = true;
+              patch({ scheduledDate: date, scheduledTime: time ?? "", inInbox: false });
+            }}
+          >
+            {t("createConfiguration.applyPlan")}
+          </Button>
+          <Button
+            size="sm"
+            aria-label={t("createConfiguration.applyDueFor", { date: label })}
+            aria-pressed={dueDate === date && dueTime === (time ?? "")}
+            onClick={() => patch({ dueDate: date, dueTime: time ?? "" })}
+          >
+            {t("createConfiguration.applyDue")}
+          </Button>
+        </div>
+      ))}
+      <Button
+        size="sm"
+        variant="ghost"
+        className="self-start"
+        onClick={() => setShowDateSuggestions(false)}
+      >
+        {t("createConfiguration.skipDateSuggestions")}
+      </Button>
+    </Field>
+  );
+
+  const formContent = (
+    <Field label={t("detail.field.content")}>
+      <Textarea
+        aria-label={t("detail.field.content")}
+        value={content}
+        rows={4}
+        placeholder={t("createConfiguration.contentPlaceholder")}
+        onChange={(event) => patch({ content: event.target.value })}
+      />
+    </Field>
+  );
 
   /** 取消只有空白草稿直接关闭，其余先给用户保留输入的机会。 */
   function cancel(): void {
@@ -443,6 +715,11 @@ export function CreateConfiguration({
       <h2 id={linksId} className="text-sm font-medium text-text">
         {t("dropCreate.links", { count: links.length })}
       </h2>
+      {skippedLinks > 0 && (
+        <p role="status" className="text-sm text-muted">
+          {t("dropCreate.linksSkipped", { count: skippedLinks })}
+        </p>
+      )}
       <ul className="flex flex-col gap-2">
         {links.map((link) => (
           <li
@@ -488,18 +765,26 @@ export function CreateConfiguration({
 
   const characters = [...content].length;
   const lines = content === "" ? 0 : content.split("\n").length;
+  const scheduledToday = !inInbox && scheduledDate !== "" && scheduledDate === today;
+  const selectedDate = !inInbox && scheduledDate !== "" && scheduledDate !== today;
 
   return (
     <form
       ref={formRef}
-      role="dialog"
-      aria-modal="true"
+      role={embedded ? undefined : "dialog"}
+      aria-modal={embedded ? undefined : true}
       aria-labelledby={headingId}
       aria-describedby={hintId}
       className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl bg-surface text-text"
       onSubmit={(event) => {
         event.preventDefault();
         submit();
+      }}
+      onFocusCapture={(event) => {
+        const target = event.target;
+        if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+          lastEditor.current = target;
+        }
       }}
       onKeyDown={(event) => {
         // 正文的 Markdown 按键已经处理（列表缩进的 Tab、勾选任务的 Ctrl+Enter）：不再当作切换焦点或创建。
@@ -511,6 +796,8 @@ export function CreateConfiguration({
           if (confirmDiscard) {
             setConfirmDiscard(false);
             inputRef.current?.focus();
+          } else if (pendingImport !== null) {
+            dismissImport();
           } else cancel();
         }
         if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
@@ -536,6 +823,7 @@ export function CreateConfiguration({
               className="flex flex-wrap items-center gap-3 border-0 p-0"
             >
               {kindSwitch}
+              {clipboardImport}
               <div
                 role="group"
                 aria-label={t("detail.field.format")}
@@ -639,6 +927,7 @@ export function CreateConfiguration({
           >
             <div className="flex flex-col gap-5">
               {kindSwitch}
+              {clipboardImport}
               <Field label={t("createConfiguration.titleLabel")}>
                 <Input
                   ref={inputRef}
@@ -651,21 +940,68 @@ export function CreateConfiguration({
                   onPaste={onTitlePaste}
                 />
               </Field>
+              {kind === "todo" && (
+                <Field label={t("createConfiguration.destination")}>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      aria-pressed={inInbox}
+                      variant={inInbox ? "primary" : "secondary"}
+                      onClick={() => {
+                        dateTouched.current = true;
+                        patch({ inInbox: true, scheduledDate: "", scheduledTime: "" });
+                      }}
+                    >
+                      {t("createConfiguration.toInbox")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={today === undefined}
+                      aria-pressed={scheduledToday}
+                      variant={scheduledToday ? "primary" : "secondary"}
+                      onClick={() => {
+                        dateTouched.current = true;
+                        patch({ inInbox: false, scheduledDate: today ?? "", scheduledTime: "" });
+                      }}
+                    >
+                      {t("createConfiguration.toToday")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      aria-pressed={selectedDate}
+                      variant={selectedDate ? "primary" : "secondary"}
+                      onClick={() =>
+                        formRef.current
+                          ?.querySelector<HTMLInputElement>("[data-scheduled-date]")
+                          ?.focus()
+                      }
+                    >
+                      {selectedDate
+                        ? t("createConfiguration.selectedDate", { date: scheduledDate })
+                        : t("createConfiguration.chooseDate")}
+                    </Button>
+                  </div>
+                </Field>
+              )}
+              {textSource !== null ? (
+                <details open>
+                  <summary className="mb-2 cursor-pointer text-sm font-medium text-text">
+                    {lines > 0
+                      ? t("createConfiguration.originalMessage", { count: lines })
+                      : t("detail.field.content")}
+                  </summary>
+                  {formContent}
+                </details>
+              ) : (
+                formContent
+              )}
+              {suggestedDates}
               <Field label={t("detail.field.brief")}>
                 <Input
                   aria-label={t("detail.field.brief")}
                   value={brief}
                   placeholder={t("detail.briefPlaceholder")}
                   onChange={(event) => patch({ brief: event.target.value })}
-                />
-              </Field>
-              <Field label={t("detail.field.content")}>
-                <Textarea
-                  aria-label={t("detail.field.content")}
-                  value={content}
-                  rows={4}
-                  placeholder={t("createConfiguration.contentPlaceholder")}
-                  onChange={(event) => patch({ content: event.target.value })}
                 />
               </Field>
               {linksSection}
@@ -694,12 +1030,13 @@ export function CreateConfiguration({
                     <Input
                       type="date"
                       aria-label={t("detail.field.scheduledDate")}
+                      data-scheduled-date
                       value={scheduledDate}
                       onChange={(event) => {
                         dateTouched.current = true;
                         patch(
                           event.target.value
-                            ? { scheduledDate: event.target.value }
+                            ? { scheduledDate: event.target.value, inInbox: false }
                             : { scheduledDate: "", scheduledTime: "" },
                         );
                       }}

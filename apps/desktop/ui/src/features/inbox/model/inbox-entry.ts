@@ -72,6 +72,8 @@ export function summarizeEntry(entry: InboxEntryDto): EntrySummary {
       };
     case "image":
       return { kind: "image", detail: null, app, missingFile: false };
+    case "clipboard":
+    case "selection":
     case "text":
       return { kind: "text", detail: null, app, missingFile: false };
     default:

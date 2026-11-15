@@ -80,7 +80,7 @@ describe("完成与撤销", () => {
         name: "重新打开「写周报」",
       }),
     ).toBeChecked();
-    expect(screen.getByText("已完成「写周报」")).toBeInTheDocument();
+    expect(screen.getByText("已完成「写周报」", { selector: "span" })).toBeInTheDocument();
     expect(ipc.calls).toContain("completeItem");
   });
 

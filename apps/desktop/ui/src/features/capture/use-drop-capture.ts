@@ -74,6 +74,8 @@ export type DropCapture = {
   pasteFromClipboard: () => void;
   /** 撤销刚才的捕获并关闭反馈。 */
   undo: () => void;
+  /** 显示显式创建的事项并使用对应的软删除撤销。 */
+  showCreated: (item: ItemDto) => void;
   /** 关闭反馈（「编辑」「知道了」或超时）。 */
   dismiss: () => void;
   /** 暂停 / 恢复自动消失的计时（指针停在反馈上时不该消失）。 */
@@ -104,7 +106,7 @@ export function useDropCapture(
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   /** 反馈代次：只有最新一次捕获的结果才能更新界面（连续拖放时丢弃过期结果）。 */
   const generationRef = useRef(0);
-  const undoIdsRef = useRef<string[]>([]);
+  const undoActionRef = useRef<(() => Promise<void>) | null>(null);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current !== undefined) clearTimeout(timerRef.current);
@@ -190,7 +192,8 @@ export function useDropCapture(
           show({ status: "unsupported", reason: outcome.reason });
           return;
         }
-        undoIdsRef.current = outcome.result.undoIds;
+        if (generationRef.current !== generation) return;
+        undoActionRef.current = () => ipc.undoCapture(outcome.result.undoIds);
         show({
           status: "created",
           items: outcome.result.items,
@@ -283,13 +286,22 @@ export function useDropCapture(
     run(async () => ({ kind: "captured", result: await ipc.captureFromClipboard() }));
   };
 
-  /** 撤销刚才的捕获：关闭反馈，并删除它创建的全部记录；失败时显示原因。 */
+  /** 让面板保持展开，展示这次配置创建对应的查看与撤销。 */
+  const showCreated = (item: ItemDto): void => {
+    generationRef.current += 1;
+    undoActionRef.current = () => ipc.undoCreatedItem(item.id, item.updatedAt);
+    send("holdRequested");
+    setFeedback({ status: "created", items: [item], undoIds: [item.id] });
+    startDismissTimer();
+  };
+
+  /** 撤销当前捕获或创建；失败时显示原因。 */
   const undo = (): void => {
-    const ids = undoIdsRef.current;
+    const action = undoActionRef.current;
+    undoActionRef.current = null;
     dismiss();
-    if (ids.length === 0) return;
-    undoIdsRef.current = [];
-    void ipc.undoCapture(ids).catch((error: unknown) => {
+    if (action === null) return;
+    void action().catch((error: unknown) => {
       setFeedback({ status: "failed", message: errorMessage(toAppError(error)) });
       send("holdRequested");
       startDismissTimer();
@@ -311,6 +323,7 @@ export function useDropCapture(
     handlers: { onDragEnter, onDragOver, onDragLeave, onDrop },
     pasteFromClipboard,
     undo,
+    showCreated,
     dismiss,
     pauseDismiss,
   };

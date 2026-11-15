@@ -1,5 +1,6 @@
 import type {
   IntegrationConnectionDto,
+  ContextCreateRequestedEvent,
   IntegrationTestDto,
   UiPrefName,
   UpdateInfoDto,
@@ -146,6 +147,7 @@ export interface MemoryIpc extends IpcClient, WorkflowMock {
   emitSearchWindowShown(): void;
   /** 模拟托盘「快速添加」。 */
   emitQuickAddRequested(): void;
+  emitContextCreateRequested(event: ContextCreateRequestedEvent): void;
   /** 模拟后端看门狗补发"指针已离开"事件。 */
   emitFloatingPointerLeft(): void;
   /** 最近一次 `expandFloating` 请求的尺寸。 */
@@ -169,7 +171,7 @@ function describeProvenance(
       sources: [
         {
           ...base,
-          sourceType: isUrl ? "web" : "text",
+          sourceType: isUrl ? "web" : request.origin === "paste" ? "clipboard" : "text",
           sourceUrl: isUrl ? input.text.trim() : null,
           sourcePath: null,
         },
@@ -265,6 +267,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const listeners = new Set<() => void>();
   const pointerLeftListeners = new Set<() => void>();
   const quickAddListeners = new Set<() => void>();
+  const contextCreateListeners = new Set<(event: ContextCreateRequestedEvent) => void>();
   const mainViewListeners = new Set<(view: string) => void>();
   const takenShortcuts = new Set<string>();
   const typingShortcuts = new Set<string>();
@@ -310,6 +313,14 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       registered: true,
       conflict: false,
       defaultAccelerator: "Ctrl+Alt+Space",
+      disabled: false,
+      typesCharacter: false,
+    },
+    contextCreate: {
+      accelerator: "Ctrl+Alt+Shift+Space",
+      registered: true,
+      conflict: false,
+      defaultAccelerator: "Ctrl+Alt+Shift+Space",
       disabled: false,
       typesCharacter: false,
     },
@@ -431,7 +442,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       due: request.due,
       reminderAt: request.reminderAt,
       projectId: request.projectId,
-      inInbox: false,
+      inInbox: request.inInbox ?? false,
       createdAt: now,
       updatedAt: now,
       completedAt: null,
@@ -441,26 +452,39 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     addToToday(item);
     // 关联资料与后端一致：每条一个来源，文件再加一条引用附件（不复制）。
     const links = request.links ?? [];
-    if (links.length > 0) {
+    if (links.length > 0 || request.textSource) {
       const base = { sourceApp: null, capturedAt: now };
       provenance.set(item.id, {
-        sources: links.map((link) =>
-          link.kind === "web"
-            ? {
-                ...base,
-                sourceType: "web",
-                sourceUrl: link.url,
-                sourcePath: null,
-                originalTitle: link.title,
-              }
-            : {
-                ...base,
-                sourceType: "file",
-                sourceUrl: null,
-                sourcePath: link.path,
-                originalTitle: null,
-              },
-        ),
+        sources: [
+          ...(request.textSource
+            ? [
+                {
+                  ...base,
+                  sourceType: request.textSource,
+                  sourceUrl: null,
+                  sourcePath: null,
+                  originalTitle: null,
+                },
+              ]
+            : []),
+          ...links.map((link) =>
+            link.kind === "web"
+              ? {
+                  ...base,
+                  sourceType: "web",
+                  sourceUrl: link.url,
+                  sourcePath: null,
+                  originalTitle: link.title,
+                }
+              : {
+                  ...base,
+                  sourceType: "file",
+                  sourceUrl: null,
+                  sourcePath: link.path,
+                  originalTitle: null,
+                },
+          ),
+        ],
         attachments: links.flatMap((link) =>
           link.kind === "file"
             ? [
@@ -604,14 +628,15 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         if (current === undefined) {
           return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
         }
+        const next = applyOrganize(current, action, today.date);
         previous.push({
           id,
           itemType: current.itemType,
           scheduled: current.scheduled,
           inInbox: current.inInbox,
           archived: current.archivedAt !== null,
+          revision: next.updatedAt,
         });
-        const next = applyOrganize(current, action, today.date);
         items[at] = next;
         updated.push(next);
       }
@@ -627,6 +652,15 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         return Promise.reject(failure);
       }
       const restored: ItemDto[] = [];
+      if (
+        previous.some(
+          (state) =>
+            state.revision != null &&
+            items.find((item) => item.id === state.id)?.updatedAt !== state.revision,
+        )
+      ) {
+        return Promise.reject(new AppError("INVALID_INPUT", "事项已修改，无法撤销整理"));
+      }
       for (const state of previous) {
         const at = items.findIndex((item) => item.id === state.id);
         const current = items[at];
@@ -673,7 +707,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       const created = await insert({
         itemType: isPlainText ? "todo" : "note",
         title,
-        content: null,
+        content: input.kind === "text" && title !== input.text.trim() ? input.text.trim() : null,
         contentFormat: null,
         priority: null,
         scheduled: null,
@@ -725,6 +759,9 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       const at = items.findIndex((candidate) => candidate.id === id);
       const stored = items[at];
       if (stored !== undefined) {
+        if (target.kind === "restore" && stored.updatedAt !== target.revision) {
+          return Promise.reject(new AppError("INVALID_INPUT", "事项已修改，无法撤销改期"));
+        }
         const kept = stored.scheduled?.time ?? null;
         const shift = (days: number) => {
           const base = new Date(`${today.date}T00:00:00`);
@@ -749,7 +786,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         items[at] = {
           ...stored,
           scheduled,
-          inInbox: target.kind === "inbox",
+          inInbox: target.kind === "inbox" || (target.kind === "restore" && target.inInbox),
           updatedAt: new Date().toISOString(),
         };
         if (found === undefined) {
@@ -761,14 +798,15 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         return Promise.reject(new AppError("ITEM_NOT_FOUND", `Item ${id} 不存在`));
       }
       // Mock 只模拟「离开 Today」与「精确恢复」两种效果。
-      if (target.kind === "exact" && inToday === undefined) {
+      const exact = target.kind === "exact" || target.kind === "restore";
+      if (exact && inToday === undefined) {
         postponed.delete(id);
         today = {
           ...today,
           remainingCount: today.remainingCount + 1,
           todos: [...today.todos, found],
         };
-      } else if (target.kind !== "today" && target.kind !== "exact") {
+      } else if (target.kind !== "today" && !exact) {
         postponed.set(id, found);
         today = {
           ...today,
@@ -777,7 +815,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         };
       }
       for (const notify of listeners) notify();
-      return Promise.resolve(itemFromToday(found, "open"));
+      return Promise.resolve(items[at] ?? itemFromToday(found, "open"));
     },
     get reschedules() {
       return reschedules;
@@ -865,10 +903,19 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     emitQuickAddRequested: () => {
       for (const notify of quickAddListeners) notify();
     },
+    emitContextCreateRequested: (event) => {
+      for (const notify of contextCreateListeners) notify(event);
+    },
     subscribeQuickAddRequested: (onRequested: () => void) => {
       quickAddListeners.add(onRequested);
       return () => {
         quickAddListeners.delete(onRequested);
+      };
+    },
+    subscribeContextCreateRequested: (onRequested) => {
+      contextCreateListeners.add(onRequested);
+      return () => {
+        contextCreateListeners.delete(onRequested);
       };
     },
     subscribeFloatingPointerLeft: (onLeft: () => void) => {
@@ -996,6 +1043,12 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     setClipboard: (content: { text?: string; files?: string[] } | null) => {
       clipboard = content;
+    },
+    readClipboardText: () => {
+      calls.push("readClipboardText");
+      const text = clipboard?.text ?? "";
+      if (text.trim()) return Promise.resolve(text);
+      return Promise.reject({ code: "CLIPBOARD_EMPTY", message: "Clipboard is empty" });
     },
     captureFromClipboard: () => {
       calls.push("captureFromClipboard");
@@ -1125,6 +1178,14 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       }
       return insert(request);
     },
+    undoCreatedItem: (id, revision) => {
+      calls.push("undoCreatedItem");
+      const item = items.find((entry) => entry.id === id);
+      if (item?.createdAt !== revision || item.updatedAt !== revision) {
+        return Promise.reject(new AppError("INVALID_INPUT", "事项已修改，无法撤销创建"));
+      }
+      return memory.deleteItems([id]);
+    },
     getItem: (id: string) => {
       calls.push("getItem");
       const found = items.find((item) => item.id === id);
@@ -1183,6 +1244,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         priority: item.priority,
         scheduled: item.scheduled,
         due: item.due,
+        inInbox: item.inInbox,
       });
       const live = items.filter((item) => item.archivedAt === null && !trashed.has(item.id));
       const entries: CalendarEntryDto[] = [];

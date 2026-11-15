@@ -1,6 +1,6 @@
 import type { DragEndEvent } from "@dnd-kit/core";
-import { act, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import type { MemoryIpc } from "@/test/ipc-mock";
@@ -90,6 +90,72 @@ describe("拖拽排期", () => {
   beforeEach(() => {
     useToastStore.setState({ toasts: [] });
     captured.onDragEnd = null;
+  });
+
+  beforeEach(() => {
+    // jsdom 没有浏览器对话框的 top layer。
+    Object.defineProperties(HTMLDialogElement.prototype, {
+      showModal: {
+        configurable: true,
+        value(this: HTMLDialogElement) {
+          this.open = true;
+        },
+      },
+      close: {
+        configurable: true,
+        value(this: HTMLDialogElement) {
+          this.open = false;
+        },
+      },
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    Reflect.deleteProperty(HTMLDialogElement.prototype, "showModal");
+    Reflect.deleteProperty(HTMLDialogElement.prototype, "close");
+  });
+
+  it("把外部消息拖到日期上，确认后才按落点日期创建待办", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<CalendarPage />, ipc);
+    const grid = await screen.findByRole("grid");
+    const cell = within(grid).getAllByRole("gridcell")[0];
+    if (!cell) throw new Error("日历缺少日期");
+    const date = cell.getAttribute("data-calendar-day");
+    fireEvent.drop(cell, {
+      dataTransfer: { types: ["text/plain"], getData: () => "查看交付内容\n保留讨论记录" },
+    });
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByLabelText("标题")).toHaveValue("查看交付内容");
+    expect(within(dialog).getByLabelText("计划日期（日）")).toHaveValue(date);
+    expect(ipc.items).toHaveLength(0);
+    fireEvent.click(within(dialog).getByRole("button", { name: "创建" }));
+    await waitFor(() => expect(ipc.items).toHaveLength(1));
+    expect(ipc.items[0]).toMatchObject({
+      inInbox: false,
+      scheduled: { date, time: null },
+      content: "查看交付内容\n保留讨论记录",
+    });
+  });
+
+  it("可通过日期的新建按钮直接从剪贴板预填", async () => {
+    const ipc = createMemoryIpc();
+    ipc.setClipboard({ text: "来自剪贴板的任务" });
+    renderWithProviders(<CalendarPage />, ipc);
+    const grid = await screen.findByRole("grid");
+    const cell = within(grid).getAllByRole("gridcell")[0];
+    if (!cell) throw new Error("日历缺少日期");
+    fireEvent.click(within(cell).getByRole("button", { name: /添加待办/ }));
+    fireEvent.click(within(cell).getByRole("button", { name: "从剪贴板新建…" }));
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText("标题")).toHaveValue("来自剪贴板的任务"),
+    );
+    expect(within(dialog).getByLabelText("计划日期（日）")).toHaveValue(
+      cell.getAttribute("data-calendar-day"),
+    );
+    expect(ipc.items).toHaveLength(0);
   });
 
   it("排期和撤销失败会报告错误，保留最近一次已成功保存的日期", async () => {

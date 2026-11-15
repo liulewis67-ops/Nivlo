@@ -152,7 +152,7 @@ describe("设置页：数据与诊断", () => {
     renderWithProviders(<SettingsPage />, ipc);
     await userEvent.click(await screen.findByRole("button", { name: "导出诊断信息" }));
     await waitFor(() => expect(ipc.calls).toContain("exportDiagnostics"));
-    expect(await screen.findByText(/诊断包已导出/)).toBeInTheDocument();
+    expect(await screen.findByText(/诊断包已导出/, { selector: "span" })).toBeInTheDocument();
   });
 });
 
@@ -163,14 +163,14 @@ describe("设置页：导出、备份与恢复", () => {
     await userEvent.selectOptions(await screen.findByLabelText("导出格式"), "markdown");
     await userEvent.click(screen.getByRole("button", { name: "导出笔记和待办" }));
     await waitFor(() => expect(ipc.calls).toContain("exportData:markdown"));
-    expect(await screen.findByText(/已导出 0 条/)).toBeInTheDocument();
+    expect(await screen.findByText(/已导出 0 条/, { selector: "span" })).toBeInTheDocument();
   });
 
   it("创建备份后提示位置", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<SettingsPage />, ipc);
     await userEvent.click(await screen.findByRole("button", { name: "创建备份" }));
-    expect(await screen.findByText(/备份已创建/)).toBeInTheDocument();
+    expect(await screen.findByText(/备份已创建/, { selector: "span" })).toBeInTheDocument();
     expect(ipc.calls).toContain("createBackupFile");
   });
 

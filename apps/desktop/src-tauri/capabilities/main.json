@@ -6,6 +6,7 @@
   "permissions": [
     "core:event:default",
     "allow-create-item",
+    "allow-undo-created-item",
     "allow-get-item",
     "allow-list-items",
     "allow-search-items",
@@ -70,6 +71,7 @@
     "allow-capture",
     "allow-undo-capture",
     "allow-capture-from-clipboard",
+    "allow-read-clipboard-text",
     "allow-take-pending-main-view",
     "allow-get-shortcut-status",
     "allow-set-shortcut",

@@ -88,6 +88,12 @@ impl Accelerator {
         meta: false,
         key: Key::Space,
     };
+
+    /// 从选区或剪贴板新建的默认组合。
+    pub const CONTEXT_CREATE_DEFAULT: Self = Self {
+        shift: true,
+        ..Self::SEARCH_DEFAULT
+    };
 }
 
 impl FromStr for Accelerator {

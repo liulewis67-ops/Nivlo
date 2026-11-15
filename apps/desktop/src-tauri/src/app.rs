@@ -81,6 +81,8 @@ pub struct RuntimeHandles {
     shortcut: OnceLock<Arc<ShortcutController>>,
     /// 全局搜索的快捷键控制器。
     search_shortcut: OnceLock<Arc<ShortcutController>>,
+    /// 从选区或剪贴板新建的快捷键控制器。
+    context_create_shortcut: OnceLock<Arc<ShortcutController>>,
     /// 应用目录布局；启动时登记，导出诊断包 / 备份时使用。
     paths: OnceLock<nivlo_common::paths::AppPaths>,
     /// 需要和应用同寿命的系统监听器（电源事件窗口等）；退出时一并释放。
@@ -115,6 +117,7 @@ impl RuntimeHandles {
             pending_main_view: Mutex::new(None),
             shortcut: OnceLock::new(),
             search_shortcut: OnceLock::new(),
+            context_create_shortcut: OnceLock::new(),
             enrichment_queue: Mutex::new(None),
             paths: OnceLock::new(),
             script_worker: OnceLock::new(),
@@ -198,6 +201,7 @@ impl RuntimeHandles {
         match action {
             ShortcutAction::QuickCreate => &self.shortcut,
             ShortcutAction::Search => &self.search_shortcut,
+            ShortcutAction::ContextCreate => &self.context_create_shortcut,
         }
     }
 
@@ -274,7 +278,8 @@ impl RuntimeHandles {
         tracing::info!(event = "shutdown_tasks_stopped", "后台任务已停止");
 
         // 先取消全局快捷键：退出过程中不应再被它唤起 Quick Create / 搜索。
-        for shortcut in [self.shortcut.get(), self.search_shortcut.get()]
+        for shortcut in ShortcutAction::ALL
+            .map(|action| self.shortcut_slot(action).get())
             .into_iter()
             .flatten()
         {

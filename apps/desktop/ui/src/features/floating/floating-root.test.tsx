@@ -101,6 +101,44 @@ describe("FloatingRoot", () => {
     expect(screen.getByRole("textbox", { name: "标题" })).toBeInTheDocument();
   });
 
+  it("全局快捷键预填选区，但不会覆盖已编辑的草稿或立即创建事项", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    await advance(0);
+
+    act(() =>
+      ipc.emitContextCreateRequested({ text: "跟进报价\n抄送项目组", source: "selection" }),
+    );
+    await advance(0);
+    const title = screen.getByRole("textbox", { name: "标题" });
+    expect(title).toHaveValue("跟进报价");
+    expect(title).toHaveFocus();
+    expect(screen.getByText("来自当前选区")).toBeInTheDocument();
+    expect(screen.getByLabelText("描述")).toHaveValue("跟进报价\n抄送项目组");
+    expect(screen.getByRole("button", { name: "收集箱" })).toHaveAttribute("aria-pressed", "true");
+    expect(ipc.items).toHaveLength(0);
+
+    fireEvent.change(title, { target: { value: "新版报价" } });
+    act(() => ipc.emitContextCreateRequested({ text: "补上合同链接", source: "clipboard" }));
+    await advance(0);
+    expect(title).toHaveValue("新版报价");
+    fireEvent.click(screen.getByRole("button", { name: "追加到内容" }));
+    expect(screen.getByLabelText("描述")).toHaveValue("跟进报价\n抄送项目组\n\n补上合同链接");
+    expect(ipc.items).toHaveLength(0);
+  });
+
+  it("Esc 关闭尚未编辑的快捷键预填窗", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    await advance(0);
+    act(() => ipc.emitContextCreateRequested({ text: "临时消息", source: "clipboard" }));
+    await advance(0);
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "标题" }), { key: "Escape" });
+    await advance(0);
+    expect(screen.queryByRole("dialog", { name: "新增事项" })).not.toBeInTheDocument();
+    expect(ipc.items).toHaveLength(0);
+  });
+
   it("Hover 延迟之后展开为面板，并请求 Rust 把窗口调整为面板大小", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);

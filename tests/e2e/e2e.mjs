@@ -7,7 +7,8 @@
 // 用法：node tests/e2e/e2e.mjs [--runs N] [--native]    需要先构建：pnpm tauri build --no-bundle（仅 Windows / WebView2）
 // M4 evidence: --native --runs 3 --warm-runs 20 --zoom --badge-matrix
 // Saves native screenshots, source/executable hashes and timings under tests/visual/stages/m4/native.
-// Focused native repros: --native --zoom-only / --ole-only / --badge-only.
+// Focused native repros: --native --zoom-only / --ole-only / --badge-only / --context-create-only.
+// App-specific native checks: --native --browser-drop-only / --explorer-drop-only / --ime-only.
 // Floating panel drag with a real mouse: --panel-drag-only.
 // --native：额外用真实按键（SendInput）按全局快捷键，检查全局搜索框的原生行为（出现、拿到键盘焦点、位置、
 // Esc 隐藏、再次出现时是干净的）。会向系统发送一次 Ctrl+Alt+Shift+F9（被测程序注册的组合，别的程序收不到），
@@ -15,11 +16,12 @@
 // 说明：计划里写的是 tauri-driver（WebDriver）；这里用 CDP 是因为它不需要额外下载 msedgedriver，
 // 且已经在真机验收里验证过。每次运行都使用全新的数据目录，互不影响。
 
-import { spawn, execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawn, execFile, execFileSync } from "node:child_process";
+import { promisify } from "node:util";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { PNG } from "pngjs";
 
@@ -28,6 +30,14 @@ const EXE = process.env.NIVLO_EXE ?? join(ROOT, "target", "release", process.pla
 const PORT = 9244;
 const RUNS = Number(process.argv[process.argv.indexOf("--runs") + 1]) || 1;
 const NATIVE = process.argv.includes("--native");
+const CONTEXT_CREATE_ONLY = process.argv.includes("--context-create-only");
+const BROWSER_DROP_ONLY = process.argv.includes("--browser-drop-only");
+const EXPLORER_DROP_ONLY = process.argv.includes("--explorer-drop-only");
+const IME_ONLY = process.argv.includes("--ime-only");
+if (CONTEXT_CREATE_ONLY && !NATIVE) throw Error("--context-create-only requires --native");
+if (BROWSER_DROP_ONLY && !NATIVE) throw Error("--browser-drop-only requires --native");
+if (EXPLORER_DROP_ONLY && !NATIVE) throw Error("--explorer-drop-only requires --native");
+if (IME_ONLY && !NATIVE) throw Error("--ime-only requires --native");
 const WARM_RUNS = process.argv.includes("--warm-runs") ? Math.max(0,Number(process.argv[process.argv.indexOf("--warm-runs")+1])||0) : 0;
 const PANEL_DRAG_ONLY = process.argv.includes("--panel-drag-only");
 const DRAG_ONLY = process.argv.includes("--drag-only") || PANEL_DRAG_ONLY;
@@ -38,6 +48,7 @@ const BADGE_ONLY = process.argv.includes("--badge-only");
 const ZOOM_ONLY = process.argv.includes("--zoom-only");
 const CHECK_ZOOM = process.argv.includes("--zoom") || ZOOM_ONLY;
 const BADGE_MATRIX = process.argv.includes("--badge-matrix") || BADGE_ONLY;
+const FOCUSED_RUN = ZOOM_ONLY || OLE_ONLY || BADGE_ONLY || SEARCH_ZOOM_ONLY || DRAG_ONLY || CONTEXT_CREATE_ONLY || BROWSER_DROP_ONLY || EXPLORER_DROP_ONLY || IME_ONLY;
 const badgeScaleFlag = process.argv.indexOf("--badge-scale");
 const badgeScale = badgeScaleFlag < 0 ? null : Number(process.argv[badgeScaleFlag + 1]);
 if (badgeScale !== null && (!NATIVE || !BADGE_MATRIX || ![100, 125].includes(badgeScale))) {
@@ -431,12 +442,14 @@ async function checkNativeOle({main,floating,data,index}) {
           const from = [target[0] > 400 ? target[0] - 300 : target[0] + 300, target[1]];
           const quote = (text) => `'${text.replaceAll("'", "''")}'`;
           /** 用 ole-drag.ps1 做一次真实拖放；`payload` 是它的数据参数（如 `-Files 'a','b'`）。 */
-          const oleDrag = async (payload) => {
+          let drops = 0;
+          const oleDrag = async (payload, zone = "inbox") => {
             // The previous accepted drop expands the panel over the helper's
             // source point. Collapse before every new drag, not just the first.
             realMouse(200,200);
             await until(()=>floating.evaluate(`innerWidth < 200 && !document.querySelector('[aria-label="今日面板"],[aria-label="Today panel"]')`),'OLE helper source is outside the collapsed target',8000);
-            const result = execFileSync(
+            const landingFile = join(data, `ole-landing-${drops++}.json`);
+            const dragProcess = promisify(execFile)(
               "powershell",
               [
                 "-NoProfile",
@@ -445,11 +458,30 @@ async function checkNativeOle({main,floating,data,index}) {
                 "-ExecutionPolicy",
                 "Bypass",
                 "-Command",
-                `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} ${payload} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])}`,
+                `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} ${payload} -FromX ${Math.round(from[0])} -FromY ${Math.round(from[1])} -ToX ${Math.round(target[0])} -ToY ${Math.round(target[1])} -LandingFile ${quote(landingFile)}`,
               ],
               { encoding: "utf8", timeout: 30000, windowsHide: true },
-            ).trim();
-            if (result === "None" || result === "NotStarted") throw new Error(`拖放没有被接受（${payload}）：${result}`);
+            );
+            const locate = until(() => floating.evaluate(`(() => {
+              const node = document.querySelector('[data-drop-zone="${zone}"]');
+              if (!node || innerWidth < 200) return null;
+              const bounds = node.getBoundingClientRect();
+              return {
+                x: Math.round((screenX + bounds.left + bounds.width / 2) * devicePixelRatio),
+                y: Math.round((screenY + bounds.top + bounds.height / 2) * devicePixelRatio),
+              };
+            })()`), `悬浮窗拖放区 ${zone}`, 6500).then((point) => {
+              const pendingFile = landingFile + ".tmp";
+              writeFileSync(pendingFile, JSON.stringify(point));
+              renameSync(pendingFile, landingFile);
+            });
+            const [drag, located] = await Promise.allSettled([dragProcess, locate]);
+            if (drag.status === "rejected") throw drag.reason;
+            const result = drag.value.stdout.trim();
+            if (result === "None" || result === "NotStarted") {
+              throw new Error(`拖放没有被接受（${zone}）：${result} ${drag.value.stderr.trim()}`);
+            }
+            if (located.status === "rejected") throw located.reason;
           };
           await oleDrag(`-Files ${paths.map(quote).join(",")}`);
           // 每一项都建成条目，并且附件引用的是磁盘上的真实路径（不是只拿到了文件名）。
@@ -468,14 +500,494 @@ async function checkNativeOle({main,floating,data,index}) {
           await oleDrag(`-Text ${quote(text)}`);
           const todo = await until(async () => (await main.invoke("search_items", { query: `e2eoletext${index}` }))[0], "拖入的文字建成了条目", 10000);
           if (todo.itemType !== "todo" || todo.title !== text) throw new Error(`拖入的文字应建成同名待办：${JSON.stringify([todo.itemType, todo.title])}`);
+          await until(() => floating.evaluate(`(() => {
+            const undo = [...document.querySelectorAll('button')].find(
+              button => ['撤销', 'Undo'].includes(button.textContent.trim())
+            );
+            if (!undo) return false;
+            undo.click();
+            return true;
+          })()`), "从悬浮窗撤销这次捕获");
+          await until(async () => !(await main.invoke("search_items", { query: `e2eoletext${index}` })).length,
+            "撤销后无法搜到这条待办");
           const url = `https://example.com/e2eolelink${index}`;
           await oleDrag(`-Url ${quote(url)}`);
           const note = await until(async () => (await main.invoke("search_items", { query: `e2eolelink${index}` }))[0], "拖入的链接建成了条目", 10000);
           if (note.itemType !== "note") throw new Error(`拖入的链接应建成笔记：${JSON.stringify([note.itemType, note.title])}`);
+
+          const prefill = `e2e-ole-prefill-${index}`;
+          await oleDrag(`-Text ${quote(prefill)}`, "create");
+          await until(() => floating.evaluate(`document.querySelector('form input[required]')?.value === ${JSON.stringify(prefill)}`), "真实拖放预填标题");
+          if ((await main.invoke("search_items", { query: prefill })).length) {
+            throw new Error("拖放到预填区时提前创建了事项");
+          }
+          await floating.evaluate(`[...document.querySelectorAll('form button')].find(
+            button => ['取消', 'Cancel'].includes(button.textContent.trim())
+          ).click()`);
+          await floating.evaluate(`[...document.querySelectorAll('form button')].find(
+            button => ['放弃内容', 'Discard'].includes(button.textContent.trim())
+          )?.click()`);
+          await until(() => floating.evaluate("!document.querySelector('form input[required]')"),
+            "关闭悬浮窗预填");
+
+          await floating.invoke("open_main_at", { view: "calendar" });
+          await main.evaluate(`(() => {
+            window.__calendarDropTrace = [];
+            window.__calendarPointer = null;
+            document.addEventListener('pointermove', event => {
+              window.__calendarPointer = { x: event.clientX, y: event.clientY };
+            });
+            for (const type of ['dragenter', 'drop']) document.addEventListener(type, event => {
+              const cell = event.target.closest?.('[data-calendar-day]');
+              window.__calendarDropTrace.push({ type, date: cell?.dataset.calendarDay, x: event.clientX,
+                y: event.clientY, formats: [...event.dataTransfer.types] });
+              window.__calendarDropTrace = window.__calendarDropTrace.slice(-8);
+            }, true);
+          })()`);
+          const { date, approxX, approxY, centerX, centerY, dpr } = await until(() => main.evaluate(`(() => {
+            const cells = [...document.querySelectorAll('[data-calendar-day]')];
+            const cell = cells[Math.floor(cells.length / 2)];
+            if (!cell) return null;
+            const bounds = cell.getBoundingClientRect();
+            const centerX = bounds.left + bounds.width / 2;
+            const centerY = bounds.top + bounds.height / 2;
+            return {
+              date: cell.dataset.calendarDay,
+              centerX, centerY, dpr: devicePixelRatio,
+              approxX: Math.round((screenX + centerX) * devicePixelRatio),
+              approxY: Math.round((screenY + centerY) * devicePixelRatio),
+            };
+          })()`), "日历落点");
+          // 主窗口的原生标题栏和边框让 screenX/Y 与实际 WebView 客户区的原点有偏移。
+          realMouse(approxX, approxY);
+          const pointer = await until(() => main.evaluate("window.__calendarPointer"), "主窗口接收到真实指针");
+          const x = Math.round(approxX + (centerX - pointer.x) * dpr);
+          const y = Math.round(approxY + (centerY - pointer.y) * dpr);
+          const calendarTitle = `e2e-ole-calendar-${index}`;
+          const calendarText = `${calendarTitle}\n保留讨论记录`;
+          const calendarDrop = await promisify(execFile)("powershell", [
+            "-NoProfile", "-NonInteractive", "-STA", "-ExecutionPolicy", "Bypass", "-Command",
+            `& ${quote(join(ROOT, "tests", "e2e", "ole-drag.ps1"))} -Text ${quote(calendarText)} -FromX ${x - 180} -FromY ${y} -ToX ${x} -ToY ${y}`,
+          ], { encoding: "utf8", timeout: 30000, windowsHide: true });
+          if (["None", "NotStarted"].includes(calendarDrop.stdout.trim())) {
+            const trace = await main.evaluate("window.__calendarDropTrace");
+            throw new Error(`日历未接收 OLE 拖放：${calendarDrop.stdout} ${calendarDrop.stderr} ${JSON.stringify({ date, x, y, trace })}`);
+          }
+          await until(() => main.evaluate(`(() => {
+            const form = document.querySelector('dialog[open] form');
+            return form?.querySelector('input[required]')?.value === ${JSON.stringify(calendarTitle)}
+              && form.querySelector('[data-scheduled-date]')?.value === ${JSON.stringify(date)};
+          })()`), "日历拖放预填标题和落点日期", 5000).catch(async (error) => {
+            const result = await main.evaluate(`({
+              trace: window.__calendarDropTrace,
+              date: document.querySelector('dialog[open] [data-scheduled-date]')?.value,
+              title: document.querySelector('dialog[open] input[required]')?.value,
+            })`);
+            throw new Error(`${error.message} ${JSON.stringify({ date, x, y, result })}`);
+          });
+          if ((await main.invoke("search_items", { query: calendarTitle })).length) {
+            throw new Error("日历预填确认前写入了事项");
+          }
+          await main.evaluate("document.querySelector('dialog[open] form button[type=submit]').click()");
+          const planned = await until(async () => (await main.invoke("search_items", { query: calendarTitle }))[0], "保存日历预填");
+          const { item: calendarItem } = await main.invoke("get_item_detail", { id: planned.id });
+          if (calendarItem.scheduled?.date !== date || calendarItem.content?.replace(/\r\n/g, "\n") !== calendarText || calendarItem.inInbox) {
+            throw new Error("日历拖放保存后的计划日期、原文或收集箱状态不符");
+          }
+          await until(() => main.evaluate(`document.hasFocus() && !document.querySelector('dialog[open]')
+            && [...document.querySelectorAll('button')].some(button => ['撤销', 'Undo'].includes(button.textContent.trim()))`),
+          "日历关闭草稿并显示撤销");
+          await main.evaluate(`document.querySelector('[data-calendar-day="${date}"] [data-day-add]').focus()`);
+          pressHotkey([0x11, 0x5a]);
+          await until(async () => (await main.invoke("list_trash")).some(
+            (entry) => entry.item.id === planned.id
+          ), "键盘撤销日历新建");
         } finally {
           realMouse(original[0], original[1]);
         }
 
+}
+
+/** 用独立 Chrome 窗口中的真实网页链接验证跨应用拖入预填区。 */
+async function checkNativeBrowserDrop({ main, floating, data, index }) {
+  const chrome = process.env.CHROME ?? "C:/Program Files/Google/Chrome/Application/chrome.exe";
+  if (!existsSync(chrome)) throw new Error("找不到 Chrome，可用 CHROME 指定路径");
+  const profile = join(data, "chrome-drop-profile");
+  const fixture = join(data, "drag-source.html");
+  const title = `e2e-chrome-link-${index}`;
+  const url = `https://example.test/${title}`;
+  writeFileSync(fixture, `<!doctype html><meta charset="utf-8"><title>Drag fixture</title>
+    <a style="display:inline-block;margin:80px;font:24px sans-serif" href="${url}">${title}</a>`);
+  const original = cursorPosition();
+  const browser = spawn(chrome, [
+    "--no-first-run", "--no-default-browser-check", "--disable-background-networking",
+    "--remote-debugging-port=0", `--user-data-dir=${profile}`,
+    "--window-position=80,180", "--window-size=480,360", `--app=${pathToFileURL(fixture).href}`,
+  ], { stdio: "ignore" });
+  let page;
+  try {
+    const target = await until(() => floating.evaluate(`innerWidth < 200 ? [
+      (screenX + innerWidth / 2) * devicePixelRatio, (screenY + innerHeight / 2) * devicePixelRatio
+    ] : null`), "收起的悬浮徽标");
+    const pageInfo = await until(async () => {
+      const [port] = readFileSync(join(profile, "DevToolsActivePort"), "utf8").split(/\r?\n/);
+      const pages = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
+      return pages.find((entry) => entry.url === pathToFileURL(fixture).href);
+    }, "独立 Chrome 测试页面");
+    page = await connect(pageInfo.webSocketDebuggerUrl);
+    const version = await page.send("Browser.getVersion");
+    await until(() => page.evaluate("Boolean(document.querySelector('a'))"), "Chrome 夹具链接加载");
+    const source = await page.evaluate(`(() => {
+      const bounds = document.querySelector('a').getBoundingClientRect();
+      const centerX = bounds.left + bounds.width / 2;
+      const centerY = bounds.top + bounds.height / 2;
+      document.addEventListener('pointermove', event => {
+        window.__browserDropPointer = { x: event.clientX, y: event.clientY };
+      });
+      return { centerX, centerY, dpr: devicePixelRatio,
+        x: (screenX + centerX) * devicePixelRatio, y: (screenY + centerY) * devicePixelRatio };
+    })()`);
+    realMouse(source.x, source.y);
+    const pointer = await until(() => page.evaluate("window.__browserDropPointer"), "Chrome 收到真实指针");
+    const from = [
+      source.x + (source.centerX - pointer.x) * source.dpr,
+      source.y + (source.centerY - pointer.y) * source.dpr,
+    ];
+    realDrag(from, target, 24, 150);
+    const prefill = await until(() => floating.evaluate(`(() => {
+      const form = document.querySelector('form');
+      const link = form?.querySelector(${JSON.stringify(`[title="${url}"]`)});
+      return link ? form.querySelector('input[required]')?.value : null;
+    })()`), "Chrome 链接预填为来源");
+    if ((await main.invoke("search_items", { query: title })).length) {
+      throw new Error("确认之前写入了浏览器链接");
+    }
+    await floating.evaluate(`[...document.querySelectorAll('form button[role=radio]')].find(
+      button => ['待办', 'To-do'].includes(button.textContent.trim())
+    ).click()`);
+    await until(() => floating.evaluate(`(() => {
+      const todo = document.querySelector('form button[role=radio][aria-checked=true]');
+      return ['待办', 'To-do'].includes(todo?.textContent.trim())
+        && !!document.querySelector(${JSON.stringify(`form [title="${url}"]`)});
+    })()`), "切换到待办后保留网页来源");
+    await floating.evaluate("document.querySelector('form button[type=submit]').click()");
+    const item = await until(async () => (await main.invoke("search_items", { query: title }))
+      .find((entry) => entry.title === prefill), "保存浏览器预填");
+    const detail = await main.invoke("get_item_detail", { id: item.id });
+    if (item.itemType !== "todo" || !detail.sources.some((source) => source.sourceUrl === url)) {
+      throw new Error("保存后的 Chrome 链接来源不符");
+    }
+    console.log(`  ${version.result?.product ?? "Chrome"}：按住网页链接拖放，预填、切换类型与保存来源通过`);
+  } finally {
+    page?.close();
+    if (browser.pid && browser.exitCode === null) {
+      try { execFileSync("taskkill", ["/F", "/T", "/PID", String(browser.pid)], { stdio: "ignore", windowsHide: true }); }
+      catch { browser.kill(); }
+    }
+    realMouse(original[0], original[1]);
+  }
+}
+
+/** 用资源管理器新窗口拖入测试文件，验证保留原文件位置。 */
+async function checkNativeExplorerDrop({ main, floating, data, index }) {
+  const folder = join(data, "explorer-drop");
+  mkdirSync(folder);
+  const title = `e2e-explorer 中文文件 ${index}`;
+  const filename = `${title}.txt`;
+  const file = join(folder, filename);
+  writeFileSync(file, "Nivlo synthetic Explorer drag fixture");
+  const original = cursorPosition();
+  const existing = new Set(win32(`
+    $shell = New-Object -ComObject Shell.Application
+    foreach ($window in $shell.Windows()) { $window.HWND }
+  `).split(/\r?\n/));
+  const quote = (value) => `'${value.replaceAll("'", "''")}'`;
+  const fixtureWindow = `
+    $shell = New-Object -ComObject Shell.Application
+    $fixture = $null
+    foreach ($window in $shell.Windows()) {
+      try {
+        if ($window.Document.Folder.Self.Path -eq ${quote(folder)}) { $fixture = $window; break }
+      } catch { }
+    }
+  `;
+  let source;
+  try {
+    spawn("explorer.exe", [`/n,${folder}`], { stdio: "ignore" });
+    const target = await until(() => floating.evaluate(`innerWidth < 200 ? [
+      (screenX + innerWidth / 2) * devicePixelRatio, (screenY + innerHeight / 2) * devicePixelRatio
+    ] : null`), "收起的悬浮徽标");
+    const handle = await until(() => win32(`${fixtureWindow}
+      if ($null -ne $fixture) { $fixture.HWND }
+    `) || null, "资源管理器打开独立测试目录");
+    if (existing.has(handle)) throw new Error("资源管理器复用了已有窗口");
+    source = handle;
+    focusWindow(source);
+    const from = await until(() => {
+      const point = win32(`
+        Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
+        $root = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]${source})
+        foreach ($name in @(${quote(filename)}, ${quote(title)})) {
+          $condition = New-Object System.Windows.Automation.PropertyCondition(
+            [System.Windows.Automation.AutomationElement]::NameProperty, $name
+          )
+          $element = $root.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
+          if ($null -ne $element -and -not $element.Current.IsOffscreen) {
+            $bounds = $element.Current.BoundingRectangle
+            if ($bounds.Width -gt 0 -and $bounds.Height -gt 0) {
+              @(($bounds.Left + [Math]::Min(60.0, $bounds.Width / 2)), ($bounds.Top + $bounds.Height / 2)) |
+                ConvertTo-Json -Compress
+              break
+            }
+          }
+        }
+      `);
+      return point ? JSON.parse(point) : null;
+    }, "资源管理器中的测试文件位置");
+    await floating.evaluate(`(() => {
+      window.__explorerDropTrace = [];
+      for (const type of ['dragenter', 'drop']) document.addEventListener(type, event => {
+        window.__explorerDropTrace.push({ type, formats: [...event.dataTransfer.types] });
+      }, true);
+    })()`);
+    realDrag(from, target, 24, 150);
+    const prefilledTitle = await until(() => floating.evaluate(`(() => {
+      const form = document.querySelector('form');
+      const submit = form?.querySelector('button[type=submit]');
+      if (!submit || submit.disabled) return null;
+      const referenced = [...form.querySelectorAll('[title]')].some(
+        element => element.title.toLowerCase() === ${JSON.stringify(file.toLowerCase())}
+      );
+      return referenced ? form.querySelector('input[required]')?.value : null;
+    })()`), "资源管理器文件路径进入预填", 5000).catch(async (error) => {
+      const state = await floating.evaluate(`({
+        trace: window.__explorerDropTrace,
+        title: document.querySelector('form input[required]')?.value,
+        window: [screenX, screenY, innerWidth, innerHeight]
+      })`);
+      throw new Error(`${error.message} ${JSON.stringify({ from, target, state })}`);
+    });
+    if ((await main.invoke("search_items", { query: "e2e-explorer" })).length) {
+      throw new Error("确认前已写入资源管理器文件");
+    }
+    await floating.evaluate("document.querySelector('form button[type=submit]').click()");
+    const item = await until(async () => (await main.invoke("search_items", { query: "e2e-explorer" }))
+      .find((entry) => entry.title === prefilledTitle),
+      "保存资源管理器预填", 7000).catch(async (error) => {
+        const message = await floating.evaluate("document.querySelector('form [role=alert]')?.textContent");
+        throw new Error(`${error.message} ${JSON.stringify({ prefilledTitle, message })}`);
+      });
+    const detail = await main.invoke("get_item_detail", { id: item.id });
+    if (!detail.attachments.some((attachment) => attachment.kind === "reference" &&
+      attachment.path.toLowerCase() === file.toLowerCase()) || !existsSync(file)) {
+      throw new Error("资源管理器文件没有保存为原路径引用");
+    }
+    const version = win32("(Get-Item -LiteralPath (Join-Path $env:windir 'explorer.exe')).VersionInfo.FileVersion");
+    console.log(`  资源管理器 ${version}：文件预填、保存原路径引用和保留原文件通过`);
+  } finally {
+    if (source) win32(`${fixtureWindow}
+      if ($null -ne $fixture -and $fixture.HWND -eq ${source}) { $fixture.Quit() }
+    `);
+    realMouse(original[0], original[1]);
+  }
+}
+
+/** 键盘创建后，检查真正的 NVDA 通知并用 Ctrl+Z 撤销。 */
+async function checkNvdaCalendarFeedback({ main, floating, speechLog }) {
+  const title = "e2e-nvda-calendar-feedback";
+  await floating.invoke("open_main_at", { view: "calendar" });
+  const day = await until(() => main.evaluate(`(() => {
+    if (!document.hasFocus()) return null;
+    const cells = [...document.querySelectorAll('[data-calendar-day]')];
+    return cells[Math.floor(cells.length / 2)]?.dataset.calendarDay;
+  })()`), "键盘验收使用的日历日期");
+  const add = `document.querySelector('[data-calendar-day="${day}"] [data-day-add]')`;
+  await main.evaluate(`${add}.focus()`);
+  pressHotkey([0x0d]);
+  await until(() => main.evaluate(`document.activeElement instanceof HTMLInputElement &&
+    document.activeElement.closest('[data-calendar-day]')?.dataset.calendarDay === ${JSON.stringify(day)}`),
+  "键盘打开当日新待办");
+  await main.send("Input.insertText", { text: title });
+  const speechOffset = readFileSync(speechLog).length;
+  pressHotkey([0x0d]);
+  const item = await until(async () => (await main.invoke("search_items", { query: title }))[0],
+    "键盘保存日历新待办");
+  await until(() => readFileSync(speechLog).subarray(speechOffset).toString("utf8")
+    .split(/\r?\n/).some((line) => line.includes("Speaking") && line.includes(title) && /已创建|Created/.test(line)),
+  "NVDA 朗读日历创建成功反馈", 3500);
+  await main.evaluate(`${add}.focus()`);
+  pressHotkey([0x11, 0x5a]);
+  await until(async () => (await main.invoke("list_trash")).some((entry) => entry.item.id === item.id),
+    "启用 NVDA 时 Ctrl+Z 撤销日历新建");
+  console.log("  NVDA 朗读了日历创建成功提示，键盘撤销通过");
+}
+
+/** 用已启用的 Windows 中文输入法验证组字和主动提交。 */
+async function checkNativeIme({ main, floating }) {
+  await main.invoke("set_shortcut", { action: "quickCreate", accelerator: "Ctrl+Alt+Shift+F8" });
+  const before = (await main.invoke("get_today")).todos.map((item) => item.id);
+  pressHotkey([0x11, 0x12, 0x10, 0x77]);
+  await until(() => floating.evaluate(`document.hasFocus()
+    && document.activeElement === document.querySelector('form input[required]')
+    && !document.activeElement.disabled`), "输入法测试的标题取得焦点");
+  await floating.evaluate(`(() => {
+    window.__imeTrace = [];
+    for (const type of ['compositionstart', 'compositionend', 'keydown']) {
+      document.querySelector('form input[required]').addEventListener(type, (event) => {
+        window.__imeTrace.push({ type, key: event.key, code: event.keyCode, composing: event.isComposing });
+      });
+    }
+  })()`);
+  /** 向 Windows 输入法输入真实的 n i h a o 按键。 */
+  const typePinyin = () => win32(`
+    foreach ($key in 0x4e,0x49,0x48,0x41,0x4f) {
+      [E2E.Native]::keybd_event($key,0,0,[System.UIntPtr]::Zero)
+      [E2E.Native]::keybd_event($key,0,2,[System.UIntPtr]::Zero)
+      Start-Sleep -Milliseconds 70
+    }
+  `);
+  const composing = "window.__imeTrace.some(event => event.type === 'compositionstart')";
+  let switched = false;
+  try {
+    typePinyin();
+    if (!await floating.evaluate(composing)) {
+      pressHotkey([0x11, 0x41]);
+      pressHotkey([0x08]);
+      pressHotkey([0x10]);
+      switched = true;
+      typePinyin();
+    }
+    await until(() => floating.evaluate(composing), "微软拼音产生真实 compositionstart", 3500);
+    pressHotkey([0x1b]);
+    await until(() => floating.evaluate(`window.__imeTrace.some(event => event.type === 'compositionend')
+      && document.activeElement === document.querySelector('form input[required]')`),
+    "Esc 取消组字但保留弹窗和焦点", 5000);
+    await floating.evaluate("window.__imeTrace.length = 0");
+    typePinyin();
+    await until(() => floating.evaluate(composing), "再次进入微软拼音组字", 3500);
+    pressHotkey([0x0d]);
+    const title = await until(() => floating.evaluate(`window.__imeTrace.some(event => event.type === 'compositionend')
+      && document.querySelector('form input[required]')?.value`), "Enter 结束组字且保留标题", 5000);
+    if (JSON.stringify((await main.invoke("get_today")).todos.map((item) => item.id)) !== JSON.stringify(before)) {
+      throw Error("结束组字时创建了事项");
+    }
+    if (switched) {
+      pressHotkey([0x10]);
+      switched = false;
+    }
+    pressHotkey([0x11, 0x0d]);
+    await until(async () => {
+      const created = (await main.invoke("get_today")).todos.filter((item) => !before.includes(item.id));
+      return created.length === 1 && created[0].title === title;
+    }, "主动 Ctrl+Enter 只创建一条事项");
+  } finally {
+    if (switched) pressHotkey([0x10]);
+  }
+}
+
+async function checkNativeContextCreate({ main, floating }) {
+  const fixture = spawn("powershell", [
+    "-NoProfile", "-NonInteractive", "-STA", "-Command", `
+    Add-Type -AssemblyName PresentationFramework
+    $window = New-Object Windows.Window
+    $window.Title = 'Nivlo context selection fixture'
+    $window.Width = 440
+    $window.Height = 160
+    $input = New-Object Windows.Controls.TextBox
+    $input.AcceptsReturn = $true
+    $input.Text = "e2e-context-selection" + [Environment]::NewLine + "second line"
+    $window.Content = $input
+    $window.Add_ContentRendered({
+      param($sender, $eventArgs)
+      [void]$sender.Content.Focus()
+      $sender.Content.SelectAll()
+    })
+    [void]$window.ShowDialog()
+  `], { windowsHide: true, stdio: ["ignore", "ignore", "inherit"] });
+  try {
+    const binding = await main.invoke("get_shortcut_status", { action: "contextCreate" });
+    const defaultReady = binding.registered && binding.accelerator === "Ctrl+Alt+Shift+Space";
+    if (!defaultReady) {
+      await main.invoke("set_shortcut", { action: "contextCreate", accelerator: "Ctrl+Alt+Shift+F10" });
+    }
+    const hotkey = [0x11, 0x12, 0x10, defaultReady ? 0x20 : 0x79];
+    const source = await until(() => {
+      const handle = win32(`${largestWindow(fixture.pid)}; $best.ToInt64()`);
+      return handle !== "0" ? handle : null;
+    }, "UI Automation text fixture");
+    focusWindow(source);
+    await until(() => foregroundWindow() === source, "selection fixture in foreground");
+    pressHotkey([0x11, 0x41]);
+    const clipboardSequence = () => win32(`
+      Add-Type -Namespace E2E -Name Clipboard -MemberDefinition '[DllImport("user32.dll")] public static extern uint GetClipboardSequenceNumber();'
+      [E2E.Clipboard]::GetClipboardSequenceNumber()
+    `);
+    const clipboardBefore = clipboardSequence();
+    const speechLog = process.env.NIVLO_NVDA_LOG;
+    const speechOffset = speechLog ? readFileSync(speechLog).length : 0;
+    pressHotkey(hotkey);
+    await until(() => floating.evaluate(`
+      document.hasFocus() &&
+      document.activeElement?.value === "e2e-context-selection" &&
+      ["来自当前选区", "From the current selection"].some(text => document.body.innerText.includes(text))
+    `), "选区预填到新增弹窗", 10000);
+    if (speechLog) {
+      await until(() => readFileSync(speechLog).subarray(speechOffset).toString("utf8")
+        .split(/\r?\n/).some((line) =>
+          line.includes("Speaking") && line.includes("e2e-context-selection") && /标题|Title/.test(line)),
+      "NVDA 朗读预填标题控件及其内容", 5000);
+      console.log("  NVDA 朗读了预填标题控件及其内容");
+    }
+    if ((await main.invoke("search_items", { query: "e2e-context-selection" })).length > 0) {
+      throw Error("用户确认之前创建了事项");
+    }
+    if (clipboardSequence() !== clipboardBefore) throw Error("预填选区时改动了系统剪贴板");
+    if (speechLog) {
+      // NVDA 可以先消费 Escape 退出焦点模式。用正常的键盘导航完成同一个取消动作。
+      let cancelFocused = false;
+      for (let attempt = 0; attempt < 10 && !cancelFocused; attempt++) {
+        pressHotkey([0x10, 0x09]);
+        cancelFocused = await floating.evaluate(`
+          ['取消', 'Cancel'].includes(document.activeElement?.textContent.trim())
+        `);
+      }
+      if (!cancelFocused) throw new Error("启用 NVDA 时无法通过键盘聚焦取消按钮");
+      await until(() => readFileSync(speechLog).subarray(speechOffset).toString("utf8")
+        .split(/\r?\n/).some((line) => line.includes("Speaking") && /取消.*按钮|Cancel.*button/i.test(line)),
+      "NVDA 朗读取消按钮", 5000);
+      pressHotkey([0x0d]);
+    } else {
+      pressHotkey([0x1b]);
+    }
+    await until(() => foregroundWindow() === source, "取消后焦点回到选区所在的应用");
+
+    pressHotkey([0x11, 0x41]);
+    pressHotkey(hotkey);
+    await until(() => floating.evaluate(
+      'document.hasFocus() && document.activeElement?.value === "e2e-context-selection"'
+    ), "再次读取选区");
+    await floating.evaluate("document.querySelector('form button[type=submit]').click()");
+    const created = await until(async () => {
+      const inbox = await main.invoke("list_inbox");
+      return inbox.find(({ item }) => item.title === "e2e-context-selection");
+    }, "预填事项写入收集箱");
+    if (created.item.scheduled || !created.item.content?.includes("second line") ||
+      !created.sources.some((entry) => entry.sourceType === "selection")) {
+      throw Error("收集箱条目缺少原文或来源，或意外写入了计划日期");
+    }
+    await until(() => floating.evaluate(`
+      Boolean([...document.querySelectorAll('button')].find(button => ['撤销', 'Undo'].includes(button.textContent.trim())))
+    `), "悬浮窗显示创建撤销");
+    await floating.evaluate(`
+      [...document.querySelectorAll('button')].find(button => ['撤销', 'Undo'].includes(button.textContent.trim())).click()
+    `);
+    await until(async () => (await main.invoke("list_trash")).some(
+      (entry) => entry.item.id === created.item.id
+    ), "撤销创建后事项移入回收站");
+    if (speechLog) await checkNvdaCalendarFeedback({ main, floating, speechLog });
+  } finally {
+    fixture.kill();
+  }
 }
 
 async function runOnce(index) {
@@ -564,7 +1076,7 @@ async function runOnce(index) {
       await until(()=>main.evaluate(`!document.querySelector('[role=dialog]')`),'onboarding dismissed');
     });
 
-    if (!ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
+    if (!FOCUSED_RUN) {
     // 3. Quick Add：创建一个 Todo，今天的视图里出现它。
     const title = `e2e-todo-${index}`;
     let todo;
@@ -809,6 +1321,7 @@ async function runOnce(index) {
         }, "创建按钮只创建一条待办");
         await until(() => foregroundWindow() === before, "创建后焦点回到之前的应用", 5000);
       });
+      await step("全局快捷键预填真实选区", () => checkNativeContextCreate({ main, floating }));
 
       // 11.7（--native）真实鼠标（实施计划 10.2）：悬停展开、点面板标题、点 Today 项的完成框，都不抢焦点。
       await step("悬浮窗不抢焦点（真实鼠标）", async () => {
@@ -1059,6 +1572,10 @@ async function runOnce(index) {
     if (PANEL_DRAG_ONLY) await step("isolated native panel drag",()=>checkNativePanelDrag(floating));
     else if (DRAG_ONLY) await step("isolated native badge drag",()=>checkNativeBadgeDrag({main,floating,child,index}));
     if (OLE_ONLY) await step("isolated native OLE drop",()=>checkNativeOle({main,floating,data,index}));
+    if (BROWSER_DROP_ONLY) await step("Chrome 网页链接真实拖放", () => checkNativeBrowserDrop({ main, floating, data, index }));
+    if (EXPLORER_DROP_ONLY) await step("资源管理器文件真实拖放", () => checkNativeExplorerDrop({ main, floating, data, index }));
+    if (IME_ONLY) await step("微软拼音组字与快捷提交", () => checkNativeIme({ main, floating }));
+    if (CONTEXT_CREATE_ONLY) await step("全局快捷键预填真实选区", () => checkNativeContextCreate({ main, floating }));
     if (ZOOM_ONLY) await main.invoke('quick_create',{request:{itemType:'todo',title:'zoom fixture',scheduled:null}});
     if (NATIVE && CHECK_ZOOM) await step('200% WebView2 content zoom',async()=>{
       await floating.invoke('open_main_at',{view:'today'});
@@ -1429,7 +1946,7 @@ for (let i = 1; i <= RUNS; i++) {
     console.error(`✗ 第 ${i} 次：${e.message}`);
   }
 }
-if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
+if (NATIVE && !FOCUSED_RUN) {
   try {
     await coldMainScenario();
     console.log("✓ 主窗口未创建时从全局搜索框回车打开结果");
@@ -1438,7 +1955,7 @@ if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DR
     console.error(`✗ 主窗口未创建时从全局搜索框回车打开结果：${e.message}`);
   }
 }
-if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
+if (NATIVE && !FOCUSED_RUN) {
   try {
     await badgeColdMainScenario();
     console.log("✓ 主窗口未创建时点徽标：主窗口到前台并留在前台");
@@ -1447,7 +1964,7 @@ if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DR
     console.error(`✗ 主窗口未创建时点徽标：${e.message}`);
   }
 }
-if (NATIVE && !ZOOM_ONLY && !OLE_ONLY && !BADGE_ONLY && !SEARCH_ZOOM_ONLY && !DRAG_ONLY) {
+if (NATIVE && !FOCUSED_RUN) {
   try {
     const { firstMs, extraMb } = await prewarmScenario();
     console.log(`✓ 预先准备全局搜索框：第一次唤出 ${firstMs} ms，进程树多占约 ${extraMb} MB`);

@@ -1,7 +1,6 @@
 //! 剪贴板的平台选择。
 //!
-//! **只在用户明确粘贴时读取**（架构文档 §17）：全仓库里调用 [`ClipboardPort::read`] 的只有
-//! `capture_from_clipboard` 这一个 Command，它由「粘贴」按钮或粘贴快捷键触发；没有任何监听或轮询。
+//! 用户明确粘贴或导入时才调用 [`ClipboardPort::read`]，没有监听或轮询。
 
 use std::sync::Arc;
 

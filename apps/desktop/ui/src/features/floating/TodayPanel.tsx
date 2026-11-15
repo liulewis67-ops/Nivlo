@@ -144,7 +144,7 @@ export function TodayPanel({
           ))}
           {capture !== undefined && (
             <Button size="sm" variant="ghost" className="ml-auto" onClick={capture.onPaste}>
-              {t("capture.paste")}
+              {t("capture.pasteToInbox")}
             </Button>
           )}
         </footer>
@@ -183,7 +183,9 @@ export function TodayPanel({
               >
                 {t(`capture.drop.${zone}.title`)}
               </p>
-              <p className="text-xs text-muted">{t(`capture.drop.${zone}.hint`)}</p>
+              <p className="text-xs text-muted">
+                {t(`capture.drop.${zone}.${dropZone === zone ? "active" : "hint"}`)}
+              </p>
             </div>
           ))}
         </div>

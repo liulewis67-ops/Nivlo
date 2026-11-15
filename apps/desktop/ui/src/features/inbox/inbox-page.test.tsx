@@ -327,13 +327,37 @@ describe("InboxPage", () => {
     renderWithProviders(<InboxPage />, ipc);
     await screen.findByText("收集箱是空的");
 
-    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    fireEvent.click(screen.getByRole("button", { name: "粘贴到收集箱" }));
     expect(await screen.findByText("整理周报")).toBeInTheDocument();
     const toast = useToastStore.getState().toasts.at(-1);
     expect(toast?.message).toBe("已收集：整理周报");
 
     act(() => toast?.action?.onClick());
     await waitFor(() => expect(ipc.undoneCaptures).toHaveLength(1));
+  });
+
+  it("用整理菜单安排明确的日期，撤销后回到收集箱", async () => {
+    const ipc = createMemoryIpc();
+    await capture(ipc, "整理待排期事项");
+    renderWithProviders(<InboxPage />, ipc);
+    await screen.findByText("整理待排期事项");
+    await userEvent.click(
+      within(row("整理待排期事项")).getByRole("button", { name: "更多整理方式" }),
+    );
+    await userEvent.click(await screen.findByRole("menuitem", { name: "安排日期…" }));
+    const input = screen.getByLabelText("计划日期（日）");
+    await waitFor(() => expect(input).toHaveFocus());
+    fireEvent.change(input, { target: { value: "2026-11-20" } });
+    await userEvent.click(screen.getByRole("button", { name: "安排" }));
+    await waitFor(() =>
+      expect(ipc.items[0]).toMatchObject({
+        inInbox: false,
+        scheduled: { date: "2026-11-20", time: null },
+      }),
+    );
+    act(() => undoToast()?.onClick());
+    expect(await screen.findByText("整理待排期事项")).toBeInTheDocument();
+    expect(ipc.items[0]).toMatchObject({ inInbox: true, scheduled: null });
   });
 
   it("焦点不在输入框时按 Ctrl+V 粘贴；在输入框里按则是普通输入", async () => {
@@ -349,6 +373,7 @@ describe("InboxPage", () => {
     input.remove();
 
     fireEvent.keyDown(document.body, { key: "v", ctrlKey: true });
+    fireEvent.keyDown(document.body, { key: "v", ctrlKey: true, repeat: true });
     expect(await screen.findByText("来自剪贴板")).toBeInTheDocument();
     expect(ipc.calls.filter((call) => call === "captureFromClipboard")).toHaveLength(1);
   });
@@ -356,7 +381,7 @@ describe("InboxPage", () => {
   it("剪贴板是空的：提示原因", async () => {
     renderWithProviders(<InboxPage />, createMemoryIpc());
     await screen.findByText("收集箱是空的");
-    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    fireEvent.click(screen.getByRole("button", { name: "粘贴到收集箱" }));
     await waitFor(() =>
       expect(useToastStore.getState().toasts.at(-1)?.message).toContain(
         "剪贴板里没有可以收集的内容",

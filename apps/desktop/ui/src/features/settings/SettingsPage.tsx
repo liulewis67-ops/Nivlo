@@ -382,6 +382,12 @@ export function SettingsPage() {
           <Row label={t("settings.searchShortcut.label")} hint={t("settings.searchShortcut.hint")}>
             <ShortcutSetting action="search" showStatus />
           </Row>
+          <Row
+            label={t("shortcut.action.contextCreate.label")}
+            hint={t("shortcut.action.contextCreate.hint")}
+          >
+            <ShortcutSetting action="contextCreate" showStatus />
+          </Row>
           <Row label={t("settings.searchPrewarm.label")} hint={t("settings.searchPrewarm.hint")}>
             <Switch
               label={t("settings.searchPrewarm.label")}

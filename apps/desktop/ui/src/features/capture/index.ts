@@ -8,6 +8,7 @@ export {
   linkKey,
   mergeLinks,
   shortUrl,
+  textDraft,
   toLinkDtos,
 } from "./model/drop-draft";
 export type { DraftLink, DropDraft } from "./model/drop-draft";

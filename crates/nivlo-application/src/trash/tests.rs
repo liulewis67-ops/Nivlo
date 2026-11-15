@@ -91,6 +91,23 @@ async fn todo(f: &Fixture, title: &str) -> ItemId {
 }
 
 #[tokio::test]
+async fn undo_creation_only_moves_the_unchanged_item_to_trash() {
+    let f = fixture();
+    let id = todo(&f, "原样撤销").await;
+    let revision = f.items.get_item(id).await.unwrap().created_at();
+    f.trash.undo_created(id, revision).await.unwrap();
+    assert_eq!(f.trash.list().await.unwrap()[0].item.id(), id);
+
+    let edited = todo(&f, "继续编辑").await;
+    let revision = f.items.get_item(edited).await.unwrap().created_at();
+    f.clock.advance(Duration::seconds(1));
+    f.items.complete_item(edited).await.unwrap();
+    let error = f.trash.undo_created(edited, revision).await.unwrap_err();
+    assert_eq!(error.code, ErrorCode::InvalidInput);
+    assert_eq!(f.trash.list().await.unwrap().len(), 1);
+}
+
+#[tokio::test]
 async fn deleted_items_disappear_from_every_view_and_come_back_on_restore() {
     let f = fixture();
     let keep = todo(&f, "留下的任务").await;

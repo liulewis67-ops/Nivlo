@@ -87,6 +87,15 @@ pub enum RescheduleTarget {
     Inbox,
     /// 精确设置（或清除）计划，用于撤销。
     Exact(Option<DatePoint>),
+    /// 恢复这次改期之前的计划与收集箱归属。
+    Restore {
+        /// 之前的计划。
+        scheduled: Option<DatePoint>,
+        /// 之前是否在收集箱。
+        in_inbox: bool,
+        /// 改期成功时的版本。
+        revision: DateTime<Utc>,
+    },
 }
 
 /// 严格晚于 `date` 的下一个周一（今天是周一则为 7 天后）。
@@ -141,6 +150,20 @@ impl ItemService {
         input: CreateItemInput,
         links: Vec<ItemLink>,
     ) -> Result<Item, AppError> {
+        self.create_item_with_source(input, links, None).await
+    }
+
+    /// 创建事项，并在同一事务中保存文本来源和关联资料。
+    ///
+    /// # Errors
+    ///
+    /// 同 [`Self::create_item_with_links`]。
+    pub async fn create_item_with_source(
+        &self,
+        input: CreateItemInput,
+        links: Vec<ItemLink>,
+        text_source: Option<SourceType>,
+    ) -> Result<Item, AppError> {
         validate_links(&links)?;
         let now = self.clock.now_utc();
         let has_schedule =
@@ -150,6 +173,21 @@ impl ItemService {
 
         let mut tx = self.uow.begin().await?;
         tx.items().insert(&item).await?;
+        if let Some(source_type) = text_source {
+            tx.sources()
+                .insert(&Source {
+                    id: SourceId::from_uuid(new_uuid_v7(self.clock.as_ref())),
+                    item_id: id,
+                    source_type,
+                    source_app: None,
+                    source_url: None,
+                    source_path: None,
+                    original_title: None,
+                    metadata_json: None,
+                    captured_at: now,
+                })
+                .await?;
+        }
         for link in links {
             let (source_type, url, path, title, file) = match link {
                 ItemLink::Web { url, title } => (SourceType::WEB, Some(url), None, title, None),
@@ -356,6 +394,21 @@ impl ItemService {
             // 放回收集箱：清除日期并标记为待整理（D-02）。
             RescheduleTarget::Inbox => item.move_to_inbox(now),
             RescheduleTarget::Exact(scheduled) => item.set_scheduled(scheduled, now),
+            RescheduleTarget::Restore {
+                scheduled,
+                in_inbox,
+                revision,
+            } => {
+                if item.updated_at().timestamp_millis() != revision.timestamp_millis() {
+                    return Err(AppError::new(
+                        ErrorCode::InvalidInput,
+                        "事项已修改，无法撤销改期",
+                    ));
+                }
+                let event = item.set_scheduled(scheduled, now);
+                item.restore_inbox_flag(in_inbox, now);
+                event
+            }
         };
         tx.items().update(&item).await?;
         // 无论去哪儿，它在 Today 里的旧位置都不再有意义；回到 Today（撤销）时由调用方重新排序。

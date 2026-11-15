@@ -56,11 +56,13 @@ pub enum ShortcutAction {
     QuickCreate,
     /// 打开全局搜索框。
     Search,
+    /// 从选区或剪贴板预填新增配置。
+    ContextCreate,
 }
 
 impl ShortcutAction {
     /// 全部动作。
-    pub const ALL: [Self; 2] = [Self::QuickCreate, Self::Search];
+    pub const ALL: [Self; 3] = [Self::QuickCreate, Self::Search, Self::ContextCreate];
 
     /// 保存绑定的设置键。
     #[must_use]
@@ -68,6 +70,7 @@ impl ShortcutAction {
         match self {
             Self::QuickCreate => SHORTCUT_SETTING_KEY,
             Self::Search => SEARCH_SHORTCUT_SETTING_KEY,
+            Self::ContextCreate => "shortcut.context_create",
         }
     }
 
@@ -80,12 +83,8 @@ impl ShortcutAction {
                 "Ctrl+Alt+Shift+N",
                 "Ctrl+Shift+Q",
             ],
-            Self::Search => &[
-                "Ctrl+Alt+K",
-                "Alt+Shift+Space",
-                "Ctrl+Alt+Shift+Space",
-                "Alt+Shift+K",
-            ],
+            Self::Search => &["Ctrl+Alt+K", "Alt+Shift+Space", "Alt+Shift+K"],
+            Self::ContextCreate => &["Ctrl+Alt+Shift+N", "Alt+Shift+N", "Ctrl+Shift+Q"],
         }
     }
 
@@ -95,6 +94,7 @@ impl ShortcutAction {
         match self {
             Self::QuickCreate => Accelerator::QUICK_CREATE_DEFAULT,
             Self::Search => Accelerator::SEARCH_DEFAULT,
+            Self::ContextCreate => Accelerator::CONTEXT_CREATE_DEFAULT,
         }
     }
 }

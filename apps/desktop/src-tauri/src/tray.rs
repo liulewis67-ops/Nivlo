@@ -354,7 +354,7 @@ pub fn request_quick_add(app: &AppHandle<Wry>) {
 }
 
 /// 显示或隐藏悬浮窗。显示时不抢焦点（窗口本身是不可聚焦的）。
-fn set_floating_visible(app: &AppHandle<Wry>, visible: bool) {
+pub(crate) fn set_floating_visible(app: &AppHandle<Wry>, visible: bool) {
     let Some(window) = app.get_webview_window(FLOATING_WINDOW_LABEL) else {
         return;
     };

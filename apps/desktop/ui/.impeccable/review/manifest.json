@@ -1,0 +1,125 @@
+{
+  "sourceCommit": "25fef6bb52fe3057d33d6f072a485a084f3c1ec8",
+  "fixtureRevision": "Create configuration: manual entry, clipboard import, failure and discard on light/dark and narrow viewports",
+  "platform": "win32",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "motion": "reduce; screenshot animations disabled",
+  "sourceFiles": {
+    "scripts/visual/visual.mjs": "e6b3223aa48b2a21fd50200014898b3fa2f049ce8529585e58240590f96adf42",
+    "apps/desktop/ui/src/test/dev-seed.ts": "190f1daa3ff2cfbdc1e26c6fd306f72d94cf4422c8a39eb4a3ad071b2e2f3188",
+    "apps/desktop/ui/src/styles/tokens.css": "83cfaa7b0f9a002ff7dbbad86820c2299fe43408c8bf4a73938e0bcfd6ec020c",
+    "apps/desktop/ui/src/styles/global.css": "85b2e987d69b3007f48cbe5916fed522effa32afee0905af77c8d35ab0778ca7",
+    "scripts/visual/create-configuration-scenes.mjs": "92d52d64e593e85a0cc00449bcce9135bc65eb99999ea0c67a7f8212cddd4b3f",
+    "apps/desktop/ui/src/features/quick-create/CreateConfiguration.tsx": "87796c594efa01acd8a383bc4a3d764d98ff5df0dd610ede7976a9d2979d3570",
+    "apps/desktop/ui/src/features/capture/model/drop-draft.ts": "fdb56bada15f4f7d752aba3d1aab5d4f61886a706005ba1174db2d371e7eee6b",
+    "apps/desktop/ui/src/i18n/zh-CN.json": "a1a704a1e319bcc456c743c34163b340a1f59292c0e8da2216be6dfb7dfb6fbb",
+    "apps/desktop/ui/src/i18n/en.json": "d9c19017ed11167ba26562eec0c21b3e59417452aea80c2808452201adb95b66"
+  },
+  "artifacts": [
+    {
+      "name": "create-desktop-light-zh",
+      "file": "create-desktop-light-zh.png",
+      "viewport": {
+        "width": 640,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "f4ecded36f6e24f07db2c4ff3a5a9913661e049e8f464ef2c67ce4671b2363af"
+    },
+    {
+      "name": "create-desktop-dark-en",
+      "file": "create-desktop-dark-en.png",
+      "viewport": {
+        "width": 640,
+        "height": 720
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "1ce54989ef891d7647c5b5af25d83915ed3d1ee033e90e9e854adc8714e9dc03"
+    },
+    {
+      "name": "create-narrow-light-zh",
+      "file": "create-narrow-light-zh.png",
+      "viewport": {
+        "width": 400,
+        "height": 560
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "2a7a2719d3e6a49d438bcdc471f72994ff629ead19cae7822ece661c139a4a3f"
+    },
+    {
+      "name": "create-failed-dark-en",
+      "file": "create-failed-dark-en.png",
+      "viewport": {
+        "width": 400,
+        "height": 560
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "44789edd65d56d719966850953dba50d335660c20cc47219cfd99afe3b084c8b"
+    },
+    {
+      "name": "create-discard-light-zh",
+      "file": "create-discard-light-zh.png",
+      "viewport": {
+        "width": 640,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "f45d91efa4b6fd023c74e0e50c18b12f379dd6ac99d350f1c7d82802e4905a19"
+    },
+    {
+      "name": "create-import-light-zh",
+      "file": "create-import-light-zh.png",
+      "viewport": {
+        "width": 640,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "327f9bbd4c1acd2f046b4aa81ad210dd113487caafd8227566ea7c65850ace0e"
+    },
+    {
+      "name": "create-import-narrow-dark-en",
+      "file": "create-import-narrow-dark-en.png",
+      "viewport": {
+        "width": 400,
+        "height": 560
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "e18a064c097b0496f04502ab75c3d8d566d5a4293c8a37dbf2fc9ca50a37cb81"
+    }
+  ]
+}

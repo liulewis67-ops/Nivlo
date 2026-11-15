@@ -94,6 +94,14 @@ export const commands = {
 	 */
 	deleteItems: (ids: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("delete_items", { ids })),
 	/**
+	 *  撤销一次创建，将仍处于创建时版本的事项移入回收站。
+	 * 
+	 *  # Errors
+	 * 
+	 *  版本已变化或参数无效时返回 `INVALID_INPUT`。
+	 */
+	undoCreatedItem: (id: string, revision: string) => typedError<null, IpcError>(__TAURI_INVOKE("undo_created_item", { id, revision })),
+	/**
 	 *  从回收站恢复一批 Item（「删除」的撤销）。不在回收站里的被忽略。
 	 * 
 	 *  # Errors
@@ -580,6 +588,14 @@ export const commands = {
 	 */
 	captureFromClipboard: () => typedError<CaptureResultDto, IpcError>(__TAURI_INVOKE("capture_from_clipboard")),
 	/**
+	 *  读取用户主动导入的剪贴板文本，用于预填草稿。
+	 * 
+	 *  # Errors
+	 * 
+	 *  没有文本返回 `CLIPBOARD_EMPTY`，读取失败返回 `CLIPBOARD_UNAVAILABLE`。
+	 */
+	readClipboardText: () => typedError<string, IpcError>(__TAURI_INVOKE("read_clipboard_text")),
+	/**
 	 *  列出 Inbox：等待整理的 Item，捕获时间从新到旧，附带来源与附件（含被引用文件是否还在）。
 	 * 
 	 *  # Errors
@@ -746,7 +762,7 @@ export const commands = {
 	/**
 	 *  开始拖动悬浮窗（由悬浮窗在检测到"按下并移动超过阈值"之后调用）。
 	 * 
-	 *  把拖动交给操作系统的原生窗口拖动，保证跟手；拖动结束后的吸附与保存由
+	 *  把拖动交给操作系统的原生窗口拖动，保证跟手；拖动结束后的落位与保存由
 	 *  `FloatingController` 在收到连续的移动事件之后完成。窗口位置始终由 Rust 控制，
 	 *  前端不直接使用 window API 移动窗口（前端规范 §9）。
 	 * 
@@ -828,6 +844,7 @@ export const commands = {
 
 /** Events */
 export const events = {
+	contextCreateRequested: makeEvent<ContextCreateRequestedEvent>("context_create_requested"),
 	dayChanged: makeEvent<DayChangedEvent>("day_changed"),
 	floatingPointerLeft: makeEvent<FloatingPointerLeftEvent>("floating_pointer_left"),
 	itemCreated: makeEvent<ItemCreatedEvent>("item_created"),
@@ -915,6 +932,8 @@ export type CalendarItemDto = {
 	scheduled: DatePointDto | null,
 	/**  截止日期。 */
 	due: DatePointDto | null,
+	/**  排期撤销时恢复的收集箱归属。 */
+	inInbox?: boolean,
 };
 
 /**  查询 Calendar 的请求。 */
@@ -993,6 +1012,25 @@ export type ContentFormatDto =
 /**  Markdown。 */
 "markdown";
 
+/**  仅发送给悬浮窗的本次用户主动捕获结果，保存在未提交草稿中。 */
+export type ContextCreateRequestedEvent = {
+	/**  本次可用文本。 */
+	text: string | null,
+	/**  文本来源或读取状态。 */
+	source: ContextCreateSource,
+};
+
+/**  快捷键读取状态。 */
+export type ContextCreateSource = 
+/**  前台应用当前的文本选区。 */
+"selection" | 
+/**  系统剪贴板。 */
+"clipboard" | 
+/**  没有可用的文本。 */
+"empty" | 
+/**  无法读取剪贴板。 */
+"unavailable";
+
 /**  创建 Item 的请求。 */
 export type CreateItemRequest = {
 	/**  类型。 */
@@ -1015,9 +1053,20 @@ export type CreateItemRequest = {
 	reminderAt: string | null,
 	/**  所属项目 ID。 */
 	projectId: string | null,
+	/**  创建时直接放入收集箱。 */
+	inInbox?: boolean,
+	/**  创建表单中明确导入的文字来源。 */
+	textSource?: CreateTextSourceDto | null,
 	/**  一起保存的关联资料（网页、本地文件引用）；缺省为没有。 */
 	links?: ItemLinkDto[],
 };
+
+/**  新增草稿的纯文本来源。 */
+export type CreateTextSourceDto = 
+/**  系统剪贴板。 */
+"clipboard" | 
+/**  前台应用的文字选区。 */
+"selection";
 
 /**  本地日期，可选带本地时间。 */
 export type DatePointDto = {
@@ -1352,6 +1401,8 @@ export type PreviousStateDto = {
 	inInbox: boolean,
 	/**  原来是否已归档。 */
 	archived: boolean,
+	/**  整理后的版本，用于保护后续编辑。 */
+	revision?: string | null,
 };
 
 /**  优先级。 */
@@ -1405,7 +1456,15 @@ export type RescheduleTargetDto =
 /**  精确设置（或清除）计划，用于撤销。 */
 { kind: "exact"; 
 /**  要设置的计划；`null` 表示清除。 */
-scheduled: DatePointDto | null };
+scheduled: DatePointDto | null } | 
+/**  只撤销对应版本的日历改期。 */
+{ kind: "restore"; 
+/**  改期前的计划。 */
+scheduled: DatePointDto | null; 
+/**  改期前的收集箱归属。 */
+inInbox: boolean; 
+/**  改期成功时的版本。 */
+revision: string };
 
 /**  选中的备份已经暂存，等待重启后应用。 */
 export type RestoreStagedDto = {
@@ -1438,7 +1497,9 @@ export type ShortcutActionDto =
 /**  在悬浮窗里快速创建。 */
 "quickCreate" | 
 /**  打开全局搜索框。 */
-"search";
+"search" | 
+/**  从选区或剪贴板预填新增配置。 */
+"contextCreate";
 
 /**  全局快捷键的状态（IPC 表示）。 */
 export type ShortcutStatusDto = {

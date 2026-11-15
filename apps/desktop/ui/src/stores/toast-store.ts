@@ -23,6 +23,8 @@ export type ToastItem = {
   message: string;
   /** 可选的操作按钮。 */
   action?: ToastAction;
+  /** 额外的查看动作，不替代快捷键撤销。 */
+  secondaryAction?: ToastAction;
 };
 
 /** 不指定时的自动消失时长（毫秒）。 */
@@ -33,7 +35,13 @@ type ToastState = {
   /** 当前显示的 Toast。 */
   toasts: ToastItem[];
   /** 显示一条 Toast，并在 `durationMs` 后自动关闭；返回它的 ID。 */
-  push: (kind: ToastKind, message: string, durationMs?: number, action?: ToastAction) => number;
+  push: (
+    kind: ToastKind,
+    message: string,
+    durationMs?: number,
+    action?: ToastAction,
+    secondaryAction?: ToastAction,
+  ) => number;
   /** 立即关闭一条 Toast。 */
   dismiss: (id: number) => void;
   /** 执行最新一条还在显示的「撤销」并关闭它；没有可撤销的返回 `false`。 */
@@ -53,10 +61,15 @@ const timers = new Map<number, ReturnType<typeof setTimeout>>();
  */
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
-  push: (kind, message, durationMs = DEFAULT_TOAST_DURATION_MS, action) => {
+  push: (kind, message, durationMs = DEFAULT_TOAST_DURATION_MS, action, secondaryAction) => {
     const id = nextId++;
-    const toast: ToastItem =
-      action === undefined ? { id, kind, message } : { id, kind, message, action };
+    const toast: ToastItem = {
+      id,
+      kind,
+      message,
+      ...(action === undefined ? {} : { action }),
+      ...(secondaryAction === undefined ? {} : { secondaryAction }),
+    };
     set((state) => ({ toasts: [...state.toasts, toast] }));
     timers.set(
       id,

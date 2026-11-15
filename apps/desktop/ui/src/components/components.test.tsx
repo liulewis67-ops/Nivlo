@@ -94,15 +94,18 @@ describe("ToastViewport", () => {
   it("到时间后自动消失", () => {
     vi.useFakeTimers();
     try {
-      render(<ToastViewport />);
+      const { container } = render(<ToastViewport />);
+      const announcements = container.querySelector('[aria-live="polite"]');
+      expect(announcements).toBeEmptyDOMElement();
       act(() => {
         useToastStore.getState().push("info", "已保存", 1000);
       });
-      expect(screen.getByRole("status")).toHaveTextContent("已保存");
+      expect(announcements).toHaveTextContent("已保存");
       act(() => {
         vi.advanceTimersByTime(1000);
       });
-      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      expect(announcements).toBeEmptyDOMElement();
+      expect(container.querySelector('[aria-live="polite"]')).toBe(announcements);
     } finally {
       vi.useRealTimers();
     }

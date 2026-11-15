@@ -19,6 +19,75 @@ async function ready(ipc = createMemoryIpc()) {
 }
 
 describe("完整新增配置", () => {
+  it("从剪贴板导入多行消息，确认后才创建未排期的收集箱待办", async () => {
+    const { ipc } = await ready();
+    const message = "发给客户新版报价\n小李：附件已经更新";
+    ipc.setClipboard({ text: message });
+    fireEvent.click(screen.getByRole("button", { name: "从剪贴板导入" }));
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("发给客户新版报价"));
+    expect(screen.getByLabelText("描述")).toHaveValue(message);
+    expect(screen.getByRole("button", { name: "收集箱" })).toHaveAttribute("aria-pressed", "true");
+    expect(ipc.items).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: "创建" }));
+    await waitFor(() => expect(ipc.items).toHaveLength(1));
+    expect(ipc.items[0]).toMatchObject({ inInbox: true, scheduled: null, content: message });
+  });
+
+  it("读取剪贴板后等待确认追加，保留原草稿及计划", async () => {
+    const { ipc } = await ready();
+    ipc.setClipboard({ text: "追加的消息" });
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "原标题" } });
+    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "原描述" } });
+    fireEvent.click(screen.getByRole("button", { name: "从剪贴板导入" }));
+    const append = await screen.findByRole("button", { name: "追加到内容" });
+    expect(screen.getByLabelText("描述")).toHaveValue("原描述");
+    fireEvent.click(append);
+    expect(screen.getByLabelText("标题")).toHaveValue("原标题");
+    expect(screen.getByLabelText("描述")).toHaveValue("原描述\n\n追加的消息");
+    expect(screen.getByLabelText("计划日期（日）")).toHaveValue("2026-11-04");
+  });
+
+  it("取消追加回到原来的描述光标", async () => {
+    const { ipc } = await ready();
+    ipc.setClipboard({ text: "不追加的消息" });
+    const content = screen.getByLabelText<HTMLTextAreaElement>("描述");
+    fireEvent.change(content, { target: { value: "原描述" } });
+    content.focus();
+    content.setSelectionRange(1, 2);
+    fireEvent.click(screen.getByRole("button", { name: "从剪贴板导入" }));
+    fireEvent.click(await screen.findByRole("button", { name: "取消导入" }));
+    expect(content).toHaveFocus();
+    expect(content).toHaveValue("原描述");
+    expect(content.selectionStart).toBe(1);
+    expect(content.selectionEnd).toBe(2);
+  });
+
+  it("消息里的日期须分别确认，原文和关联网页一并保存", async () => {
+    const { ipc } = await ready();
+    const message = "周五处理报价\n下周一交付，资料 https://example.com/quote";
+    ipc.setClipboard({ text: message });
+    fireEvent.click(screen.getByRole("button", { name: "从剪贴板导入" }));
+    const plan = await screen.findByRole("button", { name: "将 2026-11-06 设为计划日期" });
+    const due = screen.getByRole("button", { name: "将 2026-11-09 设为截止日期" });
+    expect(screen.getByLabelText("计划日期（日）")).toHaveValue("");
+    expect(screen.getByLabelText("截止日期（日）")).toHaveValue("");
+    fireEvent.click(plan);
+    fireEvent.click(due);
+    expect(screen.getByLabelText("描述")).toHaveValue(message);
+    const create = vi.spyOn(ipc, "createItem");
+    fireEvent.click(screen.getByRole("button", { name: "创建" }));
+    await waitFor(() => expect(ipc.items).toHaveLength(1));
+    expect(ipc.items[0]).toMatchObject({
+      inInbox: false,
+      scheduled: { date: "2026-11-06", time: null },
+      due: { date: "2026-11-09", time: null },
+    });
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        links: [{ kind: "web", url: "https://example.com/quote", title: null }],
+      }),
+    );
+  });
   it("切换类型恢复时间与优先级草稿，并将所选项目一次提交", async () => {
     const ipc = createMemoryIpc();
     const project = await ipc.createProject("验证项目");

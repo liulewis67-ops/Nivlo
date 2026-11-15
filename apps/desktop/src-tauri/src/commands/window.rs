@@ -311,6 +311,7 @@ pub async fn begin_floating_input(
 #[tauri::command]
 #[specta::specta]
 pub async fn end_floating_input(state: State<'_, AppState>) -> Result<(), IpcError> {
+    crate::context_create::cancel();
     floating_handle(&state)?.end_input().map_err(window_error)
 }
 

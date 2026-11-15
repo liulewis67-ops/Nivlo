@@ -13,7 +13,8 @@ const KIND_CLASSES: Record<ToastKind, string> = {
 /**
  * Toast 的显示区域，放在应用根部一次。
  *
- * 错误类 Toast 使用 `role="alert"`（读屏立即播报），其余使用 `role="status"`。
+ * 错误类 Toast 使用 `role="alert"`。普通消息加入持续挂载的播报区，
+ * 让读屏软件在提示出现时收到内容变化。
  *
  * @returns Toast 列表；没有 Toast 时渲染空容器。
  */
@@ -24,28 +25,40 @@ export function ToastViewport() {
 
   return (
     <div className="pointer-events-none fixed right-3 bottom-3 z-(--nv-z-toast) flex flex-col gap-2">
+      <div className="sr-only" aria-live="polite" aria-relevant="additions">
+        {toasts
+          .filter((toast) => toast.kind !== "error")
+          .map((toast) => (
+            <div key={toast.id}>{toast.message}</div>
+          ))}
+      </div>
       {toasts.map((toast) => (
         <div
           key={toast.id}
           role={toast.kind === "error" ? "alert" : "status"}
+          aria-live={toast.kind === "error" ? undefined : "off"}
           className={cx(
             "pointer-events-auto flex max-w-[min(20rem,calc(100vw-1.5rem))] items-start gap-3 rounded-md border border-l-4 border-border",
             "bg-surface px-3 py-2 text-sm text-text shadow-lg",
             KIND_CLASSES[toast.kind],
           )}
         >
-          <span className="flex-1">{toast.message}</span>
-          {toast.action !== undefined && (
-            <button
-              type="button"
-              className="shrink-0 font-medium text-primary hover:underline"
-              onClick={() => {
-                toast.action?.onClick();
-                dismiss(toast.id);
-              }}
-            >
-              {toast.action.label}
-            </button>
+          <span className="min-w-0 flex-1 wrap-break-word">{toast.message}</span>
+          {[toast.secondaryAction, toast.action].map(
+            (action, index) =>
+              action !== undefined && (
+                <button
+                  key={index}
+                  type="button"
+                  className="shrink-0 font-medium text-primary hover:underline"
+                  onClick={() => {
+                    action.onClick();
+                    if (action === toast.action) dismiss(toast.id);
+                  }}
+                >
+                  {action.label}
+                </button>
+              ),
           )}
           <button
             type="button"

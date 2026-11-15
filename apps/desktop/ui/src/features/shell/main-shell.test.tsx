@@ -187,7 +187,7 @@ describe("MainShell", () => {
 
     await waitFor(() => expect(ipc.items.map((item) => item.title)).toEqual(["买牛奶"]));
     expect(ipc.items[0]?.scheduled?.date).toBe("2026-10-11");
-    expect(await screen.findByText(/已添加到 明天/)).toBeInTheDocument();
+    expect(await screen.findByText(/已添加到 明天/, { selector: "span" })).toBeInTheDocument();
 
     // 退格先取消识别：标题原样保留，按今天创建。
     await user.type(input, "交房租 明天");

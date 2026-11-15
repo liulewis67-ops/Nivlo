@@ -87,7 +87,7 @@ describe("extractDraft：拖放新建事项的场景", () => {
     const result = await extractDraft(snap({ text: "  整理周报\n第二行 " }), noPaths);
     expect(result).toEqual({
       kind: "draft",
-      draft: { kind: "todo", title: "整理周报", content: "整理周报\n第二行", links: [] },
+      draft: { kind: "todo", title: "整理周报", content: "  整理周报\n第二行 ", links: [] },
     });
     const single = await extractDraft(snap({ text: "买牛奶" }), noPaths);
     expect(single).toMatchObject({ draft: { title: "买牛奶", content: "" } });

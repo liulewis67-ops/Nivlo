@@ -112,16 +112,16 @@ describe("拖放捕获（悬浮窗）", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("点「编辑」打开主窗口并关闭反馈", async () => {
+  it("点「查看」按 ID 打开事项，仍可撤销", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
     await dropOnInbox(transfer({ "text/plain": "x" }));
     await advance(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "编辑" }));
+    fireEvent.click(screen.getByRole("button", { name: "查看" }));
     await advance(0);
-    expect(ipc.openMainCalls).toBe(1);
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(ipc.openedItems).toEqual([ipc.items[0]?.id]);
+    expect(screen.getByRole("button", { name: "撤销" })).toBeInTheDocument();
   });
 
   it("指针停在反馈上时不会自动消失，移开后才重新计时", async () => {
@@ -202,7 +202,7 @@ describe("拖放捕获（悬浮窗）", () => {
     fireEvent.pointerEnter(root());
     await advance(HOVER_ENTER_DELAY_MS);
 
-    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    fireEvent.click(screen.getByRole("button", { name: "粘贴到收集箱" }));
     await advance(0);
     expect(ipc.calls.filter((call) => call === "captureFromClipboard")).toHaveLength(1);
     expect(ipc.captures[0]).toMatchObject({ origin: "paste" });
@@ -219,7 +219,7 @@ describe("拖放捕获（悬浮窗）", () => {
     fireEvent.pointerEnter(root());
     await advance(HOVER_ENTER_DELAY_MS);
 
-    fireEvent.click(screen.getByRole("button", { name: "粘贴" }));
+    fireEvent.click(screen.getByRole("button", { name: "粘贴到收集箱" }));
     await advance(0);
     expect(screen.getByRole("status")).toHaveTextContent("剪贴板里没有可以收集的内容");
     expect(ipc.items).toHaveLength(0);

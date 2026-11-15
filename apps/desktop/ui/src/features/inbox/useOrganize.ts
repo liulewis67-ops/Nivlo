@@ -5,10 +5,12 @@ import { ipc } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
+import { formatDate } from "@/lib/date-format";
+import { parseISO } from "date-fns";
 
 /** 整理动作的种类（界面上的按钮与菜单项）。 */
 export type OrganizeKind =
-  "today" | "tomorrow" | "later" | "todo" | "note" | "tip" | "leave" | "archive";
+  "today" | "tomorrow" | "later" | "todo" | "note" | "tip" | "leave" | "archive" | { date: string };
 
 /** 整理完成后「撤销」按钮停留多久（毫秒）。 */
 export const ORGANIZE_UNDO_MS = 6000;
@@ -20,6 +22,8 @@ export const ORGANIZE_UNDO_MS = 6000;
  * @returns IPC 动作。
  */
 export function toAction(kind: OrganizeKind): OrganizeActionDto {
+  if (typeof kind === "object")
+    return { kind: "schedule", target: { kind: "date", date: kind.date } };
   switch (kind) {
     case "today":
     case "tomorrow":
@@ -73,39 +77,43 @@ export function useOrganize(): OrganizeActions {
     const before = queryClient.getQueryData<InboxEntryDto[]>(listKey);
     const countBefore = queryClient.getQueryData<number>(countKey);
     const removed = new Set(ids);
-    if (before !== undefined) {
+    const exact = typeof kind === "object";
+    if (!exact && before !== undefined) {
       queryClient.setQueryData(
         listKey,
         before.filter((entry) => !removed.has(entry.item.id)),
       );
     }
-    if (countBefore !== undefined) {
+    if (!exact && countBefore !== undefined) {
       const stillThere = before?.filter((entry) => removed.has(entry.item.id)).length ?? ids.length;
       queryClient.setQueryData(countKey, Math.max(0, countBefore - stillThere));
     }
     try {
       const outcome = await ipc.organizeItems(ids, toAction(kind));
-      useToastStore
-        .getState()
-        .push(
-          "success",
-          t(`inbox.done.${kind}`, { count: ids.length, title: title ?? "" }),
-          ORGANIZE_UNDO_MS,
-          {
-            label: t("inbox.undo"),
-            undo: true,
-            onClick: () => {
-              void ipc
-                .restoreItems(outcome.previous)
-                .catch(reportError)
-                .finally(() => void resync());
-            },
+      useToastStore.getState().push(
+        "success",
+        exact
+          ? t("calendar.scheduled", {
+              title: title ?? "",
+              date: formatDate(parseISO(kind.date), "monthDay"),
+            })
+          : t(`inbox.done.${kind}`, { count: ids.length, title: title ?? "" }),
+        ORGANIZE_UNDO_MS,
+        {
+          label: t("inbox.undo"),
+          undo: true,
+          onClick: () => {
+            void ipc
+              .restoreItems(outcome.previous)
+              .catch(reportError)
+              .finally(() => void resync());
           },
-        );
+        },
+      );
       return true;
     } catch (error) {
-      if (before !== undefined) queryClient.setQueryData(listKey, before);
-      if (countBefore !== undefined) queryClient.setQueryData(countKey, countBefore);
+      if (!exact && before !== undefined) queryClient.setQueryData(listKey, before);
+      if (!exact && countBefore !== undefined) queryClient.setQueryData(countKey, countBefore);
       reportError(error);
       await resync();
       return false;

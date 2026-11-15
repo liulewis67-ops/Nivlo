@@ -7,6 +7,29 @@ use tauri::State;
 use crate::app::AppState;
 use crate::dto::{CaptureRequestDto, CaptureResultDto, IpcError, parse_item_id};
 
+/// 读取用户主动导入的剪贴板文本，用于预填草稿。
+///
+/// # Errors
+///
+/// 没有文本返回 `CLIPBOARD_EMPTY`，读取失败返回 `CLIPBOARD_UNAVAILABLE`。
+#[tauri::command]
+#[specta::specta]
+pub async fn read_clipboard_text() -> Result<String, IpcError> {
+    let unavailable = |reason: String| AppError::new(ErrorCode::ClipboardUnavailable, reason);
+    let text =
+        tauri::async_runtime::spawn_blocking(|| crate::clipboard::platform_clipboard().read_text())
+            .await
+            .map_err(|error| unavailable(error.to_string()))?
+            .map_err(|error| unavailable(error.to_string()))?;
+    text.filter(|text| !text.trim().is_empty()).ok_or_else(|| {
+        AppError::new(
+            ErrorCode::ClipboardEmpty,
+            "剪贴板里没有可导入的文字".to_owned(),
+        )
+        .into()
+    })
+}
+
 /// 在阻塞线程里识别来源应用（Win32 调用很快，但不放在异步运行时线程上）；识别失败时原样返回。
 async fn detect_source_application(request: CaptureRequest) -> CaptureRequest {
     let fallback = request.clone();

@@ -1,7 +1,6 @@
 //! 剪贴板读取（`ClipboardPort`，实施计划 2.5、架构文档 §17）。
 //!
-//! **只在用户明确粘贴时读取**：这个 Port 没有订阅 / 监听接口，也不存在后台轮询——
-//! 调用它的只有「用户按下粘贴」的那一条路径（代码审查的检查点）。
+//! 用户明确粘贴或导入时才读取。这个 Port 没有订阅、监听或轮询。
 
 use crate::error::PlatformError;
 
@@ -35,6 +34,15 @@ pub trait ClipboardPort: Send + Sync {
     /// * [`PlatformError::Unsupported`] - 当前平台不支持。
     /// * [`PlatformError::Failed`] - 剪贴板被其他程序占用且重试后仍然打不开等系统错误。
     fn read(&self) -> Result<ClipboardContent, PlatformError>;
+
+    /// 读取用于预填草稿的纯文本。
+    ///
+    /// # Errors
+    ///
+    /// 与 [`Self::read`] 相同。
+    fn read_text(&self) -> Result<Option<String>, PlatformError> {
+        self.read().map(|content| content.text)
+    }
 }
 
 #[cfg(test)]

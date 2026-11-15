@@ -1,5 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { commands, events } from "@/bindings";
+import type { ContextCreateRequestedEvent } from "@/bindings";
+export type { ContextCreateRequestedEvent } from "@/bindings";
 import type {
   AppSettingsDto,
   CalendarDto,
@@ -111,6 +113,8 @@ export type {
 export interface IpcClient {
   /** 创建一个 Item。 */
   createItem(request: CreateItemRequest): Promise<ItemDto>;
+  /** 把尚未修改的新事项移入回收站。 */
+  undoCreatedItem(id: string, revision: string): Promise<void>;
   /** 读取一个 Item 的详情：Item 本身加上来源与附件（含被引用文件是否还在）。 */
   getItemDetail(id: string): Promise<InboxEntryDto>;
   /**
@@ -165,6 +169,7 @@ export interface IpcClient {
    * 剪贴板里没有可收集的内容抛出 `CLIPBOARD_EMPTY`，读取失败抛出 `CLIPBOARD_UNAVAILABLE`。
    */
   captureFromClipboard(): Promise<CaptureResultDto>;
+  readClipboardText(): Promise<string>;
   /** 撤销一次捕获：删除它创建的全部记录（用户被引用的文件不受影响）。 */
   undoCapture(itemIds: string[]): Promise<void>;
   /** 列出 Inbox：等待整理的 Item（捕获时间从新到旧），附带来源与附件（含被引用文件是否还在）。 */
@@ -396,6 +401,10 @@ export interface IpcClient {
    * @returns 取消订阅的函数，组件卸载时必须调用。
    */
   subscribeQuickAddRequested(onRequested: () => void): () => void;
+  /** 接收本次快捷键读取的临时草稿内容。 */
+  subscribeContextCreateRequested(
+    onRequested: (event: ContextCreateRequestedEvent) => void,
+  ): () => void;
   /**
    * 订阅"数据发生了变化"的后端事件：Item 创建 / 更新、Today 顺序调整、本地日期切换。
    *
@@ -460,6 +469,9 @@ function listenAll(register: Array<() => Promise<() => void>>): () => void {
 /** 基于 Tauri Binding 的真实实现。 */
 const tauriIpc: IpcClient = {
   createItem: (request) => call("create_item", commands.createItem(request)),
+  undoCreatedItem: async (id, revision) => {
+    await call("undo_created_item", commands.undoCreatedItem(id, revision));
+  },
   getItem: (id) => call("get_item", commands.getItem(id)),
   getItemDetail: (id) => call("get_item_detail", commands.getItemDetail(id)),
   updateItem: (id, request) => call("update_item", commands.updateItem(id, request)),
@@ -569,6 +581,7 @@ const tauriIpc: IpcClient = {
     await call("undo_capture", commands.undoCapture(itemIds));
   },
   captureFromClipboard: () => call("capture_from_clipboard", commands.captureFromClipboard()),
+  readClipboardText: () => call("read_clipboard_text", commands.readClipboardText()),
   listInbox: () => call("list_inbox", commands.listInbox()),
   getInboxCount: () => call("get_inbox_count", commands.getInboxCount()),
   organizeItems: (itemIds, action) =>
@@ -617,6 +630,8 @@ const tauriIpc: IpcClient = {
     listenAll([() => events.floatingPointerLeft.listen(() => onLeft())]),
   subscribeQuickAddRequested: (onRequested) =>
     listenAll([() => events.quickAddRequested.listen(() => onRequested())]),
+  subscribeContextCreateRequested: (onRequested) =>
+    listenAll([() => events.contextCreateRequested.listen(({ payload }) => onRequested(payload))]),
   subscribeDataChanges: (onChange) =>
     listenAll([
       () => events.itemCreated.listen(() => onChange()),
@@ -650,6 +665,7 @@ export function isRunningInTauri(): boolean {
 /** 全局 IPC 入口：所有调用委托给当前生效的实现。 */
 export const ipc: IpcClient = {
   createItem: (request) => current.createItem(request),
+  undoCreatedItem: (id, revision) => current.undoCreatedItem(id, revision),
   getItem: (id) => current.getItem(id),
   getItemDetail: (id) => current.getItemDetail(id),
   updateItem: (id, request) => current.updateItem(id, request),
@@ -719,6 +735,7 @@ export const ipc: IpcClient = {
   capture: (request) => current.capture(request),
   undoCapture: (itemIds) => current.undoCapture(itemIds),
   captureFromClipboard: () => current.captureFromClipboard(),
+  readClipboardText: () => current.readClipboardText(),
   listInbox: () => current.listInbox(),
   getInboxCount: () => current.getInboxCount(),
   organizeItems: (itemIds, action) => current.organizeItems(itemIds, action),
@@ -744,5 +761,7 @@ export const ipc: IpcClient = {
   endFloatingInput: () => current.endFloatingInput(),
   subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),
   subscribeQuickAddRequested: (onRequested) => current.subscribeQuickAddRequested(onRequested),
+  subscribeContextCreateRequested: (onRequested) =>
+    current.subscribeContextCreateRequested(onRequested),
   subscribeDataChanges: (onChange) => current.subscribeDataChanges(onChange),
 };

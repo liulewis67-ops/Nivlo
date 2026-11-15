@@ -26,6 +26,10 @@ impl SourceType {
     pub const FILE: &'static str = "file";
     /// 选中或粘贴的文本。
     pub const TEXT: &'static str = "text";
+    /// 从系统剪贴板导入的消息或文字。
+    pub const CLIPBOARD: &'static str = "clipboard";
+    /// 从前台应用当前选区导入的文字。
+    pub const SELECTION: &'static str = "selection";
     /// 图片（如截图）。
     pub const IMAGE: &'static str = "image";
 

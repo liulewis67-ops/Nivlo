@@ -96,7 +96,7 @@ describe("推迟", () => {
 
     expect(remaining()).toEqual(["甲", "丙"]);
     expect(ipc.reschedules).toEqual([{ id: "b", target: { kind: "tomorrow" } }]);
-    expect(screen.getByText("「乙」已推迟到明天")).toBeInTheDocument();
+    expect(screen.getByText("「乙」已推迟到明天", { selector: "span" })).toBeInTheDocument();
   });
 
   it("焦点被还给之前的应用（窗口 blur）之后菜单仍然开着，照样能选", async () => {

@@ -28,11 +28,12 @@ pub async fn create_item(
         .into_iter()
         .map(Into::into)
         .collect();
+    let text_source = request.text_source.map(Into::into);
     let input = request.try_into()?;
     let item = state
         .services
         .items
-        .create_item_with_links(input, links)
+        .create_item_with_source(input, links, text_source)
         .await?;
     Ok(ItemDto::from(&item))
 }

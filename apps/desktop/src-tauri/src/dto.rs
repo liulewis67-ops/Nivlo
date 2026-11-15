@@ -225,7 +225,7 @@ fn invalid(message: String) -> AppError {
 }
 
 /// 解析 RFC 3339 时间点并转换为 UTC。
-fn parse_utc(text: &str) -> Result<DateTime<Utc>, AppError> {
+pub(crate) fn parse_utc(text: &str) -> Result<DateTime<Utc>, AppError> {
     DateTime::parse_from_rfc3339(text)
         .map(|t| t.with_timezone(&Utc))
         .map_err(|_| invalid(format!("无效的时间点：{text}")))
@@ -356,9 +356,34 @@ pub struct CreateItemRequest {
     pub reminder_at: Option<String>,
     /// 所属项目 ID。
     pub project_id: Option<String>,
+    /// 创建时直接放入收集箱。
+    #[serde(default)]
+    pub in_inbox: bool,
+    /// 创建表单中明确导入的文字来源。
+    #[serde(default)]
+    pub text_source: Option<CreateTextSourceDto>,
     /// 一起保存的关联资料（网页、本地文件引用）；缺省为没有。
     #[serde(default)]
     pub links: Vec<ItemLinkDto>,
+}
+
+/// 新增草稿的纯文本来源。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub enum CreateTextSourceDto {
+    /// 系统剪贴板。
+    Clipboard,
+    /// 前台应用的文字选区。
+    Selection,
+}
+
+impl From<CreateTextSourceDto> for nivlo_domain::source::SourceType {
+    fn from(value: CreateTextSourceDto) -> Self {
+        Self::new(match value {
+            CreateTextSourceDto::Clipboard => Self::CLIPBOARD,
+            CreateTextSourceDto::Selection => Self::SELECTION,
+        })
+    }
 }
 
 /// 创建时一起保存的关联资料（IPC 表示）。文件只传路径，元数据由后端探测，内容不复制。
@@ -409,8 +434,12 @@ impl TryFrom<CreateItemRequest> for NewItem {
             new.priority = priority.into();
         }
         new.scheduled = request.scheduled.map(DatePoint::try_from).transpose()?;
+        if request.in_inbox && new.scheduled.is_some() {
+            return Err(invalid("收集箱待办不能同时指定计划日期".to_owned()));
+        }
         new.due = request.due.map(DatePoint::try_from).transpose()?;
         new.reminder_at = request.reminder_at.as_deref().map(parse_utc).transpose()?;
+        new.in_inbox = request.in_inbox;
         new.project_id = request
             .project_id
             .map(|text| {
@@ -804,6 +833,8 @@ pub enum ShortcutActionDto {
     QuickCreate,
     /// 打开全局搜索框。
     Search,
+    /// 从选区或剪贴板预填新增配置。
+    ContextCreate,
 }
 
 impl From<ShortcutActionDto> for ShortcutAction {
@@ -812,6 +843,7 @@ impl From<ShortcutActionDto> for ShortcutAction {
         match value {
             ShortcutActionDto::QuickCreate => Self::QuickCreate,
             ShortcutActionDto::Search => Self::Search,
+            ShortcutActionDto::ContextCreate => Self::ContextCreate,
         }
     }
 }
@@ -1024,6 +1056,9 @@ pub struct PreviousStateDto {
     pub in_inbox: bool,
     /// 原来是否已归档。
     pub archived: bool,
+    /// 整理后的版本，用于保护后续编辑。
+    #[serde(default)]
+    pub revision: Option<String>,
 }
 
 impl From<&PreviousState> for PreviousStateDto {
@@ -1035,6 +1070,7 @@ impl From<&PreviousState> for PreviousStateDto {
             scheduled: value.scheduled.map(DatePointDto::from),
             in_inbox: value.in_inbox,
             archived: value.archived,
+            revision: value.revision.map(format_utc),
         }
     }
 }
@@ -1050,6 +1086,7 @@ impl TryFrom<PreviousStateDto> for PreviousState {
             scheduled: value.scheduled.map(DatePoint::try_from).transpose()?,
             in_inbox: value.in_inbox,
             archived: value.archived,
+            revision: value.revision.as_deref().map(parse_utc).transpose()?,
         })
     }
 }
@@ -1315,6 +1352,9 @@ pub struct CalendarItemDto {
     pub scheduled: Option<DatePointDto>,
     /// 截止日期。
     pub due: Option<DatePointDto>,
+    /// 排期撤销时恢复的收集箱归属。
+    #[serde(default)]
+    pub in_inbox: bool,
 }
 
 impl From<&Item> for CalendarItemDto {
@@ -1329,6 +1369,7 @@ impl From<&Item> for CalendarItemDto {
             priority: full.priority,
             scheduled: full.scheduled,
             due: full.due,
+            in_inbox: full.in_inbox,
         }
     }
 }
@@ -1461,6 +1502,8 @@ mod tests {
             due: None,
             reminder_at: Some("2026-10-12T01:00:00+08:00".into()),
             project_id: None,
+            in_inbox: false,
+            text_source: None,
             links: Vec::new(),
         };
         let new = NewItem::try_from(request).unwrap();
@@ -1524,6 +1567,16 @@ pub enum RescheduleTargetDto {
         /// 要设置的计划；`null` 表示清除。
         scheduled: Option<DatePointDto>,
     },
+    /// 只撤销对应版本的日历改期。
+    #[serde(rename_all = "camelCase")]
+    Restore {
+        /// 改期前的计划。
+        scheduled: Option<DatePointDto>,
+        /// 改期前的收集箱归属。
+        in_inbox: bool,
+        /// 改期成功时的版本。
+        revision: String,
+    },
 }
 
 impl TryFrom<RescheduleTargetDto> for RescheduleTarget {
@@ -1539,6 +1592,15 @@ impl TryFrom<RescheduleTargetDto> for RescheduleTarget {
             RescheduleTargetDto::Exact { scheduled } => {
                 Self::Exact(scheduled.map(DatePoint::try_from).transpose()?)
             }
+            RescheduleTargetDto::Restore {
+                scheduled,
+                in_inbox,
+                revision,
+            } => Self::Restore {
+                scheduled: scheduled.map(DatePoint::try_from).transpose()?,
+                in_inbox,
+                revision: parse_utc(&revision)?,
+            },
         })
     }
 }

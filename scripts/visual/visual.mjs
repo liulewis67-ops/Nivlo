@@ -581,9 +581,17 @@ async function main() {
   }, null, 2) + "\n");
   if (UPDATE && !IMPLEMENTATION) writeFileSync(join(BASELINES,"manifest.json"),JSON.stringify({
     sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),
-    fixtureRevision:'m5 regression: pinned 2026-10-13 clock/IDs, demo backend Today 2026-10-10; actual compact/expanded dimensions',
+    fixtureRevision:CREATE_STAGE ? 'Create configuration: manual entry, clipboard import, failure and discard on light/dark and narrow viewports' : 'm5 regression: pinned 2026-10-13 clock/IDs, demo backend Today 2026-10-10; actual compact/expanded dimensions',
     platform:PLATFORM,clock:CLOCK,motion:'reduce; screenshot animations disabled',
-    sourceFiles:Object.fromEntries(['scripts/visual/visual.mjs','apps/desktop/ui/src/test/dev-seed.ts','apps/desktop/ui/src/styles/tokens.css','apps/desktop/ui/src/styles/global.css'].map(file=>[file,createHash('sha256').update(readFileSync(join(ROOT,file))).digest('hex')])),
+    sourceFiles:Object.fromEntries(['scripts/visual/visual.mjs','apps/desktop/ui/src/test/dev-seed.ts','apps/desktop/ui/src/styles/tokens.css','apps/desktop/ui/src/styles/global.css',
+      ...(CREATE_STAGE ? [
+        'scripts/visual/create-configuration-scenes.mjs',
+        'apps/desktop/ui/src/features/quick-create/CreateConfiguration.tsx',
+        'apps/desktop/ui/src/features/capture/model/drop-draft.ts',
+        'apps/desktop/ui/src/i18n/zh-CN.json',
+        'apps/desktop/ui/src/i18n/en.json',
+      ] : []),
+    ].map(file=>[file,createHash('sha256').update(readFileSync(join(ROOT,file))).digest('hex')])),
     artifacts,
   },null,2)+'\n');
   process.exit(failed > 0 || contrastFailures > 0 ? 1 : 0);

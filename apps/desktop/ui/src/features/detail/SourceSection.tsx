@@ -30,7 +30,13 @@ export function SourceSection({ detail, onOpen, onRerun }: SourceSectionProps) {
   const { t } = useTranslation();
   const contentId = useId();
   const [expanded, setExpanded] = useState(false);
-  const source = detail.sources[0];
+  const imported = detail.sources.find((entry) =>
+    ["clipboard", "selection"].includes(entry.sourceType),
+  );
+  const source =
+    detail.sources.find((entry) => entry.sourceUrl !== null) ??
+    detail.sources.find((entry) => entry.sourcePath !== null || entry.sourceType === "file") ??
+    detail.sources[0];
   if (source === undefined) return null;
   const reference = detail.attachments.find((attachment) => attachment.kind === "reference");
   const isFile = source.sourceType === "file";
@@ -51,6 +57,12 @@ export function SourceSection({ detail, onOpen, onRerun }: SourceSectionProps) {
         {t("detail.source.label")}
       </Button>
       <p className="text-sm text-text">
+        {imported !== undefined && imported !== source && (
+          <span>
+            {t(`detail.source.type.${imported.sourceType}`)}
+            {" · "}
+          </span>
+        )}
         {t(`detail.source.type.${source.sourceType}`, { defaultValue: source.sourceType })}
         {source.sourceApp !== null && (
           <span className="text-muted">{` · ${source.sourceApp}`}</span>

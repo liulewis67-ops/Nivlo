@@ -21,10 +21,11 @@ import { OpenItemContext, useOpenItem } from "@/features/detail";
 import { useNavStore } from "@/features/shell";
 import { LAYOUT, useContainerWidth } from "@/lib/layout";
 import { trapTab } from "@/lib/focus-trap";
-import { parseDatePhrase } from "@/features/quick-create";
+import { CreateConfiguration, parseDatePhrase } from "@/features/quick-create";
+import { textDraft } from "@/features/capture";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
-import type { CalendarEntryDto, CalendarItemDto } from "@/lib/ipc";
+import type { CalendarEntryDto, CalendarItemDto, ItemDto } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
@@ -83,6 +84,8 @@ type DayCellProps = {
   onAdd: (adding: boolean) => void;
   /** 提交新待办的标题。 */
   onCreate: (date: string, title: string) => Promise<boolean>;
+  /** 在当天打开新增配置，用于导入或预填外部文字。 */
+  onConfigure: (date: string, text: string | null) => void;
   /** 展开这一天（切到周视图）。 */
   onExpand: (date: string) => void;
 };
@@ -105,12 +108,14 @@ function DayCell({
   adding,
   onAdd,
   onCreate,
+  onConfigure,
   onExpand,
 }: DayCellProps) {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({ id: date });
   const [title, setTitle] = useState("");
   const [pending, setPending] = useState(false);
+  const [externalOver, setExternalOver] = useState(false);
   const submitting = useRef(false);
   const cellRef = useRef<HTMLDivElement>(null);
   const [cellHeight, setCellHeight] = useState<number | null>(null);
@@ -174,13 +179,44 @@ function DayCell({
       data-calendar-day={date}
       aria-label={formatDate(parsed, "monthDayWeekday")}
       aria-current={isToday ? "date" : undefined}
+      onDragOver={(event) => {
+        if (!event.dataTransfer.types.includes("text/plain")) return;
+        if (
+          event.target instanceof HTMLElement &&
+          event.target.closest("input, textarea, [contenteditable]")
+        )
+          return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        setExternalOver(true);
+      }}
+      onDragLeave={(event) => {
+        if (
+          event.relatedTarget instanceof Node &&
+          event.currentTarget.contains(event.relatedTarget)
+        )
+          return;
+        setExternalOver(false);
+      }}
+      onDrop={(event) => {
+        setExternalOver(false);
+        if (
+          event.target instanceof HTMLElement &&
+          event.target.closest("input, textarea, [contenteditable]")
+        )
+          return;
+        const text = event.dataTransfer.getData("text/plain");
+        if (!text.trim()) return;
+        event.preventDefault();
+        onConfigure(date, text);
+      }}
       className={cx(
         "group relative flex min-h-0 min-w-0 flex-col border-r border-b border-border",
         compact ? "gap-0.5 px-1 pt-1 pb-0.5" : "gap-1 p-1.5",
         "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
         weekend && !outside && "bg-surface-hover/40",
         outside && "bg-bg text-muted",
-        isOver && "bg-primary/10 outline-2 -outline-offset-2 outline-primary",
+        (isOver || externalOver) && "bg-primary/10 outline-2 -outline-offset-2 outline-primary",
         stacked && (entries.length === 0 ? "min-h-16 shrink-0" : "max-h-80 min-h-40 shrink-0"),
       )}
     >
@@ -257,6 +293,16 @@ function DayCell({
           <span role="status" className="px-1 text-xs text-primary tabular-nums">
             {t("calendar.timeRecognised", { time: recognised.time })}
           </span>
+        )}
+        {adding && title.trim() === "" && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="shrink-0 self-start"
+            onClick={() => onConfigure(date, null)}
+          >
+            {t("calendar.pasteOnDay")}
+          </Button>
         )}
       </div>
     </div>
@@ -418,10 +464,16 @@ function BacklogSheet({ items, onClose }: Required<UnscheduledProps>) {
  */
 export function CalendarPage() {
   const { t } = useTranslation();
+  const openItem = useOpenItem();
   const [view, setView] = useState<CalendarViewKind>("month");
   const [anchor, setAnchor] = useState<string | null>(null);
   const [adding, setAdding] = useState<string | null>(null);
   const [dragging, setDragging] = useState<DragPayload | null>(null);
+  const [createDraft, setCreateDraft] = useState<{
+    date: string;
+    text: string | null;
+    opener: HTMLElement | null;
+  } | null>(null);
   /** 用户手动展开 / 收起「待安排」；`null` 表示跟随宽度。 */
   const [sideOpen, setSideOpen] = useState<boolean | null>(null);
   const rootRef = useRef<HTMLElement>(null);
@@ -534,7 +586,7 @@ export function CalendarPage() {
   async function createTodo(date: string, title: string): Promise<boolean> {
     const timed = timeInDay(title, date);
     try {
-      await ipc.createItem({
+      const item = await ipc.createItem({
         itemType: "todo",
         title: timed?.title ?? title,
         content: null,
@@ -545,11 +597,29 @@ export function CalendarPage() {
         reminderAt: null,
         projectId: null,
       });
+      showCreated(item);
       return true;
     } catch (error) {
       reportError(error);
       return false;
     }
+  }
+
+  /** 显示这次创建的查看与回收撤销。 */
+  function showCreated(item: ItemDto): void {
+    useToastStore.getState().push(
+      "success",
+      t("capture.created", { title: item.title }),
+      UNDO_MS,
+      {
+        label: t("capture.undo"),
+        undo: true,
+        onClick: () => void ipc.undoCreatedItem(item.id, item.updatedAt).catch(reportError),
+      },
+      openItem === null
+        ? undefined
+        : { label: t("capture.view"), onClick: () => openItem(item.id) },
+    );
   }
 
   /**
@@ -564,7 +634,7 @@ export function CalendarPage() {
     const time = previous?.time ?? null;
     ipc
       .rescheduleItem(payload.item.id, { kind: "exact", scheduled: { date, time } })
-      .then(() => {
+      .then((saved) => {
         useToastStore.getState().push(
           "success",
           t("calendar.scheduled", {
@@ -577,7 +647,12 @@ export function CalendarPage() {
             undo: true,
             onClick: () => {
               ipc
-                .rescheduleItem(payload.item.id, { kind: "exact", scheduled: previous })
+                .rescheduleItem(payload.item.id, {
+                  kind: "restore",
+                  scheduled: previous,
+                  inInbox: payload.item.inInbox ?? false,
+                  revision: saved.updatedAt,
+                })
                 .catch(reportError);
             },
           },
@@ -738,6 +813,16 @@ export function CalendarPage() {
                           setAdding((current) => (on ? date : current === date ? null : current))
                         }
                         onCreate={createTodo}
+                        onConfigure={(day, text) => {
+                          const active = document.activeElement;
+                          const opener =
+                            active instanceof HTMLElement && active !== document.body
+                              ? active
+                              : (rootRef.current?.querySelector<HTMLElement>(
+                                  `[data-calendar-day="${day}"] [data-day-add]`,
+                                ) ?? null);
+                          setCreateDraft({ date: day, text, opener });
+                        }}
                         onExpand={(day) => {
                           expandedDay.current = day;
                           setAnchor(day);
@@ -769,7 +854,67 @@ export function CalendarPage() {
             )}
           </DragOverlay>
         </DndContext>
+        {createDraft !== null && (
+          <CalendarCreateDialog
+            today={data.today}
+            date={createDraft.date}
+            text={createDraft.text}
+            opener={createDraft.opener}
+            onClose={() => setCreateDraft(null)}
+            onCreated={showCreated}
+          />
+        )}
       </div>
     </section>
+  );
+}
+
+/** 日历落点使用同一新增配置，关闭后还原入口焦点。 */
+function CalendarCreateDialog({
+  today,
+  date,
+  text,
+  opener,
+  onClose,
+  onCreated,
+}: {
+  today: string;
+  date: string;
+  text: string | null;
+  opener: HTMLElement | null;
+  onClose: () => void;
+  onCreated: (item: ItemDto) => void;
+}) {
+  const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    dialog.showModal();
+    dialog.querySelector<HTMLInputElement>("[required]")?.focus();
+    return () => {
+      dialog.close();
+      if (opener?.isConnected) opener.focus();
+    };
+  }, [opener]);
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-modal="true"
+      aria-label={t("calendar.addOn", { date: formatDate(parseISO(date), "monthDay") })}
+      className="fixed inset-0 m-auto h-[min(44rem,calc(100dvh-2rem))] w-[min(38rem,calc(100vw-2rem))] max-h-none max-w-none overflow-hidden rounded-xl border-0 bg-surface p-0 shadow-lg backdrop:bg-black/30"
+      onCancel={(event) => event.preventDefault()}
+    >
+      <CreateConfiguration
+        embedded
+        importOnOpen={text === null}
+        kind="todo"
+        today={today}
+        targetDate={date}
+        seed={text === null ? null : { id: 1, draft: textDraft(text) }}
+        onDone={onClose}
+        onCreated={onCreated}
+      />
+    </dialog>
   );
 }

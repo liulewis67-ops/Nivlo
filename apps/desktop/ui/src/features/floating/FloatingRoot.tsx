@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MenuModalContext } from "@/components";
-import type { ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
+import type { ContextCreateRequestedEvent, ExpandedLayoutDto, ItemTypeDto } from "@/lib/ipc";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 import { CaptureFeedbackBar, subscribeTabDrops, useDropCapture } from "@/features/capture";
@@ -47,6 +47,10 @@ export function FloatingRoot() {
   useIgnoreWindowBlur();
   const { state, send } = useFloatingMachine();
   const [quickCreateKind, setQuickCreateKind] = useState<ItemTypeDto | null>(null);
+  const [contextSeed, setContextSeed] = useState<{
+    id: number;
+    event: ContextCreateRequestedEvent;
+  } | null>(null);
   /** 拖入内容预填出的草稿；`id` 递增，配置页已打开时据此追加。 */
   const [dropSeed, setDropSeed] = useState<{ id: number; draft: DropDraft } | null>(null);
   const drop = useDropCapture(send, (draft) => {
@@ -116,13 +120,31 @@ export function FloatingRoot() {
   function finishQuickCreate(): void {
     setQuickCreateKind(null);
     setDropSeed(null);
+    setContextSeed(null);
     send("quickCreateFinished");
+  }
+
+  /** 查看本次捕获的第一条事项，直接用 ID 定位。 */
+  function viewCapture(): void {
+    const item = drop.feedback?.status === "created" ? drop.feedback.items[0] : undefined;
+    if (item !== undefined) void ipc.openItemInMain(item.id).catch(reportError);
   }
 
   // 托盘「快速添加」：不管当前是收起还是展开，直接进入待办的配置页；已打开时保留草稿和类型，只取回焦点。
   useEffect(
     () =>
       ipc.subscribeQuickAddRequested(() => {
+        setQuickCreateKind((current) => current ?? "todo");
+        setCreateFocusRequest((count) => count + 1);
+        send("quickCreateRequested");
+      }),
+    [send],
+  );
+
+  useEffect(
+    () =>
+      ipc.subscribeContextCreateRequested((event) => {
+        setContextSeed((current) => ({ id: (current?.id ?? 0) + 1, event }));
         setQuickCreateKind((current) => current ?? "todo");
         setCreateFocusRequest((count) => count + 1);
         send("quickCreateRequested");
@@ -166,8 +188,10 @@ export function FloatingRoot() {
             kind={quickCreateKind}
             today={today.data?.date}
             onDone={finishQuickCreate}
+            onCreated={drop.showCreated}
             focusRequest={createFocusRequest}
             seed={dropSeed}
+            contextSeed={contextSeed}
             dropActive={drop.hovering}
             onPasteNonText={drop.pasteFromClipboard}
             feedback={
@@ -176,10 +200,7 @@ export function FloatingRoot() {
                   inline
                   feedback={drop.feedback}
                   onUndo={drop.undo}
-                  onEdit={() => {
-                    drop.dismiss();
-                    void ipc.openMain();
-                  }}
+                  onEdit={viewCapture}
                   onDismiss={drop.dismiss}
                   onHoldChange={drop.pauseDismiss}
                 />
@@ -198,10 +219,7 @@ export function FloatingRoot() {
             capture={{
               feedback: drop.feedback,
               onUndo: drop.undo,
-              onEdit: () => {
-                drop.dismiss();
-                void ipc.openMain();
-              },
+              onEdit: viewCapture,
               onDismiss: drop.dismiss,
               onHoldChange: drop.pauseDismiss,
               // 快速创建输入框里粘贴的不是文字（文件 / 图片）：收进 Inbox 并结束这次快速创建。
