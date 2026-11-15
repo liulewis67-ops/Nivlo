@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#b6c4ff" opacity=".3"/></pattern>
+  </defs>
+  <path fill="#202d80" d="M0 0h640v400H0z"/>
+  <path fill="url(#dots)" d="M0 0h640v400H0z"/>
+  <g fill="none" stroke="#93a7ff" opacity=".48">
+    <circle cx="532" cy="116" r="104"/><circle cx="532" cy="116" r="148"/><circle cx="532" cy="116" r="192"/>
+    <path d="M0 308h88l44-44h308l92-92V0M0 344h138l48-48h300l66-66h88"/>
+    <path d="M24 34h20m-10-10v20M580 330h20m-10-10v20M90 370h20m-10-10v20"/>
+  </g>
+  <g fill="#cdd6ff"><circle cx="88" cy="308" r="3"/><circle cx="552" cy="230" r="3"/><circle cx="532" cy="172" r="3"/></g>
+</svg>
