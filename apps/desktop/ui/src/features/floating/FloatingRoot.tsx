@@ -19,10 +19,10 @@ import { useFloatingMachine } from "./use-floating-machine";
 import { useIgnoreWindowBlur } from "./use-ignore-window-blur";
 
 /** Today 面板的 logical 宽度（px）。 */
-export const PANEL_WIDTH_PX = 300;
+export const PANEL_WIDTH_PX = 360;
 
 /** Today 面板的 logical 高度（px）。 */
-export const PANEL_HEIGHT_PX = 380;
+export const PANEL_HEIGHT_PX = 440;
 
 /**
  * 悬浮窗根组件：收起时是徽标，Hover 后展开为 Today 面板。
