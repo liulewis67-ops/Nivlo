@@ -1,3 +1,4 @@
+import { isImeKey } from "@/lib/ime";
 import { useMutation } from "@tanstack/react-query";
 import { parseISO } from "date-fns";
 import { formatDate } from "@/lib/date-format";
@@ -77,7 +78,7 @@ export function TodayPage() {
    */
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     if (datePhrase.handleBackspace(event)) return;
-    if (event.key === "ArrowDown" && !event.nativeEvent.isComposing) {
+    if (event.key === "ArrowDown" && !isImeKey(event.nativeEvent)) {
       const first = sectionRef.current?.querySelector<HTMLElement>("[role=checkbox]");
       if (first !== null && first !== undefined) {
         event.preventDefault();
@@ -87,7 +88,7 @@ export function TodayPage() {
     }
     const action = resolveKey({
       key: event.key,
-      isComposing: event.nativeEvent.isComposing,
+      isComposing: isImeKey(event.nativeEvent),
       title,
     });
     if (action === "cancel" && title !== "") {

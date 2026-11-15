@@ -79,13 +79,18 @@ describe("全局搜索窗口", () => {
 
   it("输入法组字时的回车不会打开结果", async () => {
     const ipc = createMemoryIpc();
-    await seedTodo(ipc, "修复登录超时");
+    const id = await seedTodo(ipc, "修复登录超时");
     renderWithProviders(<SearchApp />, ipc);
 
     fireEvent.change(input(), { target: { value: "登录超时" } });
     await screen.findByRole("listbox", { name: "搜索结果" });
     fireEvent.keyDown(input(), { key: "Enter", isComposing: true });
+    fireEvent.keyDown(input(), { key: "Enter", keyCode: 229 });
+    fireEvent.keyDown(input(), { key: "Escape", keyCode: 229 });
     expect(ipc.openedItems).toEqual([]);
+    expect(input()).toHaveValue("登录超时");
+    fireEvent.keyDown(input(), { key: "Enter" });
+    await waitFor(() => expect(ipc.openedItems).toEqual([id]));
   });
 
   it("空输入时列出最近使用的条目，↓ + 回车直接打开", async () => {

@@ -39,6 +39,7 @@ async function loadRoot(label: string): Promise<ComponentType> {
 /** 从后端读取外观、皮肤、语言与主题，覆盖本地缓存；失败时沿用缓存。 */
 async function hydrateUiPrefs(): Promise<void> {
   try {
+    const cachedSkin = useSkinStore.getState().skin;
     const [appearance, skin, language, theme, hideCompleted] = await Promise.all([
       ipc.getUiPref("appearance"),
       ipc.getUiPref("skin"),
@@ -47,7 +48,7 @@ async function hydrateUiPrefs(): Promise<void> {
       ipc.getUiPref("hideCompleted"),
     ]);
     if (appearance) useAppearanceStore.getState().hydrate(appearance);
-    if (skin) useSkinStore.getState().hydrate(skin);
+    if (cachedSkin === useSkinStore.getState().skin) useSkinStore.getState().hydrate(skin);
     if (language) await hydrateLanguage(language);
     if (theme) useThemeStore.getState().hydrate(theme);
     if (hideCompleted) useDisplayStore.getState().hydrate(hideCompleted);
@@ -98,9 +99,18 @@ async function bootstrap(): Promise<void> {
 
   const rootPromise = loadRoot(label);
 
-  // 主窗口启动时以后端保存的外观 / 皮肤为准（备份恢复后也能还原）；悬浮窗与搜索框靠 storage 事件同步
-  // （它们也没有读取偏好的权限）。
-  if (label !== FLOATING_WINDOW_LABEL && label !== SEARCH_WINDOW_LABEL) void hydrateUiPrefs();
+  // 悬浮窗先于主窗口启动时，也从数据库读取备份恢复后的皮肤。
+  if (label === FLOATING_WINDOW_LABEL && isRunningInTauri()) {
+    try {
+      const cached = useSkinStore.getState().skin;
+      const saved = await ipc.getUiPref("skin");
+      if (cached === useSkinStore.getState().skin) useSkinStore.getState().hydrate(saved);
+    } catch {
+      // 后端暂不可用时沿用上一次保存的缓存。
+    }
+  } else if (label !== FLOATING_WINDOW_LABEL && label !== SEARCH_WINDOW_LABEL) {
+    void hydrateUiPrefs();
+  }
 
   // 让样式能按窗口区分（悬浮窗需要透明背景）。
   document.documentElement.dataset["window"] = label;

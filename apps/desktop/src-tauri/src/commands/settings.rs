@@ -259,10 +259,17 @@ fn ui_pref_key(name: &str) -> Result<&'static str, IpcError> {
 /// 名字不认识返回 `INVALID_INPUT`；存储失败返回存储错误。
 #[tauri::command]
 #[specta::specta]
-pub async fn get_ui_pref(
+pub async fn get_ui_pref<R: Runtime>(
+    window: tauri::Window<R>,
     state: State<'_, AppState>,
     name: String,
 ) -> Result<Option<String>, IpcError> {
+    if window.label() == "floating" && name != "skin" {
+        return Err(IpcError::from(AppError::new(
+            ErrorCode::InvalidInput,
+            "悬浮窗只能读取皮肤偏好",
+        )));
+    }
     let key = ui_pref_key(&name)?;
     Ok(state.services.settings.get(key).await?)
 }

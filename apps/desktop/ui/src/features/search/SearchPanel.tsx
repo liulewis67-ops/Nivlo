@@ -1,3 +1,4 @@
+import { isImeKey } from "@/lib/ime";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
@@ -489,7 +490,7 @@ export function SearchPanel({
    * @param event 键盘事件。
    */
   function handleKeyDown(event: KeyboardEvent<HTMLElement>): void {
-    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+    if (isImeKey(event.nativeEvent)) return;
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopPropagation();

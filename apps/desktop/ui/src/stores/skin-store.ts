@@ -160,57 +160,66 @@ function load(): Skin {
   return DEFAULT_SKIN;
 }
 
-/** 把皮肤写入后端（settings 表，随备份）；失败只影响备份，不影响当前会话。 */
-function persistSkin(json: string | null): void {
-  ipc.setUiPref("skin", json).catch(() => undefined);
-}
-
-/** 皮肤状态与操作。 */
+/** 皮肤预览及保存状态。 */
 type SkinState = {
   skin: Skin;
-  /** 修改部分字段，立即保存；保存失败（如配额超限）时返回 false 并回滚。 */
-  update: (patch: Partial<Skin>) => boolean;
-  reset: () => void;
-  /** 接收其他窗口的修改（只应用，不回写）。 */
+  saveStatus: "idle" | "saving" | "failed";
+  update: (patch: Partial<Skin>) => void;
+  retry: () => void;
   adopt: (skin: Skin) => void;
-  /** 用后端保存的 JSON 覆盖本地缓存（启动时、备份恢复后）。 */
-  hydrate: (json: string) => void;
+  hydrate: (json: string | null) => void;
 };
 
 /** 悬浮窗皮肤状态。 */
-export const useSkinStore = create<SkinState>((set, get) => ({
-  skin: load(),
-  update: (patch) => {
-    const next = sanitizeSkin({ ...get().skin, ...patch });
-    try {
-      window.localStorage.setItem(SKIN_STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      return false;
+export const useSkinStore = create<SkinState>((set, get) => {
+  /** 依次保存，写入期间只保留最新待写快照。 */
+  async function save(): Promise<void> {
+    if (get().saveStatus === "saving") return;
+    set({ saveStatus: "saving" });
+    for (;;) {
+      const snapshot = get().skin;
+      const json = JSON.stringify(snapshot);
+      try {
+        await ipc.setUiPref("skin", json);
+        window.localStorage.setItem(SKIN_STORAGE_KEY, json);
+      } catch {
+        if (snapshot !== get().skin) continue;
+        set({ saveStatus: "failed" });
+        return;
+      }
+      if (snapshot === get().skin) {
+        set({ saveStatus: "idle" });
+        return;
+      }
     }
-    set({ skin: next });
-    persistSkin(JSON.stringify(next));
-    return true;
-  },
-  reset: () => {
-    try {
-      window.localStorage.removeItem(SKIN_STORAGE_KEY);
-    } catch {
-      // 忽略：仅影响下次启动。
-    }
-    set({ skin: DEFAULT_SKIN });
-    persistSkin(null);
-  },
-  adopt: (skin) => set({ skin }),
-  hydrate: (json) => {
-    try {
-      const next = sanitizeSkin(JSON.parse(json));
-      window.localStorage.setItem(SKIN_STORAGE_KEY, JSON.stringify(next));
-      set({ skin: next });
-    } catch {
-      // 内容损坏时保留本地缓存。
-    }
-  },
-}));
+  }
+
+  return {
+    skin: load(),
+    saveStatus: "idle",
+    update: (patch) => {
+      set({ skin: sanitizeSkin({ ...get().skin, ...patch }) });
+      void save();
+    },
+    retry: () => {
+      if (get().saveStatus === "failed") void save();
+    },
+    adopt: (skin) => {
+      if (get().saveStatus === "idle") set({ skin });
+    },
+    hydrate: (json) => {
+      if (get().saveStatus !== "idle") return;
+      try {
+        const next = json === null ? DEFAULT_SKIN : sanitizeSkin(JSON.parse(json));
+        if (json === null) window.localStorage.removeItem(SKIN_STORAGE_KEY);
+        else window.localStorage.setItem(SKIN_STORAGE_KEY, JSON.stringify(next));
+        set({ skin: next });
+      } catch {
+        // 内容损坏时保留本地缓存。
+      }
+    },
+  };
+});
 
 /** 监听其他窗口对皮肤的修改。 */
 export function initSkin(): void {

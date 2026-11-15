@@ -1,3 +1,4 @@
+import { isImeKey } from "@/lib/ime";
 import type { ClipboardEvent, KeyboardEvent } from "react";
 import {
   continueMarkdownList,
@@ -32,7 +33,7 @@ export function handleMarkdownKeyDown(
   const marker = isCommandKey(event, "b") ? "**" : isCommandKey(event, "i") ? "*" : null;
   const unmodified = !event.ctrlKey && !event.metaKey && !event.altKey;
   const plainEnter =
-    event.key === "Enter" && !event.nativeEvent.isComposing && !event.shiftKey && unmodified;
+    event.key === "Enter" && !isImeKey(event.nativeEvent) && !event.shiftKey && unmodified;
   const tab = event.key === "Tab" && unmodified;
   const next =
     marker !== null

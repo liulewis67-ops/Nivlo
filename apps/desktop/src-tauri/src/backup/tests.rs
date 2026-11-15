@@ -31,7 +31,10 @@ async fn fixture() -> (tempfile::TempDir, AppPaths, Database) {
 /// 随备份验证的界面偏好（key、值）。
 const UI_PREFS: [(&str, &str); 4] = [
     ("ui.appearance", r#"{"accent":"rose"}"#),
-    ("ui.skin", r#"{"frames":[],"fps":6}"#),
+    (
+        "ui.skin",
+        r#"{"mode":"robot","robot":"relay","color":"mint","face":"focused","frames":[],"fps":6}"#,
+    ),
     ("ui.language", "en"),
     ("ui.theme", "dark"),
 ];

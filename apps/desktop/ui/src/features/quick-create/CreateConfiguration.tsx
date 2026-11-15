@@ -1,3 +1,4 @@
+import { isImeKey } from "@/lib/ime";
 import { useEffect, useId, useRef, useState } from "react";
 import type { ClipboardEvent, ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -391,7 +392,7 @@ export function CreateConfiguration({
       aria-label={t("quickCreate.typeLabel")}
       className={isDocument ? "flex gap-1" : "flex flex-wrap gap-2"}
       onKeyDown={(event) => {
-        if (event.nativeEvent.isComposing) return;
+        if (isImeKey(event.nativeEvent)) return;
         if (!["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown", "Home", "End"].includes(event.key))
           return;
         event.preventDefault();
@@ -495,14 +496,14 @@ export function CreateConfiguration({
       aria-modal="true"
       aria-labelledby={headingId}
       aria-describedby={hintId}
-      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl bg-surface text-text shadow-lg"
+      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl bg-surface text-text"
       onSubmit={(event) => {
         event.preventDefault();
         submit();
       }}
       onKeyDown={(event) => {
         // 正文的 Markdown 按键已经处理（列表缩进的 Tab、勾选任务的 Ctrl+Enter）：不再当作切换焦点或创建。
-        if (event.nativeEvent.isComposing || event.defaultPrevented) return;
+        if (isImeKey(event.nativeEvent) || event.defaultPrevented) return;
         trapTab(event, event.currentTarget);
         if (event.key === "Escape") {
           event.preventDefault();
@@ -571,7 +572,7 @@ export function CreateConfiguration({
                   onPaste={onTitlePaste}
                   onKeyDown={(event) => {
                     // 标题里按 Enter 直接开始写正文。
-                    if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+                    if (event.key !== "Enter" || isImeKey(event.nativeEvent)) return;
                     if (event.ctrlKey || event.metaKey) return;
                     event.preventDefault();
                     bodyRef.current?.focus();

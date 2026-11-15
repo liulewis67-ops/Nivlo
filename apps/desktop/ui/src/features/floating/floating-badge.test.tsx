@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TodayItemDto } from "@/lib/ipc";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
+import { DEFAULT_SKIN, useSkinStore } from "@/stores/skin-store";
 import { FloatingBadge } from "./FloatingBadge";
 import { LONG_PRESS_MS } from "./model/drag-intent";
 
@@ -42,6 +43,7 @@ function doneTodo(id: string): TodayItemDto {
 describe("FloatingBadge", () => {
   afterEach(() => {
     vi.useRealTimers();
+    useSkinStore.getState().adopt(DEFAULT_SKIN);
   });
 
   it("按下后捕获指针，在原生拖动交接、松开和取消时释放", () => {
@@ -95,6 +97,24 @@ describe("FloatingBadge", () => {
       "data-done",
       "true",
     );
+    expect(badge().querySelector('[data-expression="done"]')).toBeInTheDocument();
+    expect(badge().querySelector(".nv-robot-counter")).not.toBeInTheDocument();
+  });
+
+  it("关闭数字后保留桌面伙伴，并继续为读屏提供真实数量", async () => {
+    useSkinStore.getState().adopt({ ...DEFAULT_SKIN, showCount: false });
+    const ipc = createMemoryIpc();
+    ipc.setToday({
+      date: "2026-10-10",
+      remainingCount: 99,
+      todos: [],
+      tips: [],
+      completed: [],
+    });
+    renderWithProviders(<FloatingBadge />, ipc);
+    const button = await screen.findByRole("button", { name: /99/ });
+    expect(button).toHaveAttribute("data-shape", "robot");
+    expect(button.querySelector(".nv-robot-counter")).not.toBeInTheDocument();
   });
 
   it("右键不弹系统菜单，而是快速添加待办", () => {

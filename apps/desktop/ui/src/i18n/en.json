@@ -711,7 +711,8 @@
         "pearl": "Pearl"
       },
       "faces": { "friendly": "Friendly", "focused": "Focused", "playful": "Playful" },
-      "saveFailed": "Could not save the appearance. Try again."
+      "saveFailed": "Could not save the appearance. Try again.",
+      "retry": "Retry"
     },
     "skin": {
       "label": "Custom skin",
@@ -861,7 +862,7 @@
     },
     "step1": {
       "title": "Hover to see today, click to add",
-      "body": "Hover over the badge to see today. Click “+ To-do”, choose Todo, Note or Tip, write a title and press Enter. Use arrow keys inside the type group; Tab moves between controls."
+      "body": "Hover over the badge to see Today. Click “+ To-do” and choose a to-do, note, or tip. Enter a title, then click Create or press Ctrl+Enter."
     },
     "step2": {
       "title": "Capture on the go",
@@ -869,7 +870,7 @@
     },
     "step3": {
       "title": "Schedule in plain language",
-      "body": "Write “tomorrow 3pm review the plan” to recognize a date and time. Check the detected schedule before pressing Enter.",
+      "body": "In Today, type “tomorrow 3pm review the plan” in the single-line input. Check the detected schedule, then press Enter to add it.",
       "search": "To find something you saved, press this in any app:",
       "taken": "{{shortcut}} is currently taken by another program, so it won’t respond. You can pick another one at the bottom left of the main window.",
       "searchTaken": "The global search shortcut {{shortcut}} is taken by another program. Pick another one at the bottom left of the main window to search what you saved from any app.",

@@ -86,6 +86,8 @@ describe("完整新增配置", () => {
       ctrlKey: true,
       isComposing: true,
     });
+    fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Enter", ctrlKey: true, keyCode: 229 });
+    fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Escape", keyCode: 229 });
     expect(create).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "创建" }));
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));

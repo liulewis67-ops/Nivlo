@@ -36,13 +36,18 @@ const BADGE_ONLY = process.argv.includes("--badge-only");
 const ZOOM_ONLY = process.argv.includes("--zoom-only");
 const CHECK_ZOOM = process.argv.includes("--zoom") || ZOOM_ONLY;
 const BADGE_MATRIX = process.argv.includes("--badge-matrix") || BADGE_ONLY;
+const badgeScaleFlag = process.argv.indexOf("--badge-scale");
+const badgeScale = badgeScaleFlag < 0 ? null : Number(process.argv[badgeScaleFlag + 1]);
+if (badgeScale !== null && (!NATIVE || !BADGE_MATRIX || ![100, 125].includes(badgeScale))) {
+  throw Error("--badge-scale requires --native and --badge-only or --badge-matrix, with 100 or 125");
+}
 const warmActivations = [];
 const zoomRecords = [];
 const badgeRecords = [];
 const runtimeEnvironments = [];
 const EVIDENCE_STAGE = process.argv.includes('--evidence-stage') ? process.argv[process.argv.indexOf('--evidence-stage')+1] : 'm4';
 if(!['m4','m5'].includes(EVIDENCE_STAGE))throw Error('Evidence stage must be m4 or m5');
-const EVIDENCE = join(ROOT,'tests','visual','stages',EVIDENCE_STAGE,'native');
+const EVIDENCE = process.env.NIVLO_E2E_EVIDENCE_DIR ?? join(ROOT,'tests','visual','stages',EVIDENCE_STAGE,'native');
 if (CHECK_ZOOM || WARM_RUNS || BADGE_MATRIX || SEARCH_ZOOM_ONLY) mkdirSync(EVIDENCE,{recursive:true});
 /** --native 测得的唤出耗时（毫秒）：从按键发出到输入框拿到焦点。 */
 const hotkeyTimings = { first: [], again: [] };
@@ -680,7 +685,7 @@ async function runOnce(index) {
         };
         const inputReady = "document.hasFocus() && ['标题', 'Title'].includes(document.activeElement?.getAttribute('aria-label')) && !document.activeElement.disabled";
 
-        // Enter 创建。
+        // 普通 Enter 保留标题草稿，Ctrl+Enter 创建。
         const before = foregroundWindow();
         const addButton = await openAddButton();
         const clicked = Date.now();
@@ -690,19 +695,40 @@ async function runOnce(index) {
         const quickTitle = `e2e-quick-${index}`;
         await floating.send("Input.insertText", { text: quickTitle });
         await key("Enter", 13);
+        if (await floating.evaluate("document.activeElement?.value") !== quickTitle)
+          throw new Error("普通 Enter 没有保留标题草稿");
+        if ((await main.invoke("get_today")).todos.some((item) => item.title === quickTitle))
+          throw new Error("普通 Enter 意外创建了待办");
+        pressHotkey([0x11, 0x0d]);
         await until(async () => {
           const today = await main.invoke("get_today");
-          return today.todos.at(-1)?.title === quickTitle;
+          return today.todos.at(-1)?.title === quickTitle &&
+            today.todos.filter((item) => item.title === quickTitle).length === 1;
         }, "新待办出现在 Today 末尾");
         await until(() => foregroundWindow() === before, "创建后焦点还给之前的前台窗口", 5000);
         if (await floating.evaluate("document.hasFocus()")) throw new Error("创建后焦点残留在悬浮窗");
 
-        // Esc 取消：不创建任何数据，回到展开状态（底部又出现「+ 待办」）。
+        // 用全局快捷键打开后续草稿，避免 CDP 光标和真实光标在窗口缩放后争夺悬停。
         const countBefore = (await main.invoke("get_today")).todos.length;
-        await click(await openAddButton());
+        await main.invoke("set_shortcut", { action: "quickCreate", accelerator: "Ctrl+Alt+Shift+F8" });
+        await until(() => foregroundWindow() === before, "再次打开前焦点已恢复");
+        pressHotkey([0x11, 0x12, 0x10, 0x77]);
+        await until(() => floating.evaluate(inputReady), "空白草稿拿到焦点");
+        await key("Escape", 27);
+        await until(() => floating.evaluate("!document.querySelector('[aria-label=标题],[aria-label=Title]')"), "空白草稿直接关闭");
+        await until(() => foregroundWindow() === before, "空白草稿取消后焦点已恢复");
+        pressHotkey([0x11, 0x12, 0x10, 0x77]);
         await until(() => floating.evaluate(inputReady), "第二次 Quick Create 拿到焦点");
         await floating.send("Input.insertText", { text: "e2e-should-not-exist" });
         await key("Escape", 27);
+        const discard = await until(() => floating.evaluate(`(() => {
+          const button = document.querySelector('form button[data-variant=danger]')
+            ?? [...document.querySelectorAll('form button')].find((b) => ['放弃内容', 'Discard'].includes(b.textContent.trim()));
+          if (!button) return null;
+          const rect = button.getBoundingClientRect();
+          return [rect.x + rect.width / 2, rect.y + rect.height / 2];
+        })()`), "非空草稿显示放弃确认");
+        await click(discard);
         await until(() => floating.evaluate("!document.querySelector('[aria-label=标题],[aria-label=Title]')"), "Esc 之后输入框消失");
         await until(() => foregroundWindow() === before, "取消后焦点还给之前的前台窗口", 5000);
         const after = await main.invoke("get_today");
@@ -711,7 +737,7 @@ async function runOnce(index) {
       });
     }
 
-    // 11.6（--native）Quick Create 的全局快捷键（实施计划 2.6）：其他应用在前台时按下，输入、回车，
+    // 11.6（--native）Quick Create 的全局快捷键：其他应用在前台时按下，输入后点击创建，
     // 创建后焦点回到之前的应用。改绑到测试专用组合，避免和本机正在用的 Nivlo 冲突。
     if (NATIVE) {
       await step("Quick Create 快捷键（原生）", async () => {
@@ -723,9 +749,12 @@ async function runOnce(index) {
         quickCreateTimings.hotkey.push(Date.now() - pressed);
         const viaHotkey = `e2e-hotkey-${index}`;
         await floating.send("Input.insertText", { text: viaHotkey });
-        await floating.send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-        await floating.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-        await until(async () => (await main.invoke("get_today")).todos.at(-1)?.title === viaHotkey, "快捷键创建的待办出现在 Today 末尾");
+        await floating.evaluate("document.querySelector('form button[type=submit]').click()");
+        await until(async () => {
+          const today = await main.invoke("get_today");
+          return today.todos.at(-1)?.title === viaHotkey &&
+            today.todos.filter((item) => item.title === viaHotkey).length === 1;
+        }, "创建按钮只创建一条待办");
         await until(() => foregroundWindow() === before, "创建后焦点回到之前的应用", 5000);
       });
 
@@ -1033,6 +1062,58 @@ async function runOnce(index) {
           realMouse(200,200);
           const measured=await until(()=>floating.evaluate(`(() => {if(document.querySelector('[aria-label="今日面板"],[aria-label="Today panel"]'))return null;return innerWidth===${entry.width}&&innerHeight===${entry.height}?{width:innerWidth,height:innerHeight,dpr:devicePixelRatio,outerWidth,outerHeight,button:(()=>{const r=document.querySelector('button').getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}})()}:null})()`),'native '+entry.name+' bounds',10000).catch(async error=>{throw Error(error.message+' '+JSON.stringify(await floating.evaluate(`({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,text:document.body.innerText.slice(-300),focused:document.hasFocus()})`)))});
           if(Math.abs(measured.button.width-entry.width)>1||Math.abs(measured.button.height-entry.height)>1)throw Error('Invisible badge hit area: '+JSON.stringify(measured));
+          if (badgeScale !== null && Math.abs(measured.dpr * 100 - badgeScale) > 0.1) {
+            throw Error(`Expected Windows display scale ${badgeScale}%, measured ${measured.dpr * 100}%`);
+          }
+          if (entry.name === 'robot') {
+            const countBounds = await floating.evaluate(`(() => {
+              const counter = document.querySelector('.nv-robot-counter');
+              const figure = document.querySelector('.nv-robot-figure');
+              const original = counter.innerHTML;
+              try {
+                return ['0', '9', '99', '99+'].map(value => {
+                  counter.textContent = value;
+                  const bounds = counter.getBoundingClientRect();
+                  return {value, left:bounds.left, right:bounds.right, bottom:bounds.bottom,
+                    figureRight:figure.getBoundingClientRect().right, fontSize:getComputedStyle(counter).fontSize};
+                });
+              } finally {
+                counter.innerHTML = original;
+              }
+            })()`);
+            if (countBounds.some(bounds => bounds.fontSize !== '12px' ||
+              bounds.left < bounds.figureRight || bounds.right > entry.width || bounds.bottom > entry.height)) {
+              throw Error('Robot count clipped or overlapping: ' + JSON.stringify(countBounds));
+            }
+            measured.countBounds = countBounds;
+            const toggleCount = () => main.evaluate(`(() => {
+              const buttons = document.querySelectorAll('#settings-appearance [role=switch]');
+              const toggle = [...buttons].find(button =>
+                ['显示数字', 'Show count'].includes(button.getAttribute('aria-label'))
+              );
+              if (!toggle) throw Error('Missing robot count toggle');
+              toggle.click();
+            })()`);
+            await toggleCount();
+            await until(() => floating.evaluate(`!!document.querySelector('[data-shape=robot]') &&
+              !document.querySelector('.nv-robot-counter')`), 'robot count hidden in the native window');
+            await toggleCount();
+            await until(() => floating.evaluate("!!document.querySelector('.nv-robot-counter')"), 'robot count restored');
+            measured.hiddenCount = true;
+
+            if (BADGE_ONLY) {
+              const title = 'Badge completion fixture';
+              await main.invoke('quick_create', {request: {itemType:'todo', title, scheduled:null}});
+              const item = (await main.invoke('search_items', {query:title})).find(item => item.title === title);
+              if (!item) throw Error('Missing badge completion fixture');
+              await main.invoke('reschedule_item', {id:item.id,target:{kind:'today'}});
+              await until(() => floating.evaluate("document.querySelector('.nv-robot-counter')?.textContent === '1'"), 'one remaining task');
+              await main.invoke('complete_item', {id:item.id});
+              await until(() => floating.evaluate(`!!document.querySelector('[data-shape=robot] [data-expression=done]') &&
+                !document.querySelector('.nv-robot-counter')`), 'robot completion expression');
+              measured.completed = true;
+            }
+          }
           const frame=await floating.send('Page.captureScreenshot',{format:'png'});
           const bytes=Buffer.from(frame.result.data,'base64');
           writeFileSync(join(EVIDENCE,`badge-${entry.name}.png`),bytes);

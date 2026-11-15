@@ -1,10 +1,11 @@
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setLanguage } from "@/i18n";
 import { formatDate } from "@/lib/date-format";
 import { AppError } from "@/lib/errors";
 import { useThemeStore } from "@/stores/theme-store";
+import { useSkinStore } from "@/stores/skin-store";
 import { useToastStore } from "@/stores/toast-store";
 import { createMemoryIpc } from "@/test/ipc-mock";
 import { renderWithProviders } from "@/test/render";
@@ -14,6 +15,22 @@ describe("设置页", () => {
   beforeEach(() => {
     useToastStore.setState({ toasts: [] });
     useThemeStore.setState({ preference: "system" });
+  });
+
+  it("皮肤写入失败时保留选择，并能从设置页重试", async () => {
+    const ipc = createMemoryIpc();
+    vi.spyOn(ipc, "setUiPref").mockRejectedValueOnce(new Error("offline"));
+    renderWithProviders(<SettingsPage />, ipc);
+
+    const mechanic = screen.getByRole("button", { name: "机修" });
+    fireEvent.click(mechanic);
+    expect(mechanic).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByText("外观保存失败，请重试。")).toHaveAttribute("role", "alert");
+    const appearance = screen.getByRole("region", { name: "悬浮窗外观" });
+    fireEvent.click(within(appearance).getByRole("button", { name: "重试" }));
+    await waitFor(() => expect(useSkinStore.getState().saveStatus).toBe("idle"));
+    expect(await ipc.getUiPref("skin")).toContain('"robot":"relay"');
+    useSkinStore.getState().hydrate(null);
   });
 
   it("显示当前设置：自启关闭、置顶开启、稍后默认下周一", async () => {

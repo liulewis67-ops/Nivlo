@@ -14,6 +14,7 @@
     "allow-undo-capture",
     "allow-capture-from-clipboard",
     "allow-get-inbox-count",
+    "allow-get-ui-pref",
     "allow-complete-item",
     "allow-reopen-item",
     "allow-reschedule-item",

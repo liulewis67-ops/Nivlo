@@ -1,7 +1,62 @@
-import { describe, expect, it } from "vitest";
-import { DEFAULT_SKIN, MAX_FRAMES, nextFrame, sanitizeSkin } from "./skin-store";
+import { describe, expect, it, vi } from "vitest";
+import { setIpcClient } from "@/lib/ipc";
+import { createMemoryIpc } from "@/test/ipc-mock";
+import {
+  DEFAULT_SKIN,
+  MAX_FRAMES,
+  SKIN_STORAGE_KEY,
+  nextFrame,
+  sanitizeSkin,
+  useSkinStore,
+} from "./skin-store";
 
 const PNG = "data:image/png;base64,AAAA";
+
+describe("saving the desktop companion", () => {
+  it("retains a failed preview and publishes the latest value only after a successful write", async () => {
+    const memory = createMemoryIpc();
+    const write = vi.spyOn(memory, "setUiPref");
+    setIpcClient(memory);
+    const store = useSkinStore.getState();
+    store.hydrate(JSON.stringify({ frames: [PNG] }));
+    expect(useSkinStore.getState().skin.mode).toBe("image");
+    const original = localStorage.getItem(SKIN_STORAGE_KEY);
+    write.mockRejectedValueOnce(new Error("database unavailable"));
+
+    store.update({ mode: "robot", robot: "relay" });
+    expect(useSkinStore.getState().skin.robot).toBe("relay");
+    await vi.waitFor(() => expect(useSkinStore.getState().saveStatus).toBe("failed"));
+    expect(localStorage.getItem(SKIN_STORAGE_KEY)).toBe(original);
+
+    let finishWrite!: () => void;
+    write.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finishWrite = resolve;
+        }),
+    );
+    store.retry();
+    store.update({ color: "mint" });
+    store.update({ color: "steel" });
+    expect(write).toHaveBeenCalledTimes(2);
+    expect(localStorage.getItem(SKIN_STORAGE_KEY)).toBe(original);
+    finishWrite();
+    await vi.waitFor(() => expect(useSkinStore.getState().saveStatus).toBe("idle"));
+    expect(write).toHaveBeenCalledTimes(3);
+
+    const saved = await memory.getUiPref("skin");
+    expect(saved).toBe(localStorage.getItem(SKIN_STORAGE_KEY));
+    expect(JSON.parse(saved ?? "{}")).toMatchObject({
+      mode: "robot",
+      robot: "relay",
+      color: "steel",
+      frames: [PNG],
+    });
+    store.hydrate(null);
+    expect(useSkinStore.getState().skin).toEqual(DEFAULT_SKIN);
+    expect(localStorage.getItem(SKIN_STORAGE_KEY)).toBeNull();
+  });
+});
 
 describe("sanitizeSkin", () => {
   it("returns defaults for garbage", () => {

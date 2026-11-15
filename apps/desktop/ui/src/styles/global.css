@@ -371,22 +371,22 @@ html[data-theme="dark"] .nv-badge {
   width: 42px;
   height: 32px;
   flex: none;
-  filter: drop-shadow(0 1px 1px rgb(11 24 39 / 38%));
+}
+.nv-robot-badge:has(.nv-robot-counter) .nv-robot-figure {
+  width: 34px;
 }
 .nv-robot-counter {
-  position: absolute;
-  right: 1px;
-  bottom: 2px;
+  flex: none;
   display: grid;
   min-width: 16px;
   min-height: 16px;
-  padding-inline: 3px;
+  padding-inline: 2px;
   place-items: center;
   border: 1px solid #b3d4ef;
   border-radius: 5px;
   background: #20364d;
   color: #f5fbff;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }

@@ -106,7 +106,7 @@ macro_rules! bindings_builder {
                 $crate::commands::integration::test_integration,
                 $crate::commands::update::check_for_update::<$runtime>,
                 $crate::commands::update::install_update::<$runtime>,
-                $crate::commands::settings::get_ui_pref,
+                $crate::commands::settings::get_ui_pref::<$runtime>,
                 $crate::commands::settings::set_ui_pref::<$runtime>,
                 $crate::commands::settings::set_autostart::<$runtime>,
                 $crate::commands::settings::set_floating_always_on_top,

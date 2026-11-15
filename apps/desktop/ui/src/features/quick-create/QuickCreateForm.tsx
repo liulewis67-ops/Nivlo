@@ -1,3 +1,4 @@
+import { isImeKey } from "@/lib/ime";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { ClipboardEvent, KeyboardEvent } from "react";
@@ -129,7 +130,7 @@ export function QuickCreateForm({
     if (datePhrase.handleBackspace(event)) return;
     const action = resolveKey({
       key: event.key,
-      isComposing: event.nativeEvent.isComposing,
+      isComposing: isImeKey(event.nativeEvent),
       title,
       shiftKey: event.shiftKey,
     });
@@ -164,7 +165,7 @@ export function QuickCreateForm({
       onKeyDown={(event) => {
         if (
           event.key === "Escape" &&
-          !event.nativeEvent.isComposing &&
+          !isImeKey(event.nativeEvent) &&
           event.target !== inputRef.current
         ) {
           event.preventDefault();
@@ -179,7 +180,7 @@ export function QuickCreateForm({
           aria-label={t("quickCreate.typeLabel")}
           className="flex flex-wrap gap-1"
           onKeyDown={(event) => {
-            if (event.nativeEvent.isComposing) return;
+            if (isImeKey(event.nativeEvent)) return;
             const backwards = event.key === "ArrowLeft" || event.key === "ArrowUp";
             if (
               !backwards &&

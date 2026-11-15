@@ -24,7 +24,6 @@ import {
   useSkinStore,
 } from "@/stores/skin-store";
 import { RobotAvatar } from "@/features/floating";
-import type { Skin } from "@/stores/skin-store";
 import { SkinSetting } from "./SkinSetting";
 import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
@@ -219,16 +218,9 @@ export function SettingsPage() {
   const updateAppearance = useAppearanceStore((state) => state.update);
   const resetAppearance = useAppearanceStore((state) => state.reset);
   const skin = useSkinStore((state) => state.skin);
-  const saveSkin = useSkinStore((state) => state.update);
-  /**
-   * 保存外观并在本地写入失败时反馈。
-   * @param patch 更改的外观字段。
-   */
-  function updateSkin(patch: Partial<Skin>): void {
-    if (!saveSkin(patch)) {
-      useToastStore.getState().push("error", t("settings.companion.saveFailed"));
-    }
-  }
+  const updateSkin = useSkinStore((state) => state.update);
+  const skinSaveStatus = useSkinStore((state) => state.saveStatus);
+  const retrySkinSave = useSkinStore((state) => state.retry);
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
 
@@ -410,6 +402,16 @@ export function SettingsPage() {
               {t("settings.appearance.group.badge")}
             </legend>
             <div className="divide-y divide-border">
+              {skinSaveStatus === "failed" && (
+                <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                  <p role="alert" className="text-sm text-danger">
+                    {t("settings.companion.saveFailed")}
+                  </p>
+                  <Button size="sm" onClick={retrySkinSave}>
+                    {t("settings.companion.retry")}
+                  </Button>
+                </div>
+              )}
               <Row label={t("settings.companion.mode")}>
                 <Segmented
                   label={t("settings.companion.mode")}

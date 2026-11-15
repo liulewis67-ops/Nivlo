@@ -114,8 +114,13 @@ describe("QuickCreateForm", () => {
     fireEvent.change(input, { target: { value: "xiezhoubao" } });
 
     fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    fireEvent.keyDown(input, { key: "Enter", keyCode: 229 });
+    fireEvent.keyDown(input, { key: "Escape", keyCode: 229 });
 
     expect(ipc.calls).not.toContain("quickCreate");
+    expect(input).toHaveValue("xiezhoubao");
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() => expect(ipc.items).toHaveLength(1));
   });
 
   it("创建失败时保留输入、弹出错误提示且不结束，可以修改后重试", async () => {

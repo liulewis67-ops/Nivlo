@@ -35,9 +35,8 @@ export function SkinSetting() {
           .map((file) => fileToFrame(file, skin.pixel)),
       );
       const current = useSkinStore.getState().skin.frames;
-      if (!update({ frames: [...current, ...added] })) {
-        useToastStore.getState().push("error", t("settings.skin.saveFailed"));
-      } else if (files.length > room) {
+      update({ frames: [...current, ...added] });
+      if (files.length > Math.min(room, MAX_FRAMES - current.length)) {
         useToastStore.getState().push("info", t("settings.skin.tooMany", { max: MAX_FRAMES }));
       }
     } catch (error) {
