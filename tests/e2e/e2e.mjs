@@ -8,6 +8,7 @@
 // M4 evidence: --native --runs 3 --warm-runs 20 --zoom --badge-matrix
 // Saves native screenshots, source/executable hashes and timings under tests/visual/stages/m4/native.
 // Focused native repros: --native --zoom-only / --ole-only / --badge-only.
+// Floating panel drag with a real mouse: --panel-drag-only.
 // --native：额外用真实按键（SendInput）按全局快捷键，检查全局搜索框的原生行为（出现、拿到键盘焦点、位置、
 // Esc 隐藏、再次出现时是干净的）。会向系统发送一次 Ctrl+Alt+Shift+F9（被测程序注册的组合，别的程序收不到），
 // 所以默认不跑，CI 也不跑。
@@ -28,7 +29,8 @@ const PORT = 9244;
 const RUNS = Number(process.argv[process.argv.indexOf("--runs") + 1]) || 1;
 const NATIVE = process.argv.includes("--native");
 const WARM_RUNS = process.argv.includes("--warm-runs") ? Math.max(0,Number(process.argv[process.argv.indexOf("--warm-runs")+1])||0) : 0;
-const DRAG_ONLY = process.argv.includes("--drag-only");
+const PANEL_DRAG_ONLY = process.argv.includes("--panel-drag-only");
+const DRAG_ONLY = process.argv.includes("--drag-only") || PANEL_DRAG_ONLY;
 const DRAG_STEPS = process.argv.includes("--drag-steps") ? Math.max(1,Number(process.argv[process.argv.indexOf("--drag-steps")+1])||6) : 6;
 const SEARCH_ZOOM_ONLY = process.argv.includes("--search-zoom-only");
 const OLE_ONLY = process.argv.includes("--ole-only");
@@ -373,6 +375,40 @@ async function checkNativeBadgeDrag({main,floating,child,index}) {
         } finally {
           realMouse(original[0], original[1]);
         }
+}
+
+async function checkNativePanelDrag(floating) {
+  const original = cursorPosition();
+  const geometry = () => floating.evaluate(`(() => {
+    const scale = devicePixelRatio;
+    return { scale, x: screenX * scale, y: screenY * scale, w: outerWidth * scale, h: outerHeight * scale,
+      panel: !!document.querySelector('section.nv-panel-in') };
+  })()`);
+  const collapsed = () => until(async () => {
+    const g = await geometry();
+    return !g.panel && g.w < 200 ? g : null;
+  }, "徽标收起");
+  try {
+    realMouse(200, 200);
+    const badge = await collapsed();
+    const { scale } = badge;
+    realMouse(badge.x + badge.w / 2, badge.y + badge.h / 2);
+    const panel = await until(async () => {
+      const g = await geometry();
+      return g.panel && g.w >= 300 * scale - 1 ? g : null;
+    }, "拖动前悬停展开面板");
+    // 从标题左侧长按拖动，第一次移动就越过面板边缘。
+    const grab = [panel.x + 18 * scale, panel.y + 16 * scale];
+    const offset = 120 * scale;
+    realDrag(grab, [grab[0] - offset, grab[1]], 4);
+    realMouse(200, 200);
+    const placed = await collapsed();
+    if (Math.abs(placed.x - (badge.x - offset)) > 3 * scale || Math.abs(placed.y - badge.y) > 3 * scale) {
+      throw new Error(`收起后徽标没有跟随面板：拖之前 ${JSON.stringify(badge)}，现在 ${JSON.stringify(placed)}`);
+    }
+  } finally {
+    realMouse(original[0], original[1]);
+  }
 }
 
 async function checkNativeOle({main,floating,data,index}) {
@@ -882,6 +918,7 @@ async function runOnce(index) {
       // 11.9（--native）拖动徽标并吸附（产品文档 §28「拖动、吸附」）：真实鼠标把收起的徽标拖到离工作区右边
       // 10px 处松开，窗口贴到右边缘、竖直位置不变。
       await step("拖动徽标吸附到边缘（真实鼠标）",()=>checkNativeBadgeDrag({main,floating,child,index}));
+      await step("长按拖动悬停展开的面板（真实鼠标）",()=>checkNativePanelDrag(floating));
     }
 
     // 12.（--native）真实按下全局快捷键：搜索框出现、拿到键盘焦点、在工作区内居中，Esc 隐藏，再次出现时输入已清空。
@@ -1003,7 +1040,8 @@ async function runOnce(index) {
     }
     }
     if (NATIVE && (SEARCH_ZOOM_ONLY || CHECK_ZOOM)) await step("200% search zoom and stable fitting",()=>checkNativeSearchZoom({main,floating,index}));
-    if (DRAG_ONLY) await step("isolated native badge drag",()=>checkNativeBadgeDrag({main,floating,child,index}));
+    if (PANEL_DRAG_ONLY) await step("isolated native panel drag",()=>checkNativePanelDrag(floating));
+    else if (DRAG_ONLY) await step("isolated native badge drag",()=>checkNativeBadgeDrag({main,floating,child,index}));
     if (OLE_ONLY) await step("isolated native OLE drop",()=>checkNativeOle({main,floating,data,index}));
     if (ZOOM_ONLY) await main.invoke('quick_create',{request:{itemType:'todo',title:'zoom fixture',scheduled:null}});
     if (NATIVE && CHECK_ZOOM) await step('200% WebView2 content zoom',async()=>{

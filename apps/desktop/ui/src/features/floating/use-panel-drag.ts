@@ -42,8 +42,8 @@ export type PanelDrag = {
   handlers: {
     onPointerDown: (event: PointerEvent<HTMLElement>) => void;
     onPointerMove: (event: PointerEvent<HTMLElement>) => void;
-    onPointerUp: () => void;
-    onPointerCancel: () => void;
+    onPointerUp: (event: PointerEvent<HTMLElement>) => void;
+    onPointerCancel: (event: PointerEvent<HTMLElement>) => void;
   };
 };
 
@@ -80,6 +80,17 @@ export function usePanelDrag(): PanelDrag {
       longPressRef.current = undefined;
       if (trackerRef.current.select()) setSelected(true);
     }, LONG_PRESS_MS);
+    // 第一次移动可能已经越过面板边缘，仍需要收到事件才能交给系统拖动。
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+
+  /**
+   * 释放指针捕获，让系统接管拖动，或结束本次手势。
+   * @param event 本次手势的指针事件。
+   */
+  function releasePointer(event: PointerEvent<HTMLElement>): void {
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
   /**
@@ -90,21 +101,30 @@ export function usePanelDrag(): PanelDrag {
     const tracker = trackerRef.current;
     if (tracker.phase === "idle") return;
     if (event.buttons === 0) {
+      releasePointer(event);
       tracker.cancel();
       reset();
       return;
     }
     const starts = tracker.move({ x: event.clientX, y: event.clientY });
-    if (tracker.phase === "abandoned") reset();
+    if (tracker.phase === "abandoned") {
+      releasePointer(event);
+      reset();
+    }
     if (starts) {
+      releasePointer(event);
       // 文字可能已被按住选中了一点：拖动窗口时不要带着选区。
       window.getSelection()?.removeAllRanges();
       void ipc.startFloatingDrag(grabRef.current ?? undefined);
     }
   }
 
-  /** 松开或被取消：回到空闲并放下。 */
-  function onPointerEnd(): void {
+  /**
+   * 松开或被取消：回到空闲并放下。
+   * @param event 本次手势的指针事件。
+   */
+  function onPointerEnd(event: PointerEvent<HTMLElement>): void {
+    releasePointer(event);
     trackerRef.current.release();
     reset();
   }
