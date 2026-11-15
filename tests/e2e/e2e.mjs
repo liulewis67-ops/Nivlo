@@ -539,6 +539,22 @@ async function runOnce(index) {
       main = await connect(page.webSocketDebuggerUrl);
       main.pageId = page.id;
       await until(() => main.evaluate("document.getElementById('root')?.children.length > 0"), "主窗口渲染");
+      const centerOffset = win32(`
+        [void][E2E.Native]::SetProcessDPIAware()
+        Add-Type -AssemblyName System.Windows.Forms
+        ${largestWindow(child.pid)}
+        $frame = New-Object E2E.Native+RECT
+        [void][E2E.Native]::GetWindowRect($best, [ref]$frame)
+        $work = [System.Windows.Forms.Screen]::FromHandle($best).WorkingArea
+        @(
+          ($frame.Left + $frame.Right - $work.Left - $work.Right) / 2
+          ($frame.Top + $frame.Bottom - $work.Top - $work.Bottom) / 2
+        ) | ConvertTo-Json -Compress
+      `);
+      // Tauri 居中时会扣除 DWM 的不可见边框，GetWindowRect 包含这部分。
+      if (JSON.parse(centerOffset).some((axis) => Math.abs(axis) > 8)) {
+        throw new Error(`主窗口没有在工作区居中，偏移量为 ${centerOffset} px`);
+      }
       // A fresh native profile owns focus in onboarding. Dismiss it through the
       // visible UI before exercising the workspace, rather than clicking inert
       // background controls programmatically and mistaking them for user access.

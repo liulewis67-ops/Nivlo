@@ -128,7 +128,7 @@ pub fn foreground_port<R: Runtime>(window: &WebviewWindow<R>) -> Arc<dyn Foregro
 /// 显示并聚焦主窗口；尚未创建时先创建。
 ///
 /// 主窗口是按需创建的：第一次调用会创建 WebView（有一次性的启动开销），
-/// 之后只是显示被隐藏的窗口。
+/// 普通窗口在显示前居中，最大化和全屏窗口保留原有状态。
 ///
 /// # Errors
 ///
@@ -140,12 +140,18 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
             WebviewWindowBuilder::new(app, MAIN_WINDOW_LABEL, WebviewUrl::App("index.html".into()))
                 .title("Nivlo")
                 .inner_size(MAIN_WIDTH, MAIN_HEIGHT)
+                .visible(false)
                 .zoom_hotkeys_enabled(cfg!(target_os = "windows"))
                 .build()
                 .inspect(suppress_bare_alt_menu)?
         }
     };
-    window.unminimize()?;
+    if window.is_minimized()? {
+        window.unminimize()?;
+    }
+    if !window.is_maximized()? && !window.is_fullscreen()? {
+        window.center()?;
+    }
     window.show()?;
     window.set_focus()?;
     Ok(())
