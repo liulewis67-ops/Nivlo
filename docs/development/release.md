@@ -21,7 +21,7 @@
 ## 本地发布流程
 
 ```powershell
-$env:TAURI_SIGNING_PRIVATE_KEY_PATH = "$env:USERPROFILE\.nivlo-keys\updater.key"
+$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content -Raw "$env:USERPROFILE\.nivlo-keys\updater.key"  # 当前 CLI 不认 *_PATH
 $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
 pnpm tauri build
 node scripts/release/make-latest-json.mjs --version 0.1.1 --base-url https://<host>/nivlo
