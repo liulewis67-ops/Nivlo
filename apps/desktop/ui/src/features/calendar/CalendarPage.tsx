@@ -21,7 +21,7 @@ import { OpenItemContext, useOpenItem } from "@/features/detail";
 import { useNavStore } from "@/features/shell";
 import { LAYOUT, useContainerWidth } from "@/lib/layout";
 import { trapTab } from "@/lib/focus-trap";
-import { CreateConfiguration, parseDatePhrase } from "@/features/quick-create";
+import { CreateItemDialog, parseDatePhrase } from "@/features/quick-create";
 import { textDraft } from "@/features/capture";
 import { cx } from "@/lib/cx";
 import { ipc } from "@/lib/ipc";
@@ -855,66 +855,21 @@ export function CalendarPage() {
           </DragOverlay>
         </DndContext>
         {createDraft !== null && (
-          <CalendarCreateDialog
+          <CreateItemDialog
+            label={t("calendar.addOn", {
+              date: formatDate(parseISO(createDraft.date), "monthDay"),
+            })}
+            kind="todo"
             today={data.today}
-            date={createDraft.date}
-            text={createDraft.text}
+            targetDate={createDraft.date}
+            importOnOpen={createDraft.text === null}
+            seed={createDraft.text === null ? null : { id: 1, draft: textDraft(createDraft.text) }}
             opener={createDraft.opener}
-            onClose={() => setCreateDraft(null)}
+            onDone={() => setCreateDraft(null)}
             onCreated={showCreated}
           />
         )}
       </div>
     </section>
-  );
-}
-
-/** 日历落点使用同一新增配置，关闭后还原入口焦点。 */
-function CalendarCreateDialog({
-  today,
-  date,
-  text,
-  opener,
-  onClose,
-  onCreated,
-}: {
-  today: string;
-  date: string;
-  text: string | null;
-  opener: HTMLElement | null;
-  onClose: () => void;
-  onCreated: (item: ItemDto) => void;
-}) {
-  const { t } = useTranslation();
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    dialog.showModal();
-    dialog.querySelector<HTMLInputElement>("[required]")?.focus();
-    return () => {
-      dialog.close();
-      if (opener?.isConnected) opener.focus();
-    };
-  }, [opener]);
-  return (
-    <dialog
-      ref={dialogRef}
-      aria-modal="true"
-      aria-label={t("calendar.addOn", { date: formatDate(parseISO(date), "monthDay") })}
-      className="fixed inset-0 m-auto h-[min(44rem,calc(100dvh-2rem))] w-[min(38rem,calc(100vw-2rem))] max-h-none max-w-none overflow-hidden rounded-xl border-0 bg-surface p-0 shadow-lg backdrop:bg-black/30"
-      onCancel={(event) => event.preventDefault()}
-    >
-      <CreateConfiguration
-        embedded
-        importOnOpen={text === null}
-        kind="todo"
-        today={today}
-        targetDate={date}
-        seed={text === null ? null : { id: 1, draft: textDraft(text) }}
-        onDone={onClose}
-        onCreated={onCreated}
-      />
-    </dialog>
   );
 }

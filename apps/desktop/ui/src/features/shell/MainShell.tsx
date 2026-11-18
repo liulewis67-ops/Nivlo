@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@/components";
 import { ipc } from "@/lib/ipc";
 import { isCommandKey, isDialogOpen, isTyping } from "@/lib/typing";
 import { CalendarPage } from "@/features/calendar";
@@ -11,6 +12,7 @@ import { NotesPage } from "@/features/notes";
 import { OnboardingDialog } from "@/features/onboarding";
 import { useUpdateCheckOnStart, SETTINGS_SECTIONS } from "@/features/settings";
 import { ProjectsPage } from "@/features/projects";
+import { CreateItemDialog } from "@/features/quick-create";
 import { CommandPalette, GOTO_VIEWS } from "@/features/search";
 import type { PaletteCommand } from "@/features/search";
 import { SettingsPage } from "@/features/settings";
@@ -107,7 +109,8 @@ export function MainShell() {
   const setView = useNavStore((state) => state.setView);
   const openNote = useNavStore((state) => state.openNote);
   const openSettings = useNavStore((state) => state.openSettings);
-  const remaining = useTodayQuery().data?.remainingCount ?? null;
+  const today = useTodayQuery().data;
+  const remaining = today?.remainingCount ?? null;
   const inboxCount = useInboxCountQuery().data ?? null;
   /** 详情面板里正在编辑的条目；`null` 表示面板关闭。 */
   const openId = useNavStore((state) => state.detailId);
@@ -116,6 +119,7 @@ export function MainShell() {
   const [searching, setSearching] = useState(false);
   /** 键盘快捷键一览是否打开。 */
   const [showingShortcuts, setShowingShortcuts] = useState(false);
+  const [createOpener, setCreateOpener] = useState<HTMLButtonElement | null>(null);
   const settings = useQuery({
     queryKey: queryKeys.appSettings(),
     queryFn: () => ipc.getAppSettings(),
@@ -274,7 +278,8 @@ export function MainShell() {
      * @param event 键盘事件。
      */
     function handleKeyDown(event: KeyboardEvent): void {
-      if (event.defaultPrevented || event.isComposing || onboarding) return;
+      if (event.defaultPrevented || event.isComposing || onboarding || createOpener !== null)
+        return;
       const command = (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey;
       const position = Number.parseInt(event.key, 10);
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -310,7 +315,7 @@ export function MainShell() {
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setView, onboarding]);
+  }, [setView, onboarding, createOpener]);
 
   // 悬浮窗请求打开某个视图：窗口刚创建时从后端取走待处理的请求，已经在运行时由事件通知。
   useEffect(() => {
@@ -336,6 +341,28 @@ export function MainShell() {
       unsubscribe();
     };
   }, [setView, setOpenId]);
+
+  const createButton = (
+    <Button
+      variant="primary"
+      aria-haspopup="dialog"
+      onClick={(event) => setCreateOpener(event.currentTarget)}
+      className={compact ? "ml-auto" : "w-full justify-start"}
+    >
+      <svg
+        viewBox="0 0 16 16"
+        aria-hidden="true"
+        className="size-4 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      >
+        <path d="M8 3v10M3 8h10" />
+      </svg>
+      {t("createConfiguration.title")}
+    </Button>
+  );
 
   return (
     <OpenItemContext.Provider value={setOpenId}>
@@ -366,7 +393,8 @@ export function MainShell() {
           >
             {t("shell.navigation")}
           </button>
-          <span className="text-sm font-medium">{t(`shell.nav.${view}`)}</span>
+          <span className="min-w-0 truncate text-sm font-medium">{t(`shell.nav.${view}`)}</span>
+          {compact && createButton}
         </header>
         {navModal && (
           <div
@@ -408,6 +436,7 @@ export function MainShell() {
             <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
             <span className="text-lg font-semibold tracking-wide text-text">{t("app.name")}</span>
           </div>
+          {!compact && createButton}
           <button
             type="button"
             onClick={() => setSearching(true)}
@@ -505,6 +534,24 @@ export function MainShell() {
         )}
         {showingShortcuts && !onboarding && (
           <ShortcutsDialog onClose={() => setShowingShortcuts(false)} />
+        )}
+        {createOpener !== null && (
+          <CreateItemDialog
+            label={t("createConfiguration.title")}
+            opener={createOpener}
+            kind="todo"
+            today={today?.date}
+            onDone={() => setCreateOpener(null)}
+            onCreated={(item) =>
+              useToastStore
+                .getState()
+                .push("success", t("capture.created", { title: item.title }), undefined, {
+                  label: t("capture.view"),
+                  onClick: () =>
+                    item.itemType === "note" ? openNote(item.id) : setOpenId(item.id),
+                })
+            }
+          />
         )}
         {openId !== null && (
           <ItemDetailPanel

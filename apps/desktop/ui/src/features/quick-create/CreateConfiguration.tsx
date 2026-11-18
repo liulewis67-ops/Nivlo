@@ -37,7 +37,7 @@ type CreateConfigurationProps = {
   embedded?: boolean;
   /** 日期入口明确请求导入时，显示弹窗后立即读取一次。 */
   importOnOpen?: boolean;
-  /** 创建成功或明确取消后恢复悬浮框。 */
+  /** 创建成功或明确取消后关闭表单。 */
   onDone: () => void;
   /** 提交成功后的反馈由承载窗口决定。 */
   onCreated?: (item: ItemDto) => void;
@@ -900,14 +900,15 @@ export function CreateConfiguration({
               className="grid max-h-40 shrink-0 grid-cols-1 content-start gap-4 overflow-y-auto border-t border-border bg-bg px-5 py-4 min-[560px]:grid-cols-2 min-[760px]:flex min-[760px]:max-h-none min-[760px]:w-72 min-[760px]:flex-col min-[760px]:gap-5 min-[760px]:border-t-0 min-[760px]:border-l min-[760px]:p-5"
             >
               {projectField}
-              {linksSection || (
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-sm font-medium text-text">
-                    {t("createConfiguration.linksHeading")}
-                  </h2>
-                  <p className="text-xs text-muted">{t("createConfiguration.linksEmpty")}</p>
-                </div>
-              )}
+              {linksSection ||
+                (!embedded && (
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-sm font-medium text-text">
+                      {t("createConfiguration.linksHeading")}
+                    </h2>
+                    <p className="text-xs text-muted">{t("createConfiguration.linksEmpty")}</p>
+                  </div>
+                ))}
             </aside>
           </fieldset>
         </>
