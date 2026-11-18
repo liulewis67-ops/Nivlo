@@ -5,6 +5,7 @@
   "windows": ["floating"],
   "permissions": [
     "core:event:default",
+    "allow-get-reminder-attention-ms",
     "allow-get-today",
     "allow-reorder-today",
     "allow-quick-create",

@@ -61,6 +61,8 @@
     "allow-set-week-start",
     "allow-set-onboarding-completed",
     "allow-set-notifications-paused",
+    "allow-set-reminder-flash-seconds",
+    "allow-set-reminder-count",
     "allow-list-projects",
     "allow-create-project",
     "allow-rename-project",

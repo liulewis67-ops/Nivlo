@@ -166,6 +166,22 @@ describe("设置页", () => {
     await waitFor(() => expect(ipc.appSettings.notificationsPaused).toBe(true));
     await waitFor(() => expect(pause).toHaveAttribute("aria-checked", "true"));
   });
+
+  it("在通知设置中分别保存闪烁时长和提醒次数", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    const flash = await screen.findByRole("combobox", { name: "闪烁时长" });
+    const count = screen.getByRole("combobox", { name: "提醒次数" });
+    await waitFor(() => expect(flash).toHaveValue("8"));
+    expect(count).toHaveValue("1");
+
+    await userEvent.selectOptions(flash, "15");
+    await waitFor(() => expect(count).toBeEnabled());
+    await userEvent.selectOptions(count, "3");
+    await waitFor(() =>
+      expect(ipc.appSettings).toMatchObject({ reminderFlashSeconds: 15, reminderCount: 3 }),
+    );
+  });
 });
 
 describe("设置页：数据与诊断", () => {

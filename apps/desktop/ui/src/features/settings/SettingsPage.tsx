@@ -48,6 +48,8 @@ const LATER_RULES: LaterRuleDto[] = ["nextMonday", "inThreeDays", "inOneWeek"];
 
 /** 一周起始日选项，按展示顺序。 */
 const WEEK_STARTS: WeekStartDto[] = ["monday", "sunday"];
+const FLASH_SECONDS = [3, 5, 8, 10, 15, 20, 30];
+const REMINDER_COUNTS = [1, 2, 3, 4, 5];
 
 /** 导出格式选项，按展示顺序。 */
 const EXPORT_FORMATS = ["json", "markdown", "markdownFiles"] as const;
@@ -698,6 +700,48 @@ export function SettingsPage() {
                 })
               }
             />
+          </Row>
+          <Row label={t("settings.reminderFlash.label")} hint={t("settings.reminderFlash.hint")}>
+            <select
+              aria-label={t("settings.reminderFlash.label")}
+              value={current?.reminderFlashSeconds ?? ""}
+              disabled={current === undefined || change.isPending}
+              onChange={(event) => {
+                const seconds = Number(event.currentTarget.value);
+                change.mutate({
+                  patch: { reminderFlashSeconds: seconds },
+                  apply: () => ipc.setReminderFlashSeconds(seconds),
+                });
+              }}
+              className="h-8 rounded-md border border-border bg-surface px-2 text-sm text-text"
+            >
+              {FLASH_SECONDS.map((seconds) => (
+                <option key={seconds} value={seconds}>
+                  {t("settings.reminderFlash.seconds", { seconds })}
+                </option>
+              ))}
+            </select>
+          </Row>
+          <Row label={t("settings.reminderCount.label")} hint={t("settings.reminderCount.hint")}>
+            <select
+              aria-label={t("settings.reminderCount.label")}
+              value={current?.reminderCount ?? ""}
+              disabled={current === undefined || change.isPending}
+              onChange={(event) => {
+                const count = Number(event.currentTarget.value);
+                change.mutate({
+                  patch: { reminderCount: count },
+                  apply: () => ipc.setReminderCount(count),
+                });
+              }}
+              className="h-8 rounded-md border border-border bg-surface px-2 text-sm text-text"
+            >
+              {REMINDER_COUNTS.map((count) => (
+                <option key={count} value={count}>
+                  {count}
+                </option>
+              ))}
+            </select>
           </Row>
         </Section>
         <Section id="settings-onboarding" title={t("settings.onboarding.label")}>

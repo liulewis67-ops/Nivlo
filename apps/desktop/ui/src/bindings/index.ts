@@ -477,6 +477,18 @@ export const commands = {
 	 */
 	setNotificationsPaused: (paused: boolean) => typedError<null, IpcError>(__TAURI_INVOKE("set_notifications_paused", { paused })),
 	/**
+	 *  保存每次闪烁的时长。
+	 *  # Errors
+	 *  时长不是可选值或保存失败时保持原值。
+	 */
+	setReminderFlashSeconds: (seconds: number) => typedError<null, IpcError>(__TAURI_INVOKE("set_reminder_flash_seconds", { seconds })),
+	/**
+	 *  保存提醒的总次数（包含首次提醒）。
+	 *  # Errors
+	 *  次数超出范围或保存失败时保持原值。
+	 */
+	setReminderCount: (count: number) => typedError<null, IpcError>(__TAURI_INVOKE("set_reminder_count", { count })),
+	/**
 	 *  列出项目（创建时间从早到晚）与各自未完成的 Item 数量。
 	 * 
 	 *  # Errors
@@ -803,6 +815,8 @@ export const commands = {
 	 *  尺寸不合法返回 `INVALID_INPUT`；窗口不可用返回 `WINDOW_UNAVAILABLE`。
 	 */
 	collapseFloating: (request: CollapseFloatingRequest) => typedError<null, IpcError>(__TAURI_INVOKE("collapse_floating", { request })),
+	/**  悬浮窗首次订阅提醒后，恢复仍在显示时段内的提醒。 */
+	getReminderAttentionMs: () => __TAURI_INVOKE<number>("get_reminder_attention_ms"),
 	/**
 	 *  开始悬浮窗的文本输入（Quick Create）：悬浮窗临时可聚焦并获得键盘焦点。
 	 * 
@@ -851,6 +865,7 @@ export const events = {
 	itemUpdated: makeEvent<ItemUpdatedEvent>("item_updated"),
 	mainViewRequested: makeEvent<MainViewRequestedEvent>("main_view_requested"),
 	quickAddRequested: makeEvent<QuickAddRequestedEvent>("quick_add_requested"),
+	reminderAttention: makeEvent<ReminderAttentionEvent>("reminder_attention"),
 	searchWindowShown: makeEvent<SearchWindowShownEvent>("search_window_shown"),
 	todayReordered: makeEvent<TodayReorderedEvent>("today_reordered"),
 };
@@ -868,6 +883,10 @@ export type AppSettingsDto = {
 	weekStart: WeekStartDto,
 	/**  是否暂停系统通知（托盘「暂停通知」）。 */
 	notificationsPaused: boolean,
+	/**  每次悬浮窗提醒显示的秒数。 */
+	reminderFlashSeconds: number,
+	/**  每个事项触发点的通知总次数，包括第一次。 */
+	reminderCount: number,
 	/**  是否已经看过（或跳过）首次运行引导。 */
 	onboardingCompleted: boolean,
 	/**  是否在启动后空闲时预先创建全局搜索框。 */
@@ -1441,6 +1460,12 @@ export type QuickCreateRequest = {
 	title: string,
 	/**  计划（用户在标题里写了日期短语，由前端解析后传来）；缺省时用默认规则（今天 / 没有日期）。 */
 	scheduled?: DatePointDto | null,
+};
+
+/**  一次系统提醒已进入发送流程，仅通知悬浮窗。 */
+export type ReminderAttentionEvent = {
+	/**  悬浮窗提醒效果持续的毫秒数。 */
+	durationMs: number,
 };
 
 /**  改期的目标。 */

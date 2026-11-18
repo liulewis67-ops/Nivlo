@@ -1,17 +1,79 @@
 //! Scheduler 的宿主装配：系统通知适配器、后台任务、「暂停通知」状态（实施计划 4.4–4.6）。
 
-use std::sync::Arc;
+use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 use nivlo_application::settings::keys;
 use nivlo_domain::event::DomainEvent;
 use nivlo_platform::error::PlatformError;
 use nivlo_platform::notification::{Notification, NotificationPort};
-use nivlo_scheduler::Scheduler;
+use nivlo_scheduler::{Scheduler, service::MAX_REMINDER_COUNT};
 use tauri::menu::CheckMenuItem;
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_notification::NotificationExt;
+use tauri_specta::Event;
 
 use crate::app::AppState;
+use crate::events::ReminderAttentionEvent;
+use crate::windows::FLOATING_WINDOW_LABEL;
+
+const DEFAULT_FLASH_SECONDS: u8 = 8;
+
+/// 设置页可配置的单次提醒时长（秒）。
+pub const FLASH_SECONDS_OPTIONS: [u8; 7] = [3, 5, 8, 10, 15, 20, 30];
+
+/// 保留最近一次提醒的动画结束时间，供尚未完成加载的悬浮窗读取。
+pub struct ReminderAttention {
+    flash_seconds: AtomicU8,
+    deadline: Mutex<Option<Instant>>,
+}
+
+impl Default for ReminderAttention {
+    fn default() -> Self {
+        Self {
+            flash_seconds: AtomicU8::new(DEFAULT_FLASH_SECONDS),
+            deadline: Mutex::default(),
+        }
+    }
+}
+
+impl ReminderAttention {
+    /// 修改之后每次提醒的时长；已经开始的提示保持自己的结束时间。
+    pub fn set_flash_seconds(&self, seconds: u8) {
+        self.flash_seconds.store(seconds, Ordering::Relaxed);
+    }
+
+    /// 当前配置的单次提醒时长（秒）。
+    pub fn flash_seconds(&self) -> u8 {
+        self.flash_seconds.load(Ordering::Relaxed)
+    }
+
+    fn start(&self) -> u32 {
+        let duration_ms = u32::from(self.flash_seconds()) * 1_000;
+        let mut deadline = self
+            .deadline
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *deadline = Some(Instant::now() + Duration::from_millis(u64::from(duration_ms)));
+        duration_ms
+    }
+
+    /// 返回剩余毫秒数。读取不延长提醒，以便窗口重载时仍按时停止。
+    pub fn remaining_ms(&self) -> u32 {
+        self.deadline
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .map_or(0, |deadline| {
+                u32::try_from(
+                    deadline
+                        .saturating_duration_since(Instant::now())
+                        .as_millis(),
+                )
+                .unwrap_or(0)
+            })
+    }
+}
 
 /// 通知适配器：Windows 上优先用原生 Toast（点击通知可以打开对应的 Item，实施计划 10.6），失败时
 /// 退回 Tauri 通知插件（只能显示，点击没有回调）；其他平台直接用插件。通知的应用名与图标由应用标识提供。
@@ -30,6 +92,13 @@ impl TauriNotifier {
 impl NotificationPort for TauriNotifier {
     /// 发送一条系统通知。
     fn notify(&self, notification: &Notification) -> Result<(), PlatformError> {
+        let attention = ReminderAttentionEvent {
+            duration_ms: self.app.state::<ReminderAttention>().start(),
+        };
+        if let Err(error) = attention.emit_to(&self.app, FLOATING_WINDOW_LABEL) {
+            tracing::warn!(event = "reminder_attention_event_failed", %error, "通知悬浮窗显示提醒失败");
+        }
+
         #[cfg(target_os = "windows")]
         {
             let toast = nivlo_platform_windows::toast::WindowsToast::new(
@@ -83,6 +152,21 @@ pub fn spawn(app: &AppHandle<Wry>, state: &AppState) {
         .flatten()
         .is_some_and(|value| value == "true");
     control.set_paused(paused_before);
+    let flash_seconds = tauri::async_runtime::block_on(settings.get(keys::REMINDER_FLASH_SECONDS))
+        .ok()
+        .flatten()
+        .and_then(|value| value.parse().ok())
+        .filter(|value| FLASH_SECONDS_OPTIONS.contains(value))
+        .unwrap_or(DEFAULT_FLASH_SECONDS);
+    app.state::<ReminderAttention>()
+        .set_flash_seconds(flash_seconds);
+    let repeat_count = tauri::async_runtime::block_on(settings.get(keys::REMINDER_COUNT))
+        .ok()
+        .flatten()
+        .and_then(|value| value.parse().ok())
+        .filter(|count| (1..=MAX_REMINDER_COUNT).contains(count))
+        .unwrap_or(1);
+    control.set_repeat_count(repeat_count);
     control
         .set_locale(tauri::async_runtime::block_on(crate::native_i18n::current(&settings)).into());
 

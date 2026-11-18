@@ -388,13 +388,31 @@ html[data-theme="dark"] .nv-badge {
 .nv-robot-counter .nv-badge-count {
   color: inherit;
 }
+/* 内描边留在原生窗边界以内，不改变按钮的命中区域。 */
+[data-reminder-attention] :is(.nv-badge, .nv-floating-panel)::after {
+  position: absolute;
+  inset: 1px;
+  border: 2px solid var(--nv-tip);
+  border-radius: inherit;
+  pointer-events: none;
+  content: "";
+}
 @media (prefers-reduced-motion: no-preference) {
+  [data-reminder-attention] :is(.nv-badge, .nv-floating-panel)::after,
+  [data-reminder-attention] .nv-robot-figure {
+    animation: nv-reminder-pulse 1.2s ease-in-out infinite;
+  }
   .nv-robot-head {
     transition: transform var(--nv-duration-fast) var(--nv-ease-standard);
   }
   .nv-robot[data-expression="hover"] .nv-robot-head,
   .nv-robot[data-expression="grabbed"] .nv-robot-head {
     transform: translateY(-1px);
+  }
+}
+@keyframes nv-reminder-pulse {
+  50% {
+    opacity: 0.35;
   }
 }
 .nv-badge-ring circle {

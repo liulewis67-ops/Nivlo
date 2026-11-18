@@ -26,6 +26,10 @@ pub mod keys {
     pub const LATER_RULE: &str = "schedule.later";
     /// 是否暂停系统通知（`"true"` / `"false"`，托盘「暂停通知」），缺省为 `false`。
     pub const NOTIFICATIONS_PAUSED: &str = "notifications.paused";
+    /// 每次悬浮窗提醒的显示时长（秒）。
+    pub const REMINDER_FLASH_SECONDS: &str = "notifications.flash_seconds";
+    /// 每次到点提醒的通知总次数。
+    pub const REMINDER_COUNT: &str = "notifications.reminder_count";
     /// 是否在启动后空闲时预先创建全局搜索框（`"true"` / `"false"`），缺省为否：
     /// 第一次按快捷键更快，代价是多占一个 WebView 的内存。
     pub const SEARCH_PREWARM: &str = "search.prewarm";

@@ -119,7 +119,7 @@ pub fn compose(now: DateTime<Utc>, due: &[Trigger], timezone: Tz, locale: Locale
 }
 
 /// 一个触发点的通知。
-fn single(trigger: &Trigger, missed: bool, timezone: Tz, locale: Locale) -> Notice {
+pub(crate) fn single(trigger: &Trigger, missed: bool, timezone: Tz, locale: Locale) -> Notice {
     let local = trigger.key.fire_at.with_timezone(&timezone);
     let clock_time = local.format("%H:%M");
     let label = match (locale, trigger.key.kind) {

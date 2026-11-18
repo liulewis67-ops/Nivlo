@@ -5,11 +5,13 @@
 
 use nivlo_application::error::{AppError, ErrorCode};
 use nivlo_application::settings::keys;
-use tauri::{AppHandle, Runtime, State};
+use nivlo_scheduler::service::MAX_REMINDER_COUNT;
+use tauri::{AppHandle, Manager, Runtime, State};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::app::AppState;
 use crate::dto::{AppSettingsDto, IpcError, LaterRuleDto, WeekStartDto};
+use crate::scheduling::{FLASH_SECONDS_OPTIONS, ReminderAttention};
 
 /// 系统设置（开机启动项）修改失败时的错误。
 fn system_error(what: &str, error: &dyn std::fmt::Display) -> IpcError {
@@ -64,6 +66,8 @@ pub async fn get_app_settings<R: Runtime>(
         later_rule: later_rule.into(),
         week_start: week_start.into(),
         notifications_paused,
+        reminder_flash_seconds: app.state::<ReminderAttention>().flash_seconds(),
+        reminder_count: state.runtime.scheduler_control().repeat_count(),
         onboarding_completed,
         search_prewarm,
     })
@@ -210,6 +214,46 @@ pub async fn set_notifications_paused<R: Runtime>(
     paused: bool,
 ) -> Result<(), IpcError> {
     crate::scheduling::set_paused(&app, &state, paused).await?;
+    Ok(())
+}
+
+/// 保存每次闪烁的时长。
+/// # Errors
+/// 时长不是可选值或保存失败时保持原值。
+#[tauri::command]
+#[specta::specta]
+pub async fn set_reminder_flash_seconds(
+    state: State<'_, AppState>,
+    attention: State<'_, ReminderAttention>,
+    seconds: u8,
+) -> Result<(), IpcError> {
+    if !FLASH_SECONDS_OPTIONS.contains(&seconds) {
+        return Err(AppError::new(ErrorCode::InvalidInput, "不支持该提醒时长").into());
+    }
+    state
+        .services
+        .settings
+        .set(keys::REMINDER_FLASH_SECONDS, &seconds.to_string())
+        .await?;
+    attention.set_flash_seconds(seconds);
+    Ok(())
+}
+
+/// 保存提醒的总次数（包含首次提醒）。
+/// # Errors
+/// 次数超出范围或保存失败时保持原值。
+#[tauri::command]
+#[specta::specta]
+pub async fn set_reminder_count(state: State<'_, AppState>, count: u8) -> Result<(), IpcError> {
+    if !(1..=MAX_REMINDER_COUNT).contains(&count) {
+        return Err(AppError::new(ErrorCode::InvalidInput, "提醒次数需在 1 到 5 之间").into());
+    }
+    state
+        .services
+        .settings
+        .set(keys::REMINDER_COUNT, &count.to_string())
+        .await?;
+    state.runtime.scheduler_control().set_repeat_count(count);
     Ok(())
 }
 

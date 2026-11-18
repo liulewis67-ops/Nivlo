@@ -12,8 +12,16 @@ use crate::dto::{
     CollapseFloatingRequest, DragGrabPoint, ExpandFloatingRequest, ExpandedLayoutDto, IpcError,
 };
 use crate::events::MainViewRequestedEvent;
+use crate::scheduling::ReminderAttention;
 use crate::windows::floating::{ConfigurationLayout, FloatingHandle};
 use crate::windows::show_main_window;
+
+/// 悬浮窗首次订阅提醒后，恢复仍在显示时段内的提醒。
+#[tauri::command]
+#[specta::specta]
+pub fn get_reminder_attention_ms(attention: State<'_, ReminderAttention>) -> u32 {
+    attention.remaining_ms()
+}
 
 /// 打开（必要时创建）并聚焦主窗口。悬浮窗与主窗口都可以调用。
 ///

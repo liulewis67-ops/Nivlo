@@ -118,6 +118,8 @@ macro_rules! bindings_builder {
                 $crate::commands::settings::set_week_start,
                 $crate::commands::settings::set_onboarding_completed,
                 $crate::commands::settings::set_notifications_paused::<$runtime>,
+                $crate::commands::settings::set_reminder_flash_seconds,
+                $crate::commands::settings::set_reminder_count,
                 $crate::commands::organize::list_projects,
                 $crate::commands::organize::create_project,
                 $crate::commands::organize::rename_project,
@@ -153,6 +155,7 @@ macro_rules! bindings_builder {
                 $crate::commands::window::start_floating_drag::<$runtime>,
                 $crate::commands::window::expand_floating,
                 $crate::commands::window::collapse_floating,
+                $crate::commands::window::get_reminder_attention_ms,
                 $crate::commands::window::begin_floating_input,
                 $crate::commands::window::end_floating_input,
                 $crate::commands::window::open_item_in_main::<$runtime>,
@@ -163,6 +166,7 @@ macro_rules! bindings_builder {
                 $crate::events::ItemCreatedEvent,
                 $crate::events::ItemUpdatedEvent,
                 $crate::events::FloatingPointerLeftEvent,
+                $crate::events::ReminderAttentionEvent,
                 $crate::events::TodayReorderedEvent,
                 $crate::events::DayChangedEvent,
                 $crate::events::MainViewRequestedEvent,
@@ -400,6 +404,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             }
             state.runtime.set_paths(environment.paths.clone());
             app.manage(state);
+            app.manage(scheduling::ReminderAttention::default());
 
             let floating = windows::create_floating_window(app)?;
             // 拖入文件的磁盘路径：WebView2 把 File 对象的路径交给宿主（实施计划 10.1）。

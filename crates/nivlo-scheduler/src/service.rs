@@ -2,19 +2,20 @@
 
 use std::collections::HashSet;
 use std::future::Future;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration as StdDuration;
 
 use chrono::{DateTime, Duration, Utc};
+use chrono_tz::Tz;
 use nivlo_application::error::AppError;
 use nivlo_application::ports::UnitOfWork;
-use nivlo_application::trigger::{TriggerKey, triggers_of};
+use nivlo_application::trigger::{Trigger, TriggerKey, triggers_of};
 use nivlo_common::clock::Clock;
 use nivlo_platform::notification::NotificationPort;
 use tokio::sync::Notify;
 
-use crate::plan::{Locale, MISSED_LOOKBACK, compose, plan};
+use crate::plan::{Locale, MISSED_LOOKBACK, Notice, ON_TIME_GRACE, compose, plan, single};
 
 /// 单次睡眠的最长时间。
 ///
@@ -32,6 +33,18 @@ const JUMP_THRESHOLD: Duration = Duration::minutes(2);
 /// 触发记录保留多久，更早的清理掉。
 const LOG_RETENTION: Duration = Duration::days(30);
 
+/// 最多发送几次，包括第一次。
+pub const MAX_REMINDER_COUNT: u8 = 5;
+
+const REPEAT_INTERVAL: Duration = Duration::minutes(1);
+
+struct PendingRepeat {
+    key: TriggerKey,
+    sent: u8,
+    at: DateTime<Utc>,
+    missed: bool,
+}
+
 /// Scheduler 的外部控制：唤醒与暂停通知。
 #[derive(Debug, Default)]
 pub struct Control {
@@ -41,6 +54,7 @@ pub struct Control {
     paused: AtomicBool,
     /// 通知文案的语言（`Locale` 的编号，切换语言后下一次通知生效）。
     locale: AtomicU8,
+    repeat_count: AtomicU8,
 }
 
 impl Control {
@@ -75,6 +89,18 @@ impl Control {
         }
     }
 
+    /// 设置每个提醒的发送次数，包括第一次。
+    pub fn set_repeat_count(&self, count: u8) {
+        self.repeat_count
+            .store(count.clamp(1, MAX_REMINDER_COUNT), Ordering::SeqCst);
+        self.wake();
+    }
+
+    /// 默认一次；零表示还没加载任何偏好。
+    pub fn repeat_count(&self) -> u8 {
+        self.repeat_count.load(Ordering::SeqCst).max(1)
+    }
+
     /// 当前是否暂停通知。
     pub fn is_paused(&self) -> bool {
         self.paused.load(Ordering::SeqCst)
@@ -91,6 +117,8 @@ pub struct Scheduler {
     notifier: Arc<dyn NotificationPort>,
     /// 外部控制。
     control: Arc<Control>,
+    /// 同一次应用运行中的后续提醒；首次投递仍由持久化触发记录去重。
+    repeats: Mutex<Vec<PendingRepeat>>,
 }
 
 impl Scheduler {
@@ -106,7 +134,57 @@ impl Scheduler {
             clock,
             notifier,
             control,
+            repeats: Mutex::default(),
         }
+    }
+
+    fn send(&self, notice: &Notice) {
+        match self.notifier.notify(&notice.notification) {
+            // 只记数量与是否补发，不记标题（日志可能随诊断包导出）。
+            Ok(()) => tracing::info!(
+                event = "notification_sent",
+                triggers = notice.keys.len(),
+                missed = notice.missed,
+                "已发送系统通知"
+            ),
+            Err(error) => {
+                tracing::warn!(event = "notification_failed", %error, "发送系统通知失败");
+            }
+        }
+    }
+
+    fn process_repeats(
+        &self,
+        now: DateTime<Utc>,
+        timezone: Tz,
+        triggers: &[Trigger],
+    ) -> Option<DateTime<Utc>> {
+        let mut repeats = self
+            .repeats
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let count = self.control.repeat_count();
+        repeats.retain_mut(|repeat| {
+            if repeat.sent >= count || now - repeat.at > ON_TIME_GRACE {
+                return false;
+            }
+            // 完成、删除或改时间都会让原来的触发点消失。
+            let Some(trigger) = triggers.iter().find(|trigger| trigger.key == repeat.key) else {
+                return false;
+            };
+            if repeat.at <= now && !self.control.is_paused() {
+                self.send(&single(
+                    trigger,
+                    repeat.missed,
+                    timezone,
+                    self.control.locale(),
+                ));
+                repeat.sent += 1;
+                repeat.at = now + REPEAT_INTERVAL;
+            }
+            repeat.sent < count
+        });
+        repeats.iter().map(|repeat| repeat.at).min()
     }
 
     /// Reconcile：把现在该触发的触发点通知出去并记录，返回下一个触发点的时刻。
@@ -134,22 +212,23 @@ impl Scheduler {
             .await?
             .into_iter()
             .collect();
+        let repeat_at = self.process_repeats(now, timezone, &triggers);
         let result = plan(now, triggers, &fired);
+        let mut scheduled = Vec::new();
 
         if !self.control.is_paused() {
             for notice in compose(now, &result.due, timezone, self.control.locale()) {
-                match self.notifier.notify(&notice.notification) {
-                    // 只记数量与是否补发，不记标题（日志可能随诊断包导出）。
-                    Ok(()) => tracing::info!(
-                        event = "notification_sent",
-                        triggers = notice.keys.len(),
-                        missed = notice.missed,
-                        "已发送系统通知"
-                    ),
-                    // 通知发不出去（用户在系统里关了通知）也记为已触发，否则每次醒来都会重试。
-                    Err(error) => {
-                        tracing::warn!(event = "notification_failed", %error, "发送系统通知失败");
-                    }
+                self.send(&notice);
+                // 汇总通知只发一次。单条通知按配置继续提醒。
+                if let [key] = notice.keys.as_slice()
+                    && self.control.repeat_count() > 1
+                {
+                    scheduled.push(PendingRepeat {
+                        key: *key,
+                        sent: 1,
+                        at: now + REPEAT_INTERVAL,
+                        missed: notice.missed,
+                    });
                 }
                 for key in &notice.keys {
                     tx.triggers().record_fired(key, now, notice.missed).await?;
@@ -160,7 +239,17 @@ impl Scheduler {
                 .await?;
         }
         tx.commit().await?;
-        Ok(result.next)
+        let first_repeat_at = scheduled.first().map(|repeat| repeat.at);
+        if !scheduled.is_empty() {
+            self.repeats
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .extend(scheduled);
+        }
+        Ok([result.next, repeat_at, first_repeat_at]
+            .into_iter()
+            .flatten()
+            .min())
     }
 
     /// 运行 Scheduler 直到 `shutdown` 完成：Reconcile → 睡到最近的触发点（最长 [`MAX_SLEEP`]）→ 重复。

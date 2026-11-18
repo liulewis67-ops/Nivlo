@@ -53,6 +53,8 @@ const COMMANDS: &[&str] = &[
     "set_week_start",
     "set_onboarding_completed",
     "set_notifications_paused",
+    "set_reminder_flash_seconds",
+    "set_reminder_count",
     "list_projects",
     "create_project",
     "rename_project",
@@ -91,6 +93,7 @@ const COMMANDS: &[&str] = &[
     "fit_search",
     "expand_floating",
     "collapse_floating",
+    "get_reminder_attention_ms",
     "begin_floating_input",
     "end_floating_input",
 ];

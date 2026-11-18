@@ -61,6 +61,26 @@ describe("FloatingRoot", () => {
     useSkinStore.getState().adopt(DEFAULT_SKIN);
   });
 
+  it("到点提醒让徽标进入提醒状态，不展开窗口，并按最后一次提醒的时间停止", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<FloatingRoot />, ipc);
+    await advance(0);
+
+    act(() => ipc.emitReminderAttention(8_000));
+    expect(root()).toHaveAttribute("data-reminder-attention");
+    expect(screen.getByText("有事项到点提醒")).toBeInTheDocument();
+    expect(ipc.calls).not.toContain("expandFloating");
+    expect(ipc.calls).not.toContain("openMain");
+
+    await advance(6_000);
+    act(() => ipc.emitReminderAttention(8_000));
+    await advance(2_000);
+    expect(root()).toHaveAttribute("data-reminder-attention");
+    await advance(6_000);
+    expect(root()).not.toHaveAttribute("data-reminder-attention");
+    expect(screen.queryByText("有事项到点提醒")).not.toBeInTheDocument();
+  });
+
   it("默认机器人沿用启动尺寸；切换到经典徽标时使用所选徽标尺寸", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);

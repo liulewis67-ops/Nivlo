@@ -307,6 +307,7 @@
   },
   "floating": {
     "label": "拾序悬浮窗",
+    "reminderAttention": "有事项到点提醒",
     "open": "打开拾序主窗口",
     "allDone": "今天的事都做完了",
     "quickAddHint": "右键快速添加待办"
@@ -621,6 +622,15 @@
       "hint": "影响日历的周视图与月视图。",
       "monday": "周一",
       "sunday": "周日"
+    },
+    "reminderFlash": {
+      "label": "闪烁时长",
+      "hint": "每次提醒时，悬浮机器人提示会持续多久。",
+      "seconds": "{{seconds}} 秒"
+    },
+    "reminderCount": {
+      "label": "提醒次数",
+      "hint": "包含第一次。后续每隔 1 分钟闪烁并发送一条系统通知。"
     },
     "pauseNotifications": {
       "label": "暂停通知",

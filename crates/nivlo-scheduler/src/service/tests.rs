@@ -142,6 +142,51 @@ async fn a_reminder_fires_once_when_it_comes_due() {
 }
 
 #[tokio::test]
+async fn a_reminder_repeats_at_one_minute_intervals_up_to_the_configured_count() {
+    let f = fixture();
+    f.control.set_repeat_count(3);
+    reminder(&f, "交周报", at(10, 0)).await;
+    for (minute, count, next) in [(0, 1, Some(1)), (1, 2, Some(2)), (2, 3, None), (3, 3, None)] {
+        f.clock.set(at(10, minute));
+        assert_eq!(
+            f.scheduler.reconcile().await.unwrap(),
+            next.map(|m| at(10, m))
+        );
+        // 无论同一时刻唤醒几次，间隔内都只发一条。
+        f.scheduler.reconcile().await.unwrap();
+        assert_eq!(f.notifier.sent().len(), count);
+    }
+}
+
+#[tokio::test]
+async fn paused_repeats_do_not_send_and_removing_the_trigger_cancels_the_repeat() {
+    let f = fixture();
+    f.control.set_repeat_count(3);
+    let id = reminder(&f, "交周报", at(10, 0)).await;
+    f.clock.set(at(10, 0));
+    f.scheduler.reconcile().await.unwrap();
+
+    f.control.set_paused(true);
+    f.clock.set(at(10, 1));
+    f.scheduler.reconcile().await.unwrap();
+    assert_eq!(f.notifier.sent().len(), 1);
+
+    f.items
+        .update_item(
+            id,
+            UpdateItemInput {
+                reminder_at: Patch::Set(at(10, 10)),
+                ..UpdateItemInput::default()
+            },
+        )
+        .await
+        .unwrap();
+    f.control.set_paused(false);
+    assert_eq!(f.scheduler.reconcile().await.unwrap(), Some(at(10, 10)));
+    assert_eq!(f.notifier.sent().len(), 1);
+}
+
+#[tokio::test]
 async fn the_nearest_trigger_is_reported_and_several_can_share_a_moment() {
     let f = fixture();
     reminder(&f, "甲", at(11, 0)).await;

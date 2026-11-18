@@ -46,6 +46,7 @@ export function FloatingRoot() {
   // 焦点会被马上还给用户之前的应用：菜单不能因此关闭。
   useIgnoreWindowBlur();
   const { state, send } = useFloatingMachine();
+  const [reminderAttention, setReminderAttention] = useState(false);
   const [quickCreateKind, setQuickCreateKind] = useState<ItemTypeDto | null>(null);
   const [contextSeed, setContextSeed] = useState<{
     id: number;
@@ -160,12 +161,26 @@ export function FloatingRoot() {
   // 后端看门狗发现指针已经离开窗口时补发的事件：弥补 WebView 在指针被快速甩出时漏发 pointerleave。
   useEffect(() => ipc.subscribeFloatingPointerLeft(() => send("pointerLeave")), [send]);
 
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const stop = ipc.subscribeReminderAttention((durationMs) => {
+      clearTimeout(timer);
+      setReminderAttention(true);
+      timer = setTimeout(() => setReminderAttention(false), durationMs);
+    });
+    return () => {
+      stop();
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
     // 菜单不模态：模态菜单会让页面其余部分不响应指针，面板随之以为指针离开而收起，菜单跟着消失。
     <MenuModalContext.Provider value={false}>
       <div
         role="group"
         aria-label={t("floating.label")}
+        data-reminder-attention={reminderAttention || undefined}
         className="h-full w-full"
         onPointerEnter={() => send("pointerEnter")}
         // 在徽标上按下左键是要点击或拖动：按住期间不因悬停展开，否则面板会在拖动途中弹出、徽标从手下消失。
@@ -188,6 +203,9 @@ export function FloatingRoot() {
         }}
         {...drop.handlers}
       >
+        <span aria-live="polite" aria-atomic="true" className="sr-only">
+          {reminderAttention && t("floating.reminderAttention")}
+        </span>
         {quickCreateKind !== null ? (
           <CreateConfiguration
             kind={quickCreateKind}

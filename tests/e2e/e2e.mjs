@@ -1131,7 +1131,7 @@ async function runOnce(index) {
     });
 
     // 6.5 提醒按时触发（实施计划 4.6 / 4.7）：几秒后的提醒到点由 Scheduler 发出系统通知（release 构建、真实时钟）。
-    // 只看日志里的 `notification_sent`（不记标题）：通知本身会在桌面上短暂出现。
+    // 系统通知用发送日志确认，同时确认悬浮窗收到同一次提醒。
     await step("提醒按时触发", async () => {
       const remindAt = new Date(Date.now() + 4000).toISOString();
       await main.invoke("create_item", {
@@ -1153,7 +1153,12 @@ async function runOnce(index) {
           .join("\n")
           .split("\n")
           .filter((l) => l.includes("event=\"notification_sent\"")).length;
-      await until(() => sentCount() > 0, "到点后发出提醒通知", 20000, 250);
+      const floatingAttention = () =>
+        floating.evaluate('document.querySelector("[data-reminder-attention]") !== null');
+      await until(
+        async () => sentCount() > 0 && await floatingAttention(),
+        "到点后发送系统通知并提醒悬浮窗", 20000, 250,
+      );
 
       // 暂停通知期间到点的提醒不发，也不丢：恢复后补上（托盘与设置里的「暂停通知」）。
       const before = sentCount();
@@ -1173,8 +1178,12 @@ async function runOnce(index) {
       });
       await sleep(5000);
       if (sentCount() !== before) throw new Error("暂停通知期间仍然发出了提醒");
+      await until(async () => !(await floatingAttention()), "暂停期间只有上一次提醒，随后停止");
       await main.invoke("set_notifications_paused", { paused: false });
-      await until(() => sentCount() > before, "恢复通知后补发暂停期间到点的提醒", 20000, 250);
+      await until(
+        async () => sentCount() > before && await floatingAttention(),
+        "恢复通知后同时补发系统通知和悬浮窗提醒", 20000, 250,
+      );
     });
 
     // 7. 拼音首字母：升级迁移 0008 之后，新建的中文标题能用首字母搜到。

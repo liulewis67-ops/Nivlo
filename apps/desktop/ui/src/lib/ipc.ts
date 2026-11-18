@@ -218,6 +218,10 @@ export interface IpcClient {
    * 恢复后作为「错过的提醒」通知，多了合并成一条汇总。
    */
   setNotificationsPaused(paused: boolean): Promise<void>;
+  /** 保存单次悬浮提醒的时长（秒）。 */
+  setReminderFlashSeconds(seconds: number): Promise<void>;
+  /** 保存提醒总次数，包括第一次。 */
+  setReminderCount(count: number): Promise<void>;
   /**
    * 删除一批条目：移进回收站（软删除），30 天内可以恢复。一个事务，任何一个不存在整批不变。
    * 条目立刻从所有视图与搜索里消失。
@@ -401,6 +405,8 @@ export interface IpcClient {
    * @returns 取消订阅的函数，组件卸载时必须调用。
    */
   subscribeQuickAddRequested(onRequested: () => void): () => void;
+  /** 订阅悬浮窗提醒，回调收到还需显示的毫秒数。 */
+  subscribeReminderAttention(onAttention: (durationMs: number) => void): () => void;
   /** 接收本次快捷键读取的临时草稿内容。 */
   subscribeContextCreateRequested(
     onRequested: (event: ContextCreateRequestedEvent) => void,
@@ -496,6 +502,12 @@ const tauriIpc: IpcClient = {
   },
   setNotificationsPaused: async (paused) => {
     await call("set_notifications_paused", commands.setNotificationsPaused(paused));
+  },
+  setReminderFlashSeconds: async (seconds) => {
+    await call("set_reminder_flash_seconds", commands.setReminderFlashSeconds(seconds));
+  },
+  setReminderCount: async (count) => {
+    await call("set_reminder_count", commands.setReminderCount(count));
   },
   getUiPref: (name) => call("get_ui_pref", commands.getUiPref(name)),
   setUiPref: async (name, value) => {
@@ -630,6 +642,33 @@ const tauriIpc: IpcClient = {
     listenAll([() => events.floatingPointerLeft.listen(() => onLeft())]),
   subscribeQuickAddRequested: (onRequested) =>
     listenAll([() => events.quickAddRequested.listen(() => onRequested())]),
+  subscribeReminderAttention: (onAttention) => {
+    let cancelled = false;
+    let received = false;
+    const stop = listenAll([
+      async () => {
+        const unlisten = await events.reminderAttention.listen(({ payload }) => {
+          received = true;
+          if (!cancelled) onAttention(payload.durationMs);
+        });
+        // 先订阅再读取，避免漏掉 WebView 启动时的提醒。收到新事件后不再用快照更新计时。
+        if (!cancelled)
+          void commands
+            .getReminderAttentionMs()
+            .then((remainingMs) => {
+              if (!cancelled && !received && remainingMs > 0) onAttention(remainingMs);
+            })
+            .catch(() => {
+              // 快照读取失败不影响已建立的实时订阅。
+            });
+        return unlisten;
+      },
+    ]);
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  },
   subscribeContextCreateRequested: (onRequested) =>
     listenAll([() => events.contextCreateRequested.listen(({ payload }) => onRequested(payload))]),
   subscribeDataChanges: (onChange) =>
@@ -681,6 +720,8 @@ export const ipc: IpcClient = {
   getUiPref: (name) => current.getUiPref(name),
   setUiPref: (name, value) => current.setUiPref(name, value),
   setNotificationsPaused: (paused) => current.setNotificationsPaused(paused),
+  setReminderFlashSeconds: (seconds) => current.setReminderFlashSeconds(seconds),
+  setReminderCount: (count) => current.setReminderCount(count),
   setOnboardingCompleted: (completed) => current.setOnboardingCompleted(completed),
   deleteItems: (ids) => current.deleteItems(ids),
   restoreDeletedItems: (ids) => current.restoreDeletedItems(ids),
@@ -761,6 +802,7 @@ export const ipc: IpcClient = {
   endFloatingInput: () => current.endFloatingInput(),
   subscribeFloatingPointerLeft: (onLeft) => current.subscribeFloatingPointerLeft(onLeft),
   subscribeQuickAddRequested: (onRequested) => current.subscribeQuickAddRequested(onRequested),
+  subscribeReminderAttention: (onAttention) => current.subscribeReminderAttention(onAttention),
   subscribeContextCreateRequested: (onRequested) =>
     current.subscribeContextCreateRequested(onRequested),
   subscribeDataChanges: (onChange) => current.subscribeDataChanges(onChange),

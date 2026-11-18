@@ -35,6 +35,15 @@ pub struct ItemUpdatedEvent {
 #[tauri_specta(event_name = "floating_pointer_left")]
 pub struct FloatingPointerLeftEvent {}
 
+/// 一次系统提醒已进入发送流程，仅通知悬浮窗。
+#[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
+#[serde(rename_all = "camelCase")]
+#[tauri_specta(event_name = "reminder_attention")]
+pub struct ReminderAttentionEvent {
+    /// 悬浮窗提醒效果持续的毫秒数。
+    pub duration_ms: u32,
+}
+
 /// Today 的手动顺序被调整。
 #[derive(Debug, Clone, Serialize, Deserialize, Type, Event)]
 #[serde(rename_all = "camelCase")]

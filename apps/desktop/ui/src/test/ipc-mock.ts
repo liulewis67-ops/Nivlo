@@ -147,6 +147,8 @@ export interface MemoryIpc extends IpcClient, WorkflowMock {
   emitSearchWindowShown(): void;
   /** 模拟托盘「快速添加」。 */
   emitQuickAddRequested(): void;
+  /** 模拟调度器同时发出系统提醒和悬浮窗事件。 */
+  emitReminderAttention(durationMs: number): void;
   emitContextCreateRequested(event: ContextCreateRequestedEvent): void;
   /** 模拟后端看门狗补发"指针已离开"事件。 */
   emitFloatingPointerLeft(): void;
@@ -267,6 +269,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const listeners = new Set<() => void>();
   const pointerLeftListeners = new Set<() => void>();
   const quickAddListeners = new Set<() => void>();
+  const reminderAttentionListeners = new Set<(durationMs: number) => void>();
   const contextCreateListeners = new Set<(event: ContextCreateRequestedEvent) => void>();
   const mainViewListeners = new Set<(view: string) => void>();
   const takenShortcuts = new Set<string>();
@@ -287,6 +290,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     laterRule: "nextMonday" as LaterRuleDto,
     weekStart: "monday" as WeekStartDto,
     notificationsPaused: false,
+    reminderFlashSeconds: 8,
+    reminderCount: 1,
     // 测试默认「已经看过引导」，避免它盖住被测界面；需要时用 `showOnboarding()` 打开。
     onboardingCompleted: true,
     searchPrewarm: false,
@@ -903,6 +908,15 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     emitQuickAddRequested: () => {
       for (const notify of quickAddListeners) notify();
     },
+    emitReminderAttention: (durationMs) => {
+      for (const notify of reminderAttentionListeners) notify(durationMs);
+    },
+    subscribeReminderAttention: (onAttention) => {
+      reminderAttentionListeners.add(onAttention);
+      return () => {
+        reminderAttentionListeners.delete(onAttention);
+      };
+    },
     emitContextCreateRequested: (event) => {
       for (const notify of contextCreateListeners) notify(event);
     },
@@ -1212,6 +1226,16 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         return Promise.reject(failure);
       }
       appSettings = { ...appSettings, notificationsPaused: paused };
+      return Promise.resolve();
+    },
+    setReminderFlashSeconds: (seconds) => {
+      calls.push("setReminderFlashSeconds");
+      appSettings = { ...appSettings, reminderFlashSeconds: seconds };
+      return Promise.resolve();
+    },
+    setReminderCount: (count) => {
+      calls.push("setReminderCount");
+      appSettings = { ...appSettings, reminderCount: count };
       return Promise.resolve();
     },
     getUiPref: (name: UiPrefName) => {

@@ -308,6 +308,7 @@
   },
   "floating": {
     "label": "Nivlo floating badge",
+    "reminderAttention": "An item reminder is due",
     "open": "Open the Nivlo main window",
     "allDone": "all done for today",
     "quickAddHint": "right-click to add a to-do"
@@ -624,6 +625,15 @@
       "hint": "Affects the calendar's week and month views.",
       "monday": "Monday",
       "sunday": "Sunday"
+    },
+    "reminderFlash": {
+      "label": "Flash duration",
+      "hint": "How long the floating robot flashes for each reminder.",
+      "seconds": "{{seconds}} s"
+    },
+    "reminderCount": {
+      "label": "Reminder count",
+      "hint": "Includes the first reminder. Each repeat flashes and sends a system notification after one minute."
     },
     "pauseNotifications": {
       "label": "Pause notifications",

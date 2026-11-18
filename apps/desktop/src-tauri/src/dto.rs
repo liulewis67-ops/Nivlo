@@ -1268,6 +1268,10 @@ pub struct AppSettingsDto {
     pub week_start: WeekStartDto,
     /// 是否暂停系统通知（托盘「暂停通知」）。
     pub notifications_paused: bool,
+    /// 每次悬浮窗提醒显示的秒数。
+    pub reminder_flash_seconds: u8,
+    /// 每个事项触发点的通知总次数，包括第一次。
+    pub reminder_count: u8,
     /// 是否已经看过（或跳过）首次运行引导。
     pub onboarding_completed: bool,
     /// 是否在启动后空闲时预先创建全局搜索框。
