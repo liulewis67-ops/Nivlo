@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setLanguage } from "@/i18n";
 import { formatDate } from "@/lib/date-format";
 import { AppError } from "@/lib/errors";
+import { APPEARANCE_STORAGE_KEY } from "@/stores/appearance-store";
 import { useThemeStore } from "@/stores/theme-store";
 import { useSkinStore } from "@/stores/skin-store";
 import { useToastStore } from "@/stores/toast-store";
@@ -31,6 +32,27 @@ describe("设置页", () => {
     await waitFor(() => expect(useSkinStore.getState().saveStatus).toBe("idle"));
     expect(await ipc.getUiPref("skin")).toContain('"robot":"relay"');
     useSkinStore.getState().hydrate(null);
+  });
+
+  it("用滑块保存收起态尺寸，恢复默认外观时还原比例", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SettingsPage />, ipc);
+    const appearance = screen.getByRole("region", { name: "悬浮窗外观" });
+    const slider = within(appearance).getByRole("slider", { name: "悬浮窗收起时的大小" });
+    expect(slider).toHaveValue("100");
+
+    fireEvent.change(slider, { target: { value: "75" } });
+    expect(slider).toHaveAttribute("aria-valuetext", "75%");
+    expect(window.localStorage.getItem(APPEARANCE_STORAGE_KEY)).toContain('"badgeScale":75');
+    await waitFor(async () =>
+      expect(await ipc.getUiPref("appearance")).toContain('"badgeScale":75'),
+    );
+
+    fireEvent.click(within(appearance).getByRole("button", { name: "恢复" }));
+    expect(slider).toHaveValue("100");
+    await waitFor(async () =>
+      expect(await ipc.getUiPref("appearance")).toContain('"badgeScale":100'),
+    );
   });
 
   it("显示当前设置：自启关闭、置顶开启、稍后默认下周一", async () => {

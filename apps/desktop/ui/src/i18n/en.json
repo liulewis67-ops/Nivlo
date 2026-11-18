@@ -677,6 +677,9 @@
         "rose": "Rose",
         "amber": "Amber"
       },
+      "size": {
+        "label": "Collapsed badge size"
+      },
       "shape": {
         "label": "Badge shape",
         "hint": "How the collapsed badge looks.",

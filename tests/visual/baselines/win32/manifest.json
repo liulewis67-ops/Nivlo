@@ -1,22 +1,22 @@
 {
-  "sourceCommit": "fd334ef2b8f1813a7406cfd5a384ada482cf47d3",
+  "sourceCommit": "92da08934825e89cf37198860ddc967db6b3969d",
   "fixtureRevision": "m5 regression: pinned 2026-10-13 clock/IDs, demo backend Today 2026-10-10; actual compact/expanded dimensions",
   "platform": "win32",
   "clock": "2026-10-13T04:00:00.000Z",
   "motion": "reduce; screenshot animations disabled",
   "sourceFiles": {
-    "scripts/visual/visual.mjs": "2a1c867863f0011c53df64d56fcd3d1d6d893e9ec04b08c3acadecedbff37da9",
+    "scripts/visual/visual.mjs": "078f4fe3d457ef44bba45b4cb165552007e6316247e0d052f745a14f1c9e63c8",
     "apps/desktop/ui/src/test/dev-seed.ts": "190f1daa3ff2cfbdc1e26c6fd306f72d94cf4422c8a39eb4a3ad071b2e2f3188",
     "apps/desktop/ui/src/styles/tokens.css": "83cfaa7b0f9a002ff7dbbad86820c2299fe43408c8bf4a73938e0bcfd6ec020c",
-    "apps/desktop/ui/src/styles/global.css": "52270d8ede4f2ea8a934f1b7fc47524b8aa7dfb3160f14bc482e0ff9f474eaab"
+    "apps/desktop/ui/src/styles/global.css": "5f8fee293b837e3841783cdd453f3628f5043a4c58f6f611d511e1810973b4e0"
   },
   "artifacts": [
     {
       "name": "floating-collapsed",
       "file": "floating-collapsed.png",
       "viewport": {
-        "width": 64,
-        "height": 32
+        "width": 80,
+        "height": 40
       },
       "locale": "zh-CN",
       "theme": "light",
@@ -24,7 +24,7 @@
       "devicePixelRatio": 1,
       "clock": "2026-10-13T04:00:00.000Z",
       "pageOverflow": false,
-      "sha256": "4ef0e513ccdc90b611dd6d471ccd3067fa53de8898a32eb73a0548e43a3aaed3"
+      "sha256": "0d8248967468fa588425bc4e583470d12466662594a352f4d58c222b235c8e34"
     },
     {
       "name": "floating-expanded",

@@ -29,9 +29,12 @@ import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
 import {
   ACCENTS,
+  BADGE_SCALE_STEP,
   BADGE_SHAPES,
   CORNERS,
+  MAX_BADGE_SCALE,
   MAX_OPACITY,
+  MIN_BADGE_SCALE,
   MIN_OPACITY,
   SURFACES,
   useAppearanceStore,
@@ -426,6 +429,29 @@ export function SettingsPage() {
                   render={(o) => t(`settings.companion.modes.${o}`)}
                   onChange={(mode) => updateSkin({ mode })}
                 />
+              </Row>
+              <Row label={t("settings.appearance.size.label")}>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    aria-label={t("settings.appearance.size.label")}
+                    aria-valuetext={`${appearance.badgeScale}%`}
+                    min={MIN_BADGE_SCALE}
+                    max={MAX_BADGE_SCALE}
+                    step={BADGE_SCALE_STEP}
+                    value={appearance.badgeScale}
+                    onChange={(event) =>
+                      updateAppearance({ badgeScale: event.target.valueAsNumber })
+                    }
+                    className="w-32 min-w-0 accent-(--nv-primary)"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="w-10 text-right text-xs text-muted tabular-nums"
+                  >
+                    {`${appearance.badgeScale}%`}
+                  </span>
+                </div>
               </Row>
               {skin.mode === "robot" && (
                 <>

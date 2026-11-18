@@ -126,7 +126,16 @@ async function clickWhenReady(page, label) {
 
 /** 场景：名称、视口、地址、截图前的步骤。 */
 const SCENARIOS = [
-  { name: "floating-collapsed", w: 64, h: 32, url: `${APP}/?window=floating`, steps: async () => sleep(800) },
+  {
+    name: "floating-collapsed", w: 80, h: 40, url: `${APP}/?window=floating`,
+    steps: async (page) => {
+      for (let attempt = 0; attempt < 100; attempt++) {
+        if (await page.evaluate("Boolean(document.querySelector('[data-shape=robot] .nv-robot-counter'))")) return;
+        await sleep(100);
+      }
+      throw new Error("Floating robot and count did not render");
+    },
+  },
   {
     name: "floating-expanded",
     w: 300,

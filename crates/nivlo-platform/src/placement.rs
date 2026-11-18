@@ -13,11 +13,11 @@
 
 use serde::{Deserialize, Serialize};
 
-/// 收起态（徽标）的默认宽度（logical px）：默认的胶囊形状。其他形状由前端在收起时告知尺寸。
-pub const COLLAPSED_WIDTH_LOGICAL_PX: f64 = 64.0;
+/// 收起态机器人的默认宽度（logical px）。其他外观由前端在收起时告知尺寸。
+pub const COLLAPSED_WIDTH_LOGICAL_PX: f64 = 80.0;
 
 /// 收起态（徽标）的默认高度（logical px）。
-pub const COLLAPSED_HEIGHT_LOGICAL_PX: f64 = 32.0;
+pub const COLLAPSED_HEIGHT_LOGICAL_PX: f64 = 40.0;
 
 /// 默认位置在贴住的边缘（右侧）上的相对高度：靠近顶部但不贴边。
 const DEFAULT_Y_RATIO: f64 = 0.08;

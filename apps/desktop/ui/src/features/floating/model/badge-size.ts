@@ -4,14 +4,14 @@ import type { BadgeShape } from "@/stores/appearance-store";
 export type BadgeSize = { width: number; height: number };
 
 /**
- * 默认（胶囊）徽标的尺寸。必须与 Rust 的 `COLLAPSED_WIDTH_LOGICAL_PX` / `COLLAPSED_HEIGHT_LOGICAL_PX`
- * 一致：窗口按它创建，默认形状启动时不需要再告诉后端一次。
+ * 默认机器人徽标的尺寸。必须与 Rust 的 `COLLAPSED_WIDTH_LOGICAL_PX` / `COLLAPSED_HEIGHT_LOGICAL_PX`
+ * 一致：窗口按它创建，默认机器人启动时不需要再告诉后端一次。
  */
-export const DEFAULT_BADGE_SIZE: BadgeSize = { width: 64, height: 32 };
+export const DEFAULT_BADGE_SIZE: BadgeSize = { width: 80, height: 40 };
 
 /** 每种形状的徽标尺寸：窗口和形状一样大，形状以外没有透明的"死角"。 */
 const SHAPE_SIZES: Record<BadgeShape, BadgeSize> = {
-  pill: DEFAULT_BADGE_SIZE,
+  pill: { width: 64, height: 32 },
   circle: { width: 36, height: 36 },
   dot: { width: 28, height: 28 },
 };
@@ -25,8 +25,15 @@ const SKIN_SIZE: BadgeSize = { width: 88, height: 40 };
  * @param shape 徽标形状。
  * @param hasSkin 是否使用自定义皮肤（皮肤优先于形状）。
  * @param classic 是否使用传统徽标。
+ * @param scale 徽标缩放比例，百分比。
  * @returns logical 尺寸。
  */
-export function badgeSize(shape: BadgeShape, hasSkin: boolean, classic: boolean): BadgeSize {
-  return hasSkin ? SKIN_SIZE : classic ? SHAPE_SIZES[shape] : DEFAULT_BADGE_SIZE;
+export function badgeSize(
+  shape: BadgeShape,
+  hasSkin: boolean,
+  classic: boolean,
+  scale: number,
+): BadgeSize {
+  const size = hasSkin ? SKIN_SIZE : classic ? SHAPE_SIZES[shape] : DEFAULT_BADGE_SIZE;
+  return { width: (size.width * scale) / 100, height: (size.height * scale) / 100 };
 }

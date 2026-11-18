@@ -29,6 +29,8 @@ export type Appearance = {
   corners: Corners;
   /** 悬浮窗整体不透明度，百分比 40–100。 */
   opacity: number;
+  /** 收起态徽标相对于默认大小的百分比。 */
+  badgeScale: number;
 };
 
 export const DEFAULT_APPEARANCE: Appearance = {
@@ -37,10 +39,14 @@ export const DEFAULT_APPEARANCE: Appearance = {
   surface: "glass",
   corners: "round",
   opacity: 100,
+  badgeScale: 100,
 };
 
 export const MIN_OPACITY = 40;
 export const MAX_OPACITY = 100;
+export const MIN_BADGE_SCALE = 75;
+export const MAX_BADGE_SCALE = 150;
+export const BADGE_SCALE_STEP = 5;
 
 /** 偏好在 localStorage 中的 key；悬浮窗与主窗口共用，靠 `storage` 事件同步。 */
 export const APPEARANCE_STORAGE_KEY = "nivlo.appearance";
@@ -65,12 +71,24 @@ export function sanitizeAppearance(raw: unknown): Appearance {
     typeof rawOpacity === "number" && Number.isFinite(rawOpacity)
       ? Math.min(MAX_OPACITY, Math.max(MIN_OPACITY, Math.round(rawOpacity)))
       : DEFAULT_APPEARANCE.opacity;
+  const rawBadgeScale = o["badgeScale"];
+  const badgeScale =
+    typeof rawBadgeScale === "number" && Number.isFinite(rawBadgeScale)
+      ? Math.min(
+          MAX_BADGE_SCALE,
+          Math.max(
+            MIN_BADGE_SCALE,
+            Math.round(rawBadgeScale / BADGE_SCALE_STEP) * BADGE_SCALE_STEP,
+          ),
+        )
+      : DEFAULT_APPEARANCE.badgeScale;
   return {
     accent: pick(ACCENTS, o["accent"], DEFAULT_APPEARANCE.accent),
     badgeShape: pick(BADGE_SHAPES, o["badgeShape"], DEFAULT_APPEARANCE.badgeShape),
     surface: pick(SURFACES, o["surface"], DEFAULT_APPEARANCE.surface),
     corners: pick(CORNERS, o["corners"], DEFAULT_APPEARANCE.corners),
     opacity,
+    badgeScale,
   };
 }
 
@@ -112,6 +130,22 @@ type AppearanceState = {
 };
 
 export const useAppearanceStore = create<AppearanceState>((set, get) => {
+  let pendingSave: Appearance | undefined;
+  let saving = false;
+
+  /** 滑块拖动期间按顺序写入，保存中只保留最新待写值。 */
+  async function save(): Promise<void> {
+    if (saving) return;
+    saving = true;
+    while (pendingSave !== undefined) {
+      const next = pendingSave;
+      pendingSave = undefined;
+      // 后端存储用于备份。写入失败时仍保留本地缓存。
+      await ipc.setUiPref("appearance", JSON.stringify(next)).catch(() => undefined);
+    }
+    saving = false;
+  }
+
   /** 把外观写入根元素并持久化。 */
   const commit = (next: Appearance): void => {
     applyAppearance(next);
@@ -121,8 +155,8 @@ export const useAppearanceStore = create<AppearanceState>((set, get) => {
       // 无法保存只影响下次启动，不影响当前会话。
     }
     set({ appearance: next });
-    // 同步写入后端（settings 表，随备份）；失败只影响备份，不影响当前会话。
-    ipc.setUiPref("appearance", JSON.stringify(next)).catch(() => undefined);
+    pendingSave = next;
+    void save();
   };
   return {
     appearance: load(),

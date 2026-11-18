@@ -109,6 +109,7 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
   const progress = total > 0 ? done / total : 0;
   const allDone = remaining === 0 && done > 0;
   const shape = useAppearanceStore((state) => state.appearance.badgeShape);
+  const scale = useAppearanceStore((state) => state.appearance.badgeScale);
   const skin = useSkinStore((state) => state.skin);
   const [hovered, setHovered] = useState(false);
   const hasSkin = hasImageSkin(skin);
@@ -250,6 +251,7 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
       data-shape={robot ? "robot" : hasSkin ? "skin" : shape}
       data-done={allDone || undefined}
       data-selected={selected || undefined}
+      style={{ zoom: scale / 100 }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}

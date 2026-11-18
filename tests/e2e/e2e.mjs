@@ -1606,7 +1606,7 @@ async function runOnce(index) {
         await floating.invoke('open_main_at',{view:'settings'});
         await until(()=>main.evaluate('!!document.querySelector("#settings-appearance")'),'appearance settings');
         const cases=[
-          {name:'robot',mode:['机器人','Robot'],width:64,height:32},
+          {name:'robot',mode:['机器人','Robot'],width:80,height:40},
           {name:'pill',mode:['经典徽标','Classic badge'],label:['胶囊','Pill'],width:64,height:32},
           {name:'circle',label:['数字','Number'],width:36,height:36},
           {name:'dot',label:['圆点','Dot'],width:28,height:28},
@@ -1652,7 +1652,7 @@ async function runOnce(index) {
                 counter.innerHTML = original;
               }
             })()`);
-            if (countBounds.some(bounds => bounds.fontSize !== '12px' ||
+            if (countBounds.some(bounds => bounds.fontSize !== '14px' ||
               bounds.left < bounds.figureRight || bounds.right > entry.width || bounds.bottom > entry.height)) {
               throw Error('Robot count clipped or overlapping: ' + JSON.stringify(countBounds));
             }

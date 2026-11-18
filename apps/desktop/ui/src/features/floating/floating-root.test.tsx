@@ -76,16 +76,25 @@ describe("FloatingRoot", () => {
     expect(ipc.lastCollapse).toEqual({ width: 36, height: 36 });
   });
 
-  it("展开后收起时告诉后端当前形状的徽标尺寸", async () => {
+  it("实时调整收起态尺寸；展开期间的调整在收起时生效", async () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
     await advance(0);
+    act(() => useAppearanceStore.getState().update({ badgeScale: 75 }));
+    await advance(0);
+    expect(ipc.lastCollapse).toEqual({ width: 60, height: 30 });
+    expect(screen.getByRole("button", { name: /打开拾序主窗口/ })).toHaveStyle({ zoom: "0.75" });
+
     fireEvent.pointerEnter(root());
     await advance(HOVER_ENTER_DELAY_MS);
+    act(() => useAppearanceStore.getState().update({ badgeScale: 150 }));
+    await advance(0);
+    expect(ipc.calls.filter((call) => call === "expandFloating")).toHaveLength(1);
+    expect(ipc.lastCollapse).toEqual({ width: 60, height: 30 });
+
     fireEvent.pointerLeave(root());
     await advance(HOVER_LEAVE_DELAY_MS);
-
-    expect(ipc.lastCollapse).toEqual({ width: 64, height: 32 });
+    expect(ipc.lastCollapse).toEqual({ width: 120, height: 60 });
   });
 
   it("右键徽标直接进入待办的快速创建", async () => {

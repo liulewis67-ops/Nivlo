@@ -39,6 +39,7 @@ async function loadRoot(label: string): Promise<ComponentType> {
 /** 从后端读取外观、皮肤、语言与主题，覆盖本地缓存；失败时沿用缓存。 */
 async function hydrateUiPrefs(): Promise<void> {
   try {
+    const cachedAppearance = useAppearanceStore.getState().appearance;
     const cachedSkin = useSkinStore.getState().skin;
     const [appearance, skin, language, theme, hideCompleted] = await Promise.all([
       ipc.getUiPref("appearance"),
@@ -47,7 +48,9 @@ async function hydrateUiPrefs(): Promise<void> {
       ipc.getUiPref("theme"),
       ipc.getUiPref("hideCompleted"),
     ]);
-    if (appearance) useAppearanceStore.getState().hydrate(appearance);
+    if (appearance && cachedAppearance === useAppearanceStore.getState().appearance) {
+      useAppearanceStore.getState().hydrate(appearance);
+    }
     if (cachedSkin === useSkinStore.getState().skin) useSkinStore.getState().hydrate(skin);
     if (language) await hydrateLanguage(language);
     if (theme) useThemeStore.getState().hydrate(theme);

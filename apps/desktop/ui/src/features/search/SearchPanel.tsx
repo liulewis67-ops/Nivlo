@@ -633,7 +633,10 @@ export function SearchPanel({
           {"Esc"}
         </kbd>
       </div>
-      <div ref={scrollRef} className="nv-scroll-hover min-h-0 flex-1 overflow-y-auto">
+      <div
+        ref={scrollRef}
+        className={cx("nv-scroll-hover min-h-0 flex-1 overflow-y-auto", isWindow && "isolate")}
+      >
         <div ref={contentRef}>
           {helpOpen && doneNotice === null && (
             <section
@@ -722,7 +725,7 @@ export function SearchPanel({
               id={listId}
               role="listbox"
               aria-label={showRecent ? t("search.recent") : t("search.results")}
-              className={cx("p-2", isWindow && "nv-list-in")}
+              className="p-2"
             >
               {groups.map((group) => (
                 <li key={group.key} role="presentation">
@@ -818,7 +821,7 @@ export function SearchPanel({
       <footer
         className={cx(
           "flex max-h-40 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 overflow-y-auto border-t px-4 py-2 text-xs text-muted",
-          isWindow ? "border-border/70 bg-surface-hover/40" : "border-border",
+          isWindow ? "border-border/70 bg-surface-hover" : "border-border",
         )}
       >
         <span role="status" className="min-w-0 flex-1 basis-40 wrap-anywhere tabular-nums">

@@ -136,25 +136,6 @@ html[data-window="floating"] body {
   animation: nv-panel-in var(--nv-duration-normal) var(--nv-ease-standard);
 }
 
-/*
- * 全局搜索框的列表入场：窗口本身由系统瞬间显示，只让列表轻轻落下，不缩放整块内容
- * （缩放会让内容和系统窗口边框错位）。时长来自 Token，「减少动态效果」时为 0。
- */
-@keyframes nv-list-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.nv-list-in {
-  animation: nv-list-in var(--nv-duration-normal) var(--nv-ease-standard);
-}
-
 /* 拖拽悬停提示：只用 opacity，尊重"减少动态效果"。 */
 @keyframes nv-drop-in {
   from {
@@ -368,25 +349,25 @@ html[data-theme="dark"] .nv-badge {
 }
 .nv-robot-figure {
   display: block;
-  width: 42px;
-  height: 32px;
+  width: 52px;
+  height: 40px;
   flex: none;
 }
 .nv-robot-badge:has(.nv-robot-counter) .nv-robot-figure {
-  width: 34px;
+  width: 42px;
 }
 .nv-robot-counter {
   flex: none;
   display: grid;
-  min-width: 16px;
-  min-height: 16px;
+  min-width: 20px;
+  min-height: 20px;
   padding-inline: 2px;
   place-items: center;
   border: 1px solid #b3d4ef;
   border-radius: 5px;
   background: #20364d;
   color: #f5fbff;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }

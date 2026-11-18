@@ -14,6 +14,13 @@ describe("sanitizeAppearance", () => {
     expect(result.opacity).toBe(40);
     expect(sanitizeAppearance({ opacity: 500 }).opacity).toBe(100);
   });
+
+  it("defaults old preferences to 100% and keeps the size on the slider's steps", () => {
+    expect(sanitizeAppearance({ opacity: 80 }).badgeScale).toBe(100);
+    expect(sanitizeAppearance({ badgeScale: 10 }).badgeScale).toBe(75);
+    expect(sanitizeAppearance({ badgeScale: 87 }).badgeScale).toBe(85);
+    expect(sanitizeAppearance({ badgeScale: 200 }).badgeScale).toBe(150);
+  });
 });
 
 describe("backend persistence (D-14)", () => {
