@@ -27,7 +27,7 @@ export type Appearance = {
   badgeShape: BadgeShape;
   surface: Surface;
   corners: Corners;
-  /** 悬浮窗整体不透明度，百分比 40–100。 */
+  /** 收起徽标和展开面板底色的不透明度，百分比 40–100。 */
   opacity: number;
   /** 收起态徽标相对于默认大小的百分比。 */
   badgeScale: number;

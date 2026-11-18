@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { MainShell } from "@/features/shell";
+import { WindowTitlebar } from "./WindowTitlebar";
 
 /**
  * 主窗口的根组件：带导航的外壳（实施计划 1.10）。
@@ -23,5 +24,12 @@ export function MainApp() {
     window.addEventListener("drop", preventDropNavigation);
     return () => window.removeEventListener("drop", preventDropNavigation);
   }, []);
-  return <MainShell />;
+  return (
+    <div className="flex h-full flex-col bg-bg">
+      <WindowTitlebar />
+      <div className="min-h-0 flex-1">
+        <MainShell />
+      </div>
+    </div>
+  );
 }

@@ -312,6 +312,12 @@
     "quickAddHint": "右键快速添加待办"
   },
   "shell": {
+    "window": {
+      "minimize": "最小化",
+      "maximize": "最大化",
+      "restore": "还原窗口",
+      "close": "关闭窗口"
+    },
     "nav": {
       "label": "主导航",
       "inbox": "收集箱",
@@ -698,7 +704,7 @@
       },
       "opacity": {
         "label": "窗口不透明度",
-        "hint": "调低后可以透出后面的内容。"
+        "hint": "调低后可以透出后面的内容，展开面板的文字和按钮仍保持清晰。"
       },
       "reset": {
         "label": "恢复默认外观",

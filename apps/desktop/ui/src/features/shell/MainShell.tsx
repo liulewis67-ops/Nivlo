@@ -75,7 +75,7 @@ function NavButton({ view, isActive, count, onSelect, shortcut }: NavButtonProps
         "flex h-9 w-full items-center gap-2.5 rounded-md px-2.5 text-sm",
         "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
         isActive
-          ? "bg-primary font-medium text-primary-contrast"
+          ? "bg-surface-hover font-semibold text-text [&>svg]:text-primary"
           : "text-text hover:bg-surface-hover",
       )}
     >
@@ -85,7 +85,7 @@ function NavButton({ view, isActive, count, onSelect, shortcut }: NavButtonProps
         <span
           className={cx(
             "min-w-5 rounded-full px-1.5 text-center text-xs tabular-nums",
-            isActive ? "bg-primary-contrast text-primary" : "bg-surface-hover text-muted",
+            isActive ? "bg-surface text-text" : "bg-surface-hover text-muted",
           )}
         >
           {count}
@@ -424,7 +424,7 @@ export function MainShell() {
             } else trapTab(event, navRef.current);
           }}
           className={cx(
-            "row-start-2 min-h-0 flex-col gap-4 overflow-y-auto border-r border-border bg-surface px-3 py-4",
+            "nv-scroll-hover row-start-2 min-h-0 flex-col gap-3 overflow-y-auto border-r-[0.5px] border-border bg-surface px-3 py-4",
             compact
               ? navModal
                 ? "fixed inset-y-0 left-0 z-(--nv-z-dialog) flex w-(--nv-sidebar-width) shadow-lg"
@@ -432,15 +432,11 @@ export function MainShell() {
               : "flex",
           )}
         >
-          <div className="flex items-center gap-2 px-2">
-            <span aria-hidden="true" className="size-2.5 rounded-full bg-primary" />
-            <span className="text-lg font-semibold tracking-wide text-text">{t("app.name")}</span>
-          </div>
           {!compact && createButton}
           <button
             type="button"
             onClick={() => setSearching(true)}
-            className="flex h-9 w-full items-center gap-2.5 rounded-md border border-border bg-bg px-2.5 text-sm text-muted transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) hover:border-primary hover:text-text"
+            className="flex h-9 w-full shrink-0 items-center gap-2.5 rounded-md border border-border bg-bg px-2.5 text-sm text-muted transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard) hover:border-primary hover:text-text"
           >
             <svg
               viewBox="0 0 16 16"
@@ -469,7 +465,7 @@ export function MainShell() {
               />
             ))}
           </nav>
-          <div className="mt-auto flex flex-col gap-1">
+          <div className="mt-auto flex flex-col gap-1 border-t-[0.5px] border-border pt-3">
             <NavButton
               view="workflows"
               isActive={view === "workflows"}

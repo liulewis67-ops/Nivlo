@@ -240,7 +240,7 @@ html[data-theme="dark"][data-accent="amber"] {
 }
 
 /*
- * 悬浮窗容器：整体不透明度由用户设置。
+ * 收起态悬浮徽标：整体不透明度由用户设置。
  *
  * 悬浮窗是和内容一样大的透明窗口，形状以外的像素必须完全透明：任何画到形状外面的东西
  * （外阴影、放大动效）都会被窗口的矩形边界截断，露出一个"矩形框"。所以立体感全部用
@@ -294,6 +294,21 @@ html[data-theme="dark"][data-surface="glass"] .nv-float {
     color-mix(in srgb, var(--nv-surface) 82%, transparent);
 }
 
+/* 展开的面板只在底色应用透明度，文字和控件保持原有对比度。 */
+.nv-floating-panel {
+  --nv-panel-opacity: calc(var(--nv-float-opacity) * 100%);
+  border: 0.5px solid var(--nv-border);
+  border-radius: var(--nv-float-radius);
+  background: color-mix(in srgb, var(--nv-surface) var(--nv-panel-opacity), transparent);
+}
+html[data-surface="glass"] .nv-floating-panel {
+  --nv-panel-opacity: calc(var(--nv-float-opacity) * 97%);
+}
+.nv-floating-panel[data-grabbed] {
+  border-color: var(--nv-primary);
+  cursor: grabbing;
+}
+
 /*
  * 收起态徽标铺满整个窗口（窗口和形状一样大）：悬停不能放大（放大会被窗口边界截成方角），
  * 改为主色轻染 + 内描边加深；按下只缩小，不会越界。
@@ -319,8 +334,7 @@ html[data-theme="dark"] .nv-badge {
 /* 长按选中（可以拖动了）：从按下时的缩小弹回原大小，主色描边 + 染色，读作"拿起来了"。
    窗口和徽标一样大，不能放大，否则会被窗口裁掉。 */
 .nv-badge[data-selected],
-.nv-badge[data-selected]:active,
-.nv-float[data-grabbed] {
+.nv-badge[data-selected]:active {
   --nv-float-tint: color-mix(in srgb, var(--nv-primary) 16%, transparent);
   --nv-ring-track: color-mix(in srgb, var(--nv-primary) 30%, transparent);
   cursor: grabbing;

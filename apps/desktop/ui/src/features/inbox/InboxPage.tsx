@@ -373,11 +373,26 @@ export function InboxPage() {
           </ul>
         </div>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-1 px-8 pb-16 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-1.5 px-8 pb-12 text-center">
           {entries !== undefined && (
             <>
-              <p className="text-base font-medium text-text">{t("inbox.empty.title")}</p>
-              <p className="max-w-sm text-sm text-muted">{t("inbox.empty.hint")}</p>
+              <span className="mb-2 grid size-11 shrink-0 place-items-center rounded-lg border-[0.5px] border-border bg-surface text-muted">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-5"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m3 13 2.5-7a1 1 0 0 1 .9-.6h11.2a1 1 0 0 1 .9.6l2.5 7v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5Z" />
+                  <path d="M3 13h5l1.5 2.5h5L16 13h5" />
+                </svg>
+              </span>
+              <p className="text-base font-semibold text-text">{t("inbox.empty.title")}</p>
+              <p className="max-w-sm text-sm text-balance text-muted">{t("inbox.empty.hint")}</p>
             </>
           )}
         </div>

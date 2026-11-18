@@ -77,19 +77,20 @@ export function TodayPanel({
       data-grabbed={drag.selected || undefined}
       {...drag.handlers}
       style={{ transformOrigin: origin }}
-      className="nv-panel-in nv-float relative flex h-full w-full flex-col overflow-hidden"
+      className="nv-panel-in nv-floating-panel relative flex h-full w-full flex-col overflow-hidden"
     >
-      <header className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
-        {/* 面板只有 300px：用短日期、不换行（英文的「Tuesday, Oct 27」会把「27」挤到第二行），放不下时截断。 */}
-        <h2 className="min-w-0 truncate text-sm font-semibold whitespace-nowrap text-text">
-          {t("today.panel.title")}
-          <span className="ml-2 font-normal text-muted">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b-[0.5px] border-border bg-primary/5 px-3 py-2.5">
+        <div className="min-w-0">
+          <h2 className="truncate text-base leading-tight font-semibold text-text">
+            {t("today.panel.title")}
+          </h2>
+          <p className="mt-0.5 truncate text-xs text-muted tabular-nums">
             {formatDate(
               view === undefined ? new Date() : parseISO(view.date),
               "monthDayWeekdayShort",
             )}
-          </span>
-        </h2>
+          </p>
+        </div>
         <div className="flex shrink-0 items-center gap-1">
           {inboxCount > 0 && (
             <Button size="sm" variant="ghost" onClick={() => void ipc.openMainAt("inbox")}>
@@ -100,7 +101,7 @@ export function TodayPanel({
           <Tooltip content={t("today.panel.openMain")}>
             <Button
               size="sm"
-              variant="ghost"
+              variant="secondary"
               aria-label={t("today.panel.openMain")}
               onClick={() => void ipc.openMain()}
             >
@@ -114,7 +115,8 @@ export function TodayPanel({
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <path d="M9.5 2.5h4v4M13.5 2.5 8 8M7 3.5H3.5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V9" />
+                <rect x="2.25" y="3" width="11.5" height="10" rx="1.5" />
+                <path d="M2.25 6.25h11.5M6 6.25V13" />
               </svg>
             </Button>
           </Tooltip>
@@ -130,20 +132,40 @@ export function TodayPanel({
         view.completed.length > 0 ? (
         <TodayBoard view={view} />
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-1 p-4 text-center">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1.5 px-6 py-4 text-center">
+          <span className="mb-2 grid size-10 shrink-0 place-items-center rounded-lg bg-surface-hover text-muted">
+            <svg
+              viewBox="0 0 24 24"
+              className="size-5"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3.5" y="5.5" width="17" height="15" rx="2" />
+              <path d="M7.5 3.5v4m9-4v4m-13 3h17m-12 5 2 2 4-4" />
+            </svg>
+          </span>
           <p className="text-sm font-medium text-text">{t("today.empty.title")}</p>
           <p className="text-xs text-muted">{t("today.empty.hint")}</p>
         </div>
       )}
       {quickCreateKind === null ? (
-        <footer className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2">
+        <footer className="flex shrink-0 flex-wrap items-center gap-1 border-t-[0.5px] border-border bg-bg/60 px-2.5 py-2">
           {QUICK_CREATE_KINDS.map((kind) => (
-            <Button key={kind} size="sm" variant="ghost" onClick={() => onQuickCreate(kind)}>
+            <Button
+              key={kind}
+              size="sm"
+              variant={kind === "todo" ? "primary" : "ghost"}
+              onClick={() => onQuickCreate(kind)}
+            >
               {t(`quickCreate.add.${kind}`)}
             </Button>
           ))}
           {capture !== undefined && (
-            <Button size="sm" variant="ghost" className="ml-auto" onClick={capture.onPaste}>
+            <Button size="sm" variant="secondary" className="ml-auto" onClick={capture.onPaste}>
               {t("capture.pasteToInbox")}
             </Button>
           )}

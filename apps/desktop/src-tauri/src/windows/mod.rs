@@ -140,6 +140,7 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
             WebviewWindowBuilder::new(app, MAIN_WINDOW_LABEL, WebviewUrl::App("index.html".into()))
                 .title("Nivlo")
                 .inner_size(MAIN_WIDTH, MAIN_HEIGHT)
+                .decorations(false)
                 .visible(false)
                 .zoom_hotkeys_enabled(cfg!(target_os = "windows"))
                 // 日历需要 WebView2 传来的 HTML5 文本拖放。

@@ -313,6 +313,12 @@
     "quickAddHint": "right-click to add a to-do"
   },
   "shell": {
+    "window": {
+      "minimize": "Minimize",
+      "maximize": "Maximize",
+      "restore": "Restore window",
+      "close": "Close window"
+    },
     "nav": {
       "label": "Main navigation",
       "inbox": "Inbox",
@@ -701,7 +707,7 @@
       },
       "opacity": {
         "label": "Window opacity",
-        "hint": "Lower it to let what is behind show through."
+        "hint": "Lower it to let the desktop show through while keeping the expanded panel’s text and buttons opaque."
       },
       "reset": {
         "label": "Reset appearance",
