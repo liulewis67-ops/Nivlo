@@ -432,6 +432,22 @@ export const commands = {
 	 */
 	getSkinStorageUsage: () => typedError<SkinStorageUsageDto, IpcError>(__TAURI_INVOKE("get_skin_storage_usage")),
 	/**
+	 *  将当前皮肤清单与引用的本地帧图导出为 `.nivlo-skin.zip`（写入 `exports/` 并在文件管理器中显示）。
+	 * 
+	 *  # Errors
+	 * 
+	 *  清单过大或无效、引用的帧图缺失或写文件失败时返回 [`IpcError`]。
+	 */
+	exportSkinPack: (manifestJson: string, assetFiles: string[]) => typedError<string, IpcError>(__TAURI_INVOKE("export_skin_pack", { manifestJson, assetFiles })),
+	/**
+	 *  弹出文件选择框导入 `.nivlo-skin.zip`，校验并落盘全部帧图后返回清单 JSON；用户取消返回 `null`。
+	 * 
+	 *  # Errors
+	 * 
+	 *  压缩包损坏、含非法路径或图片魔数/配额校验失败时返回 [`IpcError`]。
+	 */
+	importSkinPack: () => typedError<string | null, IpcError>(__TAURI_INVOKE("import_skin_pack")),
+	/**
 	 *  开启或关闭开机自启，返回之后的实际状态。
 	 * 
 	 *  # Errors

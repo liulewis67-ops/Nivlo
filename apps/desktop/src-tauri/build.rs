@@ -48,6 +48,8 @@ const COMMANDS: &[&str] = &[
     "save_skin_asset",
     "prune_skin_assets",
     "get_skin_storage_usage",
+    "export_skin_pack",
+    "import_skin_pack",
     "set_autostart",
     "set_floating_always_on_top",
     "set_search_prewarm",

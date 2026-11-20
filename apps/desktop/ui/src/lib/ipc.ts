@@ -221,6 +221,10 @@ export interface IpcClient {
   pruneSkinAssets(keepFiles: string[]): Promise<number>;
   /** 读取本地 `skins/assets/` 的磁盘占用概况。 */
   getSkinStorageUsage(): Promise<SkinStorageUsageDto>;
+  /** 将当前皮肤清单与引用的本地帧图打包导出为 `.nivlo-skin.zip`，返回导出路径。 */
+  exportSkinPack(manifestJson: string, assetFiles: string[]): Promise<string>;
+  /** 选择并导入 `.nivlo-skin.zip`，返回清单 JSON；用户取消时返回 `null`。 */
+  importSkinPack(): Promise<string | null>;
   /** 修改日历一周从哪天开始。 */
   setWeekStart(weekStart: WeekStartDto): Promise<void>;
   /**
@@ -527,6 +531,9 @@ const tauriIpc: IpcClient = {
     call("save_skin_asset", commands.saveSkinAsset(bytesBase64, format)),
   pruneSkinAssets: (keepFiles) => call("prune_skin_assets", commands.pruneSkinAssets(keepFiles)),
   getSkinStorageUsage: () => call("get_skin_storage_usage", commands.getSkinStorageUsage()),
+  exportSkinPack: (manifestJson, assetFiles) =>
+    call("export_skin_pack", commands.exportSkinPack(manifestJson, assetFiles)),
+  importSkinPack: () => call("import_skin_pack", commands.importSkinPack()),
   setWeekStart: async (weekStart) => {
     await call("set_week_start", commands.setWeekStart(weekStart));
   },
@@ -736,6 +743,8 @@ export const ipc: IpcClient = {
   saveSkinAsset: (bytesBase64, format) => current.saveSkinAsset(bytesBase64, format),
   pruneSkinAssets: (keepFiles) => current.pruneSkinAssets(keepFiles),
   getSkinStorageUsage: () => current.getSkinStorageUsage(),
+  exportSkinPack: (manifestJson, assetFiles) => current.exportSkinPack(manifestJson, assetFiles),
+  importSkinPack: () => current.importSkinPack(),
   setNotificationsPaused: (paused) => current.setNotificationsPaused(paused),
   setReminderFlashSeconds: (seconds) => current.setReminderFlashSeconds(seconds),
   setReminderCount: (count) => current.setReminderCount(count),

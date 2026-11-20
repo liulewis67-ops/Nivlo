@@ -27,6 +27,7 @@ import {
 } from "@/stores/skin-store";
 import { RobotAvatar } from "@/features/floating";
 import { CompanionPreviewStage } from "./CompanionPreviewStage";
+import { SkinStorageControls, SkinTracksEditor } from "./SkinAdvancedPanel";
 import { SkinSetting } from "./SkinSetting";
 import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
@@ -229,6 +230,9 @@ export function SettingsPage() {
   const updateSkin = useSkinStore((state) => state.update);
   const skinSaveStatus = useSkinStore((state) => state.saveStatus);
   const retrySkinSave = useSkinStore((state) => state.retry);
+  const [advancedTracks, setAdvancedTracks] = useState(() =>
+    Object.keys(skin.tracks).some((slot) => slot !== "idle"),
+  );
   const theme = useThemeStore((state) => state.preference);
   const setTheme = useThemeStore((state) => state.setPreference);
 
@@ -626,15 +630,37 @@ export function SettingsPage() {
                 {t("settings.appearance.group.skin")}
               </legend>
               <div className="divide-y divide-border">
-                <Row label={t("settings.skin.label")} hint={t("settings.skin.hint")}>
-                  <SkinSetting />
+                <Row
+                  label={t("settings.skin.tracks.toggle")}
+                  hint={t("settings.skin.tracks.toggleHint")}
+                >
+                  <Switch
+                    label={t("settings.skin.tracks.toggle")}
+                    checked={advancedTracks}
+                    onCheckedChange={setAdvancedTracks}
+                  />
                 </Row>
+                {advancedTracks ? (
+                  <div className="px-4 py-3.5">
+                    <SkinTracksEditor />
+                  </div>
+                ) : (
+                  <Row label={t("settings.skin.label")} hint={t("settings.skin.hint")}>
+                    <SkinSetting />
+                  </Row>
+                )}
                 <Row label={t("settings.skin.pixel.label")} hint={t("settings.skin.pixel.hint")}>
                   <Switch
                     label={t("settings.skin.pixel.label")}
                     checked={skin.pixel}
                     onCheckedChange={(pixel) => updateSkin({ pixel })}
                   />
+                </Row>
+                <Row
+                  label={t("settings.skin.storage.label")}
+                  hint={t("settings.skin.storage.hint")}
+                >
+                  <SkinStorageControls />
                 </Row>
               </div>
             </fieldset>

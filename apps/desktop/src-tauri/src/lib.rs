@@ -113,6 +113,8 @@ macro_rules! bindings_builder {
                 $crate::commands::skin::save_skin_asset,
                 $crate::commands::skin::prune_skin_assets,
                 $crate::commands::skin::get_skin_storage_usage,
+                $crate::commands::skin::export_skin_pack,
+                $crate::commands::skin::import_skin_pack::<$runtime>,
                 $crate::commands::settings::set_autostart::<$runtime>,
                 $crate::commands::settings::set_floating_always_on_top,
                 $crate::commands::settings::set_search_prewarm::<$runtime>,

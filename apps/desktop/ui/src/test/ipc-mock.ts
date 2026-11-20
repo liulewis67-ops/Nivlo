@@ -1293,6 +1293,14 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
         quotaBytes: 50 * 1024 * 1024,
       });
     },
+    exportSkinPack: () => {
+      calls.push("exportSkinPack");
+      return Promise.resolve("exports/nivlo-skin-mock.nivlo-skin.zip");
+    },
+    importSkinPack: () => {
+      calls.push("importSkinPack");
+      return Promise.resolve(null);
+    },
     setWeekStart: (weekStart: WeekStartDto) => {
       calls.push("setWeekStart");
       appSettings = { ...appSettings, weekStart };

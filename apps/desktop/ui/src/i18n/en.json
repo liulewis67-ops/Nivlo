@@ -835,6 +835,31 @@
         "confirm": "Slice & import",
         "cancel": "Cancel"
       },
+      "tracks": {
+        "toggle": "Customize per state",
+        "toggleHint": "Assign separate frame tracks and speeds for idle, hover, grabbed, drop-ready, done, and reminder states. Unconfigured states inherit idle.",
+        "inheritsIdle": "Inherits idle",
+        "trackPlayback": {
+          "label": "Track playback",
+          "loop": "Loop",
+          "pingpong": "Ping-pong",
+          "once": "Once",
+          "still": "Still"
+        },
+        "trackFps": "Track speed (FPS)"
+      },
+      "storage": {
+        "label": "Local assets & skin pack",
+        "hint": "Custom frames are stored as local files for higher resolution and longer animations, and are included in backups.",
+        "usage": "{{count}} files · {{used}} / {{quota}}",
+        "prune": "Clean unused files",
+        "pruned": "Freed {{freed}} of unused skin assets.",
+        "prunedNone": "No unused skin assets to clean.",
+        "export": "Export skin pack…",
+        "exported": "Skin pack exported: {{path}}",
+        "import": "Import skin pack…",
+        "imported": "Skin pack imported."
+      },
       "playback": {
         "label": "Playback",
         "hint": "How the frames play.",

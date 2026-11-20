@@ -1,6 +1,6 @@
 # 悬浮窗动画设置、机器人动作与本地文件帧动画设计方案
 
-> 状态：设计定稿（待实施）
+> 状态：已完成全部三阶段实施
 > 适用范围：`apps/desktop/ui`、`apps/desktop/src-tauri`、`crates/nivlo-common`、`crates/nivlo-storage`
 
 ---

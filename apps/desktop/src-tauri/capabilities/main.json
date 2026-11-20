@@ -56,6 +56,8 @@
     "allow-save-skin-asset",
     "allow-prune-skin-assets",
     "allow-get-skin-storage-usage",
+    "allow-export-skin-pack",
+    "allow-import-skin-pack",
     "allow-set-autostart",
     "allow-set-floating-always-on-top",
     "allow-set-search-prewarm",

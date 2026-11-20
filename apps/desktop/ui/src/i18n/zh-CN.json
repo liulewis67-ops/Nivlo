@@ -832,6 +832,31 @@
         "confirm": "切分并导入",
         "cancel": "取消"
       },
+      "tracks": {
+        "toggle": "按状态分别配置动作",
+        "toggleHint": "开启后可为待机、悬停、拖拽、拖放、完成、提醒分别设置不同的帧序列与速度；未配置的状态自动沿用待机动作。",
+        "inheritsIdle": "沿用待机",
+        "trackPlayback": {
+          "label": "本状态播放方式",
+          "loop": "循环",
+          "pingpong": "往返",
+          "once": "单次",
+          "still": "静止"
+        },
+        "trackFps": "本状态速度（FPS）"
+      },
+      "storage": {
+        "label": "本地资源与皮肤包",
+        "hint": "自定义帧图保存在本地文件目录中，支持高分辨率与多帧动画，并随数据备份一起保存。",
+        "usage": "{{count}} 个文件 · {{used}} / {{quota}}",
+        "prune": "清理未使用文件",
+        "pruned": "已释放 {{freed}} 未使用皮肤资源。",
+        "prunedNone": "没有可清理的未使用资源。",
+        "export": "导出皮肤包…",
+        "exported": "皮肤包已导出：{{path}}",
+        "import": "导入皮肤包…",
+        "imported": "已导入自定义皮肤包。"
+      },
       "playback": {
         "label": "播放方式",
         "hint": "帧的播放方式。",
