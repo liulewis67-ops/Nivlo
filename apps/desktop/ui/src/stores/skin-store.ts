@@ -111,7 +111,7 @@ export const DEFAULT_SKIN: Skin = {
   motion: "none",
   pixel: false,
   showCount: true,
-  animationEnabled: true,
+  animationEnabled: false,
   animationTrigger: "interactive",
   robotAction: { ...DEFAULT_ROBOT_ACTION },
   assets: {},

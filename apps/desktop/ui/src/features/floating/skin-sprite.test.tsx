@@ -6,7 +6,13 @@ import { SkinSprite } from "./SkinSprite";
 
 const A = "data:image/png;base64,AAAA";
 const B = "data:image/png;base64,BBBB";
-const LOOPING: Skin = { ...DEFAULT_SKIN, frames: [A, B], fps: 10, playback: "loop" };
+const LOOPING: Skin = {
+  ...DEFAULT_SKIN,
+  animationEnabled: true,
+  frames: [A, B],
+  fps: 10,
+  playback: "loop",
+};
 
 /** 让 matchMedia 对「减少动态效果」返回指定值。 */
 function mockReducedMotion(reduce: boolean): void {
