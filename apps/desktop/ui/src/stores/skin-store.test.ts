@@ -69,14 +69,29 @@ describe("sanitizeSkin", () => {
       PNG,
       "http://evil/x.png",
       "data:image/svg+xml;base64,AA",
-      ...Array(30).fill(PNG),
+      ...Array(70).fill(PNG),
     ];
     const skin = sanitizeSkin({ frames, fps: 999, playback: "bogus", pixel: true });
     expect(skin.frames).toHaveLength(MAX_FRAMES);
     expect(skin.frames.every((f) => f === PNG)).toBe(true);
-    expect(skin.fps).toBe(24);
+    expect(skin.fps).toBe(30);
     expect(skin.playback).toBe("hover");
     expect(skin.pixel).toBe(true);
+  });
+
+  it("migrates legacy inline frames into local file assets and tracks", async () => {
+    const memory = createMemoryIpc();
+    setIpcClient(memory);
+    const store = useSkinStore.getState();
+    store.hydrate(JSON.stringify({ frames: [PNG], fps: 12, playback: "loop" }));
+    await store.migrateLegacyFrames();
+
+    const next = useSkinStore.getState().skin;
+    expect(next.frames).toEqual([]);
+    expect(next.tracks.idle?.frames).toHaveLength(1);
+    expect(next.tracks.idle?.fps).toBe(12);
+    expect(Object.keys(next.assets)).toHaveLength(1);
+    expect(memory.calls).toContain("saveSkinAsset");
   });
 
   it("migrates an existing image skin while preserving an explicit companion choice", () => {

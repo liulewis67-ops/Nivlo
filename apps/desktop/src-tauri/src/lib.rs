@@ -110,6 +110,9 @@ macro_rules! bindings_builder {
                 $crate::commands::update::install_update::<$runtime>,
                 $crate::commands::settings::get_ui_pref::<$runtime>,
                 $crate::commands::settings::set_ui_pref::<$runtime>,
+                $crate::commands::skin::save_skin_asset,
+                $crate::commands::skin::prune_skin_assets,
+                $crate::commands::skin::get_skin_storage_usage,
                 $crate::commands::settings::set_autostart::<$runtime>,
                 $crate::commands::settings::set_floating_always_on_top,
                 $crate::commands::settings::set_search_prewarm::<$runtime>,
@@ -195,6 +198,10 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     let builder = bindings_builder!(Wry);
 
     let app = tauri::Builder::default()
+        // 只读皮肤帧图协议：仅服务 `skins/assets/<sha256>.(webp|png)`，不暴露任意磁盘路径。
+        .register_uri_scheme_protocol("nivlo-skin", |ctx, request| {
+            serve_skin_asset(ctx.app_handle(), request.uri().path())
+        })
         // 单实例插件必须最先注册：第二次启动只唤起已有进程的主窗口，然后立即退出。
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             // 点击通知会以 `nivlo://item/<ID>` 参数再启动一次程序：转给这里，打开对应的 Item。
@@ -523,6 +530,48 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         }
     });
     Ok(())
+}
+
+/// 构造一个空体 HTTP 响应（供 `nivlo-skin://` 协议错误分支使用）。
+fn empty_protocol_response(status: u16) -> tauri::http::Response<Vec<u8>> {
+    tauri::http::Response::builder()
+        .status(status)
+        .body(Vec::new())
+        .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()))
+}
+
+/// 为 `nivlo-skin://localhost/<sha256>.(webp|png)` 提供只读文件响应。
+fn serve_skin_asset<R: tauri::Runtime>(
+    handle: &tauri::AppHandle<R>,
+    raw_path: &str,
+) -> tauri::http::Response<Vec<u8>> {
+    let file_name = raw_path.trim_start_matches('/');
+    if !nivlo_storage::is_valid_skin_asset_file_name(file_name) {
+        return empty_protocol_response(400);
+    }
+    let Some((_, ext)) = file_name.split_once('.') else {
+        return empty_protocol_response(400);
+    };
+    let Some(format) = nivlo_application::ports::SkinAssetFormat::from_extension(ext) else {
+        return empty_protocol_response(400);
+    };
+    let Some(state) = handle.try_state::<AppState>() else {
+        return empty_protocol_response(503);
+    };
+    let Some(paths) = state.runtime.paths() else {
+        return empty_protocol_response(503);
+    };
+    let path = paths.skins_assets_dir().join(file_name);
+    match std::fs::read(&path) {
+        Ok(bytes) => tauri::http::Response::builder()
+            .status(200)
+            .header("Content-Type", format.mime_type())
+            .header("Cache-Control", "public, max-age=31536000, immutable")
+            .header("Access-Control-Allow-Origin", "*")
+            .body(bytes)
+            .unwrap_or_else(|_| empty_protocol_response(500)),
+        Err(_) => empty_protocol_response(404),
+    }
 }
 
 /// 处理退出请求：第一次拦截并异步执行有序退出，完成后再真正退出。

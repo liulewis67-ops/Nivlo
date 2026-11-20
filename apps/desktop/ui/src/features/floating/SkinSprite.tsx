@@ -1,68 +1,67 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { cx } from "@/lib/cx";
-import { nextFrame } from "@/stores/skin-store";
-import type { Skin } from "@/stores/skin-store";
+import { resolveSkinTrack } from "@/stores/skin-store";
+import type { AnimationSlot, Skin } from "@/stores/skin-store";
+import { useFrameTimeline, usePageVisible, useReducedMotion } from "./model/frame-timeline";
 
 /** [`SkinSprite`] 的 Props。 */
 type SkinSpriteProps = {
   skin: Skin;
-  /** 是否正被悬停；播放方式为 `hover` 时才会动。 */
+  /** 当前交互与业务状态槽位；未指定时按 `idle` 处理。 */
+  slot?: AnimationSlot;
+  /** 是否正被悬停；播放方式或触发策略为仅悬停时才会动。 */
   hovered?: boolean;
   className?: string;
 };
 
-/** 系统是否开启「减少动态效果」。 */
-function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-/** 页面是否可见；隐藏时停止计时器与动画（D-13）。 */
-function usePageVisible(): boolean {
-  const [visible, setVisible] = useState(() => !document.hidden);
-  useEffect(() => {
-    /** 同步可见性。 */
-    const onChange = (): void => setVisible(!document.hidden);
-    document.addEventListener("visibilitychange", onChange);
-    return () => document.removeEventListener("visibilitychange", onChange);
-  }, []);
-  return visible;
-}
-
 /**
- * 按用户设置逐帧播放自定义皮肤，并叠加漂浮 / 呼吸 / 弹跳等附加动效。
+ * 按用户设置逐帧播放自定义皮肤（支持本地文件协议与旧版内联兜底），并叠加漂浮 / 呼吸 / 弹跳等附加动效。
  *
- * 系统开启"减少动态效果"时只显示第一帧（见 global.css）。
+ * 全局关闭动画、页面隐藏或系统开启「减少动态效果」时只显示首帧且不创建任何定时器（D-13）。
  *
- * @param props 皮肤与悬停状态。
+ * @param props 皮肤、状态槽位与悬停状态。
  * @returns 皮肤图像；没有帧时返回 `null`。
  */
-export function SkinSprite({ skin, hovered = false, className }: SkinSpriteProps) {
-  const { frames, fps, playback } = skin;
-  const [state, setState] = useState<{ index: number; direction: 1 | -1 }>({
-    index: 0,
-    direction: 1,
-  });
+export function SkinSprite({ skin, slot = "idle", hovered = false, className }: SkinSpriteProps) {
   const visible = usePageVisible();
-  // 减少动态效果时只显示第一帧；CSS 附加动效另在 global.css 里关闭。
-  const playing =
-    visible &&
-    !prefersReducedMotion() &&
-    frames.length > 1 &&
-    playback !== "still" &&
-    (playback !== "hover" || hovered);
+  const reducedMotion = useReducedMotion();
+  const resolved = useMemo(() => resolveSkinTrack(skin, slot), [skin, slot]);
 
+  // 预热当前活跃轨道的帧图，切帧时避免闪烁。
   useEffect(() => {
-    if (!playing) return;
-    const id = window.setInterval(
-      () => setState((s) => nextFrame(s.index, frames.length, playback, s.direction)),
-      Math.round(1000 / fps),
-    );
-    return () => window.clearInterval(id);
-  }, [playing, frames.length, fps, playback]);
+    for (const frame of resolved.frames) {
+      if (!frame.src.startsWith("data:")) {
+        const img = new Image();
+        img.src = frame.src;
+      }
+    }
+  }, [resolved.frames]);
 
-  // 不在播放时固定显示第一帧；播放中下标对帧数取模，防止删帧后越界。
-  const src = frames[playing ? state.index % frames.length : 0];
+  const canAnimate = visible && !reducedMotion && skin.animationEnabled;
+  const triggerAllows = !resolved.hoverOnly || hovered || slot === "reminder" || slot === "grabbed";
+  const playing =
+    canAnimate && resolved.frames.length > 1 && resolved.playback !== "still" && triggerAllows;
+
+  const frameDurations = useMemo(
+    () => resolved.frames.map((frame) => frame.durationMs),
+    [resolved.frames],
+  );
+  const resetKey = `${slot}:${resolved.playback}:${resolved.frames.length}:${playing ? "1" : "0"}`;
+  const frameIndex = useFrameTimeline({
+    frameDurations,
+    playback: resolved.playback,
+    active: playing,
+    resetKey,
+  });
+
+  const src = resolved.frames[playing ? frameIndex % resolved.frames.length : 0]?.src;
   if (src === undefined) return null;
+
+  const motionAllowed =
+    canAnimate &&
+    skin.motion !== "none" &&
+    (skin.animationTrigger !== "hoverOnly" || hovered || slot === "reminder" || slot === "grabbed");
+
   return (
     <img
       src={src}
@@ -72,7 +71,7 @@ export function SkinSprite({ skin, hovered = false, className }: SkinSpriteProps
       className={cx(
         "nv-skin h-full max-h-full w-auto object-contain",
         skin.pixel && "nv-skin-pixel",
-        visible && skin.motion !== "none" && `nv-skin-${skin.motion}`,
+        motionAllowed && `nv-skin-${skin.motion}`,
         className,
       )}
     />

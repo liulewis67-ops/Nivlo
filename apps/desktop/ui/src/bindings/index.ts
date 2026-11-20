@@ -408,6 +408,30 @@ export const commands = {
 	 */
 	setUiPref: (name: string, value: string | null) => typedError<null, IpcError>(__TAURI_INVOKE("set_ui_pref", { name, value })),
 	/**
+	 *  把一张皮肤帧图（Base64 编码）以内容寻址方式保存到 `skins/assets/`。
+	 * 
+	 *  # Errors
+	 * 
+	 *  格式不受支持、Base64 无效、图片魔数不符、超限或磁盘写入失败时返回 [`IpcError`]。
+	 */
+	saveSkinAsset: (bytesBase64: string, format: string) => typedError<SkinAssetDto, IpcError>(__TAURI_INVOKE("save_skin_asset", { bytesBase64, format })),
+	/**
+	 *  清理 `skins/assets/` 下未被清单引用的孤儿帧图，返回释放的字节数。
+	 * 
+	 *  # Errors
+	 * 
+	 *  磁盘读取失败时返回 [`IpcError`]。
+	 */
+	pruneSkinAssets: (keepFiles: string[]) => typedError<number, IpcError>(__TAURI_INVOKE("prune_skin_assets", { keepFiles })),
+	/**
+	 *  统计当前 `skins/assets/` 目录的文件数量与磁盘占用。
+	 * 
+	 *  # Errors
+	 * 
+	 *  磁盘读取失败时返回 [`IpcError`]。
+	 */
+	getSkinStorageUsage: () => typedError<SkinStorageUsageDto, IpcError>(__TAURI_INVOKE("get_skin_storage_usage")),
+	/**
 	 *  开启或关闭开机自启，返回之后的实际状态。
 	 * 
 	 *  # Errors
@@ -1540,6 +1564,26 @@ export type ShortcutStatusDto = {
 	disabled: boolean,
 	/**  在用户当前的键盘布局里这个组合会输入字符（AltGr）：界面提示换一个。 */
 	typesCharacter: boolean,
+};
+
+/**  已保存到本地文件系统的皮肤帧图元数据（IPC 表示）。 */
+export type SkinAssetDto = {
+	/**  内容寻址 ID（64 位小写 SHA-256）。 */
+	id: string,
+	/**  文件扩展名（`webp` 或 `png`）。 */
+	ext: string,
+	/**  文件大小（字节）。 */
+	sizeBytes: number,
+};
+
+/**  皮肤本地资源目录的磁盘占用概况（IPC 表示）。 */
+export type SkinStorageUsageDto = {
+	/**  文件数量。 */
+	fileCount: number,
+	/**  已占用总字节数。 */
+	totalBytes: number,
+	/**  最大配额（字节）。 */
+	quotaBytes: number,
 };
 
 /**  来源（IPC 表示）：这条 Item 来自哪里。 */

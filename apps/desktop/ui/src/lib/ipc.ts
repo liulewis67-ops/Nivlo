@@ -40,6 +40,8 @@ import type {
   UpdateInfoDto,
   IntegrationConnectionDto,
   IntegrationTestDto,
+  SkinAssetDto,
+  SkinStorageUsageDto,
   WorkflowRunDto,
 } from "@/bindings";
 import { toAppError } from "./errors";
@@ -101,6 +103,8 @@ export type {
   UpdateInfoDto,
   IntegrationConnectionDto,
   IntegrationTestDto,
+  SkinAssetDto,
+  SkinStorageUsageDto,
   WorkflowRunDto,
 } from "@/bindings";
 
@@ -211,6 +215,12 @@ export interface IpcClient {
   getUiPref(name: UiPrefName): Promise<string | null>;
   /** 保存界面偏好的 JSON 文本；`null` 表示恢复默认。 */
   setUiPref(name: UiPrefName, value: string | null): Promise<void>;
+  /** 把一张皮肤帧图（Base64）以内容寻址方式保存到本地 `skins/assets/`。 */
+  saveSkinAsset(bytesBase64: string, format: "webp" | "png"): Promise<SkinAssetDto>;
+  /** 清理本地 `skins/assets/` 中未被清单引用的孤儿帧图，返回释放字节数。 */
+  pruneSkinAssets(keepFiles: string[]): Promise<number>;
+  /** 读取本地 `skins/assets/` 的磁盘占用概况。 */
+  getSkinStorageUsage(): Promise<SkinStorageUsageDto>;
   /** 修改日历一周从哪天开始。 */
   setWeekStart(weekStart: WeekStartDto): Promise<void>;
   /**
@@ -513,6 +523,10 @@ const tauriIpc: IpcClient = {
   setUiPref: async (name, value) => {
     await call("set_ui_pref", commands.setUiPref(name, value));
   },
+  saveSkinAsset: (bytesBase64, format) =>
+    call("save_skin_asset", commands.saveSkinAsset(bytesBase64, format)),
+  pruneSkinAssets: (keepFiles) => call("prune_skin_assets", commands.pruneSkinAssets(keepFiles)),
+  getSkinStorageUsage: () => call("get_skin_storage_usage", commands.getSkinStorageUsage()),
   setWeekStart: async (weekStart) => {
     await call("set_week_start", commands.setWeekStart(weekStart));
   },
@@ -719,6 +733,9 @@ export const ipc: IpcClient = {
   setWeekStart: (weekStart) => current.setWeekStart(weekStart),
   getUiPref: (name) => current.getUiPref(name),
   setUiPref: (name, value) => current.setUiPref(name, value),
+  saveSkinAsset: (bytesBase64, format) => current.saveSkinAsset(bytesBase64, format),
+  pruneSkinAssets: (keepFiles) => current.pruneSkinAssets(keepFiles),
+  getSkinStorageUsage: () => current.getSkinStorageUsage(),
   setNotificationsPaused: (paused) => current.setNotificationsPaused(paused),
   setReminderFlashSeconds: (seconds) => current.setReminderFlashSeconds(seconds),
   setReminderCount: (count) => current.setReminderCount(count),

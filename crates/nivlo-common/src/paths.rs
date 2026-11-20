@@ -150,6 +150,8 @@ impl AppPaths {
             &self.cache_dir(),
             &self.workflows_dir(),
             &self.attachments_dir(),
+            &self.skins_dir(),
+            &self.skins_assets_dir(),
         ] {
             std::fs::create_dir_all(dir).map_err(|source| PathsError::CreateDir {
                 path: dir.to_path_buf(),
@@ -202,6 +204,16 @@ impl AppPaths {
     /// 附件目录（仅存放没有原始路径的内容，如粘贴的截图）。
     pub fn attachments_dir(&self) -> PathBuf {
         self.root.join("attachments")
+    }
+
+    /// 悬浮窗自定义皮肤根目录。
+    pub fn skins_dir(&self) -> PathBuf {
+        self.root.join("skins")
+    }
+
+    /// 悬浮窗自定义皮肤的帧图资源目录（内容寻址文件）。
+    pub fn skins_assets_dir(&self) -> PathBuf {
+        self.skins_dir().join("assets")
     }
 }
 
@@ -298,6 +310,11 @@ mod tests {
         );
         assert_eq!(paths.logs_dir(), Path::new("/r").join("logs"));
         assert_eq!(paths.attachments_dir(), Path::new("/r").join("attachments"));
+        assert_eq!(paths.skins_dir(), Path::new("/r").join("skins"));
+        assert_eq!(
+            paths.skins_assets_dir(),
+            Path::new("/r").join("skins").join("assets")
+        );
     }
 
     #[test]
@@ -313,6 +330,8 @@ mod tests {
             paths.cache_dir(),
             paths.workflows_dir(),
             paths.attachments_dir(),
+            paths.skins_dir(),
+            paths.skins_assets_dir(),
         ] {
             assert!(dir.is_dir(), "{dir:?} 应已创建");
         }

@@ -52,6 +52,8 @@ pub struct ApplicationServices {
     pub export: ExportService,
     /// 第三方集成的连接管理（凭据只在系统凭据库里）。
     pub integrations: crate::integration_service::IntegrationService,
+    /// 悬浮窗自定义皮肤帧图的本地文件存储。
+    pub skin_assets: Arc<dyn nivlo_application::ports::SkinAssetStore>,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。

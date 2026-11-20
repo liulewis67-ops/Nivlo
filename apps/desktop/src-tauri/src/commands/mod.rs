@@ -14,6 +14,7 @@ pub mod item;
 pub mod organize;
 pub mod settings;
 pub mod shortcut;
+pub mod skin;
 pub mod source;
 pub mod today;
 pub mod trash;

@@ -280,6 +280,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
   const itemTags = new Map<string, string[]>();
   let nextOrganizeId = 1;
   const uiPrefs = new Map<string, string>();
+  /** 内存模拟的本地皮肤帧图资源（`fileName -> { dataUrl, sizeBytes }`）。 */
+  const skinAssets = new Map<string, { dataUrl: string; sizeBytes: number }>();
   const integrationRecords: IntegrationConnectionDto[] = [];
   const integrationSecrets = new Map<string, string>();
   let offeredUpdate: UpdateInfoDto | null = null;
@@ -1247,6 +1249,49 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       if (value === null) uiPrefs.delete(name);
       else uiPrefs.set(name, value);
       return Promise.resolve();
+    },
+    saveSkinAsset: (bytesBase64: string, format: "webp" | "png") => {
+      calls.push("saveSkinAsset");
+      // 确定性 64 位 hex 哈希（与后端 SHA-256 长度和格式一致，确保去重行为相同）。
+      let h1 = 0x811c9dc5;
+      let h2 = 0x9e3779b9;
+      for (let i = 0; i < bytesBase64.length; i++) {
+        const ch = bytesBase64.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 0x01000193) >>> 0;
+        h2 = Math.imul(h2 ^ (ch + i), 0x85ebca6b) >>> 0;
+      }
+      const id = `${h1.toString(16).padStart(8, "0")}${h2.toString(16).padStart(8, "0")}`.repeat(4);
+      const sizeBytes = Math.max(1, Math.floor((bytesBase64.length * 3) / 4));
+      const fileName = `${id}.${format}`;
+      if (!skinAssets.has(fileName)) {
+        skinAssets.set(fileName, {
+          dataUrl: `data:image/${format};base64,${bytesBase64}`,
+          sizeBytes,
+        });
+      }
+      return Promise.resolve({ id, ext: format, sizeBytes });
+    },
+    pruneSkinAssets: (keepFiles: string[]) => {
+      calls.push("pruneSkinAssets");
+      const keep = new Set(keepFiles);
+      let freed = 0;
+      for (const [name, entry] of [...skinAssets.entries()]) {
+        if (!keep.has(name)) {
+          freed += entry.sizeBytes;
+          skinAssets.delete(name);
+        }
+      }
+      return Promise.resolve(freed);
+    },
+    getSkinStorageUsage: () => {
+      calls.push("getSkinStorageUsage");
+      let totalBytes = 0;
+      for (const entry of skinAssets.values()) totalBytes += entry.sizeBytes;
+      return Promise.resolve({
+        fileCount: skinAssets.size,
+        totalBytes,
+        quotaBytes: 50 * 1024 * 1024,
+      });
     },
     setWeekStart: (weekStart: WeekStartDto) => {
       calls.push("setWeekStart");

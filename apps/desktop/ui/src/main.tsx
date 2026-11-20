@@ -51,7 +51,10 @@ async function hydrateUiPrefs(): Promise<void> {
     if (appearance && cachedAppearance === useAppearanceStore.getState().appearance) {
       useAppearanceStore.getState().hydrate(appearance);
     }
-    if (cachedSkin === useSkinStore.getState().skin) useSkinStore.getState().hydrate(skin);
+    if (cachedSkin === useSkinStore.getState().skin) {
+      useSkinStore.getState().hydrate(skin);
+      void useSkinStore.getState().migrateLegacyFrames();
+    }
     if (language) await hydrateLanguage(language);
     if (theme) useThemeStore.getState().hydrate(theme);
     if (hideCompleted) useDisplayStore.getState().hydrate(hideCompleted);

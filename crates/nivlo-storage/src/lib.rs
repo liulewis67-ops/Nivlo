@@ -18,9 +18,13 @@ mod error;
 mod item_repository;
 mod organize_repository;
 mod pinyin_initials;
+mod skin_files;
 mod trash_repository;
 mod trigger_repository;
 mod workflow_repository;
 
 pub use attachment_files::FsAttachmentFiles;
 pub use database::Database;
+pub use skin_files::{
+    FsSkinAssetStore, MAX_SKIN_ASSET_BYTES, MAX_SKIN_STORAGE_BYTES, is_valid_skin_asset_file_name,
+};

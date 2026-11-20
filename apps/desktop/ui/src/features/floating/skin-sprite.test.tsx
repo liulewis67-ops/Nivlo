@@ -71,4 +71,15 @@ describe("SkinSprite", () => {
     expect(container.querySelector("img")?.className).not.toContain("nv-skin-bounce");
     Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
   });
+
+  it("stops the timer and motion when animationEnabled is false", () => {
+    vi.useFakeTimers();
+    mockReducedMotion(false);
+    const { container } = render(
+      <SkinSprite skin={{ ...LOOPING, animationEnabled: false, motion: "float" }} />,
+    );
+    expect(vi.getTimerCount()).toBe(0);
+    expect(container.querySelector("img")?.getAttribute("src")).toBe(A);
+    expect(container.querySelector("img")?.className).not.toContain("nv-skin-float");
+  });
 });

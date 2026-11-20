@@ -728,7 +728,7 @@
         "badge": "Desktop companion",
         "surface": "Surface, accent and opacity",
         "skin": "Custom skin",
-        "motion": "Skin motion"
+        "motion": "Floating animation"
       }
     },
     "companion": {
@@ -748,11 +748,68 @@
       },
       "faces": { "friendly": "Friendly", "focused": "Focused", "playful": "Playful" },
       "saveFailed": "Could not save the appearance. Try again.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "animation": {
+        "enabled": {
+          "label": "Enable floating animation",
+          "hint": "Turn off to stop all robot actions, frame playback, and floating transitions."
+        },
+        "trigger": {
+          "label": "Animation trigger",
+          "hint": "Choose when floating animations play.",
+          "interactive": "Interactive & reminders",
+          "always": "Always",
+          "hoverOnly": "On hover only"
+        },
+        "preview": {
+          "label": "Live action preview",
+          "hint": "Switch states to preview how the floating companion behaves."
+        },
+        "slots": {
+          "idle": "Idle",
+          "hover": "Hover",
+          "grabbed": "Grabbed",
+          "ready": "Drop ready",
+          "done": "All done",
+          "reminder": "Reminder"
+        },
+        "robotIdle": {
+          "label": "Robot idle action",
+          "hint": "Pick a looping idle action, or turn it off to stay still.",
+          "off": "Off",
+          "blink": "Blink",
+          "float": "Float",
+          "breathe": "Breathe",
+          "lookAround": "Look around",
+          "sleep": "Sleep"
+        },
+        "robotReactive": {
+          "hover": {
+            "label": "Hover greeting",
+            "hint": "Lift head and smile when the pointer hovers over the robot."
+          },
+          "grabbed": {
+            "label": "Grab reaction",
+            "hint": "Wiggle gently and light up the antenna while dragging."
+          },
+          "ready": {
+            "label": "Drop ready cue",
+            "hint": "Highlight the robot when dragging files or text onto the badge."
+          },
+          "done": {
+            "label": "Completion celebration",
+            "hint": "Play a one-shot celebration hop when all today's to-dos are done."
+          },
+          "reminder": {
+            "label": "Reminder wiggle",
+            "hint": "Wiggle to get attention when a reminder fires."
+          }
+        }
+      }
     },
     "skin": {
       "label": "Custom skin",
-      "hint": "Pick several images or pixel art; they play as frames on the collapsed badge. Up to 16 frames, shrunk to fit. A GIF contributes its first frame.",
+      "hint": "Pick images or pixel art to play as animation frames, stored as local files. Up to 60 frames per track at up to 256px.",
       "add": "Add images…",
       "clear": "Remove skin",
       "empty": "No skin",

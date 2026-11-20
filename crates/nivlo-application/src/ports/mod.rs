@@ -6,7 +6,9 @@ pub mod inspect;
 pub mod integration;
 mod storage;
 
-pub use files::{AttachmentFiles, StoredFile};
+pub use files::{
+    AttachmentFiles, SkinAssetFormat, SkinAssetStore, SkinStorageUsage, StoredFile, StoredSkinAsset,
+};
 
 pub use storage::{
     AttachmentRepository, ItemFilter, ItemOrder, ItemRepository, ProjectRepository,

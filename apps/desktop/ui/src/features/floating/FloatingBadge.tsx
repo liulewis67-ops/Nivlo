@@ -7,6 +7,7 @@ import { ipc } from "@/lib/ipc";
 import { useAppearanceStore } from "@/stores/appearance-store";
 import { hasImageSkin, useSkinStore } from "@/stores/skin-store";
 import { LONG_PRESS_MS, createDragIntentTracker } from "./model/drag-intent";
+import { resolveAnimationSlot } from "./model/frame-timeline";
 import { SkinSprite } from "./SkinSprite";
 import { RobotAvatar } from "./RobotAvatar";
 
@@ -17,6 +18,10 @@ const PLACEHOLDER = "–";
 type FloatingBadgeProps = {
   /** 右键徽标：直接进入待办的快速创建。 */
   onQuickAdd?: () => void;
+  /** 是否有外部文件/内容正悬停准备拖入。 */
+  dropReady?: boolean;
+  /** 是否有到期提醒正在提示。 */
+  reminderAttention?: boolean;
 };
 
 /**
@@ -99,7 +104,11 @@ function CheckGlyph({ className }: { className?: string }) {
  * @param props 右键快速添加的回调。
  * @returns 徽标按钮。
  */
-export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
+export function FloatingBadge({
+  onQuickAdd,
+  dropReady = false,
+  reminderAttention = false,
+}: FloatingBadgeProps = {}) {
   const { t } = useTranslation();
   const today = useTodayQuery();
   /** 今天还剩的事；尚未加载完成时为 `null`，显示占位而不是误导性的 0。 */
@@ -242,6 +251,14 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
     </span>
   );
 
+  const activeSlot = resolveAnimationSlot({
+    reminder: reminderAttention,
+    grabbed: selected,
+    ready: dropReady,
+    done: allDone,
+    hovered,
+  });
+
   return (
     <button
       type="button"
@@ -271,7 +288,11 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
           <span className="nv-robot-figure">
             <RobotAvatar
               appearance={skin}
-              expression={selected ? "grabbed" : allDone ? "done" : hovered ? "hover" : "idle"}
+              expression={activeSlot}
+              action={skin.robotAction}
+              animationEnabled={skin.animationEnabled}
+              trigger={skin.animationTrigger}
+              hovered={hovered}
             />
           </span>
           {skin.showCount && !allDone && (
@@ -282,7 +303,7 @@ export function FloatingBadge({ onQuickAdd }: FloatingBadgeProps = {}) {
         </>
       ) : hasSkin ? (
         <>
-          <SkinSprite skin={skin} hovered={hovered} />
+          <SkinSprite skin={skin} slot={activeSlot} hovered={hovered} />
           {skin.showCount && count}
         </>
       ) : shape === "circle" ? (

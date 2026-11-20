@@ -142,6 +142,7 @@ pub async fn create_backup(
     let schema_version = Database::verify_file(&snapshot).await?.unwrap_or(0);
 
     let attachments_dir = paths.attachments_dir();
+    let skins_dir = paths.skins_dir();
     let manifest = Manifest {
         format: BACKUP_FORMAT.to_owned(),
         version: BACKUP_VERSION,
@@ -164,6 +165,10 @@ pub async fn create_backup(
         std::io::copy(&mut File::open(&snapshot_path)?, &mut writer)?;
         for (name, path) in walk(&attachments_dir) {
             writer.start_file(format!("attachments/{name}"), options)?;
+            std::io::copy(&mut File::open(path)?, &mut writer)?;
+        }
+        for (name, path) in walk(&skins_dir) {
+            writer.start_file(format!("skins/{name}"), options)?;
             std::io::copy(&mut File::open(path)?, &mut writer)?;
         }
         writer.finish()?;
@@ -253,7 +258,9 @@ fn extract(backup: &Path, staging: &Path) -> Result<Manifest, BackupError> {
         if entry.is_dir() || name == "manifest.json" {
             continue;
         }
-        let allowed = name == "nivlo.db" || name.strip_prefix("attachments/").is_some();
+        let allowed = name == "nivlo.db"
+            || name.strip_prefix("attachments/").is_some()
+            || name.strip_prefix("skins/").is_some();
         if !allowed || !safe_relative(&name) {
             return Err(BackupError::Invalid(format!("包含不允许的文件：{name}")));
         }
@@ -305,7 +312,8 @@ fn move_current_aside(
             .unwrap_or_default();
         move_aside(from, replaced.join(file_name))?;
     }
-    move_aside(paths.attachments_dir(), replaced.join("attachments"))
+    move_aside(paths.attachments_dir(), replaced.join("attachments"))?;
+    move_aside(paths.skins_dir(), replaced.join("skins"))
 }
 
 /// 回滚 [`move_current_aside`]：把挪走的放回去（反向）。
@@ -340,6 +348,12 @@ pub fn apply_pending_restore(paths: &AppPaths, stamp: &str) -> Result<bool, Back
             std::fs::rename(staged_attachments, paths.attachments_dir())?;
         } else {
             std::fs::create_dir_all(paths.attachments_dir())?;
+        }
+        let staged_skins = staging.join("skins");
+        if staged_skins.is_dir() {
+            std::fs::rename(staged_skins, paths.skins_dir())?;
+        } else {
+            std::fs::create_dir_all(paths.skins_assets_dir())?;
         }
         Ok(())
     })();
@@ -386,6 +400,7 @@ pub fn apply_pending_reset(paths: &AppPaths, stamp: &str) -> Result<bool, Backup
         return Err(error);
     }
     std::fs::create_dir_all(paths.attachments_dir())?;
+    std::fs::create_dir_all(paths.skins_assets_dir())?;
     let _ = std::fs::remove_file(paths.root().join(RESET_MARKER));
     Ok(true)
 }

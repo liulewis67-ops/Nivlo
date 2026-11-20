@@ -18,7 +18,7 @@ use nivlo_application::workflow::{WorkflowEngine, WorkflowService};
 use nivlo_common::clock::SystemClock;
 use nivlo_common::logging::{LogConfig, LogError, LogGuard, init_logging};
 use nivlo_common::paths::{AppPaths, PathsError};
-use nivlo_storage::{Database, FsAttachmentFiles};
+use nivlo_storage::{Database, FsAttachmentFiles, FsSkinAssetStore};
 use nivlo_workflow::WorkflowEngineAdapter;
 
 use crate::app::{AppState, ApplicationServices, RuntimeHandles};
@@ -175,6 +175,12 @@ pub fn build_app_state(
     );
     let calendar = CalendarService::new(Arc::new(database.clone()), clock.clone());
     let export = ExportService::new(Arc::new(database.clone()), clock.clone());
+    let skins_assets_dir = attachments_dir.parent().map_or_else(
+        || attachments_dir.join("skins").join("assets"),
+        |root| root.join("skins").join("assets"),
+    );
+    let skin_assets: Arc<dyn nivlo_application::ports::SkinAssetStore> =
+        Arc::new(FsSkinAssetStore::new(skins_assets_dir));
     let runtime = RuntimeHandles::new(event_bus, database, clock, log_guard);
     runtime.set_enrichment_queue(enrichment_rx);
     let _ = runtime.set_script_worker(script_worker);
@@ -192,6 +198,7 @@ pub fn build_app_state(
             workflows,
             export,
             integrations,
+            skin_assets,
         },
         runtime,
     }

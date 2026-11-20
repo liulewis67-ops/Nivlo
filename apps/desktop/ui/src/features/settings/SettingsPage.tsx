@@ -13,6 +13,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useToastStore } from "@/stores/toast-store";
 import {
+  ANIMATION_TRIGGERS,
   AVATAR_MODES,
   MAX_FPS,
   MIN_FPS,
@@ -21,9 +22,11 @@ import {
   ROBOTS,
   ROBOT_COLORS,
   ROBOT_FACES,
+  ROBOT_IDLE_ACTIONS,
   useSkinStore,
 } from "@/stores/skin-store";
 import { RobotAvatar } from "@/features/floating";
+import { CompanionPreviewStage } from "./CompanionPreviewStage";
 import { SkinSetting } from "./SkinSetting";
 import { useThemeStore } from "@/stores/theme-store";
 import type { ThemePreference } from "@/stores/theme-store";
@@ -636,53 +639,155 @@ export function SettingsPage() {
               </div>
             </fieldset>
           )}
-          {skin.mode === "image" && (
-            <fieldset className="min-w-0 p-3">
-              <legend className="px-1 text-sm font-medium text-text">
-                {t("settings.appearance.group.motion")}
-              </legend>
-              <div className="divide-y divide-border">
-                <Row
-                  label={t("settings.skin.playback.label")}
-                  hint={t("settings.skin.playback.hint")}
-                >
-                  <Segmented
-                    label={t("settings.skin.playback.label")}
-                    value={skin.playback}
-                    options={PLAYBACKS}
-                    render={(o) => t(`settings.skin.playback.${o}`)}
-                    onChange={(playback) => updateSkin({ playback })}
-                  />
-                </Row>
-                <Row label={t("settings.skin.fps.label")} hint={t("settings.skin.fps.hint")}>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      aria-label={t("settings.skin.fps.label")}
-                      min={MIN_FPS}
-                      max={MAX_FPS}
-                      step={1}
-                      value={skin.fps}
-                      onChange={(event) => updateSkin({ fps: Number(event.target.value) })}
-                      className="w-32 accent-(--nv-primary)"
+          <fieldset className="min-w-0 p-3">
+            <legend className="px-1 text-sm font-medium text-text">
+              {t("settings.appearance.group.motion")}
+            </legend>
+            <div className="divide-y divide-border">
+              <Row
+                label={t("settings.companion.animation.enabled.label")}
+                hint={t("settings.companion.animation.enabled.hint")}
+              >
+                <Switch
+                  label={t("settings.companion.animation.enabled.label")}
+                  checked={skin.animationEnabled}
+                  onCheckedChange={(animationEnabled) => updateSkin({ animationEnabled })}
+                />
+              </Row>
+              {skin.animationEnabled && (
+                <>
+                  <Row
+                    label={t("settings.companion.animation.trigger.label")}
+                    hint={t("settings.companion.animation.trigger.hint")}
+                  >
+                    <Segmented
+                      label={t("settings.companion.animation.trigger.label")}
+                      value={skin.animationTrigger}
+                      options={ANIMATION_TRIGGERS}
+                      render={(o) => t(`settings.companion.animation.trigger.${o}`)}
+                      onChange={(animationTrigger) => updateSkin({ animationTrigger })}
                     />
-                    <span className="w-10 text-right text-xs text-muted tabular-nums">
-                      {skin.fps}
-                    </span>
-                  </div>
-                </Row>
-                <Row label={t("settings.skin.motion.label")} hint={t("settings.skin.motion.hint")}>
-                  <Segmented
-                    label={t("settings.skin.motion.label")}
-                    value={skin.motion}
-                    options={MOTIONS}
-                    render={(o) => t(`settings.skin.motion.${o}`)}
-                    onChange={(motion) => updateSkin({ motion })}
-                  />
-                </Row>
-              </div>
-            </fieldset>
-          )}
+                  </Row>
+                  {skin.mode !== "badge" && (
+                    <Row
+                      label={t("settings.companion.animation.preview.label")}
+                      hint={t("settings.companion.animation.preview.hint")}
+                    >
+                      <CompanionPreviewStage />
+                    </Row>
+                  )}
+                  {skin.mode === "robot" && (
+                    <>
+                      <Row
+                        label={t("settings.companion.animation.robotIdle.label")}
+                        hint={t("settings.companion.animation.robotIdle.hint")}
+                      >
+                        <Segmented
+                          label={t("settings.companion.animation.robotIdle.label")}
+                          value={skin.robotAction.idle}
+                          options={ROBOT_IDLE_ACTIONS}
+                          render={(o) => t(`settings.companion.animation.robotIdle.${o}`)}
+                          onChange={(idle) =>
+                            updateSkin({ robotAction: { ...skin.robotAction, idle } })
+                          }
+                        />
+                      </Row>
+                      {(["hover", "grabbed", "ready", "done", "reminder"] as const).map((key) => (
+                        <Row
+                          key={key}
+                          label={t(`settings.companion.animation.robotReactive.${key}.label`)}
+                          hint={t(`settings.companion.animation.robotReactive.${key}.hint`)}
+                        >
+                          <Switch
+                            label={t(`settings.companion.animation.robotReactive.${key}.label`)}
+                            checked={skin.robotAction[key]}
+                            onCheckedChange={(enabled) =>
+                              updateSkin({
+                                robotAction: { ...skin.robotAction, [key]: enabled },
+                              })
+                            }
+                          />
+                        </Row>
+                      ))}
+                    </>
+                  )}
+                  {skin.mode === "image" && (
+                    <>
+                      <Row
+                        label={t("settings.skin.playback.label")}
+                        hint={t("settings.skin.playback.hint")}
+                      >
+                        <Segmented
+                          label={t("settings.skin.playback.label")}
+                          value={skin.playback}
+                          options={PLAYBACKS}
+                          render={(o) => t(`settings.skin.playback.${o}`)}
+                          onChange={(playback) => {
+                            const idle = skin.tracks.idle;
+                            const trackPlayback =
+                              playback === "pingpong"
+                                ? "pingpong"
+                                : playback === "still"
+                                  ? "still"
+                                  : "loop";
+                            updateSkin({
+                              playback,
+                              ...(idle
+                                ? {
+                                    tracks: {
+                                      ...skin.tracks,
+                                      idle: { ...idle, playback: trackPlayback },
+                                    },
+                                  }
+                                : {}),
+                            });
+                          }}
+                        />
+                      </Row>
+                      <Row label={t("settings.skin.fps.label")} hint={t("settings.skin.fps.hint")}>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="range"
+                            aria-label={t("settings.skin.fps.label")}
+                            min={MIN_FPS}
+                            max={MAX_FPS}
+                            step={1}
+                            value={skin.tracks.idle?.fps ?? skin.fps}
+                            onChange={(event) => {
+                              const fps = Number(event.target.value);
+                              const idle = skin.tracks.idle;
+                              updateSkin({
+                                fps,
+                                ...(idle
+                                  ? { tracks: { ...skin.tracks, idle: { ...idle, fps } } }
+                                  : {}),
+                              });
+                            }}
+                            className="w-32 accent-(--nv-primary)"
+                          />
+                          <span className="w-10 text-right text-xs text-muted tabular-nums">
+                            {skin.tracks.idle?.fps ?? skin.fps}
+                          </span>
+                        </div>
+                      </Row>
+                      <Row
+                        label={t("settings.skin.motion.label")}
+                        hint={t("settings.skin.motion.hint")}
+                      >
+                        <Segmented
+                          label={t("settings.skin.motion.label")}
+                          value={skin.motion}
+                          options={MOTIONS}
+                          render={(o) => t(`settings.skin.motion.${o}`)}
+                          onChange={(motion) => updateSkin({ motion })}
+                        />
+                      </Row>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          </fieldset>
         </Section>
         <Section id="settings-notifications" title={t("settings.section.notifications")}>
           <Row

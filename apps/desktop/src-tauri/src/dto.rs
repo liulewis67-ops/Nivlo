@@ -1719,3 +1719,49 @@ impl From<&CaptureResult> for CaptureResultDto {
         }
     }
 }
+
+/// 已保存到本地文件系统的皮肤帧图元数据（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SkinAssetDto {
+    /// 内容寻址 ID（64 位小写 SHA-256）。
+    pub id: String,
+    /// 文件扩展名（`webp` 或 `png`）。
+    pub ext: String,
+    /// 文件大小（字节）。
+    pub size_bytes: u32,
+}
+
+impl From<nivlo_application::ports::StoredSkinAsset> for SkinAssetDto {
+    /// Application → DTO。
+    fn from(value: nivlo_application::ports::StoredSkinAsset) -> Self {
+        Self {
+            id: value.id,
+            ext: value.format.extension().to_owned(),
+            size_bytes: u32::try_from(value.size_bytes).unwrap_or(u32::MAX),
+        }
+    }
+}
+
+/// 皮肤本地资源目录的磁盘占用概况（IPC 表示）。
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct SkinStorageUsageDto {
+    /// 文件数量。
+    pub file_count: u32,
+    /// 已占用总字节数。
+    pub total_bytes: u32,
+    /// 最大配额（字节）。
+    pub quota_bytes: u32,
+}
+
+impl From<nivlo_application::ports::SkinStorageUsage> for SkinStorageUsageDto {
+    /// Application → DTO。
+    fn from(value: nivlo_application::ports::SkinStorageUsage) -> Self {
+        Self {
+            file_count: u32::try_from(value.file_count).unwrap_or(u32::MAX),
+            total_bytes: u32::try_from(value.total_bytes).unwrap_or(u32::MAX),
+            quota_bytes: u32::try_from(value.quota_bytes).unwrap_or(u32::MAX),
+        }
+    }
+}

@@ -253,7 +253,11 @@ export function FloatingRoot() {
             }}
           />
         ) : (
-          <FloatingBadge onQuickAdd={() => startQuickCreate("todo")} />
+          <FloatingBadge
+            onQuickAdd={() => startQuickCreate("todo")}
+            dropReady={drop.hovering}
+            reminderAttention={reminderAttention}
+          />
         )}
       </div>
     </MenuModalContext.Provider>
