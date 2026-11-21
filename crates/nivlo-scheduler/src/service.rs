@@ -36,12 +36,18 @@ const LOG_RETENTION: Duration = Duration::days(30);
 /// 最多发送几次，包括第一次。
 pub const MAX_REMINDER_COUNT: u8 = 5;
 
+/// Delay between repeated deliveries of the same reminder.
 const REPEAT_INTERVAL: Duration = Duration::minutes(1);
 
+/// Delivery state for a reminder that still has repetitions scheduled.
 struct PendingRepeat {
+    /// Original trigger, used to discard reminders removed or rescheduled by the user.
     key: TriggerKey,
+    /// Number of deliveries already attempted for this reminder.
     sent: u8,
+    /// Earliest time of the next repeated delivery.
     at: DateTime<Utc>,
+    /// Whether the original trigger was recovered as a missed reminder.
     missed: bool,
 }
 
@@ -54,6 +60,7 @@ pub struct Control {
     paused: AtomicBool,
     /// 通知文案的语言（`Locale` 的编号，切换语言后下一次通知生效）。
     locale: AtomicU8,
+    /// Configured total delivery count, including the initial reminder.
     repeat_count: AtomicU8,
 }
 
@@ -138,6 +145,7 @@ impl Scheduler {
         }
     }
 
+    /// Attempt notification delivery and record its result without stopping the scheduler.
     fn send(&self, notice: &Notice) {
         match self.notifier.notify(&notice.notification) {
             // 只记数量与是否补发，不记标题（日志可能随诊断包导出）。
@@ -153,6 +161,7 @@ impl Scheduler {
         }
     }
 
+    /// Deliver due repetitions, discard stale triggers, and return the next repeat time.
     fn process_repeats(
         &self,
         now: DateTime<Utc>,
