@@ -1,5 +1,7 @@
 name: Publish Nivlo 0.1.0
 
+# Create the release tag before building and retain the installer before publishing.
+
 on:
   push:
     branches: [main]

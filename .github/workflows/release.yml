@@ -39,6 +39,8 @@ jobs:
         with:
           toolchain: 1.95.0
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -55,6 +57,9 @@ jobs:
           test -f "docs/development/releases/$RELEASE_TAG.md"
           if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
             [ "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)" ] || { echo 'Existing tag points to another commit'; exit 1; }
+          else
+            git tag "$RELEASE_TAG" HEAD
+            git push origin "refs/tags/$RELEASE_TAG"
           fi
       - name: Build with updater signature
         if: env.TAURI_SIGNING_PRIVATE_KEY != ''
@@ -72,6 +77,16 @@ jobs:
           node scripts/release/make-latest-json.mjs --version "${RELEASE_TAG#v}" \
             --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}" \
             --notes "Nivlo ${RELEASE_TAG#v}"
+      - name: Preserve Windows build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nivlo-windows-${{ env.RELEASE_TAG }}
+          path: |
+            target/release/bundle/nsis/*-setup.exe
+            target/release/bundle/nsis/*-setup.exe.sig
+            latest.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Publish installer and checksums
         shell: pwsh
         env:
@@ -90,7 +105,7 @@ jobs:
           }
           gh release view $env:RELEASE_TAG --json isDraft --jq .isDraft > release-state.txt 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:RELEASE_TAG --target $env:GITHUB_SHA --draft --title "Nivlo $($env:RELEASE_TAG.Substring(1))" --notes-file "docs/development/releases/$env:RELEASE_TAG.md"
+            gh release create $env:RELEASE_TAG --verify-tag --draft --title "Nivlo $($env:RELEASE_TAG.Substring(1))" --notes-file "docs/development/releases/$env:RELEASE_TAG.md"
             if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
           } elseif ((Get-Content release-state.txt -Raw).Trim() -ne 'true') {
             throw 'This release is already published. Refusing to replace public artifacts.'
