@@ -1,0 +1,191 @@
+# 交互与设计优化计划：全局快捷键与全局搜索框
+
+> 2026-10-26。记录本轮已经落地的内容、尚待真机确认的项目，以及按优先级排列的后续优化。
+
+## 2026-11-01 implementation amendment
+
+The historical fixed-height global-search description is superseded by the current content-fitting implementation (`fitSearch` / native `fit_search`). The 640px nominal width and 440px maximum height are constraints, not a fixed content height. See the [UI/UX implementation guide](ui-ux-implementation-guide.md) for work-area clamping requirements and the [stage ledger](ui-ux-progress.md) for current evidence. Earlier decisions and results remain historical records.
+
+## 2026-11-02 capture and search amendment
+
+M3 deliberately replaces input-level Tab / Shift+Tab capture-type cycling with standard focus traversal. The visible Todo / Note / Tip radio group uses arrow keys; Tab moves between that group, the title and other controls. Capture still starts with title focus; clicking a type preserves the title draft and selection. Enter submits and Escape cancels. Earlier Tab-cycle descriptions below remain historical, not current instructions.
+
+Search now exposes Commands and Keyboard help controls alongside the existing `>` route. Visible Open / Create Todo / Complete / Reopen actions share the existing operations and Undo duration. Global search exposes its supported navigation commands only. M4 release Windows checks pass for native invocation, previous-app focus return, click-away, visible/hidden/uncreated-main handoff and 200% content zoom. Search fitting distinguishes content zoom from monitor DPI; selected results follow the resized list viewport. Fast badge gestures capture the pointer and hand native dragging over synchronously. NVDA and physical mixed-monitor checks remain unrun. See [stage evidence](ui-ux-progress.md) and [implementation release notes](ui-ux-release-notes.md).
+
+## 1. 本轮已落地
+
+### 1.1 第二个全局快捷键：全局搜索
+
+| 项 | 内容 |
+|---|---|
+| 默认绑定 | `Ctrl+Alt+Space`（与 Quick Create 的 `Ctrl+Shift+Space` 同一组按键，好记） |
+| 设置键 | `shortcut.search`（Quick Create 仍是 `shortcut.quick_create`，已有数据不受影响） |
+| 实现 | `ShortcutController` 按 `ShortcutAction` 区分设置键与默认值；每个动作一个独立的 `RegisterHotKey` 线程，一个被占用不影响另一个 |
+| 冲突 | 启动时被占用不致命，界面提示并引导重绑；重绑到 Nivlo 另一个动作已用的组合时直接给出明确原因（不再误报「被其他程序占用」） |
+| IPC | `get_shortcut_status(action)`、`set_shortcut(action, accelerator)` 取代 `set_quick_create_shortcut` |
+| 设置入口 | 设置页「悬浮窗」分区新增「全局搜索快捷键」行；侧栏仍只放 Quick Create，保持紧凑 |
+
+### 1.2 全局搜索框（`search` 窗口）
+
+- **按需创建**：第一次按快捷键才创建 WebView，之后只隐藏 / 显示，不增加常驻内存；第一次等页面加载完成才显示，避免闪白。
+- **出现位置**：鼠标所在显示器的工作区内，水平居中、顶边在 18% 高度处；小屏幕上保证完整可见（`search_origin` 有单测）。
+- **外观**：无边框、不透明、系统阴影（Windows 11 自带圆角）、置顶、不进任务栏，640×440 logical px。
+- **开 / 关**：再按一次快捷键、Esc、点到别处都会隐藏。Esc 把焦点还给之前正在使用的应用；点到别处只隐藏，不抢回焦点。
+- **每次出现都是干净的**：清空输入、重新聚焦、丢弃旧的搜索缓存；失去焦点时也先重置，下次出现不会闪出上次的结果。
+- **打开结果**：回车 / 点击交给主窗口打开详情（复用通知激活的 `item:<ID>` 通道），搜索框随即隐藏。
+- **最小权限**：`capabilities/search.json` 只有 `search_items`、`open_item_in_main`、`hide_search`；Capability 测试保证搜索框拿不到编辑与删除命令（后来只增加了 Quick Create 与可撤销的完成）。
+
+### 1.3 搜索面板的交互改进（主窗口 Ctrl+K 与全局搜索框共用 `SearchPanel`）
+
+- **手快不落空**：输入还没停顿就按回车，会在这次搜索结果到达后打开第一条。
+- **输入法友好**：中文输入法组字时的回车不会误打开结果。
+- **Ctrl+Home / Ctrl+End**（或 Ctrl+PageUp / PageDown）跳到首尾结果。
+- 搜索进行中在输入框右侧显示小的加载指示；结果列表的滚动条只在悬停时出现。
+- 主窗口 Ctrl+K 底部提示全局快捷键（「在任何应用里搜索 Ctrl+Alt+Space」），让用户发现这个能力。
+
+## 2. 待真机确认
+
+浏览器预览与单元 / 集成测试已经覆盖界面与逻辑，下列原生行为需要在真机上确认（可加入 `tests/e2e` 的 CDP 用例）：
+
+- [x] 在其他应用前台时按快捷键，搜索框出现且**输入框直接可打字**（系统前台锁定的边界情况）。2026-10-27 由 `node tests/e2e/e2e.mjs --native` 自动验证：其他应用在前台时用 SendInput 真实按下快捷键，搜索框出现、`document.hasFocus()` 为真、焦点在输入框；release 构建上 10/10 通过。
+- [ ] 多显示器、不同 DPI（100% / 150%）下出现在鼠标所在的屏幕，位置正确。（单显示器已由 `--native` 验证：完整落在工作区内且水平居中；多显示器 / 150% 仍需人工。）
+- [x] Esc 后焦点回到原来的应用；点到别处时搜索框消失且不抢焦点。（`--native` 已验证：Esc 后窗口真正隐藏（系统可见窗口数减一）、搜索框失去焦点，再次唤出时输入已清空并聚焦；焦点回到按快捷键之前的前台窗口（GetForegroundWindow 前后一致）也已自动验证；「点到别处」也已验证：把焦点切到别的窗口后搜索框隐藏，0.5 秒后前台窗口仍是用户切过去的那个，没有被抢回。）
+- [x] 回车打开结果：主窗口未创建 / 已隐藏 / 已打开三种状态都能定位到详情。（`--native` 已验证「已打开」与「已隐藏」（向主窗口发 WM_CLOSE 后再回车，主窗口重新出现并显示详情），release 构建 5/5；「未创建」也已验证：同一数据目录启动两次，第二次启动时只有悬浮窗，按快捷键搜索后回车，主窗口被创建并显示详情（4/4）。）
+- [x] 冷启动第一次唤出耗时、之后唤出耗时（记录到 `perf-baseline.md`，目标：之后 < 150 ms）。2026-10-27 `--native` 实测：第一次中位数 319 ms（含创建窗口、加载页面与测试自身的 CDP 连接），之后中位数 53 ms，达标。
+- [ ] 全局搜索框里 `>` 命令：主窗口出现在前台并切到对应视图，搜索框消失、不抢回焦点。
+- [ ] 托盘「搜索…」：快捷键提示右对齐；点击后搜索框出现且可以直接打字。
+- [x] 某些欧洲键盘布局上 `Ctrl+Alt` 等同于 `AltGr`，确认默认绑定不会吞掉字符输入。2026-10-27：`nivlo-platform-windows/tests/altgr.rs` 在真实布局上检查（ToUnicodeEx，临时加载后卸载）：德、法、西、意、葡、瑞士德语、波兰（程序员）、捷克、匈牙利、瑞典、挪威、土耳其 12 种布局里 `Ctrl+Alt+Space` 不输入字符；**加拿大多语言标准布局会**。因此新增运行时检测：注册快捷键时用当前布局判断（`ShortcutPort::types_character`），会输入字符时设置页提示换一个组合（状态 `typesCharacter`）。
+
+> 2026-10-27：`tests/e2e/e2e.mjs` 新增 5 步（拼音首字母搜索、最近使用、结果标签、快捷键停用 / 启用、前往设置），在本机 release 构建上 3/3 通过；迁移 0007 / 0008 在真实程序启动时执行成功。上面的原生窗口行为（焦点、位置、DPI、托盘）仍需人工确认。
+
+## 3. 后续优化（按优先级）
+
+### P1：让全局搜索框成为「随手可用」的入口
+
+1. ~~**空输入时显示最近的条目**~~ ✅ 2026-10-27：空输入列出最近更新的 8 条（`RECENT_LIMIT`），↑↓ + 回车直接打开；主窗口 Ctrl+K 与全局搜索框共用。搜索框新增只读的 `list_items`（Capability 白名单与测试已更新）。顺带：继续输入时保留上一次结果直到新结果到达（`keepPreviousData`），列表不再闪空白。空输入列表后来改为「最近使用」（见 P2 搜索质量第 2 项）。
+2. ~~**从搜索直接创建**~~ ✅ 2026-10-27：任何时候 `Ctrl+Enter` 把搜索词建成待办（有结果时底部提示快捷键），没有结果时额外给出「新建待办「…」」按钮并显示识别到的日期；日期短语复用 Quick Create 的 `parseDatePhrase`。全局搜索框建好后隐藏、焦点还给原应用；Ctrl+K 建好后打开详情。搜索框新增 `quick_create`（与悬浮窗相同，仍不能修改或删除已有数据）。
+3. **结果里的轻量动作**：选中待办按 `Ctrl+D` 完成（授予 `complete_item` + 撤销），按 `Shift+Enter` 复制标题。每增加一个写入命令都要更新 Capability 白名单与测试。✅ 复制标题 2026-10-27：`Shift+Enter` 用 WebView 剪贴板复制选中条目的标题，底部 `role="status"` 提示「已复制标题」，不需要新权限。✅ `Ctrl+D` 2026-10-27（产品确认）：选中的待办按 `Ctrl+D` 完成，已完成的则重新打开；条目留在列表里显示为已完成，窗口不关闭；底部提示「已完成「…」」和「撤销 Ctrl+Z」按钮，5 秒内 `Ctrl+Z` 也能撤销（`DONE_UNDO_MS`）。笔记与提示上按它什么也不做；选中待办时底部提示「Ctrl+D 完成」。主窗口 Ctrl+K 共用。全局搜索框新增 `complete_item` + `reopen_item`（与悬浮窗相同）；Capability 测试改为保证它拿不到编辑、改期、归档或删除的命令。
+4. ~~**结果的元信息**~~ ✅ 2026-10-27：结果右侧显示「项目 · 收集箱 · 计划（今天 / 明天 / 昨天 / 10月30日 15:00）· 截止」，已完成的只标「已完成」（`model/meta.ts`，有单测）。放在标题行右侧而不是第二行，不增加行高。搜索框新增只读的 `list_projects`。✅ 标签 2026-10-27：新增只读命令 `tags_for_items`（一批最多 100 个，一个事务），搜索框（含全局搜索框，Capability 已更新）对当前列表一次取标签，显示为「#工作 #周报 +N」（最多两个）。
+5. **高度随内容变化**：空输入时收成一行输入框，有结果再展开（新增窗口几何命令，参照悬浮窗 `expand_floating` 的做法，几何仍由 Rust 控制）。⏸ 2026-10-27 重新评估后暂缓：空输入现在列出「最近使用」，只有全新安装、一条数据都没有时才会是空的，收成一行的收益很小；而改变窗口高度会带来闪动与多显示器 DPI 的风险。等真机反馈说固定高度碍事再做。
+
+### P1：快捷键设置
+
+1. ~~设置页把两个快捷键合并为独立的「快捷键」分区，并显示注册状态~~ ✅ 2026-10-27：「快捷键」分区，按钮下方显示「已生效 / 被其他程序占用 / 未生效」（`ShortcutSetting showStatus`；侧栏仍保持紧凑）。
+2. 每个快捷键提供「恢复默认」与「停用」。✅「恢复默认」2026-10-27：`ShortcutStatusDto` 新增 `defaultAccelerator`，改过时编辑区出现「恢复默认（…）」。✅「停用」2026-10-27：设置值 `off` 表示停用（启动时不注册），`disable_shortcut` 命令取消注册并保存；状态带 `disabled`，记住原来的组合，编辑区「启用（…）」一键恢复；停用的动作不再和另一个动作算冲突；全局搜索停用时托盘不再显示快捷键。
+3. ~~托盘菜单加入「搜索…」，旁边显示当前绑定；首次运行引导同时介绍两个快捷键~~ ✅ 2026-10-27：托盘「搜索…」（Windows 上快捷键用制表符右对齐，只在已生效时显示；重新绑定、切换语言时更新），与全局快捷键走同一个 `windows::search::toggle`；引导最后一步在全局搜索生效时追加一句介绍。**待真机确认**：托盘菜单里快捷键的对齐效果、从托盘唤出时输入框能直接打字。
+
+### P2：搜索质量
+
+1. 少于 3 个字符的查询目前退化为 LIKE 扫描（D-09）；评估为常用二字词加 bigram 索引，或在 1 万条以上数据时限制 LIKE 的扫描范围。⏸ 2026-10-27 评估：实施计划 3.4 的实测是 1 万条时二字查询 9.9ms（debug 构建），远低于 140ms 的输入防抖，用户感知不到；bigram 索引会让 FTS 表体积大约翻倍。暂不做，等 `perf-baseline.md` 在 5 万条以上出现超过 50ms 的二字查询再处理（优先考虑限制扫描范围）。
+2. 排序加入「最近打开」的权重；完成很久的待办降权。✅ 「最近打开」2026-10-27：`migrations/0007_item_opened.sql` 新增 `items.opened_at`（只服务排序，不进领域快照、不改 `updated_at`、不发事件）；详情面板打开时调用 `mark_item_opened`；新增排序 `ItemOrder::RecentDesc`（max(打开, 更新)），搜索框空输入的列表改为「最近使用」。✅ 降权部分 2026-10-27：未完成的条目排在已完成之前（LIKE 回退与 FTS 两条路径一致，存储测试覆盖），不需要把「现在」传进仓储。**「最近打开」未做**：需要记录打开时间（新列或表 + migration）。
+3. ~~拼音首字母匹配~~ ✅ 2026-10-27：`migrations/0008_title_initials.sql` 新增 `items.title_initials`（只取汉字的首字母，英文不参与以免误中；写入时由存储层计算，升级后由 `Database::migrate` 一次性回填）。2 个字母以上的纯字母查询额外按首字母子串匹配，结果接在正常命中之后并去重（如 `bzzb` / `zlbzzb` 命中「整理本周周报」）。依赖 `pinyin`（MIT，只开 `plain`）。多音字取常用读音。中文提示文案里介绍了这个用法。
+
+### P2：从「搜索」到「命令面板」
+
+Ctrl+K 与全局搜索框除了条目，还可以列出命令：「打开收集箱」「新建笔记」「打开设置」「暂停通知」等，以 `>` 前缀或独立分组呈现。命令表放在前端，执行仍走已有的 IPC。
+
+✅ 第一步 2026-10-27：主窗口 Ctrl+K 输入 `>` 进入命令模式（不搜索条目），列出「前往：收集箱 / 今天 / 日历 / 笔记 / 项目 / 自动化 / 回收站 / 设置」，按中文名或英文视图名过滤，回车执行并关闭；空输入时底部提示「输入 > 使用命令」。`SearchPanel` 的 `commands` 是通用的（`PaletteCommand`），后续命令只需在 `MainShell` 里追加。✅ 全局搜索框的命令 2026-10-27：搜索框授予 `open_main_at`（只打开视图，不改数据），「前往：…」在主窗口打开对应视图，后端同时隐藏搜索框且焦点留在主窗口；可打开的视图扩到自动化 / 回收站 / 设置（前后端列表一致，`GOTO_VIEWS`）。✅ 动作命令 2026-10-27：主窗口 Ctrl+K 新增「新建笔记」（建好一篇未命名笔记并直接打开详情）与「暂停通知 / 恢复通知」（与设置页、托盘同一个开关，名称随当前状态变化，执行后提示）。全局搜索框暂不加：它没有写设置的权限，而且新建笔记需要主窗口编辑。
+
+### P3：体验细节
+
+- ~~搜索框出现时的入场动画~~ ✅ 2026-10-27：全局搜索框的列表以 `nv-list-in`（淡入 + 下落 4px）出现，不缩放整块内容以免和系统窗口边框错位；时长 Token 在「减少动态效果」时为 0。
+- ~~结果数量变化用 `aria-live` 播报~~ ✅ 2026-10-27：底部的结果数量常驻为 `role="status"`，只更新文字。
+- ~~可选的启动后空闲时预创建搜索窗口~~ ✅ 2026-10-27：设置页「快捷键」分区新增「预先准备全局搜索框」（默认关闭，`search.prewarm`）。开启后启动 10 秒（一次性）在后台创建隐藏的搜索窗口；开关立即生效（关闭时释放没在显示的窗口）。`--native` 实测（3 轮）：第一次唤出 118–131 ms（不开为 300–370 ms），进程树常驻多占约 92 MB。
+
+### P1：快捷键冲突（2026-10-27，按真机情况补充）
+
+开发机上默认的全局搜索快捷键 `Ctrl+Alt+Space` 一直被别的程序占用，用户只有打开设置页才会知道全局搜索用不了。
+
+1. ✅ 侧栏提示：全局搜索的快捷键被占用时，主窗口侧栏直接出现它的修改框（自动展开冲突说明）；没被占用时侧栏不变。
+2. ✅ 一键换用：冲突时修改框列出最多 3 个「现在可用」的组合——后端逐个 `RegisterHotKey` 试注册再立刻取消（`ShortcutPort::is_available`，新命令 `suggest_shortcuts`，只给主窗口），跳过 Nivlo 自己正在用的与 AltGr 组合；平台无法判断时不列出。
+3. ✅ 首次引导：快捷键被占用时说明按了没反应、去哪里换，不再介绍一个用不了的组合。
+4. **待定**：默认组合被占用时是否自动改用一个可用的候选（会改变用户没要求改的东西，需要产品决定）。
+
+### P1：输入的一致性（2026-10-27）
+
+1. ✅ 主窗口「今天」的输入框和快速创建一样识别日期短语（共用 `useDatePhrase` / `DatePhraseChip`）：输入框下方提示识别结果，退格或 ✕ 取消；排到别的日子时提示「已添加到 …」，免得用户以为没加上。此前「明天下午3点 评审方案」会原样成为今天的待办，和首次引导的说法矛盾。
+2. ✅ 日历：在某一天里添加待办时认出时间（「下午3点 开会」→ 那天 15:00）；日期由格子决定，写了别的日期就原样记在这一格。
+3. ✅ 长标题：悬浮窗与 Today 里被截断的标题，指针移上去显示全文（只在确实截断时）。
+
+### P1：悬浮窗徽标的拖动（2026-10-27，原生 E2E 用真实鼠标发现）
+
+1. ✅ 按住徽标时不再因为悬停弹出面板（此前按下后 250ms 面板弹出，徽标从手下消失，拖动坏掉）。
+2. ✅ 拖动时按下的那一点始终在光标下（`start_floating_drag` 带上按下位置，系统接手前先对齐），松手的位置就是徽标的位置；此前会落后一截。
+
+### P2：可发现性与键盘（2026-10-29）
+
+1. ✅ 键盘快捷键一览：主窗口按 `?`（输入时不触发）或 Ctrl+K「键盘快捷键」打开，集中列出全局、主窗口、搜索框、快速创建、Today 的快捷键；全局的两个取自真实绑定，被占用 / 停用时注明。
+2. ✅ Ctrl+K 新命令：「切换到深色 / 浅色主题」（名称随当前显示）、「隐藏 / 显示今天已完成的待办」（与设置页同一个偏好）。
+3. ✅ 模态对话框（快捷键一览、首次引导、Ctrl+K）里 Tab / Shift+Tab 只在对话框内循环（`trapTab`）。
+4. ✅ 日期识别提示条的 ✕ 键盘也能用（Enter / Space）。
+
+### P2：真机走查发现的细节（2026-10-29，中英文 + 深色）
+
+1. ✅ 悬浮窗标题栏在英文下换行：改短日期、不换行，「打开主窗口」改为带提示的图标按钮。
+2. ✅ 设置页快捷键冲突时那一行被撑宽、出现横向滚动条：快捷键组件限宽。
+3. ✅ 来源应用名：补企业微信 / QQ / 钉钉 / 飞书 / WPS / Teams / Windows 终端等，其他全小写的程序名首字母大写。
+4. ✅ 自动化规则列表：指针移上去看规则全名与说明。
+5. ✅ 提醒：原生 E2E 覆盖按时触发与「暂停通知期间不发、恢复后补发」；Scheduler 记录 `notification_sent`（不记标题）。
+
+### P2：列表的键盘与查找（2026-10-30）
+
+1. ✅ 收集箱、今天、笔记列表的 ↑ / ↓ 共用 `lib/arrow-focus.ts`；笔记列表里移动会直接打开那篇笔记。
+2. ✅ 笔记列表筛选框：在已加载的笔记里按标题与内容筛选（不走搜索索引、不切换正在编辑的笔记），↓ / Enter 打开第一篇匹配，Esc 清空。
+3. ✅ 新建笔记：标题聚焦并全选（只对刚建的那一篇，打开已有笔记不抢焦点）；标题里 Enter 跳到正文。
+4. ✅ 打开的笔记放在导航 Store（`noteId` / `freshNoteId`）：离开笔记页再回来仍是那一篇；Ctrl+K「新建笔记」切到笔记页打开并全选标题（离开笔记页即不再算「刚新建」）。
+5. ✅ Ctrl+K 命令按词匹配（每个词出现在名称或任一匹配词里），「new note」此前没有结果。顺带修正测试替身 `searchItems` 的分词正则（`/s+/` → `/\s+/`，含字母 s 的查询会被拆错）。
+6. ✅ 详情面板的焦点：打开时移进面板（此前焦点留在列表行上，Esc 不起作用，要 Tab 穿过整页才进得去），关闭时回到打开它的元素；焦点已去别处或那一行已删除时不抢。
+7. ✅ 收集箱整理后的焦点：被整理的行立刻消失（乐观更新），焦点此前掉到页面上；现在落在后面紧接着的一行（没有就是前面一行，`nextRemaining`），只在整理前焦点就在列表里时才移动。
+8. ✅ 「今天」完成待办后同样落到下一条的完成框（`nextRemaining` 移到 `lib/arrow-focus.ts` 共用）。
+9. ✅ 笔记归档 / 删除后焦点落在列表里接下来的那一篇（`NoteEditor onLeave`），焦点已在别处时不抢。
+10. ✅ 回收站恢复 / 彻底删除后焦点落在下一项的同一个按钮（列表靠事件刷新，不是乐观更新，所以在刷新后的 Effect 里聚焦）。
+11. ✅ 「今天」取消勾选已完成的待办：焦点跟着它回到待办列表的完成框。项目视图的勾选是原地切换，不会丢焦点。
+12. ✅ 日历快捷键：J / K 翻页、T 今天、M / W 切换视图（正在输入、按着修饰键、有对话框时不响应）；`isTyping` 移到 `lib/typing.ts` 与主窗口的 `?` 共用。
+13. ✅ 视图切换快捷键：`Ctrl+1…5` 对应侧栏上方的视图、`Ctrl+,` 设置；导航按钮带 `aria-keyshortcuts`，快捷键一览已列出。
+14. ✅ 项目 / 标签的条目列表：↑ / ↓ 在标题按钮之间移动（笔记和提示没有勾选框，所以用标题），Enter 打开详情。
+15. ✅ 「今天」添加框 ↓ 进入列表、第一条上 ↑ 回到添加框（列表到头不处理的 ↑ 冒泡到页面处理）。
+16. ✅ 收集箱 Ctrl+A 全选（焦点在收集箱里、不在文字输入框时），接着 T / M 整批整理。
+17. ✅ 「今天」添加框 Esc 清空（连同识别出的日期）；空时不拦截。
+18. ✅ 发布版拦下浏览器功能键（`lib/browser-keys.ts`）：F5 / Ctrl+R 刷新、Ctrl+P 打印、Ctrl+S 另存、Ctrl+U 源代码；缩放、查找、编辑键不拦，开发时保留 F5。**待真机确认**：WebView2 里 `preventDefault` 确实挡住了刷新与打印（Chromium 的行为如此，未在 Nivlo 里实测）。Tauri 2.12 没有暴露 `SetAreBrowserAcceleratorKeysEnabled`，而且整体关掉会连缩放一起关。
+19. 入口包体检查（2026-10-30）：`index` 约 497 KB，主要是 react-dom、@tauri-apps/api、TanStack Query、i18next 与 Radix 菜单，都是各窗口启动就要用的，不再拆分；生产构建已不带内存 Mock。
+20. ✅ 主窗口 Ctrl+Z：执行最新一条还在显示的「撤销」提示（`ToastAction.undo` 标记撤销类操作，`undoLatest`；安装更新等其他按钮不会被触发）；输入时、对话框打开时不响应。
+21. ✅ 收集箱勾选后按 Delete 删除（移进回收站，带撤销）；删除和整理一样把焦点留在下一条（`deleteItems`）。
+22. ✅ 「今天」完成框上按 M 推迟到明天（与收集箱的 M 一致），焦点落到下一条。Delete 只在主窗口：`TodayBoard` 的 `onDelete` 只有主窗口的 Today 页传（悬浮窗没有 `delete_items` 权限，按了不起作用）。
+23. ✅ 设置页（10 个分组、约 2300px 高）页首加跳转链接（`SECTION_LINKS`，分组带锚点 ID）。没做筛选框：分组里有不少不是普通设置行的自定义组件，按行筛选会把它们一起藏掉；Ctrl+F 页内查找仍可用。
+24. ✅ Ctrl+K「设置：…」命令（`SETTINGS_SECTIONS` 与页首链接共用，`openSettings` 经导航 Store 传给设置页，滚过去后清空）；排在命令列表最后，「快捷键」仍先命中快捷键一览。
+25. ✅ 快捷键一览随新增分组变长（约 35 行）：窗口够宽时排成两栏（CSS columns，每组不拆开），1280×720 下内容 864px、可视 610px，此前单栏约两倍高。
+26. ✅ 收集箱批量工具栏的「今天 / 明天 / 删除」按钮里用小字标出 T / M / Del（`aria-hidden`，读屏走 `aria-keyshortcuts`），在用的地方就能学到按键。
+27. 测试耗时（2026-10-30）：全量约 20s，16 个 Worker 并行，最慢的文件 6.7s（workflows），单个最慢 2s（等真实的 700ms 自动保存两次）。墙钟时间主要花在每个文件的环境与导入上，缩短个别测试收益很小，暂不处理。
+28. ✅ 笔记页 Ctrl+N 新建笔记（输入时也有效、对话框打开时不响应，`preventDefault` 同时挡住 WebView2 的默认行为）；「+ 新笔记」带 `aria-keyshortcuts`。
+29. ✅ 「今天」Ctrl+N 跳到添加框（与笔记页的「新建」同一个按键）。
+30. ✅ 日历网格的方向键：在各天的「+」之间移动（左右一天、上下一周），Enter 原地写待办。此前 `role="grid"` 没有方向键导航，只能 Tab 穿过每一格的条目。
+31. ✅ 页面快捷键的公共判断移到 `lib/typing.ts`（`isCommandKey`、`isDialogOpen`）。
+32. ✅ 项目页侧栏 ↑ / ↓ 在项目与标签之间移动并打开（与笔记列表一致）。
+33. ✅ 回收站 ↑ / ↓ 保持在同一列按钮（恢复 / 彻底删除）；自动化规则列表 ↑ / ↓ 只移动焦点、Enter 打开（打开别的规则会丢掉正在编辑的草稿，所以不随方向键打开）。主窗口的列表至此都支持方向键。
+34. ✅ 自动化编辑区的未保存修改：编辑区上报 `dirty`（`onDirtyChange`），切换规则 / 新建 / 导入 / 切到「最近执行」时先显示提醒条，「放弃修改」才执行。此前编辑区按规则 ID 重新挂载，修改会无声丢失。切到别的视图（侧栏、Ctrl+1…5、Ctrl+K、打开笔记 / 设置分组）同样拦下：导航 Store 的 `leaveGuard` / `pendingNav` / `confirmLeave`，自动化页挂载时注册检查。
+35. ✅ 「今天」完成框上 Enter 打开详情（完成框是按钮，Enter 原本也会勾选，容易误完成）；悬浮窗没有详情面板，保持原样。检查过其他编辑区：详情面板与笔记关闭时先保存，脚本页写进同一份草稿，没有别处会无声丢修改。
+36. ✅ Markdown 笔记 Ctrl+B / Ctrl+I（`lib/markdown-wrap.ts`，再按取消；用 `execCommand("insertText")` 保住 Ctrl+Z，浏览器预览已验证；不支持时直接改草稿）。日历添加框失焦即取消，与项目重命名一致，不改。
+37. ✅ Markdown 笔记的列表续行（`continueMarkdownList`）：行尾按 Enter 续上记号、有序列表加一、任务框换成 `[ ]`，空项按 Enter 结束列表；输入法组字时不处理。浏览器预览验证过续行、结束与 Ctrl+Z。
+38. ✅ 列表项上 Tab / Shift+Tab 缩进 / 取消缩进两个空格（`indentMarkdownList`，多行选区只动其中的列表项）；选区里没有列表项时不拦 Tab，键盘用户不会被困在正文里。
+39. ✅ Markdown 按键移到 `lib/markdown-keys.ts`（`handleMarkdownKeyDown`），详情面板的描述在 Markdown 格式时也用上。
+40. ✅ 任务项 Ctrl+Enter 勾选 / 取消（`toggleMarkdownTask`；多行里有没勾的就全勾上，否则全取消）。
+41. ✅ 选中文字粘贴网址变成 Markdown 链接（`linkOnPaste` / `handleMarkdownPaste`；只认单个 http(s) 网址、不跨行、选中的不是网址本身）；浏览器预览验证过粘贴与 Ctrl+Z。
+42. ✅ 笔记页 Ctrl+F 跳到筛选框并全选；焦点在编辑区时不拦，留给 WebView2 的页内查找。
+43. ✅ Ctrl+N 统一为「新建」：项目页新建项目、自动化新建规则（走 `leaveEditor`，有未保存修改时先提醒）；日历在今天（不在这一页时在锚点日期）原地写待办。
+44. ✅ 日历翻页的过渡：标题立刻变、网格要等新数据（`placeholderData` 保留上一页），中间那一下网格调淡、`aria-busy`、不接受点击与 Ctrl+N，免得写到看不见的那天。
+45. ✅ 收集箱勾选框上 Enter 打开详情（与「今天」一致）。
+47. ✅ 详情面板刚打开时第一下 Tab 进到标题：此前焦点在面板本身，Tab 的第一站是页首的「删除」，Tab、Enter 就会误删。
+48. ✅ 笔记筛选的性能：每篇的小写全文在列表变化时算一次（`noteSearchText` + `useMemo`），输入时只转换筛选词。1000 篇 × 1 万字的测算（Node）：每次按键约 26ms → 4ms，列表加载时一次性约 42ms。
+49. ✅ 笔记列表的摘要：`noteSnippet` 原先把整篇拆行、逐行清理再找第一段，改成找到就停。1000 篇 × 500 行，每次渲染列表约 59ms → 11ms（Node 测算）。
+50. ✅ 笔记列表按 `useDeferredValue` 的筛选词渲染，筛选框跟手。筛选框里的 ↓ / Enter 按当前输入（不是延后的那份）找第一篇并打开，列表跟上后再聚焦那一行；浏览器预览验证过「打完字立刻 Enter」打开的是对的那篇。
+51. ✅ 收集箱筛选（10 条以上或筛选中才显示，`INBOX_FILTER_MIN`）：`entrySearchText` 含来源网址 / 路径 / 应用；选择、全选与整理只作用于匹配的条目。筛选词拆分移到 `lib/text-filter.ts`，与笔记共用。
+52. ✅ 回收站按标题筛选（`TRASH_FILTER_MIN` = 10）；处理后焦点按筛选后的列表找下一项。「清空回收站」仍是清空全部（按钮名称就是这么说的）。
+53. ✅ 三处筛选框合成一个组件 `components/FilterInput`（Esc 清空、↓ / Enter 进列表、输入法选字的 Enter 不算、可选的 Ctrl+F 且有对话框时不响应）；回收站因此也有了 Ctrl+F。
+54. ✅ 命令按最近使用排序（`model/recent-commands.ts`：localStorage 记最近 5 条，读不了 / 损坏时当作没有记录；最近用过的按先后排前，其余保持原顺序）。
+46. 测试稳定性（2026-10-30）：`npm run check` 首跑暴露 `altgr` 测试的竞态（并行测试互相卸载键盘布局），已加锁；顺带修了凭据测试共用一个凭据名、剪贴板测试改为加锁。其余 Rust 测试没有固定临时路径或改环境变量。
+
+## 4. 验收标准（用于后续每一项）
+
+- 新增 IPC 命令：同时更新 `build.rs`、`bindings_builder!`、对应窗口的 Capability 与 `tests/capabilities.rs`，并重新生成 Binding。
+- 界面改动：有对应的 Vitest 用例；可在浏览器预览中复现（`?window=search` 预览全局搜索框）。
+- 原生窗口行为：在第 2 节的真机清单里打勾，并补一条 E2E 用例。

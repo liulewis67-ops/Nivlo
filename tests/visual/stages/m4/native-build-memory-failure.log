@@ -1,0 +1,125 @@
+$ node apps/desktop/ui/node_modules/@tauri-apps/cli/tauri.js "build" "--no-bundle"
+        Info `tauri-build` dependency has workspace inheritance enabled. The features array won't be automatically rewritten. Expected features: []
+        Info `tauri` dependency has workspace inheritance enabled. The features array won't be automatically rewritten. Expected features: []
+        Info Looking up installed tauri packages to check mismatched versions...
+     Running beforeBuildCommand `pnpm --filter @nivlo/desktop-ui build`
+$ tsc --noEmit && vite build
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 1161 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                         0.39 kB │ gzip:   0.26 kB
+dist/assets/index-CgxN3-gz.css         46.98 kB │ gzip:   9.55 kB
+dist/assets/FloatingApp-CjCjrC8L.js     0.14 kB │ gzip:   0.14 kB
+dist/assets/SearchApp-Be8V5LMm.js      16.53 kB │ gzip:   5.89 kB
+dist/assets/quick-create-C8Obkm-A.js   53.88 kB │ gzip:  17.58 kB
+dist/assets/MainApp-B1OOxiq6.js       123.16 kB │ gzip:  31.92 kB
+dist/assets/floating-CVAVYwvA.js      138.63 kB │ gzip:  40.65 kB
+dist/assets/ScriptEditor-BAToyUeR.js  429.38 kB │ gzip: 145.34 kB
+dist/assets/index-rEaQ2euF.js         506.32 kB │ gzip: 163.64 kB
+
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 701ms
+   Compiling nivlo-desktop v0.1.0 (E:\personal_projects\Nivlo\apps\desktop\src-tauri)
+memory allocation of 2097152 bytes failed
+stack backtrace:
+   0:     0x7ff8f8e23d70 - std::backtrace_rs::backtrace::win64::trace
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\..\..\backtrace\src\backtrace\win64.rs:85
+   1:     0x7ff8f8e23d70 - std::backtrace_rs::backtrace::trace_unsynchronized
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\..\..\backtrace\src\backtrace\mod.rs:66
+   2:     0x7ff8f8e23d70 - std::sys::backtrace::_print_fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\sys\backtrace.rs:74
+   3:     0x7ff8f8e23d70 - std::sys::backtrace::impl$0::print::impl$0::fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\sys\backtrace.rs:44
+   4:     0x7ff8f8e4bc61 - core::fmt::write
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\core\src\fmt\mod.rs:0
+   5:     0x7ff8f8e340e4 - std::io::default_write_fmt
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\io\mod.rs:639
+   6:     0x7ff8f8e340e4 - std::io::Write::write_fmt<std::sys::stdio::windows::Stderr>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\io\mod.rs:1994
+   7:     0x7ff8f8e16f22 - std::sys::backtrace::BacktraceLock::print
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\sys\backtrace.rs:47
+   8:     0x7ff8f8e16f22 - std::alloc::default_alloc_error_hook
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\alloc.rs:397
+   9:     0x7ff8f8dfca8c - std::alloc::rust_oom::closure$0
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\alloc.rs:428
+  10:     0x7ff8f8dfa14f - std::sys::backtrace::__rust_end_short_backtrace<std::alloc::rust_oom::closure_env$0,never$>
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\sys\backtrace.rs:182
+  11:     0x7ff8f8e16fbb - std::alloc::rust_oom
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\alloc.rs:424
+  12:     0x7ff8f8dfd9e8 - std::alloc::_::__rust_alloc_error_handler
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\alloc.rs:423
+  13:     0x7ff8fd0b4a69 - alloc::alloc::handle_alloc_error::rt_error
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\alloc\src\alloc.rs:531
+  14:     0x7ff8fd0b4a69 - alloc::alloc::handle_alloc_error
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\alloc\src\alloc.rs:537
+  15:     0x7ff8fd0b4a83 - alloc::raw_vec::handle_error
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\alloc\src\raw_vec\mod.rs:888
+  16:     0x7ff8fa574b40 - <rustc_arena[fee581958cca9725]::DroplessArena>::grow
+  17:     0x7ff8fa433b67 - <rustc_middle[508bed62f7e3701]::ty::context::CtxtInterners>::intern_ty
+  18:     0x7ff8f98dad4c - <rustc_const_eval[b0cf9864e0718151]::check_consts::qualifs::NeedsDrop as rustc_const_eval[b0cf9864e0718151]::check_consts::qualifs::Qualif>::in_any_value_of_ty
+  19:     0x7ff8f980e2a4 - <rustc_const_eval[b0cf9864e0718151]::check_consts::ConstCx>::new
+  20:     0x7ff8f974a696 - <hashbrown[43bd7235cf0a4df]::raw::RawTable<(rustc_middle[508bed62f7e3701]::mir::interpret::AllocId, ())>>::reserve_rehash::<hashbrown[43bd7235cf0a4df]::map::make_hasher<rustc_middle[508bed62f7e3701]::mir::interpret::AllocId, (), rustc_hash[3a2e7738a48613c0]::FxBuildHasher>::{closure#0}>
+  21:     0x7ff8f98c5291 - rustc_const_eval[b0cf9864e0718151]::const_eval::eval_queries::eval_to_allocation_raw_provider
+  22:     0x7ff8f9cc02d7 - rustc_query_impl[92b76e72f256e1cb]::plumbing::query_key_hash_verify_all
+  23:     0x7ff8f9c2d022 - RINvMs6_NtCsmxeZUtwRFb_9hashbrown3rawINtB6_8RawTableTINtNtCsfVugF0hdaZx_13rustc_type_ir14predicate_kind13PredicateKindNtNtNtCsqNoC513Zhl_12rustc_middle2ty7context6TyCtxtEjEE14reserve_rehashNCINvNtB8_3map11make_hasherBP_jNtCs4ZHkamydDb0_10rustc_hash13FxBuil
+  24:     0x7ff8f9cc0390 - rustc_query_impl[92b76e72f256e1cb]::plumbing::query_key_hash_verify_all
+  25:     0x7ff8f98c7c62 - rustc_const_eval[b0cf9864e0718151]::const_eval::eval_queries::eval_to_const_value_raw_provider
+  26:     0x7ff8f9cc2377 - rustc_query_impl[92b76e72f256e1cb]::plumbing::query_key_hash_verify_all
+  27:     0x7ff8f9c2cffd - RINvMs6_NtCsmxeZUtwRFb_9hashbrown3rawINtB6_8RawTableTINtNtCsfVugF0hdaZx_13rustc_type_ir14predicate_kind13PredicateKindNtNtNtCsqNoC513Zhl_12rustc_middle2ty7context6TyCtxtEjEE14reserve_rehashNCINvNtB8_3map11make_hasherBP_jNtCs4ZHkamydDb0_10rustc_hash13FxBuil
+  28:     0x7ff8f9cc2430 - rustc_query_impl[92b76e72f256e1cb]::plumbing::query_key_hash_verify_all
+  29:     0x7ff8fa3e8130 - <rustc_middle[508bed62f7e3701]::ty::context::TyCtxt>::const_eval_resolve
+  30:     0x7ff8f9294c32 - rustc_monomorphize[18b01b7a8d6b6e0e]::collector::items_of_instance
+  31:     0x7ff8f9cbd263 - rustc_query_impl[92b76e72f256e1cb]::plumbing::query_key_hash_verify_all
+  32:     0x7ff8f9c8290b - RINvMs6_NtCsmxeZUtwRFb_9hashbrown3rawINtB6_8RawTableTINtNtCsfVugF0hdaZx_13rustc_type_ir14predicate_kind13PredicateKindNtNtNtCsqNoC513Zhl_12rustc_middle2ty7context6TyCtxtEjEE14reserve_rehashNCINvNtB8_3map11make_hasherBP_jNtCs4ZHkamydDb0_10rustc_hash13FxBuil
+  33:     0x7ff8f9cbd30a - rustc_query_impl[92b76e72f256e1cb]::plumbing::query_key_hash_verify_all
+  34:     0x7ff8f928d5c8 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  35:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  36:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  37:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  38:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  39:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  40:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  41:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  42:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  43:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  44:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  45:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  46:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  47:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  48:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  49:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  50:     0x7ff8f92901f3 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  51:     0x7ff8f85a5120 - RINvNtNtNtNtCs8icZUrvfcq9_4core5slice4sort6stable9quicksort9quicksortNtNtNtCsqNoC513Zhl_12rustc_middle3mir4mono11CodegenUnitNCINvMNtCs1f2BdUxKfgg_5alloc5sliceSB15_7sort_byNCNvNtCs27pCoIZNUuw_18rustc_monomorphize12partitioning19merge_codegen_unitss4_0E0EB2P
+  52:     0x7ff8f927a629 - rustc_monomorphize[18b01b7a8d6b6e0e]::partitioning::collect_and_partition_mono_items
+  53:     0x7ff8f8934dc7 - rustc_query_impl[92b76e72f256e1cb]::plumbing::encode_all_query_results
+  54:     0x7ff8f88010ce - <<rustc_ty_utils[6b5c08bf4099cddc]::opaque_types::OpaqueTypeCollector>::collect_taits_declared_in_body::TaitInBodyFinder as rustc_hir[2574b6166bceac22]::intravisit::Visitor>::visit_nested_item
+  55:     0x7ff8f8934e45 - rustc_query_impl[92b76e72f256e1cb]::plumbing::encode_all_query_results
+  56:     0x7ff8f9de0d73 - rustc_codegen_ssa[5a513ce8da3ca513]::back::symbol_export::exported_generic_symbols_provider_local
+  57:     0x7ff8f892eafd - rustc_query_impl[92b76e72f256e1cb]::plumbing::encode_all_query_results
+  58:     0x7ff8f87e30f9 - <<rustc_ty_utils[6b5c08bf4099cddc]::opaque_types::OpaqueTypeCollector>::collect_taits_declared_in_body::TaitInBodyFinder as rustc_hir[2574b6166bceac22]::intravisit::Visitor>::visit_nested_item
+  59:     0x7ff8f892eb5f - rustc_query_impl[92b76e72f256e1cb]::plumbing::encode_all_query_results
+  60:     0x7ff8fa075005 - <rustc_metadata[6ac3d253a89292f4]::creader::CStore>::from_tcx
+  61:     0x7ff8f8b2aacb - <rustc_metadata[6ac3d253a89292f4]::creader::CStore as rustc_session[4f6d99f9b0323ce0]::cstore::CrateStore>::def_path
+  62:     0x7ff8f8ae7424 - rustc_metadata[6ac3d253a89292f4]::rmeta::encoder::encode_metadata
+  63:     0x7ff8f8ae22ae - rustc_metadata[6ac3d253a89292f4]::fs::encode_and_write_metadata
+  64:     0x7ff8f6193bb8 - <rustc_interface[f424b11e141aa742]::queries::Linker>::codegen_and_build_linker
+  65:     0x7ff8f613ae37 - std[d99d321fffadf0e]::sys::backtrace::__rust_begin_short_backtrace::<std[d99d321fffadf0e]::thread::lifecycle::spawn_unchecked<ctrlc[8d4ba2a38fd62187]::set_handler_inner<rustc_driver_impl[ec820b8c445af180]::install_ctrlc_handler::{closure#0}>::{closure#0}, ()>::{closure#1}::{closure#0}::{closure#0}, ()>
+  66:     0x7ff8f6134cb1 - RINvNtNtCs1aoCESei0z2_3std3sys9backtrace28___rust_begin_short_backtraceNCNCINvNtCskXzi1fhPsgo_15rustc_interface4util26run_in_thread_with_globalsNCINvB1e_31run_in_thread_pool_with_globalsNCINvNtB1g_9interface12run_compileruNCNvCskiVrmKtmSOG_17rustc_driver_i
+  67:     0x7ff8f613fc1a - std[d99d321fffadf0e]::sys::backtrace::__rust_begin_short_backtrace::<std[d99d321fffadf0e]::thread::lifecycle::spawn_unchecked<ctrlc[8d4ba2a38fd62187]::set_handler_inner<rustc_driver_impl[ec820b8c445af180]::install_ctrlc_handler::{closure#0}>::{closure#0}, ()>::{closure#1}::{closure#0}::{closure#0}, ()>
+  68:     0x7ff8f8e2109c - std::sys::thread::windows::impl$0::new::thread_start
+                               at /rustc/59807616e1fa2540724bfbac14d7976d7e4a3860/library\std\src\sys\thread\windows.rs:58
+  69:     0x7ffa1360dda7 - BaseThreadInitThunk
+  70:     0x7ffa150fee4c - RtlUserThreadStart
+error: could not compile `nivlo-desktop` (lib)
+
+Caused by:
+  process didn't exit successfully: `E:\rust\rustup\toolchains\1.95.0-x86_64-pc-windows-msvc\bin\rustc.exe --crate-name nivlo_desktop_lib --edition=2024 apps\desktop\src-tauri\src\lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C opt-level=3 -C linker-plugin-lto -C codegen-units=1 --warn=clippy::unwrap_used --deny=unsafe_code --warn=clippy::undocumented_unsafe_blocks --warn=clippy::todo --warn=clippy::print_stdout --warn=clippy::panic --warn=clippy::missing_panics_doc --warn=clippy::missing_errors_doc --warn=clippy::missing_docs_in_private_items --warn=missing_docs --warn=clippy::expect_used --warn=clippy::dbg_macro --check-cfg cfg(docsrs,test) --check-cfg "cfg(feature, values())" -C metadata=e6d7f7172e6debcc -C extra-filename=-e817914b1b6d119f --out-dir E:\personal_projects\Nivlo\target\release\deps -C strip=symbols -L dependency=E:\personal_projects\Nivlo\target\release\deps --extern async_trait=E:\personal_projects\Nivlo\target\release\deps\async_trait-7b0a5bd11a6b52f0.dll --extern base64=E:\personal_projects\Nivlo\target\release\deps\libbase64-4b5d835b77c87d8d.rmeta --extern chrono=E:\personal_projects\Nivlo\target\release\deps\libchrono-90bab3b4f92e2e01.rmeta --extern nivlo_application=E:\personal_projects\Nivlo\target\release\deps\libnivlo_application-39cc1b5d04746540.rmeta --extern nivlo_capture=E:\personal_projects\Nivlo\target\release\deps\libnivlo_capture-3bdd8916d61f102e.rmeta --extern nivlo_common=E:\personal_projects\Nivlo\target\release\deps\libnivlo_common-fbbfed57a2d0490b.rmeta --extern nivlo_domain=E:\personal_projects\Nivlo\target\release\deps\libnivlo_domain-f3de9a81098ff495.rmeta --extern nivlo_integrations=E:\personal_projects\Nivlo\target\release\deps\libnivlo_integrations-0b0856e04c7b09a7.rmeta --extern nivlo_platform=E:\personal_projects\Nivlo\target\release\deps\libnivlo_platform-f4f2ed0e9defdefd.rmeta --extern nivlo_platform_windows=E:\personal_projects\Nivlo\target\release\deps\libnivlo_platform_windows-dd350da460fd3a3c.rmeta --extern nivlo_scheduler=E:\personal_projects\Nivlo\target\release\deps\libnivlo_scheduler-76801ae58f4f9197.rmeta --extern nivlo_script=E:\personal_projects\Nivlo\target\release\deps\libnivlo_script-71d2fb2c927ea3b9.rmeta --extern nivlo_storage=E:\personal_projects\Nivlo\target\release\deps\libnivlo_storage-7cf2f68a144d627d.rmeta --extern nivlo_workflow=E:\personal_projects\Nivlo\target\release\deps\libnivlo_workflow-e603c79ce951a8e4.rmeta --extern regex=E:\personal_projects\Nivlo\target\release\deps\libregex-5ef68b5fdd0cb645.rmeta --extern serde=E:\personal_projects\Nivlo\target\release\deps\libserde-c89674c32878f7be.rmeta --extern serde_json=E:\personal_projects\Nivlo\target\release\deps\libserde_json-f71eefc7bf62305f.rmeta --extern specta=E:\personal_projects\Nivlo\target\release\deps\libspecta-ff6d63114f93c3d0.rmeta --extern specta_typescript=E:\personal_projects\Nivlo\target\release\deps\libspecta_typescript-6ad16f38fb1cede2.rmeta --extern sys_locale=E:\personal_projects\Nivlo\target\release\deps\libsys_locale-d970764f971121e1.rmeta --extern tauri=E:\personal_projects\Nivlo\target\release\deps\libtauri-edeb39469ffda37c.rmeta --extern tauri_plugin_autostart=E:\personal_projects\Nivlo\target\release\deps\libtauri_plugin_autostart-12377cdddfbcb3b8.rmeta --extern tauri_plugin_dialog=E:\personal_projects\Nivlo\target\release\deps\libtauri_plugin_dialog-11698d856aa53727.rmeta --extern tauri_plugin_notification=E:\personal_projects\Nivlo\target\release\deps\libtauri_plugin_notification-ae316f5ca993ba62.rmeta --extern tauri_plugin_opener=E:\personal_projects\Nivlo\target\release\deps\libtauri_plugin_opener-1a60ee9fa0aad1e0.rmeta --extern tauri_plugin_single_instance=E:\personal_projects\Nivlo\target\release\deps\libtauri_plugin_single_instance-c06e9a7e152c8227.rmeta --extern tauri_plugin_updater=E:\personal_projects\Nivlo\target\release\deps\libtauri_plugin_updater-87cabbee852e7eae.rmeta --extern tauri_specta=E:\personal_projects\Nivlo\target\release\deps\libtauri_specta-636345186e0253ff.rmeta --extern thiserror=E:\personal_projects\Nivlo\target\release\deps\libthiserror-eb3b99861181efd4.rmeta --extern tokio=E:\personal_projects\Nivlo\target\release\deps\libtokio-91431bbcca677221.rmeta --extern tokio_util=E:\personal_projects\Nivlo\target\release\deps\libtokio_util-e377462245370bb0.rmeta --extern tracing=E:\personal_projects\Nivlo\target\release\deps\libtracing-78067c68a7901861.rmeta --extern zip=E:\personal_projects\Nivlo\target\release\deps\libzip-d251d9f3f2af8792.rmeta -L native=E:\personal_projects\Nivlo\target\release\build\nivlo-desktop-ae001586b6fb881b\out -L native=E:\personal_projects\Nivlo\target\release\build\aws-lc-sys-bfe89af865145718\out -L native=E:\personal_projects\Nivlo\target\release\build\ring-f773d4aa0d38db32\out -L native=E:\personal_projects\Nivlo\target\release\build\webview2-com-sys-f9386674137b2730\out\x64 -L native=E:\personal_projects\Nivlo\target\release\build\rquickjs-sys-429b790505f92925\out -L native=E:\personal_projects\Nivlo\target\release\build\libsqlite3-sys-ec2f49d0e92dd04b\out -L native=E:\rust\cargo\registry\src\index.crates.io-1949cf8c6b5b557f\windows_x86_64_msvc-0.53.1\lib -C link-arg=/MANIFEST:EMBED -C link-arg=/MANIFESTINPUT:E:\personal_projects\Nivlo\apps\desktop\src-tauri\windows-app.manifest -C link-arg=/NODEFAULTLIB:libvcruntimed.lib -C link-arg=/NODEFAULTLIB:vcruntime.lib -C link-arg=/NODEFAULTLIB:vcruntimed.lib -C link-arg=/NODEFAULTLIB:libcmtd.lib -C link-arg=/NODEFAULTLIB:msvcrt.lib -C link-arg=/NODEFAULTLIB:msvcrtd.lib -C link-arg=/NODEFAULTLIB:libucrt.lib -C link-arg=/NODEFAULTLIB:libucrtd.lib -C link-arg=/DEFAULTLIB:libcmt.lib -C link-arg=/DEFAULTLIB:libvcruntime.lib -C link-arg=/DEFAULTLIB:ucrt.lib --cfg desktop --check-cfg cfg(desktop) --check-cfg cfg(mobile) --check-cfg cfg(dev)` (exit code: 0xc0000409, STATUS_STACK_BUFFER_OVERRUN)
+failed to build app: failed to build app
+       Error failed to build app: failed to build app
+[ELIFECYCLE] Command failed with exit code 1.

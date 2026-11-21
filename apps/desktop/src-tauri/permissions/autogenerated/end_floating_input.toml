@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-end-floating-input"
+description = "Enables the end_floating_input command without any pre-configured scope."
+commands.allow = ["end_floating_input"]
+
+[[permission]]
+identifier = "deny-end-floating-input"
+description = "Denies the end_floating_input command without any pre-configured scope."
+commands.deny = ["end_floating_input"]

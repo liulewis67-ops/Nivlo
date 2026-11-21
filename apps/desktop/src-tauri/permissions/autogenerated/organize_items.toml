@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-organize-items"
+description = "Enables the organize_items command without any pre-configured scope."
+commands.allow = ["organize_items"]
+
+[[permission]]
+identifier = "deny-organize-items"
+description = "Denies the organize_items command without any pre-configured scope."
+commands.deny = ["organize_items"]

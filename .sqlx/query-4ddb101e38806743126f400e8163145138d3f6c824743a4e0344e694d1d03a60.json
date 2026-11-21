@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT deleted_at FROM items WHERE id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "deleted_at",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "4ddb101e38806743126f400e8163145138d3f6c824743a4e0344e694d1d03a60"
+}

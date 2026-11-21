@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.github-pr",
+  "name": "GitHub Pull Request",
+  "description": "github.com 的 Pull Request 链接变成待办「Review PR #182: 标题」。先立刻用编号创建，随后在后台通过 GitHub 公开 API 读取标题；API 被限流（403/429）或读不到时退回页面标题，都不行就只保留编号。 已在「集成」里连接 GitHub（个人访问令牌）后，会优先通过带认证的 API 读取标题、状态、标签、指派人和里程碑，私有仓库也能读取；没有连接时仍走原来的公开 API / 页面标题路径。",
+  "version": 2,
+  "priority": 20,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": {
+    "all": [
+      {
+        "field": "input.type",
+        "op": "equals",
+        "value": "url"
+      },
+      {
+        "field": "url.host",
+        "op": "equals",
+        "value": "github.com"
+      },
+      {
+        "field": "url.path",
+        "op": "regex",
+        "value": "^/[^/]+/[^/]+/pull/\\d+(/|$)"
+      }
+    ]
+  },
+  "permissions": {
+    "network": true,
+    "hosts": [
+      "api.github.com",
+      "github.com"
+    ]
+  },
+  "steps": [
+    {
+      "type": "extract",
+      "from": "url.path",
+      "pattern": "^/([^/]+)/[^/]+/pull/\\d+",
+      "into": "owner"
+    },
+    {
+      "type": "extract",
+      "from": "url.path",
+      "pattern": "^/[^/]+/([^/]+)/pull/\\d+",
+      "into": "repo"
+    },
+    {
+      "type": "extract",
+      "from": "url.path",
+      "pattern": "^/[^/]+/[^/]+/pull/(\\d+)",
+      "into": "number"
+    },
+    {
+      "type": "integration",
+      "integration": "github",
+      "operation": "pull",
+      "params": {
+        "owner": "{{ vars.owner }}",
+        "repo": "{{ vars.repo }}",
+        "number": "{{ vars.number }}"
+      },
+      "into": "gh",
+      "optional": true
+    },
+    {
+      "type": "http",
+      "url": "https://api.github.com/repos/{{ vars.owner }}/{{ vars.repo }}/issues/{{ vars.number }}",
+      "into": "api",
+      "optional": true
+    },
+    {
+      "type": "jsonPath",
+      "from": "vars.api",
+      "path": "$.title",
+      "into": "api_title",
+      "optional": true
+    },
+    {
+      "type": "jsonPath",
+      "from": "vars.api",
+      "path": "$.state",
+      "into": "state",
+      "optional": true
+    },
+    {
+      "type": "http",
+      "url": "{{ input.url }}",
+      "into": "page",
+      "optional": true
+    },
+    {
+      "type": "htmlMeta",
+      "from": "vars.page",
+      "into": "meta",
+      "optional": true
+    },
+    {
+      "type": "extract",
+      "from": "vars.meta_title",
+      "pattern": "^(.+?)(?: by [^·]+)? · Pull Request #\\d+",
+      "into": "page_title",
+      "optional": true
+    },
+    {
+      "type": "transform",
+      "set": {
+        "full": "Review PR #{{ vars.number }}: {{ vars.gh_title | default(vars.api_title) | default(vars.page_title) | default(\"\") | truncate(120) }}"
+      }
+    },
+    {
+      "type": "regex",
+      "from": "vars.full",
+      "pattern": ":\\s*$",
+      "replacement": "",
+      "into": "final_title"
+    },
+    {
+      "type": "createItem",
+      "itemType": "todo",
+      "title": "{{ vars.final_title }}",
+      "content": "{{ input.url }}",
+      "inInbox": true,
+      "sourceLabel": "GitHub · {{ vars.owner }}/{{ vars.repo }}#{{ vars.number }}",
+      "metadata": {
+        "integration": "github",
+        "kind": "pull",
+        "owner": "{{ vars.owner }}",
+        "repo": "{{ vars.repo }}",
+        "number": "{{ vars.number }}",
+        "state": "{{ vars.gh_state | default(vars.state) | default(\"\") }}",
+        "labels": "{{ vars.gh_labels | default(\"\") }}",
+        "assignees": "{{ vars.gh_assignees | default(\"\") }}",
+        "milestone": "{{ vars.gh_milestone | default(\"\") }}"
+      }
+    }
+  ]
+}

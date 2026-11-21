@@ -1,0 +1,422 @@
+{
+  "sourceCommit": "2b347550a7dfde141a4cd0b7d8be5db62f75da53",
+  "branch": "main",
+  "fixtureRevision": "m4-v1: M3 paired fixtures; flat composited contrast/AX audit and empty light search placeholders",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "sourceFiles": {
+    "scripts/visual/accessibility-audit.mjs": "d2fd5cf1644871953dfcf8d4b7f089355e51df1514a5605826278ff125dfde7a",
+    "apps/desktop/ui/src/features/floating/FloatingBadge.tsx": "4ec107956050e4f411f10be19ab5d94da4bfde42b3f448147f685fdd546acc78",
+    "apps/desktop/ui/src/features/projects/ProjectItemRow.tsx": "007173dab156ad987fc40b80411b18276a67db2c1adbf0d301c0f5d5807a2c53",
+    "scripts/visual/guidance-scenes.mjs": "3e993f36d35523f004c7fc210b12c2185bd87733b7d82de8691b605d387c854e",
+    "apps/desktop/ui/src/features/search/SearchPanel.tsx": "6a2f5d856f40ec332c7b11715c9b4c2bceaec8963ed44968feeebb67e462bd30",
+    "apps/desktop/ui/src/features/search/CommandPalette.tsx": "5013e52d8d61403a9dbc59261f239bfde61fc15ee7986f2a67de2f7e33dc2cbb",
+    "apps/desktop/ui/src/features/search/SearchApp.tsx": "ce21b06e0967b3f8a738a5cc6c520d86fd35ab0908769125bc1be70490c329ab",
+    "apps/desktop/ui/src/lib/ipc.ts": "8f873c504340c041a54370881c5ac19a249469b9e5da9e997fd83ec3be079551",
+    "apps/desktop/ui/src/bindings/index.ts": "7b7b8f0076a0919cd18f64d39f8ca8d0ab8af693e19d9a11c95ad360f6941295",
+    "apps/desktop/ui/src/features/quick-create/QuickCreateForm.tsx": "964b50ec8f098f0fd5323eaf4dcbb187c00b5817cd6caf06c5575b0c9ccd062b",
+    "apps/desktop/ui/src/features/quick-create/model/quick-create.ts": "90bff54e97ddcaa2d1423502fd53ae350fe3d533eb405b6f07d10a4f0f421cf4",
+    "apps/desktop/ui/src/features/inbox/InboxRow.tsx": "cfe9451f503545b83fa30a69beacba483a41ff1ebedd6181845c928bb8c61fb5",
+    "apps/desktop/ui/src/features/settings/SettingsPage.tsx": "10e7208c137876f853fbbaeadccf29a4c3f6ac78508106b43e852b3beae8e9e7",
+    "apps/desktop/ui/src/features/settings/SkinSetting.tsx": "f0309b1fef50667d8f86854541e447ca16fb4d9a619e2ee0980b356ab59f3509",
+    "apps/desktop/ui/src/features/workflows/WorkflowsPage.tsx": "389e2cf3df2e3236b4e14fbd937bec3d6e0d2ce5787a2a39ebd9adc8ea0c7ede",
+    "apps/desktop/ui/src/features/workflows/WorkflowEditor.tsx": "f9a4027300f14fc24b249a95829dc169da11fe1473b490830e570eaaf39ebf00",
+    "apps/desktop/ui/src/features/onboarding/OnboardingDialog.tsx": "6aef089f68fa42edb360b61dd2174abc169182635f2772b889e7326511d1a184",
+    "apps/desktop/ui/src/features/projects/ProjectsPage.tsx": "e6ae35266623b38a6dd6ceb843a3c17afc4c3f596b0fa3da384f8d6c2615bce8",
+    "apps/desktop/ui/src/features/trash/TrashPage.tsx": "e38fe1988faa15e25c0d9d802579420889e55a3563940922c193e1e9ff6950bb",
+    "apps/desktop/ui/src/features/today/TodayPage.tsx": "0cfaa61da947fbaef170077189d5d8a91a1d2888b388760812bf1a26fdb3547b",
+    "apps/desktop/ui/src/components/LoadFeedback.tsx": "fbbfb26e856b54af1ef4325c4de51c5762da7484d0834ed2648ae8854bfafb2f",
+    "apps/desktop/ui/src/features/floating/TodayPanel.tsx": "42c658ffd4612369435a840a9619904986f0b5a4d52e40ffd91ada06fa721052",
+    "apps/desktop/ui/src/app/providers/AppProviders.tsx": "0dbf94b4c7f955396d0102f7d4f529e9ea243565f8b6267957afbf3ad6d0fef4",
+    "apps/desktop/ui/src/features/inbox/InboxPage.tsx": "63580c3b41682cd6438960140fb1d6307e66db719c48049260163c0ff44053eb",
+    "apps/desktop/ui/src/features/shell/ShortcutsDialog.tsx": "3a591921cf15952c3f68e55ea65b62ba7bfd45604c625fb7b2b7209b18558560",
+    "apps/desktop/ui/src/features/calendar/CalendarPage.tsx": "d4a1ff27858288fdf182d00b001318304fe491b7dedc165e9da2604a7a816fef",
+    "apps/desktop/ui/src/features/calendar/CalendarChip.tsx": "533bb4ce2cd1a36daf6f43f115c83e5c252f5cb3e401b1f9cfa3fb76769cb68a",
+    "apps/desktop/ui/src/components/Tooltip.tsx": "4263740c4348f253b462bb43534cf7ee1984f59fbd5a2f093ac74bf1f2d98908",
+    "scripts/visual/visual.mjs": "f224d2c077b5895d0be69593d13d0216698b59598fe737282a071ddcc7ef3da9",
+    "apps/desktop/ui/src/test/dev-seed.ts": "190f1daa3ff2cfbdc1e26c6fd306f72d94cf4422c8a39eb4a3ad071b2e2f3188",
+    "apps/desktop/ui/src/features/detail/use-item-draft.ts": "089bb23cdc64353d8d5650394fab48c5f73e2478b7369ee5ed3252b2dc20cb26",
+    "apps/desktop/ui/src/features/detail/ItemDetailPanel.tsx": "9a23bca6728fa22ae51c02299a2a279124b41da34b53411c2d632b8eeb30e4ee",
+    "apps/desktop/ui/src/features/shell/MainShell.tsx": "6223e91b1618a1d9722182b384077ac2bd062ae92d42c4f62a418c9678d3d294",
+    "apps/desktop/ui/src/stores/draft-transition-store.ts": "1020eee92c99d9596ae2b789eaa269b0f2340310c2521f8bbdcd23b2c0ff4b53",
+    "apps/desktop/ui/src/features/shell/nav-store.ts": "dbf10d7f49f0d3537a53304f438266a44c9d7306dea3299d4948b5650acbdbf7",
+    "apps/desktop/ui/src/features/detail/DraftRecovery.tsx": "5701ccb95f9eb683026f9df477f7e73f13855443d1a8239f3c091e23b6dbd23d",
+    "apps/desktop/ui/src/features/detail/SourceSection.tsx": "79caff815925c00699bbd6d7d841d402cf992e384a1b6282b7c22d4a7cfe572a",
+    "apps/desktop/ui/src/features/notes/NoteEditor.tsx": "2b4a1d093ffdcf3a27a77b768a08276d9e4608db48b507e55bbc420b22685b38",
+    "apps/desktop/ui/src/features/notes/NotesPage.tsx": "1344cc188cef448c8c47e340b9f88b9421290d73d660e7d9262516a5a77b7d2f",
+    "apps/desktop/ui/src/lib/layout.ts": "46e5b46925c3ea2fe4531d13d97ebba6d5d68f0b9bf51f1d749a57ff680f592c",
+    "apps/desktop/ui/src/lib/focus-trap.ts": "be7466c2cb938e260b7f573459f8eb9ee23fd9a7a7c6078f3b58e57c420c7617",
+    "apps/desktop/ui/src/components/Menu.tsx": "1abfc3045c9d25b4a1fe930aecb22d58267be1291c49a82bb0021e2d92bb085b",
+    "apps/desktop/ui/src/styles/tokens.css": "83cfaa7b0f9a002ff7dbbad86820c2299fe43408c8bf4a73938e0bcfd6ec020c",
+    "apps/desktop/ui/src/styles/global.css": "52270d8ede4f2ea8a934f1b7fc47524b8aa7dfb3160f14bc482e0ff9f474eaab",
+    "apps/desktop/ui/src/i18n/en.json": "245758fd8e94a636abab0461c75e78c3176cc87421769597d6ea408996f7df40",
+    "apps/desktop/ui/src/i18n/zh-CN.json": "e6d815b1a8d920b9b29ade285adaf06b988f3d7c79f826ab8d3ef0e1e2b2c519"
+  },
+  "acceptance": "M4 rendered audit: inspect per-scene contrast failures and unmeasured gradients; browser AX trees are not NVDA evidence; native zoom and focus use separate release E2E",
+  "platform": "win32",
+  "timezone": "Asia/Shanghai",
+  "motion": "reduce; animations/transitions disabled",
+  "environment": "Chrome browser mock; OS scale and native WebView2 not certified",
+  "artifacts": [
+    {
+      "name": "guidance-inbox-960-zh",
+      "file": "guidance-inbox-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "a548b0fea58c5f2e5a9df23075f93fbfeb551bbcbaaf1e2c305af9adbd56c817"
+    },
+    {
+      "name": "guidance-inbox-400-en-dark",
+      "file": "guidance-inbox-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "ddd2ab8ebc0ffe2653b6850f6a8fe7b6c06dcef1545b1f703bf4ffe63e6a5bee"
+    },
+    {
+      "name": "guidance-settings-960-zh",
+      "file": "guidance-settings-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "16af1bb8db478f8aee37c0937ce56846cf4cf96885653b3b6a9754bab6e19076"
+    },
+    {
+      "name": "guidance-settings-400-en-dark",
+      "file": "guidance-settings-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "001f0e364157b0517ff68ee054ca6ceb15f20694b5a303810de73aee10c44e3d"
+    },
+    {
+      "name": "guidance-workflows-960-zh",
+      "file": "guidance-workflows-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "37b495ec9898a50a8a35ec93977464eb009907eb639d99e01807d0d4314a23c7"
+    },
+    {
+      "name": "guidance-workflows-400-en-dark",
+      "file": "guidance-workflows-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "e7645e87815f6233d1fcbe507449ea27c6097c33a95604f3900201d4d51f3901"
+    },
+    {
+      "name": "guidance-notes-960-zh",
+      "file": "guidance-notes-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "cc4cb6bc720264bc3c0efe99604da97effddefe20924801af53581120fb20d8e"
+    },
+    {
+      "name": "guidance-notes-400-en-dark",
+      "file": "guidance-notes-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "89439d7fc111096ea4fcea449e6e5ea4919a7066891816cc6b3bb0b2b0fbb7d6"
+    },
+    {
+      "name": "guidance-projects-960-zh",
+      "file": "guidance-projects-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "d73c96ad6387b212fe5115b85d778569a3a81bd18b65af961247625de8b0aa8e"
+    },
+    {
+      "name": "guidance-projects-400-en-dark",
+      "file": "guidance-projects-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "337866143d264f4f256613e1796e286d94d17747d2174bdc7deaf1958457f3ad"
+    },
+    {
+      "name": "guidance-today-960-zh",
+      "file": "guidance-today-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "240f7a91a847ecf201902d0a100006ff59b6aec6d752b561fc39c64475eff506"
+    },
+    {
+      "name": "guidance-today-400-en-dark",
+      "file": "guidance-today-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "d97a3262c2c94b2ec072095cbc64bb02c458dd613480ee785178a01ef188e9a6"
+    },
+    {
+      "name": "guidance-trash-960-zh",
+      "file": "guidance-trash-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "ea17082b64399e812e8256967f246b31a30bad2378d671feda2fc41534d8e2b6"
+    },
+    {
+      "name": "guidance-trash-400-en-dark",
+      "file": "guidance-trash-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "92141c2aebe9d7e12434a383c50ae5b0ea276de1392e849f95158f7c97dc51b9"
+    },
+    {
+      "name": "guidance-onboarding-960-zh",
+      "file": "guidance-onboarding-960-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "aab7136203bc1cd39f6a618ed702ded35c241321558ddc8557fd2220cf384d58"
+    },
+    {
+      "name": "guidance-onboarding-400-en-dark",
+      "file": "guidance-onboarding-400-en-dark.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "88db10b3d33f640230ec26a1c133577b43263459a17c09516b11862bc36d790b"
+    },
+    {
+      "name": "guidance-palette-zh",
+      "file": "guidance-palette-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "7ea00bff3064e74a77326d3996cda17460c360532a3611c1033c043be81b72ed"
+    },
+    {
+      "name": "guidance-palette-en-dark",
+      "file": "guidance-palette-en-dark.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "565d8143e40c1d6f72fcc2c8a7474048dc9dbb980df3cf98230f72548000d542"
+    },
+    {
+      "name": "guidance-global-zh",
+      "file": "guidance-global-zh.png",
+      "viewport": {
+        "width": 640,
+        "height": 440
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "9e65e58dfe8a806a61c7d906c378dfa8c63fc15caa58a89446a0a41907cd86a7"
+    },
+    {
+      "name": "guidance-global-en-dark",
+      "file": "guidance-global-en-dark.png",
+      "viewport": {
+        "width": 640,
+        "height": 440
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "49200b78fd35c2208f84849b95703835e735bc94522ec4aa41809451ee8b45cf"
+    },
+    {
+      "name": "guidance-capture-zh",
+      "file": "guidance-capture-zh.png",
+      "viewport": {
+        "width": 300,
+        "height": 380
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "790d94bb36d324947af954a7ff96c4ee1826d02f66c727abd1740e8a92a76e93"
+    },
+    {
+      "name": "guidance-capture-en-dark",
+      "file": "guidance-capture-en-dark.png",
+      "viewport": {
+        "width": 300,
+        "height": 380
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "ee8725835058735c0c62cdb14a3bf12d6f97bc6535c8271207e7897dbfcf7c0e"
+    },
+    {
+      "name": "guidance-global-error-undo-zh",
+      "file": "guidance-global-error-undo-zh.png",
+      "viewport": {
+        "width": 640,
+        "height": 440
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "9184260af9b66a67d8327580d5d25c4e2ae57d097f94360d571b0faad4cae8f7"
+    },
+    {
+      "name": "guidance-global-error-undo-320-zh",
+      "file": "guidance-global-error-undo-320-zh.png",
+      "viewport": {
+        "width": 320,
+        "height": 220
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "c47b1c1356933c5557384b4fe3b2e6ab682a23d5c2d6ffd4ec7775fb566f9ef0"
+    }
+  ],
+  "recordings": []
+}

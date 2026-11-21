@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT project_id AS \"project_id!\", COUNT(*) AS \"count!: i64\"\n             FROM items\n             WHERE project_id IS NOT NULL AND archived_at IS NULL AND deleted_at IS NULL\n               AND status != 'done'\n             GROUP BY project_id",
+  "describe": {
+    "columns": [
+      {
+        "name": "project_id!",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "count!: i64",
+        "ordinal": 1,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true,
+      false
+    ]
+  },
+  "hash": "f0271bbb7fcc716b84fd7c460680d7868f2fcc938c72197ef89ced00abd16270"
+}

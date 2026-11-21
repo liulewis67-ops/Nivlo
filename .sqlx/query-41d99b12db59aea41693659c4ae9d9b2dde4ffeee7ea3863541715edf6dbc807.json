@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT tags.id AS id, tags.name AS name\n             FROM item_tags JOIN tags ON tags.id = item_tags.tag_id\n             WHERE item_tags.item_id = ?\n             ORDER BY tags.name_key ASC, tags.id ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "41d99b12db59aea41693659c4ae9d9b2dde4ffeee7ea3863541715edf6dbc807"
+}

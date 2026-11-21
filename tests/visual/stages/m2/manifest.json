@@ -1,0 +1,157 @@
+{
+  "sourceCommit": "4ed97db46947252cbcc141e7078c3e12ff5b735f",
+  "branch": "main",
+  "fixtureRevision": "m2-v1: dev-seed + twenty similar-prefix todos, due overlay, injected creation failure",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "sourceFiles": {
+    "apps/desktop/ui/src/features/calendar/CalendarPage.tsx": "d4a1ff27858288fdf182d00b001318304fe491b7dedc165e9da2604a7a816fef",
+    "apps/desktop/ui/src/features/calendar/CalendarChip.tsx": "533bb4ce2cd1a36daf6f43f115c83e5c252f5cb3e401b1f9cfa3fb76769cb68a",
+    "apps/desktop/ui/src/components/Tooltip.tsx": "a7af2d1e04aa77a54f87fbb20d1b409b0429009c519da7a8186862f5a5a511ca",
+    "scripts/visual/visual.mjs": "831ae0cb1c8fa58d6c0097bcaa8657a2ad3e372ad2744dac11ddbd62b65ea543",
+    "apps/desktop/ui/src/test/dev-seed.ts": "190f1daa3ff2cfbdc1e26c6fd306f72d94cf4422c8a39eb4a3ad071b2e2f3188",
+    "apps/desktop/ui/src/features/detail/use-item-draft.ts": "089bb23cdc64353d8d5650394fab48c5f73e2478b7369ee5ed3252b2dc20cb26",
+    "apps/desktop/ui/src/features/detail/ItemDetailPanel.tsx": "9a23bca6728fa22ae51c02299a2a279124b41da34b53411c2d632b8eeb30e4ee",
+    "apps/desktop/ui/src/features/shell/MainShell.tsx": "35025e39e01208f59018f751ba2b31b25d45c5e4e0045791114b285440c3d127",
+    "apps/desktop/ui/src/stores/draft-transition-store.ts": "1020eee92c99d9596ae2b789eaa269b0f2340310c2521f8bbdcd23b2c0ff4b53",
+    "apps/desktop/ui/src/features/shell/nav-store.ts": "dbf10d7f49f0d3537a53304f438266a44c9d7306dea3299d4948b5650acbdbf7",
+    "apps/desktop/ui/src/features/detail/DraftRecovery.tsx": "5701ccb95f9eb683026f9df477f7e73f13855443d1a8239f3c091e23b6dbd23d",
+    "apps/desktop/ui/src/features/detail/SourceSection.tsx": "79caff815925c00699bbd6d7d841d402cf992e384a1b6282b7c22d4a7cfe572a",
+    "apps/desktop/ui/src/features/notes/NoteEditor.tsx": "218ac764e23d1386ef96537c10c6f6954e2a334ad107f3c1e09088518b909473",
+    "apps/desktop/ui/src/features/notes/NotesPage.tsx": "55e569f666bf4530139dc7048e32d14c7402ac52c67c523829df7d04c06ca6f7",
+    "apps/desktop/ui/src/lib/layout.ts": "c0f38a9d1873e7d177c999667c15c1ab36a73d730be6b9aed01e573d696b8b4f",
+    "apps/desktop/ui/src/lib/focus-trap.ts": "def30fabf4d7f08ded27717c59e6d2c3696fe3bb3f54807cf52467239e232329",
+    "apps/desktop/ui/src/components/Menu.tsx": "1abfc3045c9d25b4a1fe930aecb22d58267be1291c49a82bb0021e2d92bb085b",
+    "apps/desktop/ui/src/styles/tokens.css": "83cfaa7b0f9a002ff7dbbad86820c2299fe43408c8bf4a73938e0bcfd6ec020c",
+    "apps/desktop/ui/src/styles/global.css": "52270d8ede4f2ea8a934f1b7fc47524b8aa7dfb3160f14bc482e0ff9f474eaab",
+    "apps/desktop/ui/src/i18n/en.json": "dfd8e17b01cb0a238252f6ff828b5468d659e4f2afe712c92dea22644f459ec4",
+    "apps/desktop/ui/src/i18n/zh-CN.json": "d8c5afef08974ec41b791f5930bd87f83bf55b9fad8d520abe4e2359029f619b"
+  },
+  "acceptance": "M2: twenty entries reachable in week, no horizontal overflow, top-layer backlog without grid compression, persisted scheduling through details and toolbar focus return, failed creation retains input; browser mock only",
+  "platform": "win32",
+  "timezone": "Asia/Shanghai",
+  "motion": "reduce; animations/transitions disabled",
+  "environment": "Chrome browser mock; OS scale and native WebView2 not certified",
+  "artifacts": [
+    {
+      "name": "calendar-960-month-zh",
+      "file": "calendar-960-month-zh.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "d155a020910a6301c43f3eb52a781a2142d361a1ab4e46f60eb87a9383001111"
+    },
+    {
+      "name": "calendar-960-week-en-dark",
+      "file": "calendar-960-week-en-dark.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "529f36e924202c66e101c16b15de117efe3ca4c957504306288e15f10694db6c"
+    },
+    {
+      "name": "calendar-960-tooltip-focus",
+      "file": "calendar-960-tooltip-focus.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "f8289b64e680b43bf2ef1e05c0d65cdd4406969c6393196150e78ebc4ef01bc0"
+    },
+    {
+      "name": "calendar-400-week-en",
+      "file": "calendar-400-week-en.png",
+      "viewport": {
+        "width": 400,
+        "height": 600
+      },
+      "locale": "en",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "110f181f8adc68754df5689a583bee43069ee8ce858cc184d4420d1c742a353c"
+    },
+    {
+      "name": "calendar-1440-docked-zh",
+      "file": "calendar-1440-docked-zh.png",
+      "viewport": {
+        "width": 1440,
+        "height": 800
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "75ead2cb258c9f183390354a64246666fe8942f319d828d183bf3ba5f14ba84a"
+    },
+    {
+      "name": "calendar-960-backlog-en-dark",
+      "file": "calendar-960-backlog-en-dark.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "b8b4497a187d7851a992e3b2646b98d0f3268de514a1ef1c2bc42db45e9bbe82"
+    },
+    {
+      "name": "calendar-keyboard-schedule",
+      "file": "calendar-keyboard-schedule.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "96688f9558ac82b0399ae8d884d2165bade18698fb9fde979bd17f35f4f21c9f"
+    },
+    {
+      "name": "calendar-create-failure",
+      "file": "calendar-create-failure.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "7a1a915f6c8a56b6d29a0f38dd540a5f6df1292bbdd10f1a43a9119b245f0c99"
+    }
+  ],
+  "recordings": []
+}

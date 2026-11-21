@@ -1,0 +1,750 @@
+{
+  "samples": [],
+  "unmeasured": [
+    {
+      "text": "今天",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "10月10日 周六",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "收集箱 3",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "回复产品评审的邮件",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "整理本周周报",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "下午三点：站会",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "待办",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "笔记",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "提示",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "Capture draft / 保留草稿",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    }
+  ],
+  "failures": [],
+  "viewport": {
+    "width": 300,
+    "height": 380,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/?window=floating"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "拾序悬浮窗",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "今日面板",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "list",
+      "name": "待办",
+      "properties": []
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "assertive"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "list",
+      "name": "提示",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "捕获类型",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "textbox",
+      "name": "标题",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "今天10月10日 周六",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "收集箱 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "打开主窗口",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "待办",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "笔记",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "提示",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "10月10日 周六",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收集箱 3",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "拖动以调整「回复产品评审的邮件」的顺序",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "describedby",
+          "value": {
+            "type": "idrefList",
+            "value": "DndDescribedBy-0",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 67,
+                "idref": "DndDescribedBy-0"
+              }
+            ]
+          }
+        },
+        {
+          "name": "roledescription",
+          "value": {
+            "type": "string",
+            "value": "sortable"
+          }
+        }
+      ]
+    },
+    {
+      "role": "checkbox",
+      "name": "完成「回复产品评审的邮件」",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "回复产品评审的邮件",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "「回复产品评审的邮件」的更多操作",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "拖动以调整「整理本周周报」的顺序",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "describedby",
+          "value": {
+            "type": "idrefList",
+            "value": "DndDescribedBy-0",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 67,
+                "idref": "DndDescribedBy-0"
+              }
+            ]
+          }
+        },
+        {
+          "name": "roledescription",
+          "value": {
+            "type": "string",
+            "value": "sortable"
+          }
+        }
+      ]
+    },
+    {
+      "role": "checkbox",
+      "name": "完成「整理本周周报」",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "整理本周周报",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "「整理本周周报」的更多操作",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "checkbox",
+      "name": "完成「下午三点：站会」",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "下午三点：站会",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "待办",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "提示",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Capture draft / 保留草稿",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "今天",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "10月10日 周六",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收集箱 3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回复产品评审的邮件",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "整理本周周报",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "下午三点：站会",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "待办",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "笔记",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "提示",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Capture draft / 保留草稿",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

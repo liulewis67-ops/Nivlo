@@ -1,0 +1,905 @@
+import { isImeKey } from "@/lib/ime";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components";
+import { useProjectsQuery } from "@/features/organize";
+import { parseDatePhrase } from "@/features/quick-create";
+import type { DatePhraseResult } from "@/features/quick-create";
+import { cx } from "@/lib/cx";
+import { ipc } from "@/lib/ipc";
+import type { ItemDto, ItemTypeDto } from "@/lib/ipc";
+import { queryKeys } from "@/lib/query-keys";
+import { errorMessage } from "@/lib/error-message";
+import { toAppError } from "@/lib/errors";
+import { highlight, searchTerms, snippetAround } from "./model/highlight";
+import { rankByRecent, readRecentCommands, rememberCommand } from "./model/recent-commands";
+import type { Segment } from "./model/highlight";
+import { itemMeta } from "./model/meta";
+
+/** 停止输入多久之后才发起搜索（毫秒）。 */
+export const SEARCH_DEBOUNCE_MS = 140;
+
+/** 输入以它开头时进入命令模式（与常见编辑器的命令面板一致）。 */
+export const COMMAND_PREFIX = ">";
+
+/** 命令面板里的一条命令：执行仍然走已有的界面动作或 IPC。 */
+export type PaletteCommand = {
+  /** 稳定的 ID（用于列表 key 与无障碍关联）。 */
+  id: string;
+  /** 显示的名称，也参与匹配。 */
+  label: string;
+  /** 额外的匹配词（如英文名、拼音），不显示。 */
+  keywords?: readonly string[];
+  /** 执行。 */
+  run: () => void;
+};
+
+/**
+ * 按输入过滤命令（忽略大小写）：输入按空格分成几个词，每个词都要出现在名称或某个匹配词里，
+ * 所以「new note」能找到匹配词分别是 new、note 的「新建笔记」；输入为空时全部列出。
+ *
+ * @param commands 全部命令。
+ * @param input 去掉前缀之后的输入。
+ * @returns 匹配的命令，保持原有顺序。
+ */
+export function matchCommands(
+  commands: readonly PaletteCommand[],
+  input: string,
+): PaletteCommand[] {
+  const words = input.toLowerCase().split(/\s+/).filter(Boolean);
+  return commands.filter((command) => {
+    const texts = [command.label, ...(command.keywords ?? [])].map((text) => text.toLowerCase());
+    return words.every((word) => texts.some((text) => text.includes(word)));
+  });
+}
+
+/** 「已复制」提示显示多久（毫秒）。 */
+const COPIED_NOTICE_MS = 1500;
+
+/** Ctrl+D 完成 / 重新打开之后，「撤销」留多久（毫秒，与 Today 的撤销 Toast 一致）。 */
+export const DONE_UNDO_MS = 5000;
+
+/** 刚用 Ctrl+D 改过完成状态的条目：底部提示并提供撤销。 */
+type DoneNotice = {
+  /** 改过之后的条目。 */
+  item: ItemDto;
+  /** `true` 是刚完成，`false` 是刚重新打开。 */
+  completed: boolean;
+};
+
+/** 输入为空时列出多少条最近使用（打开或更新）的条目。 */
+export const RECENT_LIMIT = 8;
+
+/** 结果分组的顺序（产品文档 §23：待办、笔记、提示）。 */
+const GROUP_ORDER: ItemTypeDto[] = ["todo", "note", "tip"];
+
+/** [`SearchPanel`] 的 Props。 */
+export type SearchPanelProps = {
+  /** 关闭（Esc）。 */
+  onClose: () => void;
+  /** 选中一条结果（回车或点击）。 */
+  onOpenItem: (id: string) => void;
+  /**
+   * 外观：`dialog` 是主窗口里的浮层（自带圆角边框）；`window` 填满独立的全局搜索窗口
+   * （圆角与阴影由系统窗口提供），输入框更大。
+   */
+  variant?: "dialog" | "window";
+  /** 输入框为空、也还没有任何条目可列出时显示的提示，缺省为通用的搜索说明。 */
+  emptyHint?: ReactNode;
+  /** 输入为空时底部右侧的附加内容（如全局快捷键提示）。 */
+  footerExtra?: ReactNode;
+  /**
+   * 从搜索创建的待办建好之后调用。提供时才能从搜索直接创建：Ctrl+Enter，或者没有结果时
+   * 点「新建待办」；标题里的日期短语（「明天」「周五 3pm」）按 Quick Create 的规则识别。
+   */
+  onCreated?: (item: ItemDto) => void;
+  /**
+   * 命令面板的命令。提供时，输入以 `>` 开头就只列出命令（回车执行），不搜索条目；
+   * 输入为空时底部提示这个用法。
+   */
+  commands?: readonly PaletteCommand[] | undefined;
+  /**
+   * 内容的自然高度（CSS px）变化时调用：独立的全局搜索窗口据此调整窗口高度，结果少时不留空白。
+   * 窗口比内容矮时列表在窗口内滚动，量出的仍是不滚动时需要的高度。
+   */
+  onContentHeight?: (height: number) => void;
+};
+
+/** 从搜索词新建待办的草稿。 */
+type Draft = {
+  /** 去掉日期短语之后的标题。 */
+  title: string;
+  /** 识别出的计划；没有时由后端按 Quick Create 的默认值（今天）处理。 */
+  schedule: DatePhraseResult["schedule"] | null;
+  /** 识别出的计划的说明，如「明天 · 10月28日 周三」。 */
+  label: string | null;
+};
+
+/**
+ * 把搜索词变成待办草稿：识别日期短语，识别不到就原样作为标题。
+ *
+ * @param query 搜索词（已去掉首尾空白，非空）。
+ * @returns 草稿。
+ */
+function draftFrom(query: string): Draft {
+  const parsed = parseDatePhrase(query, format(new Date(), "yyyy-MM-dd"));
+  return parsed === null
+    ? { title: query, schedule: null, label: null }
+    : { title: parsed.title, schedule: parsed.schedule, label: parsed.label };
+}
+
+/**
+ * 一个分组：类型与其中的结果（保持后端给出的相关度顺序）；输入为空时只有一组 `recent`，
+ * 即最近使用（打开或更新）的条目。
+ */
+type Group = { key: ItemTypeDto | "recent"; items: ItemDto[] };
+
+/**
+ * 把结果按类型分组；组内保持原有顺序，空组不出现。
+ *
+ * @param items 搜索结果（已按相关度排序）。
+ * @returns 分组。
+ */
+function groupByType(items: readonly ItemDto[]): Group[] {
+  return GROUP_ORDER.map((type) => ({
+    key: type,
+    items: items.filter((item) => item.itemType === type),
+  })).filter((group) => group.items.length > 0);
+}
+
+/** [`Marked`] 的 Props。 */
+type MarkedProps = {
+  /** 切好的片段。 */
+  segments: readonly Segment[];
+};
+
+/**
+ * 渲染带高亮的文字：命中的部分加粗并着色。
+ *
+ * @param props 片段。
+ * @returns 行内元素。
+ */
+function Marked({ segments }: MarkedProps) {
+  return (
+    <>
+      {segments.map((segment, index) =>
+        segment.match ? (
+          <mark key={index} className="rounded-sm bg-primary/15 font-medium text-text">
+            {segment.text}
+          </mark>
+        ) : (
+          <span key={index}>{segment.text}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+/** 类型的小图标（线性，和侧栏风格一致）。 */
+function TypeGlyph({ type }: { type: ItemTypeDto }) {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      className="size-4 shrink-0 text-muted"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {type === "todo" && (
+        <>
+          <rect x="2.5" y="2.5" width="11" height="11" rx="2.5" />
+          <path d="M5.5 8.2l1.8 1.8 3.2-3.6" />
+        </>
+      )}
+      {type === "note" && (
+        <>
+          <path d="M4 2.5h6l2.5 2.5v8a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5z" />
+          <path d="M5.8 7.5h4.4M5.8 10h4.4" />
+        </>
+      )}
+      {type === "tip" && (
+        <>
+          <path d="M8 2.5a4 4 0 0 0-2.2 7.3c.5.4.7.8.7 1.2h3c0-.4.2-.8.7-1.2A4 4 0 0 0 8 2.5z" />
+          <path d="M6.5 13h3" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/**
+ * 搜索面板：主窗口的 Ctrl+K 浮层与全局搜索窗口共用（实施计划 3.4）。
+ *
+ * * 输入后稍作停顿再搜索（[`SEARCH_DEBOUNCE_MS`]），结果按类型分组，命中的文字高亮，
+ *   并附带正文里命中位置附近的一小段；
+ * * 全键盘：↑ / ↓ 选择（首尾循环），Home / End 跳到首尾，回车打开，Esc 关闭；
+ *   鼠标移过也会选中，点击打开；
+ * * 输入还没停顿就按回车时，等这次搜索出结果后再打开第一条，不会因为手快而落空；
+ * * 输入为空时列出最近使用（打开或更新）的几条（[`RECENT_LIMIT`]），直接 ↑ / ↓ + 回车就能打开，
+ *   不必先想关键词；
+ * * 提供 `onCreated` 时，Ctrl+Enter 把搜索词直接建成待办（没有结果时还会给出按钮），
+ *   找不到就顺手记下，不必换到别的入口；
+ * * 提供 `commands` 时，以 `>` 开头的输入只列出匹配的命令，回车执行；
+ * * Shift+Enter 复制选中条目的标题（贴到聊天、提交信息里），底部短暂提示「已复制」；
+ * * Ctrl+D 完成选中的待办或提示（已完成的则重新打开），条目留在列表里显示为已完成；底部给出「撤销」，
+ *   提示还在时 Ctrl+Z 也能撤销——找到它、勾掉它，不必打开主窗口；
+ * * 挂载时输入框聚焦；重置（清空输入）由调用方用 `key` 重新挂载完成。
+ *
+ * @param props 关闭与打开回调、外观。
+ * @returns 面板内容（不含遮罩）。
+ */
+export function SearchPanel({
+  onClose,
+  onOpenItem,
+  variant = "dialog",
+  emptyHint,
+  footerExtra,
+  onCreated,
+  commands,
+  onContentHeight,
+}: SearchPanelProps) {
+  const { t } = useTranslation();
+  const listId = useId();
+  const [text, setText] = useState("");
+  const [helpOpen, setHelpOpen] = useState(false);
+  const helpId = useId();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [debounced, setDebounced] = useState("");
+  const [active, setActive] = useState(0);
+  /** 用户在结果出来之前按了回车：结果一到就打开选中的那一条。 */
+  const openWhenReady = useRef(false);
+  const activeRef = useRef<HTMLLIElement | null>(null);
+  /** 刚刚复制了标题：底部短暂提示。 */
+  const [copied, setCopied] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  /** 本次打开期间改过完成状态的条目：列表按它显示，不必重新搜索。 */
+  const [patched, setPatched] = useState<ReadonlyMap<string, ItemDto>>(new Map());
+  const [doneNotice, setDoneNotice] = useState<DoneNotice | null>(null);
+  /** 正在切换完成状态：忽略重复触发（按住 Ctrl+D 不会来回切换）。 */
+  const toggling = useRef(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // 量出内容的自然高度：面板高度减去滚动区可见高度（= 输入框 + 底部提示），再加上列表内容的实际高度。
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    const scroll = scrollRef.current;
+    const content = contentRef.current;
+    if (onContentHeight === undefined || panel === null || scroll === null || content === null) {
+      return;
+    }
+    let last = "";
+    /** 量一次，高度变了才通知（ResizeObserver 回调很频繁）。 */
+    const measure = () => {
+      const height = Math.ceil(panel.offsetHeight - scroll.clientHeight + content.offsetHeight);
+      const measurement = `${height}:${window.devicePixelRatio}`;
+      if (measurement !== last) {
+        last = measurement;
+        onContentHeight(height);
+      }
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    observer?.observe(content);
+    observer?.observe(panel);
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
+  }, [onContentHeight]);
+
+  useEffect(() => {
+    if (doneNotice === null) return;
+    const timer = setTimeout(() => setDoneNotice(null), DONE_UNDO_MS);
+    return () => clearTimeout(timer);
+  }, [doneNotice]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), COPIED_NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  /** 命令模式：只列出命令，不搜索条目。 */
+  const commandMode = commands !== undefined && text.trimStart().startsWith(COMMAND_PREFIX);
+  // 最近用过的命令排在前面（按使用习惯）；面板每次打开时读一次。
+  const [recentCommands] = useState(readRecentCommands);
+  const matches =
+    commands !== undefined && commandMode
+      ? rankByRecent(
+          matchCommands(commands, text.trimStart().slice(COMMAND_PREFIX.length)),
+          recentCommands,
+        )
+      : [];
+
+  /**
+   * 执行一条命令，并记下它，下次排在前面。
+   *
+   * @param command 命令。
+   */
+  function runCommand(command: PaletteCommand): void {
+    rememberCommand(command.id);
+    command.run();
+  }
+  /** 送去搜索的文本；命令模式下为空，不打后端。 */
+  const searchable = commandMode ? "" : text.trim();
+
+  // 输入停顿之后才更新查询，避免每个字符都打一次后端。
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(searchable), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchable]);
+
+  const search = useQuery({
+    meta: { errorPresentation: "inline" },
+    queryKey: queryKeys.search(debounced),
+    queryFn: () => ipc.searchItems(debounced),
+    enabled: debounced !== "",
+    staleTime: Infinity,
+    // 继续输入时先保留上一次的结果，新结果到了再替换，列表不会闪一下空白。
+    placeholderData: keepPreviousData,
+  });
+  const projects = useProjectsQuery();
+  const projectNames = new Map(projects.data?.map((project) => [project.id, project.name]));
+  const today = new Date();
+  const recent = useQuery({
+    meta: { errorPresentation: "inline" },
+    queryKey: queryKeys.searchRecent(),
+    queryFn: () =>
+      ipc.listItems({
+        itemType: null,
+        includeArchived: false,
+        orderBy: "recent",
+        limit: RECENT_LIMIT,
+      }),
+  });
+  const query = searchable;
+  /** 输入为空：浏览最近的条目。 */
+  const browsing = !commandMode && query === "";
+  // 刚开始输入、第一次搜索的结果还没到时继续显示最近条目，避免列表闪一下空白。
+  const showRecent = !commandMode && (browsing || debounced === "" || search.data === undefined);
+  const recentItems = recent.data ?? [];
+  const terms = showRecent ? [] : searchTerms(debounced);
+  const groups: Group[] = commandMode
+    ? []
+    : showRecent
+      ? recentItems.length > 0
+        ? [{ key: "recent", items: recentItems }]
+        : []
+      : groupByType(search.data ?? []);
+  // 展示顺序（分组后）的扁平列表，键盘选择按它走；Ctrl+D 改过的条目用改过之后的样子。
+  const flat = groups.flatMap((group) => group.items).map((item) => patched.get(item.id) ?? item);
+  /** 键盘选择的条数：命令模式下是命令，否则是条目。 */
+  const count = commandMode ? matches.length : flat.length;
+  const activeIndex = count === 0 ? -1 : Math.min(active, count - 1);
+  // 列表里的条目各自的标签：一次请求取一批，切换结果时先保留上一批，避免元信息闪动。
+  const visibleIds = flat.map((item) => item.id);
+  const tagsQuery = useQuery({
+    queryKey: queryKeys.searchTags(visibleIds),
+    queryFn: () => ipc.tagsForItems(visibleIds),
+    enabled: visibleIds.length > 0,
+    placeholderData: keepPreviousData,
+  });
+  const tagNames = new Map(
+    tagsQuery.data?.map((entry) => [entry.itemId, entry.tags.map((tag) => tag.name)]),
+  );
+  const activeItem = !commandMode && activeIndex >= 0 ? flat[activeIndex] : undefined;
+  const activeCommand = commandMode && activeIndex >= 0 ? matches[activeIndex] : undefined;
+  const activeOptionId =
+    activeCommand !== undefined
+      ? `${listId}-cmd-${activeCommand.id}`
+      : activeItem !== undefined
+        ? `${listId}-${activeItem.id}`
+        : undefined;
+  const draft = onCreated === undefined || browsing || commandMode ? null : draftFrom(query);
+  const create = useMutation({
+    meta: { errorPresentation: "inline" },
+    mutationFn: (value: Draft) => ipc.quickCreate("todo", value.title, value.schedule),
+    onSuccess: (item) => onCreated?.(item),
+    onError: (error) => setProblem(errorMessage(toAppError(error))),
+  });
+
+  /** 用当前搜索词新建待办（正在创建时忽略重复触发）。 */
+  function createDraft(): void {
+    if (draft !== null && !create.isPending) {
+      setProblem(null);
+      create.mutate(draft);
+    }
+  }
+
+  /**
+   * 切换一条待办或提示的完成状态：完成 ↔ 重新打开。成功后列表就地更新并给出撤销；笔记什么也不做。
+   *
+   * @param item 要切换的条目（以当前显示的状态为准）。
+   * @returns 是否切换成功。
+   */
+  async function toggleDone(item: ItemDto): Promise<boolean> {
+    if (item.itemType === "note" || toggling.current) return false;
+    toggling.current = true;
+    setProblem(null);
+    setBusy(true);
+    const completing = item.status !== "done";
+    try {
+      const updated = completing ? await ipc.completeItem(item.id) : await ipc.reopenItem(item.id);
+      setPatched((current) => new Map(current).set(updated.id, updated));
+      setDoneNotice({ item: updated, completed: completing });
+      return true;
+    } catch (error) {
+      setProblem(errorMessage(toAppError(error)));
+      return false;
+    } finally {
+      toggling.current = false;
+      setBusy(false);
+    }
+  }
+
+  /** 撤销刚才的 Ctrl+D，焦点回到输入框继续搜索。 */
+  function undoDone(): void {
+    if (doneNotice === null) return;
+    const { item } = doneNotice;
+    void toggleDone(item).then((done) => {
+      if (done) setDoneNotice(null);
+    });
+    inputRef.current?.focus();
+  }
+
+  /** 列表与输入一致，可以直接打开选中项。 */
+  const settled = commandMode
+    ? false
+    : browsing
+      ? recent.data !== undefined
+      : debounced !== "" &&
+        search.data !== undefined &&
+        !search.isError &&
+        !search.isPlaceholderData &&
+        debounced === query;
+
+  // 选中项与可用列表高度改变时都滚进可见区域；缩放、帮助和反馈会改变视口。
+  useEffect(() => {
+    /** 保留当前键盘选中项在实际滚动视口内。 */
+    const reveal = () => activeRef.current?.scrollIntoView?.({ block: "nearest" });
+    reveal();
+    window.addEventListener("resize", reveal);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(reveal);
+    if (scrollRef.current) observer?.observe(scrollRef.current);
+    return () => {
+      window.removeEventListener("resize", reveal);
+      observer?.disconnect();
+    };
+  }, [activeOptionId]);
+
+  // 提前按下的回车：这次输入的结果到了就打开第一条；没有结果就作罢。
+  useEffect(() => {
+    if (!openWhenReady.current || !settled) return;
+    openWhenReady.current = false;
+    if (activeItem !== undefined) onOpenItem(activeItem.id);
+  }, [settled, activeItem, onOpenItem]);
+
+  /**
+   * 键盘：↑↓ 循环选择，Home / End 首尾，回车打开，Esc 关闭。
+   *
+   * @param event 键盘事件。
+   */
+  function handleKeyDown(event: KeyboardEvent<HTMLElement>): void {
+    if (isImeKey(event.nativeEvent)) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      if (helpOpen) setHelpOpen(false);
+      else onClose();
+      return;
+    }
+    // 按钮保留自身的 Enter / Space 操作，不能误开当前搜索结果。
+    if (event.target !== inputRef.current) return;
+    if (event.key === "ArrowDown" && count > 0) {
+      event.preventDefault();
+      setActive((activeIndex + 1) % count);
+    } else if (event.key === "ArrowUp" && count > 0) {
+      event.preventDefault();
+      setActive((activeIndex - 1 + count) % count);
+    } else if ((event.key === "PageDown" || event.key === "End") && event.ctrlKey && count > 0) {
+      event.preventDefault();
+      setActive(count - 1);
+    } else if ((event.key === "PageUp" || event.key === "Home") && event.ctrlKey && count > 0) {
+      event.preventDefault();
+      setActive(0);
+    } else if (
+      (event.key === "d" || event.key === "D") &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.shiftKey &&
+      !event.altKey
+    ) {
+      // 不论选中的是什么都拦下，免得落到 WebView 的默认行为（如加入收藏）。
+      event.preventDefault();
+      if (settled && activeItem !== undefined) void toggleDone(activeItem);
+    } else if (
+      (event.key === "z" || event.key === "Z") &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.shiftKey &&
+      doneNotice !== null
+    ) {
+      // 撤销提示还在时，Ctrl+Z 撤销的是完成，而不是输入框里的文字。
+      event.preventDefault();
+      undoDone();
+    } else if (event.key === "Enter" && commandMode) {
+      event.preventDefault();
+      if (activeCommand !== undefined) runCommand(activeCommand);
+    } else if (event.key === "Enter" && event.shiftKey) {
+      event.preventDefault();
+      if (!settled || activeItem === undefined) return;
+      navigator.clipboard
+        .writeText(activeItem.title)
+        .then(() => setCopied(true))
+        .catch((error: unknown) => setProblem(errorMessage(toAppError(error))));
+    } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+      event.preventDefault();
+      openWhenReady.current = false;
+      createDraft();
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (settled && activeItem !== undefined) onOpenItem(activeItem.id);
+      else if (!settled && !browsing) openWhenReady.current = true;
+    }
+  }
+
+  const isWindow = variant === "window";
+  return (
+    <div
+      ref={panelRef}
+      onKeyDown={handleKeyDown}
+      className={cx(
+        "flex flex-col overflow-hidden bg-surface",
+        isWindow
+          ? "h-full w-full"
+          : "nv-panel-in max-h-[min(34rem,72vh)] w-full max-w-xl rounded-xl border border-border shadow-lg",
+      )}
+    >
+      <div
+        className={cx(
+          "flex shrink-0 items-center gap-3 border-b",
+          isWindow ? "border-border/70 px-5" : "border-border px-4",
+        )}
+      >
+        {commands !== undefined && commands.length > 0 && (
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-pressed={commandMode}
+            onClick={() => {
+              setText(
+                commandMode
+                  ? text.trimStart().slice(COMMAND_PREFIX.length).trimStart()
+                  : `${COMMAND_PREFIX} ${text}`,
+              );
+              setActive(0);
+              openWhenReady.current = false;
+              inputRef.current?.focus();
+            }}
+          >
+            {t("search.commands")}
+          </Button>
+        )}
+        <svg
+          viewBox="0 0 16 16"
+          aria-hidden="true"
+          className={cx("shrink-0", isWindow ? "size-5 text-primary" : "size-4 text-muted")}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        >
+          <circle cx="7" cy="7" r="4.5" />
+          <path d="M10.5 10.5L14 14" />
+        </svg>
+        <input
+          ref={inputRef}
+          autoFocus
+          role="combobox"
+          aria-expanded={count > 0}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={activeOptionId}
+          aria-label={t("search.input")}
+          placeholder={t("search.placeholder")}
+          value={text}
+          spellCheck={false}
+          autoComplete="off"
+          onChange={(event) => {
+            setText(event.target.value);
+            setActive(0);
+            openWhenReady.current = false;
+          }}
+          className={cx(
+            "min-w-0 flex-1 bg-transparent text-text placeholder:text-muted focus-visible:outline-none",
+            isWindow ? "h-14 text-base" : "h-12 text-base",
+          )}
+        />
+        {text !== "" && search.isFetching && (
+          <span
+            aria-hidden="true"
+            className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary"
+          />
+        )}
+        <kbd className="shrink-0 rounded-md bg-surface-hover px-1.5 py-0.5 font-sans text-xs text-muted">
+          {"Esc"}
+        </kbd>
+      </div>
+      <div
+        ref={scrollRef}
+        className={cx("nv-scroll-hover min-h-0 flex-1 overflow-y-auto", isWindow && "isolate")}
+      >
+        <div ref={contentRef}>
+          {helpOpen && doneNotice === null && (
+            <section
+              id={helpId}
+              aria-label={t("search.keyboardHelp")}
+              className="border-b border-border px-4 py-3 text-xs text-muted"
+            >
+              <h2 className="mb-2 font-medium text-text">{t("search.keyboardHelp")}</h2>
+              <p className="whitespace-pre-line">{t("search.allKeys")}</p>
+            </section>
+          )}
+          {!commandMode && (browsing ? recent.isError : search.isError) && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm text-danger"
+            >
+              <p>{errorMessage(toAppError(browsing ? recent.error : search.error))}</p>
+              <Button
+                size="sm"
+                onClick={() => void (browsing ? recent.refetch() : search.refetch())}
+              >
+                {t("search.retry")}
+              </Button>
+            </div>
+          )}
+          {showRecent && recentItems.length === 0 && !recent.isLoading && (
+            <p className="px-6 py-8 text-center text-sm text-muted">
+              {emptyHint ?? t("search.hint")}
+            </p>
+          )}
+          {!browsing && settled && flat.length === 0 && (
+            <div className="flex flex-col items-center gap-3 px-6 py-8">
+              <p className="text-center text-sm text-muted">
+                {t("search.empty", { query: debounced })}
+              </p>
+              {draft !== null && (
+                <Button size="sm" disabled={create.isPending} onClick={createDraft}>
+                  <span className="truncate">{t("search.create", { title: draft.title })}</span>
+                  {draft.label !== null && <span className="text-muted">{draft.label}</span>}
+                  <kbd className="rounded border border-border px-1 text-xs text-muted">
+                    {"Ctrl+↵"}
+                  </kbd>
+                </Button>
+              )}
+            </div>
+          )}
+          {commandMode && matches.length === 0 && (
+            <p className="px-6 py-8 text-center text-sm text-muted">{t("search.noCommand")}</p>
+          )}
+          {commandMode && matches.length > 0 && (
+            <ul id={listId} role="listbox" aria-label={t("search.commands")} className="p-2">
+              {matches.map((command, index) => {
+                const selected = index === activeIndex;
+                return (
+                  <li
+                    key={command.id}
+                    id={`${listId}-cmd-${command.id}`}
+                    ref={selected ? activeRef : undefined}
+                    role="option"
+                    aria-selected={selected}
+                    onMouseMove={() => setActive(index)}
+                    onClick={() => runCommand(command)}
+                    className={cx(
+                      "flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2",
+                      selected ? "bg-primary/10" : "hover:bg-surface-hover",
+                    )}
+                  >
+                    <span aria-hidden="true" className="w-4 shrink-0 text-center text-muted">
+                      {COMMAND_PREFIX}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-text">
+                      {command.label}
+                    </span>
+                    {selected && (
+                      <kbd className="shrink-0 rounded border border-border px-1.5 text-xs text-muted">
+                        {"↵"}
+                      </kbd>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {flat.length > 0 && (
+            <ul
+              id={listId}
+              role="listbox"
+              aria-label={showRecent ? t("search.recent") : t("search.results")}
+              className="p-2"
+            >
+              {groups.map((group) => (
+                <li key={group.key} role="presentation">
+                  <p
+                    id={`${listId}-group-${group.key}`}
+                    className="px-2 pt-2 pb-1 text-xs font-semibold tracking-wide text-muted"
+                  >
+                    {group.key === "recent" ? t("search.recent") : t(`search.group.${group.key}`)}
+                  </p>
+                  <ul role="group" aria-labelledby={`${listId}-group-${group.key}`}>
+                    {group.items.map((original) => {
+                      const item = patched.get(original.id) ?? original;
+                      const selected = item.id === activeItem?.id;
+                      const snippet = snippetAround(item.content, terms);
+                      const meta = itemMeta(
+                        item,
+                        today,
+                        (id) => projectNames.get(id),
+                        tagNames.get(item.id),
+                      );
+                      return (
+                        <li
+                          key={item.id}
+                          id={`${listId}-${item.id}`}
+                          ref={selected ? activeRef : undefined}
+                          role="option"
+                          aria-selected={selected}
+                          onMouseMove={() => setActive(flat.indexOf(item))}
+                          onClick={() => {
+                            if (settled) onOpenItem(item.id);
+                          }}
+                          className={cx(
+                            "flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2",
+                            selected ? "bg-primary/10" : "hover:bg-surface-hover",
+                          )}
+                        >
+                          <span className="pt-0.5">
+                            <TypeGlyph type={item.itemType} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span
+                              className={cx(
+                                "block truncate text-sm text-text",
+                                item.status === "done" && "text-muted line-through",
+                              )}
+                            >
+                              <Marked segments={highlight(item.title, terms)} />
+                            </span>
+                            {snippet !== "" && (
+                              <span className="mt-0.5 block truncate text-xs text-muted">
+                                <Marked segments={highlight(snippet, terms)} />
+                              </span>
+                            )}
+                          </span>
+                          {meta.length > 0 && (
+                            <span className="mt-0.5 max-w-[40%] shrink-0 truncate text-xs text-muted">
+                              {meta.join(" · ")}
+                            </span>
+                          )}
+                          {selected && (
+                            <kbd className="mt-0.5 shrink-0 rounded border border-border px-1.5 text-xs text-muted">
+                              {"↵"}
+                            </kbd>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+      {problem !== null && (
+        <div
+          role="alert"
+          className="flex max-h-32 shrink-0 flex-wrap items-center gap-2 overflow-y-auto border-t border-border px-4 py-2 text-xs text-danger"
+        >
+          <p className="min-w-0 flex-1">{problem}</p>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setProblem(null);
+              inputRef.current?.focus();
+            }}
+          >
+            {t("search.dismissError")}
+          </Button>
+        </div>
+      )}
+      <footer
+        className={cx(
+          "flex max-h-40 shrink-0 flex-wrap items-center gap-x-3 gap-y-2 overflow-y-auto border-t px-4 py-2 text-xs text-muted",
+          isWindow ? "border-border/70 bg-surface-hover" : "border-border",
+        )}
+      >
+        <span role="status" className="min-w-0 flex-1 basis-40 wrap-anywhere tabular-nums">
+          {doneNotice !== null
+            ? t(doneNotice.completed ? "search.completed" : "search.reopened", {
+                title: doneNotice.item.title,
+              })
+            : create.isPending
+              ? t("search.creating")
+              : copied
+                ? t("search.copied")
+                : commandMode
+                  ? t("search.commandStatus", { count: matches.length })
+                  : !browsing && !settled && !search.isError
+                    ? t("search.searching")
+                    : !browsing && settled
+                      ? t("search.count", {
+                          count: flat.length,
+                          query: debounced,
+                        })
+                      : t("search.browseKeys")}
+        </span>
+        {doneNotice !== null ? (
+          <Button size="sm" variant="ghost" onClick={undoDone}>
+            {t("search.undo")}
+          </Button>
+        ) : (
+          <>
+            {commandMode && activeCommand && (
+              <Button size="sm" onClick={() => runCommand(activeCommand)}>
+                {t("search.run")}
+              </Button>
+            )}
+            {settled && activeItem && (
+              <>
+                <Button size="sm" onClick={() => onOpenItem(activeItem.id)}>
+                  {t("search.openAction")}
+                </Button>
+                {activeItem.itemType !== "note" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => void toggleDone(activeItem)}
+                  >
+                    {t(
+                      activeItem.status === "done"
+                        ? "search.reopenAction"
+                        : "search.completeAction",
+                    )}
+                    <kbd aria-hidden="true" className="text-xs text-muted">
+                      {"Ctrl+D"}
+                    </kbd>
+                  </Button>
+                )}
+              </>
+            )}
+            {draft !== null && flat.length > 0 && (
+              <Button size="sm" variant="ghost" disabled={create.isPending} onClick={createDraft}>
+                {t("search.createTodo")}
+                <kbd aria-hidden="true" className="text-xs text-muted">
+                  {"Ctrl+↵"}
+                </kbd>
+              </Button>
+            )}
+            {browsing && footerExtra}
+          </>
+        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-expanded={helpOpen && doneNotice === null}
+          aria-controls={helpId}
+          onClick={() => setHelpOpen(!helpOpen)}
+        >
+          {t("search.keyboardHelp")}
+        </Button>
+      </footer>
+    </div>
+  );
+}

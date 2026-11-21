@@ -1,0 +1,44 @@
+{
+  "sourceCommit": "ed99ab9684c0a10f62a0b70c20a92624568e399d",
+  "branch": "main",
+  "fixtureRevision": "w0-v1: dev-seed + 20 similar-prefix calendar entries",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "acceptance": "W0 baseline only",
+  "platform": "win32",
+  "timezone": "Asia/Shanghai",
+  "motion": "reduce; animations/transitions disabled",
+  "environment": "Chrome browser mock; OS scale and native WebView2 not certified",
+  "artifacts": [
+    {
+      "name": "search-focus-click",
+      "file": "search-focus-click.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "f186d4b34e1ebbf7bf60d8e9aa90ef2943aebac21cbb71e051f5c118e060ee58"
+    },
+    {
+      "name": "search-focus-shortcut",
+      "file": "search-focus-shortcut.png",
+      "viewport": {
+        "width": 960,
+        "height": 640
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "e4706a206cc79d4f301f1760c7caca16f1fb1fd15b24c720d875f12431237263"
+    }
+  ],
+  "recordings": []
+}

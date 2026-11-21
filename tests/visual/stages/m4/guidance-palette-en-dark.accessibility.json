@@ -1,0 +1,1381 @@
+{
+  "samples": [
+    {
+      "text": "Commands",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Search to-dos, notes and tips…",
+      "tag": "INPUT",
+      "placeholder": true,
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Esc",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        38,
+        42,
+        51,
+        1
+      ],
+      "ratio": 5.666,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Keyboard help",
+      "tag": "H2",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "↑ / ↓: Select a result\nCtrl+Home / Ctrl+End: First / last result\nEnter: Open item or run command\nShift+Enter: Copy title\nCtrl+Enter: Create ",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Recent",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "600",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "季度 报告 final.pdf",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 11.973,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Inbox",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 5.678,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "↵",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        34.11764705882353,
+        41.807843137254906,
+        58.08627450980392,
+        1
+      ],
+      "ratio": 5.678,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "记得给新来的同事开通测试环境的权限",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Inbox",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "https://www.example.com/blog/local-first-software",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Inbox",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "给爸妈打电话",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "整理照片",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "提交报销",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Oct 20 · Due Oct 23",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "读书笔记：Local-first",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Oct 15",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "↑↓ Select · Enter Open",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Open",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Search from any app",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Ctrl+Alt+Space",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        154,
+        163,
+        181,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 6.503,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Keyboard help",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        232,
+        234,
+        240,
+        1
+      ],
+      "background": [
+        28,
+        31,
+        38,
+        1
+      ],
+      "ratio": 13.711,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 960,
+    "height": 640,
+    "dpr": 1
+  },
+  "modal": "Search",
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "dialog",
+      "name": "Search",
+      "properties": [
+        {
+          "name": "modal",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Commands",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "combobox",
+      "name": "Search keywords",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "autocomplete",
+          "value": {
+            "type": "token",
+            "value": "list"
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "listbox"
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "activedescendant",
+          "value": {
+            "type": "idref",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 191,
+                "idref": "_r_6_-00000000-0000-4000-8000-000000000013"
+              }
+            ]
+          }
+        },
+        {
+          "name": "controls",
+          "value": {
+            "type": "idrefList",
+            "value": "_r_6_",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 88,
+                "idref": "_r_6_"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "contentinfo",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Commands",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Esc",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Keyboard help",
+      "properties": []
+    },
+    {
+      "role": "listbox",
+      "name": "Recent",
+      "properties": [
+        {
+          "name": "multiselectable",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "vertical"
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Open",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Search from any app",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Ctrl+Alt+Space",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Keyboard help",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "controls",
+          "value": {
+            "type": "idrefList",
+            "value": "_r_7_",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 185,
+                "idref": "_r_7_"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Commands",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Esc",
+      "properties": []
+    },
+    {
+      "role": "heading",
+      "name": "Keyboard help",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Recent",
+      "properties": [
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 189,
+                "idref": "_r_6_-group-recent",
+                "text": "Recent"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "↑↓ Select · Enter Open",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Open",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Search from any app",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl+Alt+Space",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Keyboard help",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Keyboard help",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "↑ / ↓: Select a result\nCtrl+Home / Ctrl+End: First / last result\nEnter: Open item or run command\nShift+Enter: Copy title\nCtrl+Enter: Create Todo\nCtrl+D: Complete / reopen selected Todo or Tip\nCtrl+Z: Undo completion while Undo is visible\n>: Commands mode\nTab / Shift+Tab: Move between controls\nEsc: Close help, then search",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Recent",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "季度 报告 final.pdf Inbox ↵",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "记得给新来的同事开通测试环境的权限 Inbox",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "https://www.example.com/blog/local-first-software Inbox",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "给爸妈打电话",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "整理照片",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "提交报销 Oct 20 · Due Oct 23",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "读书笔记：Local-first Oct 15",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "预约牙医 Oct 15",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "↑↓ Select · Enter Open",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Open",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Keyboard help",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Keyboard help",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "↑ / ↓: Select a result",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl+Home / Ctrl+End: First / last result",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Enter: Open item or run command",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Shift+Enter: Copy title",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl+Enter: Create Todo",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl+D: Complete / reopen selected Todo or Tip",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Ctrl+Z: Undo completion while Undo is visible",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": ">: Commands mode",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Tab / Shift+Tab: Move between controls",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "\n",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Esc: Close help, then search",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Recent",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Inbox",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "记得给新来的同事开通测试环境的权限",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Inbox",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Inbox",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "给爸妈打电话",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "整理照片",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "提交报销",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Oct 20 · Due Oct 23",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Oct 15",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "预约牙医",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Oct 15",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Inbox",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "↵",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "记得给新来的同事开通测试环境的权限",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Inbox",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Inbox",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "给爸妈打电话",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "整理照片",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "提交报销",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Oct 20 · Due Oct 23",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Oct 15",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "预约牙医",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Oct 15",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "↵",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

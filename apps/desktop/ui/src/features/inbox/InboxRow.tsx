@@ -1,0 +1,208 @@
+import { parseISO } from "date-fns";
+import { distanceToNow } from "@/lib/date-format";
+import { useTranslation } from "react-i18next";
+import { useEffect, useRef, useState } from "react";
+import { Button, Input, Menu } from "@/components";
+import { useOpenItem } from "@/features/detail";
+import type { MenuItemSpec } from "@/components";
+import type { InboxEntryDto, ItemTypeDto } from "@/lib/ipc";
+import { cx } from "@/lib/cx";
+import { summarizeEntry } from "./model/inbox-entry";
+import { SourceIcon } from "./SourceIcon";
+import type { OrganizeKind } from "./useOrganize";
+
+/** 三种可转换的类型，按展示顺序。 */
+const CONVERT_KINDS: ItemTypeDto[] = ["todo", "note", "tip"];
+
+/** [`InboxRow`] 的 Props。 */
+export type InboxRowProps = {
+  /** 这一行的条目。 */
+  entry: InboxEntryDto;
+  /** 是否被选中。 */
+  selected: boolean;
+  /** 点击选择框；`range` 为 `true` 表示按住了 Shift（范围选择）。 */
+  onToggle: (range: boolean) => void;
+  /** 对这一条执行整理动作。 */
+  onOrganize: (kind: OrganizeKind) => void;
+  /** 为待办安排明确日期。 */
+  onSchedule: (date: string) => Promise<boolean>;
+  /** 删除这一条（移进回收站）。 */
+  onDelete: () => void;
+};
+
+/**
+ * Inbox 里的一行：选择框、来源图标、标题与来源说明、捕获时间，以及悬停（或键盘聚焦）时出现的
+ * 快速整理按钮（产品文档 §8：一两下就能把它放到该去的地方）。
+ *
+ * 被引用的文件不在原处时显示「文件不存在」徽标，而不是报错。
+ *
+ * @param props 条目、选中状态与回调。
+ * @returns 列表项。
+ */
+export function InboxRow({
+  entry,
+  selected,
+  onToggle,
+  onOrganize,
+  onSchedule,
+  onDelete,
+}: InboxRowProps) {
+  const { t } = useTranslation();
+  const { item } = entry;
+  const summary = summarizeEntry(entry);
+  const openItem = useOpenItem();
+  const [date, setDate] = useState<string | null>(null);
+  const [scheduling, setScheduling] = useState(false);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const organizeRef = useRef<HTMLButtonElement>(null);
+  const focusDateOnMenuClose = useRef(false);
+  const dateEditorOpen = date !== null;
+  useEffect(() => {
+    if (dateEditorOpen) dateRef.current?.focus();
+  }, [dateEditorOpen]);
+  // 标题已经是文件名 / 网址时，不再重复显示同样的来源说明。
+  const detail = [summary.detail, summary.app].filter(
+    (part) => part !== null && part !== "" && part !== item.title,
+  );
+
+  const moreItems: MenuItemSpec[] = [
+    { id: "today", label: t("inbox.action.today"), onSelect: () => onOrganize("today") },
+    { id: "tomorrow", label: t("inbox.action.tomorrow"), onSelect: () => onOrganize("tomorrow") },
+    { id: "later", label: t("inbox.action.later"), onSelect: () => onOrganize("later") },
+    ...(item.itemType === "todo"
+      ? [
+          {
+            id: "date",
+            label: t("inbox.action.scheduleDate"),
+            onSelect: () => {
+              focusDateOnMenuClose.current = true;
+              setDate(item.scheduled?.date ?? "");
+            },
+          },
+        ]
+      : []),
+    ...CONVERT_KINDS.filter((kind) => kind !== item.itemType).map((kind) => ({
+      id: `convert-${kind}`,
+      label: t("inbox.action.convert", { type: t(`quickCreate.kind.${kind}`) }),
+      onSelect: () => onOrganize(kind),
+    })),
+    { id: "leave", label: t("inbox.action.leave"), onSelect: () => onOrganize("leave") },
+    { id: "archive", label: t("inbox.action.archive"), onSelect: () => onOrganize("archive") },
+    { id: "delete", label: t("trash.delete"), isDanger: true, onSelect: onDelete },
+  ];
+
+  return (
+    <li
+      className={cx(
+        "group @container flex flex-wrap items-center gap-3 rounded-md px-3 py-2.5",
+        "transition-colors duration-(--nv-duration-fast) ease-(--nv-ease-standard)",
+        selected ? "bg-primary/10" : "hover:bg-surface-hover",
+      )}
+    >
+      <input
+        type="checkbox"
+        data-inbox-select=""
+        data-item-id={item.id}
+        aria-label={t("inbox.select", { title: item.title })}
+        checked={selected}
+        onChange={() => undefined}
+        onClick={(event) => onToggle(event.shiftKey)}
+        className="size-4 shrink-0 cursor-pointer accent-primary"
+      />
+      <span className="text-muted">
+        <SourceIcon kind={summary.kind} />
+      </span>
+      <div className="min-w-0 flex-1">
+        {openItem === null ? (
+          <p className="truncate text-sm font-medium text-text">{item.title}</p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => openItem(item.id)}
+            className="block w-full truncate text-left text-sm font-medium text-text hover:underline"
+          >
+            {item.title}
+          </button>
+        )}
+        <p className="flex min-w-0 items-center gap-2 text-xs text-muted">
+          <span className="shrink-0 rounded-sm bg-surface-hover px-1.5 py-0.5">
+            {t(`quickCreate.kind.${item.itemType}`)}
+          </span>
+          {detail.length > 0 && <span className="truncate">{detail.join(" · ")}</span>}
+          {summary.missingFile && (
+            <span className="shrink-0 rounded-sm bg-danger/10 px-1.5 py-0.5 text-danger">
+              {t("inbox.missingFile")}
+            </span>
+          )}
+        </p>
+      </div>
+      <time
+        dateTime={item.createdAt}
+        className="hidden shrink-0 text-xs text-muted tabular-nums @2xl:block"
+      >
+        {distanceToNow(parseISO(item.createdAt), true)}
+      </time>
+      <div className="flex shrink-0 items-center gap-1">
+        <Menu
+          trigger={
+            <Button ref={organizeRef} size="sm" variant="ghost" aria-label={t("inbox.action.more")}>
+              {t("inbox.action.organize")}
+            </Button>
+          }
+          items={moreItems}
+          onCloseAutoFocus={(event) => {
+            if (!focusDateOnMenuClose.current) return;
+            focusDateOnMenuClose.current = false;
+            event.preventDefault();
+            dateRef.current?.focus();
+          }}
+        />
+      </div>
+      {date !== null && (
+        <form
+          className="flex basis-full flex-wrap items-center gap-2 pl-7"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!date || scheduling) return;
+            setScheduling(true);
+            void onSchedule(date).then((ok) => {
+              setScheduling(false);
+              if (ok) setDate(null);
+            });
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || scheduling || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setDate(null);
+            organizeRef.current?.focus();
+          }}
+        >
+          <Input
+            ref={dateRef}
+            type="date"
+            required
+            disabled={scheduling}
+            aria-label={t("detail.field.scheduledDate")}
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+          />
+          <Button type="submit" size="sm" disabled={!date || scheduling}>
+            {t("inbox.action.schedule")}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={scheduling}
+            onClick={() => {
+              setDate(null);
+              organizeRef.current?.focus();
+            }}
+          >
+            {t("createConfiguration.cancel")}
+          </Button>
+        </form>
+      )}
+    </li>
+  );
+}

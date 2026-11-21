@@ -1,0 +1,8 @@
+
+ RUN  v5.0.3 E:/personal_projects/Nivlo/apps/desktop/ui
+
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  09:19:49
+   Duration  6.82s (tests 41%, environment 28%, import 17%, setup 12%, worker 1%)

@@ -1,0 +1,68 @@
+[package]
+name = "nivlo-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Nivlo desktop host (Composition Root)"
+
+[lib]
+name = "nivlo_desktop_lib"
+
+[build-dependencies]
+tauri-build.workspace = true
+
+[dependencies]
+tauri.workspace = true
+tauri-plugin-dialog.workspace = true
+tauri-plugin-opener.workspace = true
+base64.workspace = true
+tauri-plugin-single-instance.workspace = true
+tauri-plugin-autostart.workspace = true
+tauri-plugin-notification.workspace = true
+tauri-plugin-updater.workspace = true
+tauri-specta.workspace = true
+specta.workspace = true
+specta-typescript.workspace = true
+tokio-util.workspace = true
+tokio = { workspace = true, features = ["macros", "rt"] }
+chrono.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+zip.workspace = true
+nivlo-common.workspace = true
+nivlo-domain.workspace = true
+nivlo-application.workspace = true
+nivlo-storage.workspace = true
+nivlo-capture.workspace = true
+nivlo-workflow.workspace = true
+nivlo-script.workspace = true
+async-trait.workspace = true
+nivlo-scheduler.workspace = true
+nivlo-integrations.workspace = true
+nivlo-platform.workspace = true
+sys-locale = "0.3.2"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+nivlo-platform-windows.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+nivlo-platform-macos.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nivlo-platform-linux.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
+tauri = { workspace = true, features = ["test"] }
+sqlx.workspace = true
+tempfile.workspace = true
+uuid.workspace = true
+tracing-subscriber.workspace = true
+nivlo-application = { workspace = true, features = ["testing"] }
+
+[lints]
+workspace = true

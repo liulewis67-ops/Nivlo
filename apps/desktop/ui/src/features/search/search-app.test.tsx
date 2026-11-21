@@ -1,0 +1,317 @@
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { addDays, format } from "date-fns";
+import { describe, expect, it, vi } from "vitest";
+import { SearchApp } from "./SearchApp";
+import { createMemoryIpc } from "@/test/ipc-mock";
+import type { MemoryIpc } from "@/test/ipc-mock";
+import { renderWithProviders } from "@/test/render";
+import { AppError } from "@/lib/errors";
+
+/** 创建一条待办。 */
+async function seedTodo(ipc: MemoryIpc, title: string): Promise<string> {
+  const item = await ipc.createItem({
+    itemType: "todo",
+    title,
+    content: null,
+    contentFormat: "plain",
+    priority: null,
+    scheduled: null,
+    due: null,
+    reminderAt: null,
+    projectId: null,
+  });
+  return item.id;
+}
+
+/** 搜索框。 */
+function input(): HTMLElement {
+  return screen.getByLabelText("搜索关键词");
+}
+
+describe("全局搜索窗口", () => {
+  it("内容缩放改变但自然高度不变时，重新报告渲染比例并保留搜索输入", async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, "devicePixelRatio");
+    try {
+      Object.defineProperty(window, "devicePixelRatio", { value: 1.25, configurable: true });
+      const ipc = createMemoryIpc();
+      const fit = vi.spyOn(ipc, "fitSearch");
+      renderWithProviders(<SearchApp />, ipc);
+      await waitFor(() => expect(fit).toHaveBeenLastCalledWith(expect.any(Number), 1.25));
+      fireEvent.change(input(), { target: { value: "保留缩放草稿" } });
+      Object.defineProperty(window, "devicePixelRatio", { value: 2.5, configurable: true });
+      fireEvent(window, new Event("resize"));
+      await waitFor(() => expect(fit).toHaveBeenLastCalledWith(expect.any(Number), 2.5));
+      expect(input()).toHaveValue("保留缩放草稿");
+      expect(input()).toHaveFocus();
+    } finally {
+      if (descriptor) Object.defineProperty(window, "devicePixelRatio", descriptor);
+    }
+  });
+
+  it("输入框自动聚焦；还没有任何条目时提示回车会在主窗口打开", async () => {
+    renderWithProviders(<SearchApp />, createMemoryIpc());
+    expect(input()).toHaveFocus();
+    expect(await screen.findByText(/回车在主窗口中打开/)).toBeInTheDocument();
+  });
+
+  it("回车把选中的结果交给主窗口打开", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+
+    fireEvent.change(input(), { target: { value: "登录超时" } });
+    const results = await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(within(results).getByRole("option", { name: /修复登录超时/ })).toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "Enter" });
+    expect(ipc.openedItems).toEqual([id]);
+  });
+
+  it("结果出来之前就按回车：等结果到了再打开第一条", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "季度复盘提纲");
+    renderWithProviders(<SearchApp />, ipc);
+
+    fireEvent.change(input(), { target: { value: "复盘提纲" } });
+    fireEvent.keyDown(input(), { key: "Enter" });
+    expect(ipc.openedItems).toEqual([]);
+    await waitFor(() => expect(ipc.openedItems).toEqual([id]));
+  });
+
+  it("输入法组字时的回车不会打开结果", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+
+    fireEvent.change(input(), { target: { value: "登录超时" } });
+    await screen.findByRole("listbox", { name: "搜索结果" });
+    fireEvent.keyDown(input(), { key: "Enter", isComposing: true });
+    fireEvent.keyDown(input(), { key: "Enter", keyCode: 229 });
+    fireEvent.keyDown(input(), { key: "Escape", keyCode: 229 });
+    expect(ipc.openedItems).toEqual([]);
+    expect(input()).toHaveValue("登录超时");
+    fireEvent.keyDown(input(), { key: "Enter" });
+    await waitFor(() => expect(ipc.openedItems).toEqual([id]));
+  });
+
+  it("空输入时列出最近使用的条目，↓ + 回车直接打开", async () => {
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "较早的待办");
+    const latest = await seedTodo(ipc, "刚刚改过的待办");
+    renderWithProviders(<SearchApp />, ipc);
+
+    const recent = await screen.findByRole("listbox", { name: "最近使用" });
+    const options = within(recent).getAllByRole("option");
+    expect(options.map((option) => option.textContent)).toEqual([
+      expect.stringContaining("刚刚改过的待办"),
+      expect.stringContaining("较早的待办"),
+    ]);
+    expect(screen.queryByText(/回车在主窗口中打开/)).not.toBeInTheDocument();
+
+    fireEvent.keyDown(input(), { key: "ArrowDown" });
+    fireEvent.keyDown(input(), { key: "ArrowUp" });
+    fireEvent.keyDown(input(), { key: "Enter" });
+    expect(ipc.openedItems).toEqual([latest]);
+  });
+
+  it("开始输入后最近条目被搜索结果取代，清空输入又回到最近条目", async () => {
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "修复登录超时");
+    await seedTodo(ipc, "整理周报");
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+
+    fireEvent.change(input(), { target: { value: "周报" } });
+    const results = await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(within(results).getAllByRole("option")).toHaveLength(1);
+
+    fireEvent.change(input(), { target: { value: "" } });
+    const recent = screen.getByRole("listbox", { name: "最近使用" });
+    expect(within(recent).getAllByRole("option")).toHaveLength(2);
+  });
+
+  it("找不到时 Ctrl+Enter 把搜索词记成待办（识别日期短语），随即隐藏窗口", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+
+    fireEvent.change(input(), { target: { value: "买咖啡豆 明天" } });
+    expect(await screen.findByText("没有找到「买咖啡豆 明天」")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /新建待办「买咖啡豆」/ })).toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => expect(ipc.searchHides).toBe(1));
+    const created = ipc.items.find((item) => item.title === "买咖啡豆");
+    expect(created?.itemType).toBe("todo");
+    expect(created?.scheduled?.date).toBe(format(addDays(new Date(), 1), "yyyy-MM-dd"));
+    expect(ipc.openedItems).toEqual([]);
+  });
+
+  it("有结果时 Ctrl+Enter 仍然新建，而不是打开选中的结果", async () => {
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "周报模板");
+    renderWithProviders(<SearchApp />, ipc);
+
+    fireEvent.change(input(), { target: { value: "周报" } });
+    await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(screen.getByRole("button", { name: "创建待办" })).toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
+
+    await waitFor(() => expect(ipc.items.map((item) => item.title)).toContain("周报"));
+    expect(ipc.openedItems).toEqual([]);
+  });
+
+  it("空输入时 Ctrl+Enter 什么也不做", () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.keyDown(input(), { key: "Enter", ctrlKey: true });
+    expect(ipc.items).toEqual([]);
+    expect(ipc.searchHides).toBe(0);
+  });
+
+  it("搜索完成时通过 status 区域播报结果数量", async () => {
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "周报模板");
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.change(input(), { target: { value: "周报" } });
+    await waitFor(() =>
+      expect(screen.getAllByRole("status").map((node) => node.textContent)).toContain("1 条结果"),
+    );
+  });
+
+  it("Shift+Enter 复制选中条目的标题，并短暂提示已复制；不会打开它", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    const ipc = createMemoryIpc();
+    await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+
+    fireEvent.keyDown(input(), { key: "Enter", shiftKey: true });
+    expect(writeText).toHaveBeenCalledWith("修复登录超时");
+    expect(await screen.findByText("已复制标题")).toBeInTheDocument();
+    expect(ipc.openedItems).toEqual([]);
+  });
+
+  it("Ctrl+D 完成选中的待办：留在列表里显示为已完成，底部提示可撤销，窗口不关闭", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.change(input(), { target: { value: "登录超时" } });
+    const results = await screen.findByRole("listbox", { name: "搜索结果" });
+    expect(screen.getByRole("button", { name: "完成" })).toBeInTheDocument();
+
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+
+    expect(await screen.findByText("已完成「修复登录超时」")).toBeInTheDocument();
+    expect(ipc.items.find((item) => item.id === id)?.status).toBe("done");
+    expect(
+      within(results)
+        .getByRole("option", { name: /修复登录超时/ })
+        .querySelector(".line-through"),
+    ).not.toBeNull();
+    expect(screen.getByRole("button", { name: "撤销 Ctrl+Z" })).toBeInTheDocument();
+    expect(ipc.searchHides).toBe(0);
+    expect(ipc.openedItems).toEqual([]);
+    expect(input()).toHaveValue("登录超时");
+  });
+
+  it("点「撤销」重新打开刚完成的待办，焦点回到输入框", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    fireEvent.click(await screen.findByRole("button", { name: "撤销 Ctrl+Z" }));
+
+    await waitFor(() => expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done"));
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "撤销 Ctrl+Z" })).not.toBeInTheDocument(),
+    );
+    expect(input()).toHaveFocus();
+  });
+
+  it("撤销提示还在时 Ctrl+Z 撤销完成；对已完成的待办 Ctrl+D 是重新打开", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc, "修复登录超时");
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    await screen.findByText("已完成「修复登录超时」");
+    expect(screen.queryByRole("button", { name: "完成" })).not.toBeInTheDocument();
+
+    fireEvent.keyDown(input(), { key: "z", ctrlKey: true });
+    await waitFor(() => expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done"));
+    expect(ipc.calls.filter((call) => call === "reopenItem")).toHaveLength(1);
+
+    // 再完成一次，等提示过期之后用 Ctrl+D 重新打开。
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    await screen.findByText("已完成「修复登录超时」");
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    expect(await screen.findByText("已重新打开「修复登录超时」")).toBeInTheDocument();
+    expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done");
+  });
+
+  it("Ctrl+D 对笔记什么也不做；失败时提示错误，列表不变", async () => {
+    const ipc = createMemoryIpc();
+    await ipc.createItem({
+      itemType: "note",
+      title: "会议纪要",
+      content: null,
+      contentFormat: "plain",
+      priority: null,
+      scheduled: null,
+      due: null,
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<SearchApp />, ipc);
+    await screen.findByRole("listbox", { name: "最近使用" });
+    expect(screen.queryByRole("button", { name: "完成" })).not.toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    expect(ipc.calls).not.toContain("completeItem");
+
+    const id = await seedTodo(ipc, "修复登录超时");
+    fireEvent.change(input(), { target: { value: "登录超时" } });
+    await screen.findByRole("listbox", { name: "搜索结果" });
+    ipc.failNextTransitionWith(new AppError("ITEM_NOT_FOUND", "gone"));
+    fireEvent.keyDown(input(), { key: "d", ctrlKey: true });
+    await waitFor(() => expect(ipc.calls).toContain("completeItem"));
+    expect(ipc.items.find((item) => item.id === id)?.status).not.toBe("done");
+    expect(screen.queryByText("已完成「修复登录超时」")).not.toBeInTheDocument();
+  });
+
+  it("输入 > 列出命令，回车在主窗口打开对应视图", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.change(input(), { target: { value: "> 设置" } });
+    expect(screen.getByRole("option", { name: /前往：设置/ })).toBeInTheDocument();
+    fireEvent.keyDown(input(), { key: "Enter" });
+    await waitFor(() => expect(ipc.calls).toContain("openMainAt"));
+  });
+
+  it("Esc 隐藏窗口", () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.keyDown(input(), { key: "Escape" });
+    expect(ipc.searchHides).toBe(1);
+  });
+
+  it("每次被快捷键唤出都清空上一次的输入并重新聚焦", async () => {
+    const ipc = createMemoryIpc();
+    renderWithProviders(<SearchApp />, ipc);
+    fireEvent.change(input(), { target: { value: "上一次" } });
+    expect(input()).toHaveValue("上一次");
+
+    act(() => ipc.emitSearchWindowShown());
+    await waitFor(() => expect(input()).toHaveValue(""));
+    expect(input()).toHaveFocus();
+  });
+
+  it("失去焦点（窗口随即被隐藏）时也先重置，下次出现不会闪出旧结果", async () => {
+    renderWithProviders(<SearchApp />, createMemoryIpc());
+    fireEvent.change(input(), { target: { value: "上一次" } });
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+    });
+    await waitFor(() => expect(input()).toHaveValue(""));
+  });
+});

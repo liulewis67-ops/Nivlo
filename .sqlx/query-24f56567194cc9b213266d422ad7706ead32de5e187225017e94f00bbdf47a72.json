@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id FROM items WHERE deleted_at IS NOT NULL AND deleted_at < ? ORDER BY deleted_at ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "24f56567194cc9b213266d422ad7706ead32de5e187225017e94f00bbdf47a72"
+}

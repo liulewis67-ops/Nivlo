@@ -1,0 +1,1362 @@
+{
+  "app": {
+    "name": "拾序"
+  },
+  "common": {
+    "loading": "加载中…",
+    "retry": "重试",
+    "loadFailed": "暂时无法加载此页面，请重试。"
+  },
+  "toast": {
+    "dismiss": "关闭提示"
+  },
+  "theme": {
+    "label": "主题",
+    "current": "主题 · {{preference}}",
+    "system": "跟随系统",
+    "light": "浅色",
+    "dark": "深色"
+  },
+  "dev": {
+    "title": "开发控制台",
+    "quit": "退出 Nivlo",
+    "subtitle": "Phase 0 的 IPC 演示页：创建并列出 Item，验证 UI → IPC → SQLite 链路。",
+    "form": {
+      "titleLabel": "标题",
+      "titlePlaceholder": "输入一条待办、笔记或提示",
+      "typeLabel": "类型",
+      "submit": "创建"
+    },
+    "type": {
+      "todo": "待办",
+      "note": "笔记",
+      "tip": "提示"
+    },
+    "list": {
+      "heading": "最近的 Item",
+      "empty": "还没有任何 Item，先创建一个吧。"
+    }
+  },
+  "quickCreate": {
+    "add": {
+      "todo": "+ 待办",
+      "note": "+ 笔记",
+      "tip": "+ 提示"
+    },
+    "kind": {
+      "todo": "待办",
+      "note": "笔记",
+      "tip": "提示"
+    },
+    "input": {
+      "label": "标题",
+      "placeholder": "输入标题，Enter 创建"
+    },
+    "parsed": {
+      "label": "识别到计划：{{label}}",
+      "cancel": "取消日期识别",
+      "hint": "退格键可取消"
+    },
+    "relative": {
+      "today": "今天",
+      "tomorrow": "明天",
+      "dayAfter": "后天"
+    },
+    "typeLabel": "捕获类型",
+    "retry": "编辑后重试"
+  },
+  "notes": {
+    "label": "笔记",
+    "listLabel": "笔记列表",
+    "editor": "笔记编辑区",
+    "new": "+ 新笔记",
+    "untitled": "未命名笔记",
+    "noContent": "没有内容",
+    "characters": "{{count}} 字",
+    "empty": {
+      "list": "还没有笔记。",
+      "title": "还没有笔记",
+      "hint": "随手记下的想法和长文都收在这里。点「新笔记」先写下来，以后再整理。"
+    },
+    "filter": "筛选笔记",
+    "noMatch": "没有匹配的笔记。"
+  },
+  "detail": {
+    "label": "条目详情",
+    "title": "详情",
+    "close": "关闭详情",
+    "loading": "加载中…",
+    "retry": "重试",
+    "saveFailed": "没能保存：{{reason}}你的修改还留在这里，不会丢。",
+    "status": {
+      "saving": "保存中…",
+      "saved": "已保存",
+      "error": "保存失败"
+    },
+    "contentPlaceholder": "写点什么…（支持 Markdown）",
+    "briefPlaceholder": "一句话补充标题",
+    "format": {
+      "plain": "纯文本",
+      "markdown": "Markdown"
+    },
+    "priority": {
+      "none": "无",
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "field": {
+      "type": "类型",
+      "title": "标题",
+      "brief": "简述",
+      "content": "描述",
+      "format": "格式",
+      "scheduled": "计划日期",
+      "scheduledDate": "计划日期（日）",
+      "scheduledTime": "计划时间",
+      "due": "截止日期",
+      "dueDate": "截止日期（日）",
+      "dueTime": "截止时间",
+      "priority": "优先级",
+      "project": "项目",
+      "tags": "标签",
+      "reminder": "提醒"
+    },
+    "source": {
+      "label": "来源",
+      "open": "在浏览器中打开",
+      "reveal": "在文件夹中显示",
+      "type": {
+        "web": "网页链接",
+        "file": "文件",
+        "text": "文字",
+        "clipboard": "剪贴板",
+        "selection": "文字选区",
+        "image": "图片",
+        "manual": "手动创建"
+      },
+      "rerun": "重新运行规则",
+      "rerunDone": "已重新运行，标题和内容已更新",
+      "rerunSame": "已重新运行，没有变化"
+    },
+    "project": {
+      "none": "无项目",
+      "archived": "{{name}}（已归档）",
+      "missing": "已不存在的项目"
+    },
+    "tags": {
+      "add": "添加标签，回车确认",
+      "addLabel": "添加标签",
+      "remove": "移除标签「{{name}}」",
+      "suggestions": "标签建议",
+      "empty": "还没有标签"
+    },
+    "reminder": {
+      "input": "提醒时间",
+      "clear": "清除提醒",
+      "hint": "到点时用系统通知提醒你。",
+      "needDate": "先设置日期，才能用这个预设",
+      "needTime": "先设置具体时间，才能用这个预设",
+      "preset": {
+        "minutes15": "提前 15 分钟",
+        "hour1": "提前 1 小时",
+        "sameDay9": "当天 9:00",
+        "dayBefore9": "前一天 9:00"
+      }
+    },
+    "more": "更多",
+    "scheduleHint": "打算什么时候处理这件事。",
+    "dueHint": "最迟需要在什么时候完成。",
+    "expandContent": "展开描述",
+    "incompleteReminder": "请填写完整的提醒日期和时间。",
+    "incompleteDate": "请填写完整或清除日期和时间后再离开。",
+    "leave": {
+      "message": "修改仍保留在这里，保存成功后再离开。",
+      "confirm": "确认只放弃当前编辑器里尚未保存的修改？",
+      "back": "返回",
+      "confirmDiscard": "确认放弃",
+      "stay": "留在这里",
+      "discard": "放弃修改…",
+      "other": "“{{title}}”的编辑器也需要完成保存。",
+      "confirmOther": "确认只放弃“{{title}}”里尚未保存的修改？"
+    }
+  },
+  "shortcut": {
+    "hint": "在下面的框里按下新的快捷键，需要至少一个修饰键（Ctrl / Alt / Shift / Win）。",
+    "placeholder": "按下新的快捷键…",
+    "input": "新的快捷键",
+    "save": "保存",
+    "cancel": "取消",
+    "restore": "恢复默认（{{accelerator}}）",
+    "disable": "停用",
+    "enable": "启用（{{accelerator}}）",
+    "suggestions": "这些现在可用：",
+    "useSuggestion": "改用 {{accelerator}}",
+    "status": {
+      "registered": "已生效",
+      "conflict": "被其他程序占用",
+      "inactive": "未生效",
+      "disabled": "已停用",
+      "typesCharacter": "在你当前的键盘布局里，{{accelerator}} 会输入字符（AltGr）；它被占作快捷键后这个字符就打不出来了，建议换一个组合。"
+    },
+    "unusable": {
+      "noModifier": "需要至少一个修饰键（Ctrl / Alt / Shift / Win）。",
+      "unsupportedKey": "这个按键不能用作快捷键。"
+    },
+    "action": {
+      "contextCreate": {
+        "label": "从选区或剪贴板新建",
+        "hint": "选中文字或复制消息，再按快捷键预填待办。",
+        "button": "从选区或剪贴板新建：{{accelerator}}",
+        "conflict": "{{accelerator}} 已被占用，请为从选区或剪贴板新建换一个快捷键。",
+        "saved": "从选区或剪贴板新建的快捷键已改为 {{accelerator}}",
+        "disabled": "已停用从选区或剪贴板新建的快捷键"
+      },
+      "quickCreate": {
+        "label": "快速创建快捷键",
+        "button": "快速创建：{{accelerator}}",
+        "conflict": "{{accelerator}} 已被其他程序占用，暂时无法用它呼出快速创建。请换一个快捷键。",
+        "saved": "快速创建的快捷键已改为 {{accelerator}}",
+        "disabled": "已停用快速创建的快捷键"
+      },
+      "search": {
+        "label": "全局搜索快捷键",
+        "button": "全局搜索：{{accelerator}}",
+        "conflict": "{{accelerator}} 已被其他程序占用，暂时无法用它呼出全局搜索。请换一个快捷键。",
+        "saved": "全局搜索的快捷键已改为 {{accelerator}}",
+        "disabled": "已停用全局搜索的快捷键"
+      }
+    }
+  },
+  "inbox": {
+    "page": {
+      "label": "收集箱",
+      "allClear": "已全部整理",
+      "pending": "{{count}} 项待整理"
+    },
+    "toolbar": {
+      "label": "批量整理",
+      "selectAll": "全选",
+      "selected": "已选 {{count}} 项"
+    },
+    "select": "选择：{{title}}",
+    "undo": "撤销",
+    "missingFile": "文件不存在",
+    "action": {
+      "today": "今天",
+      "tomorrow": "明天",
+      "later": "下周一",
+      "scheduleDate": "安排日期…",
+      "schedule": "安排",
+      "convert": "转为{{type}}",
+      "convertMenu": "转为…",
+      "leave": "移出收集箱",
+      "archive": "归档",
+      "more": "更多整理方式",
+      "moreShort": "更多",
+      "organize": "整理"
+    },
+    "done": {
+      "today": "已安排到今天（{{count}} 项）",
+      "tomorrow": "已安排到明天（{{count}} 项）",
+      "later": "已安排到下周一（{{count}} 项）",
+      "todo": "已转为待办（{{count}} 项）",
+      "note": "已转为笔记（{{count}} 项）",
+      "tip": "已转为提示（{{count}} 项）",
+      "leave": "已移出收集箱（{{count}} 项）",
+      "archive": "已归档（{{count}} 项）"
+    },
+    "empty": {
+      "title": "收集箱是空的",
+      "hint": "从聊天复制消息，再回到这里按 Ctrl+V。也可以把链接、文字或图片拖到悬浮窗收集。"
+    },
+    "filter": "筛选收集箱",
+    "noMatch": "没有匹配的条目。"
+  },
+  "capture": {
+    "drop": {
+      "label": "放置区",
+      "badgeHint": "拖入文字、链接或文件",
+      "create": {
+        "title": "新建事项…",
+        "active": "松手预填事项",
+        "hint": "按内容预填，再选类型、日期和项目"
+      },
+      "inbox": {
+        "title": "直接收进收集箱",
+        "active": "松手收进收集箱",
+        "hint": "立即创建，稍后整理"
+      }
+    },
+    "saving": "正在收集…",
+    "paste": "粘贴",
+    "pasteToInbox": "粘贴到收集箱",
+    "view": "查看",
+    "pasted": "已收集：{{title}}",
+    "pastedMany": "已收集 {{count}} 项",
+    "created": "已创建：{{title}}",
+    "createdMany": "已创建 {{count}} 项",
+    "undo": "撤销",
+    "edit": "编辑",
+    "dismiss": "知道了",
+    "failed": "没能收集：{{message}}",
+    "unsupported": {
+      "files": "没能读到这些文件在磁盘上的位置。可以在资源管理器里复制文件，再点「粘贴」。",
+      "empty": "这个内容没法收集，试试拖入链接、文字、图片或文件。"
+    }
+  },
+  "floating": {
+    "label": "拾序悬浮窗",
+    "reminderAttention": "有事项到点提醒",
+    "open": "打开拾序主窗口",
+    "allDone": "今天的事都做完了",
+    "quickAddHint": "右键快速添加待办"
+  },
+  "shell": {
+    "window": {
+      "minimize": "最小化",
+      "maximize": "最大化",
+      "restore": "还原窗口",
+      "close": "关闭窗口"
+    },
+    "nav": {
+      "label": "主导航",
+      "inbox": "收集箱",
+      "today": "今天",
+      "calendar": "日历",
+      "notes": "笔记",
+      "projects": "项目",
+      "dev": "开发控制台",
+      "trash": "回收站",
+      "settings": "设置",
+      "workflows": "自动化"
+    },
+    "navigation": "导航"
+  },
+  "today": {
+    "badge": {
+      "label": "今天还剩 {{count}} 件事"
+    },
+    "panel": {
+      "label": "今日面板",
+      "title": "今天",
+      "openMain": "打开主窗口",
+      "inbox": "收集箱 {{count}}"
+    },
+    "section": {
+      "todos": "待办",
+      "tips": "提示",
+      "completed": "今日已完成"
+    },
+    "overdue": "逾期",
+    "page": {
+      "label": "今天",
+      "progress": "今日完成进度",
+      "nothingPlanned": "暂无安排",
+      "allDone": "今天的待办全部完成 🎉",
+      "remaining": "还剩 {{count}} 项",
+      "addLabel": "添加待办",
+      "addPlaceholder": "写下一件今天要做的事，回车添加",
+      "addedElsewhere": "已添加到 {{label}}",
+      "emptyHint": "在上面的输入框写下第一件事，按回车就能加进来；写「明天下午3点 评审方案」会直接排到那个时间。"
+    },
+    "complete": "完成「{{title}}」",
+    "reopen": "重新打开「{{title}}」",
+    "completedToast": "已完成「{{title}}」",
+    "undo": "撤销",
+    "postpone": {
+      "menu": {
+        "today": "移到今天",
+        "tomorrow": "推迟到明天",
+        "later": "推迟到下周一",
+        "inbox": "放回收集箱"
+      },
+      "toast": {
+        "today": "「{{title}}」已移到今天",
+        "tomorrow": "「{{title}}」已推迟到明天",
+        "later": "「{{title}}」已推迟到下周一",
+        "inbox": "「{{title}}」已放回收集箱"
+      },
+      "zone": {
+        "tomorrow": "明天",
+        "later": "下周一",
+        "inbox": "收集箱"
+      },
+      "more": "「{{title}}」的更多操作"
+    },
+    "reorder": {
+      "handle": "拖动以调整「{{title}}」的顺序",
+      "instructions": "按空格键拿起，用上下方向键移动，再按空格键放下，按 Esc 取消。",
+      "picked": "已拿起「{{title}}」。",
+      "moved": "「{{title}}」移到第 {{position}} 位，共 {{total}} 项。",
+      "dropped": "「{{title}}」已放在第 {{position}} 位。",
+      "cancelled": "已取消移动「{{title}}」。"
+    },
+    "empty": {
+      "title": "今天还没有安排",
+      "hint": "按下 Ctrl+Shift+Space 快速添加一条待办。"
+    },
+    "due": {
+      "overdue": "已过截止",
+      "today": "今天截止",
+      "tomorrow": "明天截止"
+    }
+  },
+  "menu": {
+    "open": "打开菜单"
+  },
+  "error": {
+    "UNKNOWN": "出了点问题，请稍后重试。",
+    "INVALID_INPUT": "输入的内容不合法。",
+    "ITEM_NOT_FOUND": "找不到这个条目，它可能已被删除。",
+    "ITEM_TITLE_EMPTY": "标题不能为空。",
+    "ITEM_TITLE_TOO_LONG": "标题太长了。",
+    "ITEM_CONTENT_TOO_LONG": "内容太长了。",
+    "ITEM_BRIEF_TOO_LONG": "简述太长了（最多 200 个字）。",
+    "ITEM_NOT_COMPLETABLE": "笔记和提示不能被完成。",
+    "ITEM_ALREADY_COMPLETED": "这个待办已经完成了。",
+    "ITEM_NOT_COMPLETED": "这个待办还没有完成。",
+    "ITEM_ALREADY_ARCHIVED": "这个条目已经归档。",
+    "ITEM_NOT_ARCHIVED": "这个条目还没有归档。",
+    "ITEM_ARCHIVED": "条目已归档，请先取消归档。",
+    "ITEM_FIELD_NOT_APPLICABLE": "这个字段不适用于当前类型的条目。",
+    "NAME_EMPTY": "名称不能为空。",
+    "NAME_TOO_LONG": "名称太长了。",
+    "DATA_INCONSISTENT": "本地数据不一致，请导出诊断信息并联系开发者。",
+    "STORAGE_CONSTRAINT": "保存失败：数据与已有内容冲突。",
+    "STORAGE_UNAVAILABLE": "本地数据库暂时不可用。",
+    "STORAGE_CORRUPT": "本地数据已损坏，请导出诊断信息。",
+    "STORAGE_MIGRATION_FAILED": "数据库升级失败。",
+    "WINDOW_UNAVAILABLE": "无法打开窗口，请查看诊断信息。",
+    "SHORTCUT_INVALID": "这不是一个可用的快捷键：需要至少一个修饰键（Ctrl / Alt / Shift / Win）加一个按键。",
+    "SHORTCUT_CONFLICT": "这个快捷键已被其他程序占用，换一个试试。",
+    "SOURCE_FILE_MISSING": "文件已经不在原来的位置了，可能被移动或删除。",
+    "SOURCE_OPEN_FAILED": "无法打开这个来源。",
+    "CLIPBOARD_UNAVAILABLE": "暂时读取不到剪贴板，可能被其他程序占用，请稍后重试。",
+    "CLIPBOARD_EMPTY": "剪贴板里没有可以收集的内容，先复制点什么吧。",
+    "PROJECT_NOT_FOUND": "这个项目已经不存在了。",
+    "TAG_NOT_FOUND": "这个标签已经不存在了。",
+    "TAG_NAME_TAKEN": "已经有一个同名的标签了。想把两个合并，请用「合并到…」。",
+    "WORKFLOW_NOT_FOUND": "这个 Workflow 已经不存在了。",
+    "WORKFLOW_INVALID": "这个 Workflow 的定义有问题，请按提示修改后再保存。",
+    "WORKFLOW_READ_ONLY": "内置 Workflow 不能直接修改。先「复制」一份，再改复制出来的这份。",
+    "EXPORT_FAILED": "导出失败，请检查磁盘空间和文件夹的写入权限后重试。",
+    "SYSTEM_SETTING_FAILED": "系统没有允许这次修改，请稍后重试，或在系统设置里手动调整。",
+    "WORKFLOW_RUN_FAILED": "没能重新运行：这条内容的来源不支持，或规则本身出错了。",
+    "UPDATE_FAILED": "检查或安装更新失败，当前版本没有变化，请稍后重试。"
+  },
+  "errorAction": {
+    "OPEN_DIAGNOSTICS": "打开诊断信息"
+  },
+  "projects": {
+    "label": "项目与标签",
+    "sidebar": "项目与标签导航",
+    "projects": "项目",
+    "tags": "标签",
+    "new": "新项目",
+    "newLabel": "新项目名称",
+    "newPlaceholder": "项目名称，回车创建",
+    "noProjects": "还没有项目",
+    "noTags": "给条目打上标签后，会出现在这里。",
+    "count": "{{count}} 项未完成",
+    "tagCount": "{{count}} 项",
+    "menu": "「{{name}}」的更多操作",
+    "rename": "重命名",
+    "renameLabel": "新的名称",
+    "archive": "归档",
+    "archived": "项目「{{name}}」已归档",
+    "merge": "合并到…",
+    "mergeTitle": "把标签「{{name}}」合并到",
+    "mergeTarget": "合并目标",
+    "mergeConfirm": "合并",
+    "merged": "已把「{{from}}」合并到「{{into}}」",
+    "cancel": "取消",
+    "save": "保存",
+    "items": "条目列表",
+    "empty": {
+      "title": "这个项目还是空的",
+      "hint": "打开任意条目，在详情里选择项目，它就会出现在这里。",
+      "none": "还没有项目",
+      "noneHint": "项目把相关的待办和笔记放在一起。新建一个，再把条目归进去。",
+      "tag": "没有带这个标签的条目",
+      "pick": "选择一个项目或标签"
+    },
+    "complete": "完成「{{title}}」",
+    "reopen": "重新打开「{{title}}」",
+    "noDate": "未安排"
+  },
+  "search": {
+    "label": "搜索",
+    "input": "搜索关键词",
+    "placeholder": "搜索待办、笔记和提示…",
+    "hint": "输入关键词，搜索标题、正文和来源；中文标题也可以输拼音首字母（如 bzzb 找「本周周报」）。",
+    "empty": "没有找到「{{query}}」",
+    "results": "搜索结果",
+    "keys": "↑↓ 选择　↵ 打开　⇧↵ 复制标题　Esc 关闭",
+    "copied": "已复制标题",
+    "completed": "已完成「{{title}}」",
+    "reopened": "已重新打开「{{title}}」",
+    "undo": "撤销 Ctrl+Z",
+    "completeHint": "Ctrl+D 完成",
+    "reopenHint": "Ctrl+D 重新打开",
+    "count": "{{count}} 条结果",
+    "open": "搜索",
+    "group": {
+      "todo": "待办",
+      "note": "笔记",
+      "tip": "提示"
+    },
+    "recent": "最近使用",
+    "create": "新建待办「{{title}}」",
+    "createHint": "Ctrl+↵ 新建待办",
+    "commands": "命令",
+    "commandHint": "输入 > 使用命令",
+    "noCommand": "没有匹配的命令",
+    "goto": "前往：{{view}}",
+    "newNote": "新建笔记",
+    "switchTheme": "切换到{{theme}}主题",
+    "hideCompleted": "隐藏今天已完成的待办",
+    "showCompleted": "显示今天已完成的待办",
+    "pauseNotifications": "暂停通知",
+    "resumeNotifications": "恢复通知",
+    "notificationsPaused": "已暂停通知，到点的提醒会在恢复后汇总",
+    "notificationsResumed": "已恢复通知",
+    "meta": {
+      "yesterday": "昨天",
+      "inbox": "收集箱",
+      "done": "已完成",
+      "due": "截止 {{date}}"
+    },
+    "windowHint": "输入关键词或拼音首字母，搜索标题、正文和来源；回车在主窗口中打开。",
+    "globalTip": "在任何应用里搜索",
+    "settingsGroup": "设置：{{group}}",
+    "keyboardHelp": "键盘帮助",
+    "allKeys": "↑ / ↓：选择结果\nCtrl+Home / Ctrl+End：首条 / 末条结果\nEnter：打开条目或执行命令\nShift+Enter：复制标题\nCtrl+Enter：创建待办\nCtrl+D：完成 / 重新打开选中的待办或提示\nCtrl+Z：撤销提示可见时，撤销完成\n>：命令模式\nTab / Shift+Tab：在控件间移动\nEsc：先关闭帮助，再关闭搜索",
+    "browseKeys": "↑↓ 选择 · Enter 打开",
+    "commandStatus": "命令模式 · {{count}} 条命令",
+    "run": "执行命令",
+    "completeAction": "完成",
+    "reopenAction": "重新打开",
+    "createTodo": "创建待办",
+    "creating": "正在创建…",
+    "searching": "正在搜索…",
+    "loadFailed": "暂时无法加载结果，搜索词已保留。",
+    "retry": "重试",
+    "openAction": "打开",
+    "dismissError": "关闭错误提示"
+  },
+  "trash": {
+    "label": "回收站",
+    "list": "回收站里的条目",
+    "count": "{{count}} 项",
+    "empty": "清空回收站",
+    "emptyConfirm": "再点一次，永久清空",
+    "emptyTitle": "回收站是空的",
+    "emptyHint": "删除的条目会在这里保留 30 天，期间可以随时恢复。",
+    "deletedAgo": "删除于 {{ago}}",
+    "daysLeft": "还剩 {{count}} 天自动清除",
+    "restore": "恢复「{{title}}」",
+    "restoreShort": "恢复",
+    "purge": "永久删除「{{title}}」",
+    "purgeShort": "彻底删除",
+    "purgeConfirm": "再点一次确认",
+    "restored": "已恢复「{{title}}」",
+    "emptied": "已清空回收站（{{count}} 项）",
+    "delete": "删除",
+    "deleted": "已删除「{{title}}」，可在回收站找回",
+    "deletedMany": "已删除 {{count}} 项，可在回收站找回",
+    "filter": "按标题筛选回收站",
+    "noMatch": "没有匹配的项。"
+  },
+  "settings": {
+    "label": "设置",
+    "title": "设置",
+    "section": {
+      "general": "通用",
+      "floating": "悬浮窗",
+      "shortcuts": "快捷键",
+      "appearance": "悬浮窗外观",
+      "schedule": "日程",
+      "notifications": "通知",
+      "data": "数据与诊断",
+      "integrations": "集成",
+      "about": "关于"
+    },
+    "autostart": {
+      "label": "开机自动启动",
+      "hint": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。"
+    },
+    "language": {
+      "label": "语言",
+      "hint": "切换后立即生效。",
+      "zhCN": "简体中文",
+      "en": "English"
+    },
+    "theme": {
+      "label": "主题",
+      "hint": "跟随系统，或固定为浅色 / 深色。"
+    },
+    "hideCompleted": {
+      "label": "隐藏已完成的待办",
+      "hint": "在 Today 列表与悬浮面板中隐藏今天已完成的待办。"
+    },
+    "alwaysOnTop": {
+      "label": "悬浮窗置顶",
+      "hint": "开启后悬浮窗始终显示在其他窗口上面。"
+    },
+    "shortcut": {
+      "label": "快速创建快捷键",
+      "hint": "在任何应用里按下它，就能立刻写下一条待办。"
+    },
+    "later": {
+      "label": "「稍后」是哪一天",
+      "hint": "悬浮窗和收集箱里的「稍后」按钮会把条目安排到这一天。",
+      "nextMonday": "下周一",
+      "inThreeDays": "3 天后",
+      "inOneWeek": "7 天后"
+    },
+    "saved": "已保存",
+    "loadFailed": "没能读取设置。",
+    "weekStart": {
+      "label": "一周从哪天开始",
+      "hint": "影响日历的周视图与月视图。",
+      "monday": "周一",
+      "sunday": "周日"
+    },
+    "reminderFlash": {
+      "label": "闪烁时长",
+      "hint": "每次提醒时，悬浮机器人提示会持续多久。",
+      "seconds": "{{seconds}} 秒"
+    },
+    "reminderCount": {
+      "label": "提醒次数",
+      "hint": "包含第一次。后续每隔 1 分钟闪烁并发送一条系统通知。"
+    },
+    "pauseNotifications": {
+      "label": "暂停通知",
+      "hint": "暂停期间不弹出提醒；到点的提醒不会丢，恢复后会汇总通知你。托盘菜单里也有这个开关。"
+    },
+    "onboarding": {
+      "label": "新手引导",
+      "hint": "再看一遍拾序的基本用法。",
+      "replay": "重新查看"
+    },
+    "diagnostics": {
+      "label": "导出诊断信息",
+      "hint": "把运行环境和最近的日志（已去除内容与令牌）打成一个压缩包，反馈问题时附上它。不包含你的笔记、待办、剪贴板和文件。",
+      "action": "导出",
+      "done": "诊断包已导出：{{path}}"
+    },
+    "exportData": {
+      "label": "导出笔记和待办",
+      "hint": "导出成普通文件，任何编辑器都能打开，包含来源信息。回收站里的不导出。",
+      "json": "JSON（完整）",
+      "markdown": "Markdown（单个文件）",
+      "markdownFiles": "Markdown（每条一个文件）",
+      "action": "导出",
+      "done": "已导出 {{count}} 条：{{path}}",
+      "format": "导出格式"
+    },
+    "backup": {
+      "label": "备份",
+      "hint": "把全部数据（含 Workflow 和设置）和你粘贴的图片打成一个压缩包。不包含你的原始文件，也不含任何密钥。",
+      "action": "创建备份",
+      "done": "备份已创建：{{path}}"
+    },
+    "restore": {
+      "label": "从备份恢复",
+      "hint": "选择一个备份包。恢复前会先自动备份当前数据，重启后生效；被替换的数据也会保留在数据目录里。",
+      "action": "选择备份…",
+      "readyTitle": "备份已准备好",
+      "readyBody": "备份创建于 {{created}}（拾序 {{version}}）。重启后会换上这份数据；当前数据已先备份到：{{safety}}",
+      "restart": "立即重启"
+    },
+    "reset": {
+      "label": "删除所有数据",
+      "hint": "清空所有条目、设置与附件，Nivlo 将从头开始。会先自动备份当前数据；卸载 Nivlo 永远不会删除数据。",
+      "action": "删除所有数据…",
+      "confirm": "再点一次确认删除",
+      "readyTitle": "重启后将删除数据",
+      "readyBody": "已把全部数据备份到：{{safety}}",
+      "restart": "立即重启"
+    },
+    "appearance": {
+      "accent": {
+        "label": "强调色",
+        "hint": "用于徽标圆点、按钮和高亮。",
+        "blue": "蓝",
+        "violet": "紫",
+        "teal": "青",
+        "rose": "玫红",
+        "amber": "琥珀"
+      },
+      "size": {
+        "label": "悬浮窗收起时的大小"
+      },
+      "shape": {
+        "label": "徽标形态",
+        "hint": "收起时徽标的样子。",
+        "pill": "胶囊",
+        "circle": "数字",
+        "dot": "圆点"
+      },
+      "surface": {
+        "label": "质感",
+        "hint": "通透带有柔和半透明，纯色则完全不透明。",
+        "solid": "纯色",
+        "glass": "通透"
+      },
+      "corners": {
+        "label": "圆角",
+        "hint": "面板的圆角大小。",
+        "soft": "柔和",
+        "round": "圆润"
+      },
+      "opacity": {
+        "label": "窗口不透明度",
+        "hint": "调低后可以透出后面的内容，展开面板的文字和按钮仍保持清晰。"
+      },
+      "reset": {
+        "label": "恢复默认外观",
+        "hint": "还原为默认的样子。",
+        "button": "恢复"
+      },
+      "group": {
+        "badge": "桌面伙伴",
+        "surface": "表面、强调色与透明度",
+        "skin": "自定义皮肤",
+        "motion": "悬浮窗动画"
+      }
+    },
+    "companion": {
+      "mode": "显示方式",
+      "robot": "机器人款式",
+      "color": "外壳配色",
+      "face": "表情",
+      "modes": { "robot": "机器人", "image": "自定义图片", "badge": "经典徽标" },
+      "robots": { "scout": "巡航", "relay": "机修", "memo": "便签" },
+      "colors": {
+        "original": "原装",
+        "steel": "灰蓝",
+        "mint": "薄荷",
+        "amber": "暖橙",
+        "lilac": "浅紫",
+        "pearl": "珍珠白"
+      },
+      "faces": { "friendly": "友好", "focused": "专注", "playful": "俏皮" },
+      "saveFailed": "外观保存失败，请重试。",
+      "retry": "重试",
+      "animation": {
+        "enabled": {
+          "label": "启用悬浮窗动画",
+          "hint": "关闭后将停止所有悬浮窗动作、帧播放与界面动效，降低资源占用。"
+        },
+        "trigger": {
+          "label": "动画触发方式",
+          "hint": "控制动画在日常待机与交互时的播放策略。",
+          "interactive": "交互与提醒时",
+          "always": "始终播放",
+          "hoverOnly": "仅悬停时"
+        },
+        "preview": {
+          "label": "实时动作预览",
+          "hint": "切换不同状态，立即预览悬浮窗的真实动作表现。"
+        },
+        "slots": {
+          "idle": "待机",
+          "hover": "悬停",
+          "grabbed": "拖拽",
+          "ready": "拖放",
+          "done": "完成",
+          "reminder": "提醒"
+        },
+        "robotIdle": {
+          "label": "机器人待机动作",
+          "hint": "选择日常待机时的循环动作，或选择关闭保持静止。",
+          "off": "关闭",
+          "blink": "自然眨眼",
+          "float": "轻缓漂浮",
+          "breathe": "呼吸律动",
+          "lookAround": "巡航张望",
+          "sleep": "安静打盹"
+        },
+        "robotReactive": {
+          "hover": {
+            "label": "悬停打招呼",
+            "hint": "鼠标移到悬浮机器人上时抬头并笑眼回应。"
+          },
+          "grabbed": {
+            "label": "拖拽反应",
+            "hint": "长按拎起拖动时轻微晃动并点亮信号灯。"
+          },
+          "ready": {
+            "label": "拖放接取",
+            "hint": "有文件或内容拖入悬浮窗时高亮提示。"
+          },
+          "done": {
+            "label": "完成庆祝",
+            "hint": "今日待办全部完成时播放单次庆祝跳动。"
+          },
+          "reminder": {
+            "label": "提醒摇晃",
+            "hint": "到期提醒到达时摇晃机身引起注意。"
+          }
+        }
+      }
+    },
+    "skin": {
+      "label": "自定义皮肤",
+      "hint": "选择多张图片或像素图作为动画帧，以本地文件保存。单轨道最多 60 帧、单帧最高 256px。",
+      "add": "添加图片 / GIF…",
+      "spriteSheet": "导入精灵图…",
+      "clear": "移除皮肤",
+      "empty": "无皮肤",
+      "frames": "{{count}} 帧",
+      "removeFrame": "删除第 {{index}} 帧",
+      "selectFrame": "选中第 {{index}} 帧进行编辑",
+      "moveLeft": "左移一帧",
+      "moveRight": "右移一帧",
+      "duplicateFrame": "复制当前帧",
+      "frameDuration": "单帧时长（毫秒）",
+      "frameDurationPlaceholder": "跟随速度",
+      "downsampled": "动图帧数超过上限，已均匀抽帧为 {{max}} 帧。",
+      "tooMany": "只保留了前 {{max}} 帧。",
+      "saveFailed": "皮肤保存失败，请减少图片数量或换更小的图片。",
+      "readFailed": "有图片无法读取。",
+      "sheet": {
+        "title": "切分精灵图",
+        "rows": "行数",
+        "cols": "列数",
+        "skipTrailing": "跳过末尾空白帧",
+        "summary": "将切分为 {{count}} 帧（每帧 {{width}}×{{height}}px）",
+        "confirm": "切分并导入",
+        "cancel": "取消"
+      },
+      "tracks": {
+        "toggle": "按状态分别配置动作",
+        "toggleHint": "开启后可为待机、悬停、拖拽、拖放、完成、提醒分别设置不同的帧序列与速度；未配置的状态自动沿用待机动作。",
+        "inheritsIdle": "沿用待机",
+        "trackPlayback": {
+          "label": "本状态播放方式",
+          "loop": "循环",
+          "pingpong": "往返",
+          "once": "单次",
+          "still": "静止"
+        },
+        "trackFps": "本状态速度（FPS）"
+      },
+      "storage": {
+        "label": "本地资源与皮肤包",
+        "hint": "自定义帧图保存在本地文件目录中，支持高分辨率与多帧动画，并随数据备份一起保存。",
+        "usage": "{{count}} 个文件 · {{used}} / {{quota}}",
+        "prune": "清理未使用文件",
+        "pruned": "已释放 {{freed}} 未使用皮肤资源。",
+        "prunedNone": "没有可清理的未使用资源。",
+        "export": "导出皮肤包…",
+        "exported": "皮肤包已导出：{{path}}",
+        "import": "导入皮肤包…",
+        "imported": "已导入自定义皮肤包。"
+      },
+      "playback": {
+        "label": "播放方式",
+        "hint": "帧的播放方式。",
+        "loop": "循环",
+        "pingpong": "往返",
+        "hover": "悬停时",
+        "still": "静止"
+      },
+      "fps": {
+        "label": "速度",
+        "hint": "每秒播放的帧数。"
+      },
+      "motion": {
+        "label": "附加动效",
+        "hint": "在图片上叠加的轻微动作。",
+        "none": "无",
+        "float": "漂浮",
+        "breathe": "呼吸",
+        "bounce": "弹跳"
+      },
+      "pixel": {
+        "label": "像素风模式",
+        "hint": "保持锐利的像素边缘而不做平滑，请在添加图片前开启。"
+      },
+      "showCount": {
+        "label": "显示数字",
+        "hint": "在悬浮窗收起时显示今天的剩余待办数。"
+      }
+    },
+    "integrations": {
+      "name": {
+        "github": "GitHub",
+        "jira": "Jira"
+      },
+      "notConnected": "未连接",
+      "connectedCount": "已连接（{{count}} 个账号）",
+      "githubAccount": "GitHub 账号",
+      "connect": "连接",
+      "connected": "已连接。",
+      "disconnect": "断开",
+      "disconnectConfirm": "确定断开？",
+      "disconnected": "已断开，令牌已从本机的系统凭据库中删除。",
+      "test": "测试连接",
+      "jiraAddress": "Jira 地址",
+      "jiraAddressPlaceholder": "https://your-team.atlassian.net",
+      "email": "账号邮箱",
+      "emailPlaceholder": "you@example.com",
+      "token": {
+        "github": "个人访问令牌",
+        "jira": "个人访问令牌（PAT）",
+        "apiToken": "API Token"
+      },
+      "help": {
+        "github": "需要对你要捕获链接的仓库有读取权限的令牌。令牌保存在系统凭据库里，之后无法读回。",
+        "jira": "Jira Cloud：账号邮箱 + API Token；自托管 Jira：个人访问令牌。保存在系统凭据库里，之后无法读回。"
+      },
+      "lastError": "最近一次检查失败：{{message}}",
+      "result": {
+        "ok": "已连接，账号：{{message}}。",
+        "notConnected": "还没有连接。",
+        "authFailed": "认证失败：令牌无效或已过期，请用新的令牌重新连接。",
+        "permissionDenied": "令牌有效，但权限不足。{{message}}",
+        "network": "连不上服务：{{message}}",
+        "failed": "检查失败：{{message}}"
+      }
+    },
+    "update": {
+      "label": "更新",
+      "hint": "更新包经过签名校验；安装前会自动备份你的数据。",
+      "check": "检查更新",
+      "checking": "正在检查…",
+      "latest": "已经是最新版本。",
+      "available": "有新版本 {{version}}。",
+      "install": "立即更新",
+      "installing": "正在后台下载并安装，完成后 Nivlo 会自动重启…",
+      "error": "更新失败，当前版本没有变化。"
+    },
+    "searchShortcut": {
+      "label": "全局搜索快捷键",
+      "hint": "在任何应用里按下它，弹出搜索框，直接找到待办、笔记和提示。"
+    },
+    "searchPrewarm": {
+      "label": "预先准备全局搜索框",
+      "hint": "启动后在后台提前创建搜索框，第一次按快捷键时弹出得更快（约 0.3 秒 → 0.12 秒）；代价是常驻多占约 90 MB 内存。"
+    },
+    "jump": "跳到设置分组"
+  },
+  "calendar": {
+    "label": "日历",
+    "previous": "上一页",
+    "next": "下一页",
+    "today": "今天",
+    "viewSwitch": "切换视图",
+    "view": {
+      "month": "月",
+      "week": "周"
+    },
+    "due": "截止",
+    "dueChip": "「{{title}}」的截止日期",
+    "more": "还有 {{count}} 项",
+    "addOn": "在{{date}}添加待办",
+    "pasteOnDay": "从剪贴板新建…",
+    "newTodo": "新待办",
+    "newTodoPlaceholder": "写下一件事，回车添加",
+    "timeRecognised": "🕒 {{time}}",
+    "unscheduled": "待安排",
+    "unscheduledHint": "打开条目，在详情中安排日期。侧栏停靠时，也可拖到日期格上。",
+    "unscheduledEmpty": "没有待安排的待办 🎉",
+    "scheduled": "「{{title}}」已安排到 {{date}}",
+    "expanded": "已展开{{date}}所在周",
+    "closeBacklog": "关闭待安排",
+    "scheduleCleared": "已移除「{{title}}」的计划日期",
+    "editDue": "打开详情，修改截止日期…",
+    "planItem": "打开详情，安排日期…",
+    "changePlan": "打开详情，修改计划日期…"
+  },
+  "onboarding": {
+    "demo": {
+      "add": "+ 待办",
+      "sources": "链接 · 文字 · 图片 · 文件",
+      "input": "明天下午3点 评审方案",
+      "parsed": "识别到计划：明天 · 周四 15:00"
+    },
+    "label": "欢迎使用拾序",
+    "steps": "引导步骤",
+    "goTo": "第 {{step}} 步",
+    "next": "下一步",
+    "back": "上一步",
+    "skip": "跳过",
+    "start": "开始使用",
+    "step0": {
+      "title": "欢迎使用拾序",
+      "body": "拾序住在屏幕边缘：先收下想到的事，再慢慢整理。在屏幕边缘找到小徽标就能开始。"
+    },
+    "step1": {
+      "title": "悬停看今天，点一下就添加",
+      "body": "悬停在徽标上展开今日事项。点击「+ 待办」，选择待办、笔记或提示。输入标题后点击「创建」或按 Ctrl+Enter。"
+    },
+    "step2": {
+      "title": "随手收进来",
+      "body": "复制一个链接，在悬浮面板点击「粘贴」。打开收集箱，点击该条目的「整理」，再选择「明天」：来源留住了，日期也安排好了。"
+    },
+    "step3": {
+      "title": "用说话的方式安排时间",
+      "body": "在主窗口「今天」的单行输入框写「明天下午3点 评审方案」，确认识别出的计划后按 Enter 添加。",
+      "search": "想找回记下的东西，在任何应用里按：",
+      "taken": "不过 {{shortcut}} 现在被别的程序占用了，按了不会有反应。可以在主窗口左下角换一个。",
+      "searchTaken": "全局搜索的快捷键 {{shortcut}} 被别的程序占用了，可以在主窗口左下角换一个，就能在任何应用里搜索记下的东西。",
+      "cheatSheet": "想看所有键盘快捷键，在主窗口里按",
+      "quickShortcut": "在其他应用中，用这个快捷键快速记录："
+    }
+  },
+  "workflows": {
+    "newName": "新的 Workflow",
+    "matcher": {
+      "exists": "{{field}} 存在",
+      "and": " 且 ",
+      "or": " 或 "
+    },
+    "scriptApi": {
+      "input": "输入字段，如 input.title、input.url、input.text。",
+      "vars": "前面的 Step 写入的变量。",
+      "metadata": "来源信息，如 url.host。",
+      "item": "当前条目的信息（预留）。",
+      "trim": "转成字符串并去掉首尾空白。",
+      "truncate": "最多保留 n 个字符。",
+      "httpGet": "GET 请求，只能访问「脚本主机」里声明过的主机；未授权的主机会以 PermissionDenied 失败。",
+      "log": "输出到试运行的日志（不写入运行记录）。"
+    },
+    "label": "自动化",
+    "tabs": "自动化分区",
+    "tab": {
+      "rules": "规则",
+      "runs": "最近执行"
+    },
+    "new": "新建规则",
+    "intro": "收集到的内容会交给第一条匹配的规则处理：优先级数字大的先匹配，相同时越具体的越优先。内置规则只读，可以复制后自定义。",
+    "group": {
+      "builtin": "内置",
+      "mine": "我的"
+    },
+    "groupEmpty": "还没有。选一条内置规则，点「复制」就能开始自定义。",
+    "enable": "启用 {{name}}",
+    "priority": "优先级",
+    "priorityOf": "{{name}} 的优先级",
+    "priorityDown": "降低 {{name}} 的优先级",
+    "priorityUp": "提高 {{name}} 的优先级",
+    "pickTitle": "选一条规则查看或编辑",
+    "pickHint": "或者点右上角「新建规则」。试运行可以先看看会创建什么，不会写入任何数据。",
+    "close": "关闭",
+    "readOnlyNotice": "内置规则不能直接修改。点「复制」得到一份副本，副本的优先级更高，会先于原规则生效。",
+    "matches": "匹配",
+    "matchesComplex": "复杂条件（见下方定义）",
+    "duplicate": "复制",
+    "duplicated": "已复制为「{{name}}」，现在可以修改它了",
+    "save": "保存",
+    "saved": "已保存「{{name}}」",
+    "delete": "删除",
+    "deleteConfirm": "再点一次删除",
+    "deleted": "已删除",
+    "editMode": "编辑方式",
+    "mode": {
+      "form": "表单",
+      "json": "JSON",
+      "script": "脚本"
+    },
+    "formUnavailable": "这份定义用到了表单还不能表示的写法，请用 JSON 编辑。",
+    "when": "当收集到……时",
+    "then": "就创建……",
+    "steps": "执行步骤",
+    "templateHint": "可以使用这些变量：{{vars}}",
+    "field": {
+      "name": "名称",
+      "description": "说明",
+      "itemType": "创建",
+      "title": "标题",
+      "content": "内容",
+      "tags": "标签",
+      "tagsPlaceholder": "用逗号分隔，如 read, github",
+      "inInbox": "先放进收集箱",
+      "scheduledToday": "安排在今天"
+    },
+    "fieldName": {
+      "input.type": "输入类型",
+      "url.host": "网址主机",
+      "url.path": "网址路径",
+      "url.scheme": "网址协议",
+      "file.extension": "文件扩展名",
+      "file.name": "文件名",
+      "text": "文字内容",
+      "source.application": "来源应用"
+    },
+    "op": {
+      "equals": "等于",
+      "contains": "包含",
+      "startsWith": "开头是",
+      "endsWith": "结尾是",
+      "glob": "通配",
+      "regex": "正则",
+      "exists": "存在"
+    },
+    "condition": {
+      "field": "条件 {{n}} 的字段",
+      "op": "条件 {{n}} 的比较方式",
+      "value": "条件 {{n}} 的值",
+      "remove": "删除条件 {{n}}",
+      "add": "添加条件"
+    },
+    "dryRun": {
+      "label": "试运行",
+      "title": "试运行",
+      "hint": "输入一个样例，看看这条规则会创建什么。不会创建任何条目，也不会留下运行记录。",
+      "kind": "样例类型",
+      "kindText": "文字 / 网址",
+      "kindFile": "文件路径",
+      "sample": "样例",
+      "textPlaceholder": "例如 https://github.com/a/b/pull/1",
+      "filePlaceholder": "例如 D:\\文档\\报告.pdf",
+      "run": "试运行",
+      "wouldCreate": "会创建 {{count}} 条：",
+      "nothing": "这条规则没有产出任何内容（实际收集时会按默认方式保存）。",
+      "failed": "运行失败：{{reason}}（实际收集时会按默认方式保存，不会丢失）",
+      "inInbox": "收集箱",
+      "logs": "脚本控制台输出"
+    },
+    "stepOutcome": {
+      "ok": "完成",
+      "skipped": "跳过",
+      "failed": "失败"
+    },
+    "runs": {
+      "list": "最近执行",
+      "emptyTitle": "还没有执行记录",
+      "emptyHint": "收集内容并命中某条规则后，会在这里留下一条记录（只有摘要，不含内容全文）。",
+      "status": {
+        "succeeded": "成功",
+        "failed": "失败",
+        "skipped": "未产出"
+      },
+      "fellBack": "规则失败，已按默认方式保存：{{reason}}",
+      "summary": "创建 {{count}} 条 · {{ms}} ms"
+    },
+    "script": {
+      "needsConfirmation": "这个自动化包含脚本，确认它能访问的内容后才会运行：{{hosts}}。",
+      "noNetwork": "不访问网络",
+      "confirm": "确认权限",
+      "confirmed": "脚本权限已确认。可访问的网络：{{hosts}}。",
+      "saveFirst": "请先保存修改。",
+      "confirmFailed": "确认脚本权限失败。",
+      "invalidJson": "请先修好 JSON——脚本编辑需要一份合法的定义。",
+      "none": "这个自动化还没有脚本。脚本可以把捕获到的输入加工成要创建的条目。",
+      "add": "添加脚本",
+      "hosts": "脚本可以访问的主机",
+      "hostsHint": "用逗号分隔，例如 api.example.com。留空表示脚本完全不联网。",
+      "editorLabel": "脚本源码",
+      "reference": "ctx API 参考",
+      "remove": "移除脚本",
+      "removeConfirm": "确定移除？",
+      "hostsPlaceholder": "api.example.com"
+    },
+    "export": "导出",
+    "exported": "已导出到 {{path}}",
+    "import": {
+      "button": "导入",
+      "title": "导入自动化",
+      "intro": "导入之前，先看看这个文件会做什么、要求哪些权限。",
+      "name": "名称",
+      "publisher": "发布者",
+      "noPublisher": "未注明（未经验证）",
+      "description": "说明",
+      "steps": "步骤",
+      "network": "网络",
+      "networkYes": "需要联网访问：{{hosts}}",
+      "networkNo": "不联网",
+      "noHosts": "没有主机",
+      "script": "脚本",
+      "scriptYes": "包含脚本，可能访问：{{hosts}}",
+      "scriptNo": "没有脚本",
+      "renamed": "ID {{from}} 已被占用，将以 {{to}} 导入，不会覆盖任何已有的自动化。",
+      "disabledNotice": "导入的自动化默认是禁用的。看过之后再自己启用；联网的脚本在运行前还会再确认一次。",
+      "agree": "我已查看以上权限，确认导入这个自动化",
+      "confirm": "导入",
+      "cancel": "取消",
+      "done": "已导入“{{name}}”（未启用）"
+    },
+    "action": {
+      "openIntegrationSettings": "打开设置，连接 {{name}}"
+    },
+    "leave": {
+      "message": "这条规则还有没保存的修改。",
+      "keep": "继续编辑",
+      "discard": "放弃修改"
+    },
+    "enabledState": "已启用",
+    "disabledState": "已停用"
+  },
+  "dateFormat": {
+    "monthDay": "M月d日",
+    "monthDayWeekday": "M月d日 EEEE",
+    "monthDayWeekdayShort": "M月d日 EEE",
+    "yearMonth": "yyyy年M月",
+    "yearMonthDay": "yyyy年M月d日",
+    "weekdayShort": "eee"
+  },
+  "shortcuts": {
+    "title": "键盘快捷键",
+    "close": "关闭",
+    "section": {
+      "global": "在任何应用里",
+      "main": "主窗口",
+      "search": "搜索框（Ctrl+K 与全局搜索）",
+      "quickCreate": "快速创建",
+      "today": "今天的列表",
+      "inbox": "收集箱（先勾选条目）",
+      "notes": "笔记列表",
+      "calendar": "日历",
+      "projects": "项目与标签",
+      "workflows": "自动化",
+      "trash": "回收站"
+    },
+    "global": {
+      "quickCreate": "快速创建",
+      "search": "全局搜索",
+      "taken": "被其他程序占用",
+      "disabled": "已停用"
+    },
+    "main": {
+      "search": "搜索与命令",
+      "help": "显示这张表",
+      "views": "前往收集箱 / 今天 / 日历 / 笔记 / 项目",
+      "settings": "打开设置",
+      "undo": "撤销刚才的操作（提示还在时）",
+      "zoom": "放大 / 缩小 / 重置（Windows 主窗口和搜索窗口）"
+    },
+    "search": {
+      "move": "选择上一条 / 下一条",
+      "open": "打开选中的条目",
+      "create": "把搜索词记成待办",
+      "copy": "复制选中条目的标题",
+      "complete": "完成选中的待办",
+      "undo": "撤销刚才的完成",
+      "commands": "命令：前往页面、新建笔记、暂停通知…",
+      "close": "关闭"
+    },
+    "quickCreate": {
+      "create": "创建（「明天下午3点 …」会认出日期）",
+      "kind": "在类型组内选择待办 / 笔记 / 提示",
+      "date": "取消刚认出的日期",
+      "cancel": "取消",
+      "focus": "在类型组与标题之间移动，并正常离开"
+    },
+    "today": {
+      "move": "在完成框之间移动",
+      "reorder": "拿起 / 放下待办，配合 ↑ ↓ 调整顺序",
+      "fromInput": "在添加框里：进入待办列表（第一条上按 ↑ 回来）",
+      "tomorrow": "推迟到明天（可以撤销）",
+      "delete": "删除（可以撤销）",
+      "add": "跳到添加框",
+      "open": "打开详情（空格完成）"
+    },
+    "inbox": {
+      "move": "在条目之间移动",
+      "today": "安排到今天",
+      "tomorrow": "安排到明天",
+      "clear": "取消选择",
+      "all": "全选",
+      "delete": "删除（可以撤销）",
+      "open": "打开详情（空格勾选）",
+      "filter": "跳到筛选框（条目多时才有）"
+    },
+    "notes": {
+      "move": "换到上一篇 / 下一篇",
+      "filterOpen": "在筛选框里：打开第一篇匹配的笔记",
+      "filterClear": "在筛选框里：清空筛选",
+      "new": "新建一篇笔记",
+      "format": "Markdown 笔记里加粗 / 斜体（再按取消）",
+      "indent": "列表项缩进 / 取消缩进（Enter 续上记号）",
+      "task": "勾选 / 取消勾选任务项（- [ ]）",
+      "filter": "跳到筛选框（在正文里时是页内查找）"
+    },
+    "calendar": {
+      "page": "下一段 / 上一段（月或周）",
+      "today": "回到今天",
+      "view": "切换到月视图 / 周视图",
+      "days": "在日期之间移动（↵ 在那天添加待办）",
+      "new": "在今天写一条待办"
+    },
+    "projects": {
+      "move": "在条目之间移动，回车打开详情",
+      "sidebar": "在左侧：换到上一个 / 下一个项目或标签",
+      "new": "新建项目"
+    },
+    "workflows": {
+      "move": "在规则之间移动（↵ 打开）",
+      "new": "新建规则"
+    },
+    "trash": {
+      "move": "在各项的同一个按钮之间移动",
+      "filter": "跳到筛选框（项多时才有）"
+    }
+  },
+  "createConfiguration": {
+    "importClipboard": "从剪贴板导入",
+    "importSource": {
+      "selection": "来自当前选区",
+      "clipboard": "来自剪贴板",
+      "empty": "选中文字，或复制消息后再试",
+      "unavailable": "暂时无法读取剪贴板"
+    },
+    "importingClipboard": "正在读取…",
+    "appendClipboard": "追加到内容",
+    "dismissClipboard": "取消导入",
+    "destination": "去向",
+    "toInbox": "收集箱",
+    "toToday": "今天",
+    "chooseDate": "选日期…",
+    "selectedDate": "计划 {{date}}",
+    "originalMessage": "原消息（{{count}} 行）",
+    "suggestedDates": "从内容识别到的日期",
+    "applyPlan": "设为计划",
+    "applyPlanFor": "将 {{date}} 设为计划日期",
+    "applyDue": "设为截止",
+    "applyDueFor": "将 {{date}} 设为截止日期",
+    "skipDateSuggestions": "跳过日期建议",
+    "title": "新增事项",
+    "hint": "把内容和安排一起记下，点击创建后保存。",
+    "titleLabel": "标题（必填）",
+    "titlePlaceholder": "输入事项标题",
+    "contentPlaceholder": "补充详细说明、步骤或参考资料…",
+    "schedule": "时间安排",
+    "organize": "归类",
+    "discardPrompt": "放弃这次填写的内容？",
+    "keepEditing": "继续编辑",
+    "discard": "放弃内容",
+    "cancel": "取消",
+    "create": "创建",
+    "creating": "创建中…",
+    "retry": "重试创建",
+    "shortcut": "Ctrl + Enter 创建",
+    "keepOpen": "创建后继续新增",
+    "created": "已创建「{{title}}」，可以继续新增。",
+    "noteTitle": "新增笔记",
+    "noteHint": "正文可以写很长，草稿会一直保留到创建或放弃。",
+    "noteTitlePlaceholder": "笔记标题",
+    "noteBodyPlaceholder": "开始记录…",
+    "markdownHint": "Markdown：Ctrl+B 加粗 · Ctrl+I 斜体 · - 列表 · - [ ] 任务 · 粘贴网址变链接",
+    "plainHint": "纯文本：按原样保存换行与空格",
+    "noteStats": "{{characters}} 字 · {{lines}} 行",
+    "noteDetails": "笔记信息",
+    "linksHeading": "关联资料",
+    "linksEmpty": "把网页或文件拖到这个窗口，就会关联到这条笔记（文件只记录位置）。"
+  },
+  "dropCreate": {
+    "linksSkipped": "关联资料最多 20 条，本次有 {{count}} 条未加入。移除部分资料后可以重新导入。",
+    "links": "关联资料（{{count}}）",
+    "remove": "移除关联资料「{{name}}」",
+    "removeShort": "移除",
+    "referenceNote": "文件只记录位置，不会复制；移动或删除原文件后关联会失效。",
+    "titleMany": "{{first}} 等 {{count}} 项",
+    "appendTitle": "松手添加为关联资料",
+    "appendHint": "网页和文件会加到这条事项里，不会另开一页"
+  }
+}

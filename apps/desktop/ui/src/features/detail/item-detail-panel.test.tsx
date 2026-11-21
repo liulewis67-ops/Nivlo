@@ -1,0 +1,371 @@
+import { act, fireEvent, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AppError } from "@/lib/errors";
+import { useToastStore } from "@/stores/toast-store";
+import { createMemoryIpc } from "@/test/ipc-mock";
+import type { MemoryIpc } from "@/test/ipc-mock";
+import { bodyText, selectBody, setBody } from "@/test/markdown-body";
+import { renderWithProviders } from "@/test/render";
+import { useState } from "react";
+import { AUTOSAVE_DELAY_MS, ItemDetailPanel } from "./ItemDetailPanel";
+
+/** 推进虚拟时间并让挂起的 Promise 完成。 */
+async function advance(ms: number): Promise<void> {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms);
+  });
+}
+
+/** 创建一个待办并返回它的 ID。 */
+async function seedTodo(ipc: MemoryIpc): Promise<string> {
+  const item = await ipc.createItem({
+    itemType: "todo",
+    title: "写周报",
+    content: "要点",
+    contentFormat: "plain",
+    priority: "high",
+    scheduled: { date: "2026-10-12", time: null },
+    due: null,
+    reminderAt: null,
+    projectId: null,
+  });
+  return item.id;
+}
+
+describe("ItemDetailPanel", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    useToastStore.setState({ toasts: [] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("显示条目的各个字段；待办显示截止日期与优先级", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    expect(screen.getByLabelText("标题")).toHaveValue("写周报");
+    expect(screen.getByLabelText("描述")).toHaveValue("要点");
+    expect(screen.getByLabelText("计划日期（日）")).toHaveValue("2026-10-12");
+    expect(screen.getByLabelText("截止日期（日）")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "高" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("停止输入后自动保存，并且只发送变化的字段；连续输入只保存一次", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    const title = screen.getByLabelText("标题");
+    fireEvent.change(title, { target: { value: "写周报（" } });
+    await advance(AUTOSAVE_DELAY_MS - 100);
+    fireEvent.change(title, { target: { value: "写周报（终稿）" } });
+    await advance(AUTOSAVE_DELAY_MS - 100);
+    expect(ipc.updates).toHaveLength(0);
+
+    await advance(200);
+    expect(ipc.updates).toEqual([{ id, request: { title: "写周报（终稿）" } }]);
+    expect(screen.getByRole("status")).toHaveTextContent("已保存");
+  });
+
+  it("清空日期是「清除」；设置截止日期带时间", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    fireEvent.change(screen.getByLabelText("计划日期（日）"), { target: { value: "" } });
+    await advance(AUTOSAVE_DELAY_MS);
+    expect(ipc.updates[0]?.request).toEqual({ scheduled: { kind: "clear" } });
+
+    fireEvent.change(screen.getByLabelText("截止日期（日）"), { target: { value: "2026-10-20" } });
+    fireEvent.change(screen.getByLabelText("截止时间"), { target: { value: "18:00" } });
+    await advance(AUTOSAVE_DELAY_MS);
+    expect(ipc.updates[1]?.request).toEqual({
+      due: { kind: "set", value: { date: "2026-10-20", time: "18:00" } },
+    });
+  });
+
+  it("转换类型：保存类型；转成笔记后不再显示截止日期与优先级", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "笔记" }));
+    expect(screen.queryByLabelText("截止日期（日）")).not.toBeInTheDocument();
+    await advance(AUTOSAVE_DELAY_MS);
+    expect(ipc.updates[0]?.request).toEqual({ itemType: "note" });
+  });
+
+  it("保存失败：修改仍然保留，显示原因与重试；重试成功后恢复", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "boom"));
+    fireEvent.change(screen.getByLabelText("描述"), { target: { value: "新的描述\n第二行" } });
+    await advance(AUTOSAVE_DELAY_MS);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("没能保存：本地数据库暂时不可用。");
+    // 编辑内容没有丢。
+    expect(screen.getByLabelText("描述")).toHaveValue("新的描述\n第二行");
+
+    fireEvent.click(screen.getByRole("button", { name: "重试" }));
+    await advance(0);
+    expect(ipc.updates).toHaveLength(2);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("描述")).toHaveValue("新的描述\n第二行");
+    expect((await ipc.getItem(id)).content).toBe("新的描述\n第二行");
+  });
+
+  it("违反领域规则（空标题）：显示后端的原因，不丢内容", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "  " } });
+    await advance(AUTOSAVE_DELAY_MS);
+    expect(screen.getByRole("alert")).toHaveTextContent("标题不能为空");
+    expect(screen.getByLabelText("标题")).toHaveValue("  ");
+  });
+
+  it("关闭时先保存还没保存的修改", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    let closed = false;
+    const { unmount } = renderWithProviders(
+      <ItemDetailPanel
+        id={id}
+        onClose={() => {
+          closed = true;
+        }}
+      />,
+      ipc,
+    );
+    await advance(0);
+
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "关闭前的修改" } });
+    fireEvent.click(screen.getByRole("button", { name: "关闭详情" }));
+    expect(closed).toBe(false);
+    await advance(0);
+    expect(closed).toBe(true);
+    expect(ipc.updates).toEqual([{ id, request: { title: "关闭前的修改" } }]);
+    unmount();
+  });
+
+  it("Todo 有简述，自动保存；转成笔记后不再显示", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    fireEvent.change(screen.getByLabelText("简述"), { target: { value: "汇总本周进展" } });
+    await advance(AUTOSAVE_DELAY_MS);
+    expect(ipc.updates).toEqual([
+      { id, request: { brief: { kind: "set", value: "汇总本周进展" } } },
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "笔记" }));
+    expect(screen.queryByLabelText("简述")).toBeNull();
+  });
+
+  it("Markdown 描述里 Ctrl+B 加粗、列表按 Enter 续行；纯文本描述不处理", async () => {
+    const ipc = createMemoryIpc();
+    const item = await ipc.createItem({
+      itemType: "note",
+      title: "会议",
+      content: "要点",
+      contentFormat: "markdown",
+      priority: null,
+      scheduled: null,
+      due: null,
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<ItemDetailPanel id={item.id} onClose={() => undefined} />, ipc);
+    await advance(0);
+    const body = screen.getByLabelText("描述");
+
+    selectBody(body, 0, 2);
+    fireEvent.keyDown(body, { key: "b", ctrlKey: true });
+    expect(bodyText(body)).toBe("**要点**");
+
+    act(() => setBody(body, "- 一"));
+    selectBody(body, 3, 3);
+    fireEvent.keyDown(body, { key: "Enter" });
+    expect(bodyText(body)).toBe("- 一\n- ");
+
+    // 纯文本描述是原生文本框，不处理 Markdown 按键。
+    fireEvent.click(screen.getByRole("button", { name: "纯文本" }));
+    const plain = screen.getByLabelText("描述");
+    if (!(plain instanceof HTMLTextAreaElement)) throw Error("Expected textarea");
+    plain.setSelectionRange(0, 1);
+    fireEvent.keyDown(plain, { key: "b", ctrlKey: true });
+    expect(plain).toHaveValue("- 一\n- ");
+  });
+
+  it("Esc 关闭", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    let closed = 0;
+    renderWithProviders(
+      <ItemDetailPanel
+        id={id}
+        onClose={() => {
+          closed += 1;
+        }}
+      />,
+      ipc,
+    );
+    await advance(0);
+    fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Escape" });
+    expect(closed).toBe(1);
+  });
+
+  it("打开时焦点移进面板，Esc 关闭后回到打开它的那一行", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    /** 模拟列表里的一行：按下打开详情，Esc 关闭。 */
+    function Host() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            {"row"}
+          </button>
+          {open && <ItemDetailPanel id={id} onClose={() => setOpen(false)} />}
+        </>
+      );
+    }
+    renderWithProviders(<Host />, ipc);
+    const row = screen.getByRole("button", { name: "row" });
+    row.focus();
+    fireEvent.click(row);
+    await advance(0);
+    const panel = screen.getByRole("complementary", { name: "条目详情" });
+    expect(panel).toHaveFocus();
+
+    // 第一下 Tab 进到标题，而不是「删除」。
+    fireEvent.keyDown(panel, { key: "Tab" });
+    expect(screen.getByLabelText("标题")).toHaveFocus();
+    panel.focus();
+    fireEvent.keyDown(panel, { key: "Escape" });
+    expect(screen.queryByRole("complementary", { name: "条目详情" })).not.toBeInTheDocument();
+    expect(row).toHaveFocus();
+  });
+
+  it("来源：网址显示链接并可以打开；文件不存在时禁用并提示", async () => {
+    const ipc = createMemoryIpc();
+    const captured = await ipc.capture({
+      input: { kind: "text", text: "https://example.com/a" },
+      origin: "drop",
+      sourceApplication: "Chrome",
+    });
+    const id = captured.items[0]?.id ?? "";
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    expect(screen.getByText("https://example.com/a")).toBeInTheDocument();
+    expect(screen.getByText(/网页链接/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "在浏览器中打开" }));
+    await advance(0);
+    expect(ipc.openedSources).toEqual([id]);
+
+    fireEvent.click(screen.getByRole("button", { name: "重新运行规则" }));
+    await advance(0);
+    expect(ipc.calls).toContain(`rerunWorkflow:${id}`);
+    expect(useToastStore.getState().toasts.at(-1)?.message).toContain("已重新运行");
+
+    ipc.failRerun(true);
+    fireEvent.click(screen.getByRole("button", { name: "重新运行规则" }));
+    await advance(0);
+    expect(useToastStore.getState().toasts.at(-1)?.message).toContain("没能重新运行");
+  });
+
+  it("打开来源失败（文件已不在）：提示原因", async () => {
+    const ipc = createMemoryIpc();
+    const captured = await ipc.capture({
+      input: { kind: "files", paths: ["C:\\资料\\报告.pdf"] },
+      origin: "paste",
+      sourceApplication: null,
+    });
+    const id = captured.items[0]?.id ?? "";
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    ipc.failNextOpenSourceWith(new AppError("SOURCE_FILE_MISSING", "gone"));
+    fireEvent.click(screen.getByRole("button", { name: "在文件夹中显示" }));
+    await advance(0);
+    expect(useToastStore.getState().toasts.at(-1)?.message).toContain("文件已经不在原来的位置");
+  });
+
+  it("手动创建的条目没有来源区块", async () => {
+    const ipc = createMemoryIpc();
+    const id = await seedTodo(ipc);
+    renderWithProviders(<ItemDetailPanel id={id} onClose={() => undefined} />, ipc);
+    await advance(0);
+    expect(screen.queryByRole("region", { name: "来源" })).not.toBeInTheDocument();
+  });
+
+  it("提醒：点预设填入时间并自动保存为 UTC，✕ 清除；笔记没有提醒字段", async () => {
+    const ipc = createMemoryIpc();
+    const item = await ipc.createItem({
+      itemType: "todo",
+      title: "交报告",
+      content: null,
+      contentFormat: "plain",
+      priority: null,
+      scheduled: null,
+      due: { date: "2026-10-16", time: "17:30:00" },
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<ItemDetailPanel id={item.id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    expect(screen.getByLabelText("提醒时间")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "提前 15 分钟" }));
+    expect(screen.getByLabelText("提醒时间")).toHaveValue("2026-10-16T17:15");
+    await advance(AUTOSAVE_DELAY_MS + 50);
+    const saved = ipc.updates.at(-1)?.request.reminderAt;
+    expect(saved).toEqual({ kind: "set", value: new Date("2026-10-16T17:15").toISOString() });
+
+    fireEvent.click(screen.getByRole("button", { name: "清除提醒" }));
+    await advance(AUTOSAVE_DELAY_MS + 50);
+    expect(ipc.updates.at(-1)?.request.reminderAt).toEqual({ kind: "clear" });
+
+    // 转成笔记后没有提醒字段。
+    fireEvent.click(screen.getByRole("button", { name: "笔记" }));
+    expect(screen.queryByLabelText("提醒时间")).not.toBeInTheDocument();
+  });
+
+  it("没有具体时间时「提前 …」预设置灰，9:00 预设可用", async () => {
+    const ipc = createMemoryIpc();
+    const item = await ipc.createItem({
+      itemType: "todo",
+      title: "只有日期",
+      content: null,
+      contentFormat: "plain",
+      priority: null,
+      scheduled: null,
+      due: { date: "2026-10-16", time: null },
+      reminderAt: null,
+      projectId: null,
+    });
+    renderWithProviders(<ItemDetailPanel id={item.id} onClose={() => undefined} />, ipc);
+    await advance(0);
+
+    expect(screen.getByRole("button", { name: "提前 15 分钟" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "提前 1 小时" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "前一天 9:00" }));
+    expect(screen.getByLabelText("提醒时间")).toHaveValue("2026-10-15T09:00");
+  });
+});

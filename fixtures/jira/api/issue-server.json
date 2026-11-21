@@ -1,0 +1,15 @@
+{
+  "id": "20931",
+  "self": "https://jira.corp.local/rest/api/2/issue/20931",
+  "key": "OPS-77",
+  "fields": {
+    "summary": "替换机房 B 的交换机",
+    "description": "按变更单 CHG-2041 执行。",
+    "status": { "name": "To Do", "id": "10000" },
+    "priority": { "name": "Medium", "id": "3" },
+    "assignee": { "name": "zhangsan", "displayName": "张三" },
+    "duedate": null,
+    "labels": [],
+    "project": { "key": "OPS", "name": "Operations" }
+  }
+}

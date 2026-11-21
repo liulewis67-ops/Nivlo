@@ -1,0 +1,1146 @@
+{
+  "samples": [
+    {
+      "text": "命令",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "搜索待办、笔记和提示…",
+      "tag": "INPUT",
+      "placeholder": true,
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Esc",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "最近使用",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "600",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "季度 报告 final.pdf",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 14.331,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "收集箱",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 5.172,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "↵",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 5.172,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "记得给新来的同事开通测试环境的权限",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "收集箱",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "https://www.example.com/blog/local-first-software",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "收集箱",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "给爸妈打电话",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "整理照片",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "提交报销",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "10月20日 · 截止 10月23日",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "读书笔记：Local-first",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "10月15日",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "预约牙医",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "10月15日",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "↑↓ 选择 · Enter 打开",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        247.8,
+        249,
+        251,
+        1
+      ],
+      "ratio": 5.654,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "打开",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "键盘帮助",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        247.8,
+        249,
+        251,
+        1
+      ],
+      "ratio": 15.667,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 640,
+    "height": 440,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/?window=search"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "命令",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "combobox",
+      "name": "搜索关键词",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "autocomplete",
+          "value": {
+            "type": "token",
+            "value": "list"
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "listbox"
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "activedescendant",
+          "value": {
+            "type": "idref",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 78,
+                "idref": "_r_0_-00000000-0000-4000-8000-000000000013"
+              }
+            ]
+          }
+        },
+        {
+          "name": "controls",
+          "value": {
+            "type": "idrefList",
+            "value": "_r_0_",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 74,
+                "idref": "_r_0_"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "listbox",
+      "name": "最近使用",
+      "properties": [
+        {
+          "name": "multiselectable",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "vertical"
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "contentinfo",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "命令",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Esc",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "最近使用",
+      "properties": [
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 76,
+                "idref": "_r_0_-group-recent",
+                "text": "最近使用"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "打开",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "键盘帮助",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "命令",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Esc",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "最近使用",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "季度 报告 final.pdf 收集箱 ↵",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "记得给新来的同事开通测试环境的权限 收集箱",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "https://www.example.com/blog/local-first-software 收集箱",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "给爸妈打电话",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "整理照片",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "提交报销 10月20日 · 截止 10月23日",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "读书笔记：Local-first 10月15日",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "option",
+      "name": "预约牙医 10月15日",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "↑↓ 选择 · Enter 打开",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "打开",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "键盘帮助",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "最近使用",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "记得给新来的同事开通测试环境的权限",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "给爸妈打电话",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "整理照片",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "提交报销",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "10月20日 · 截止 10月23日",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "10月15日",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "预约牙医",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "10月15日",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "↑↓ 选择 · Enter 打开",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "打开",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "键盘帮助",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "季度 报告 final.pdf",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "↵",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "记得给新来的同事开通测试环境的权限",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "https://www.example.com/blog/local-first-software",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "收集箱",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "给爸妈打电话",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "整理照片",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "提交报销",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "10月20日 · 截止 10月23日",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "读书笔记：Local-first",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "10月15日",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "预约牙医",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "10月15日",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "↵",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

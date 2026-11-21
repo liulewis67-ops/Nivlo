@@ -1,0 +1,13 @@
+{
+  "key": "AI-1",
+  "fields": {
+    "summary": "只有标题",
+    "description": null,
+    "status": null,
+    "priority": null,
+    "assignee": null,
+    "duedate": null,
+    "labels": null,
+    "project": null
+  }
+}

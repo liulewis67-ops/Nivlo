@@ -1,0 +1,89 @@
+[workspace]
+resolver = "3"
+members = ["crates/*", "apps/desktop/src-tauri"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "UNLICENSED"
+publish = false
+
+# 所有依赖版本在此统一声明，子 crate 使用 `xxx.workspace = true` 引用（后端规范 §2.2）。
+[workspace.dependencies]
+nivlo-domain = { path = "crates/nivlo-domain" }
+nivlo-application = { path = "crates/nivlo-application" }
+nivlo-storage = { path = "crates/nivlo-storage" }
+nivlo-capture = { path = "crates/nivlo-capture" }
+nivlo-workflow = { path = "crates/nivlo-workflow" }
+nivlo-script = { path = "crates/nivlo-script" }
+nivlo-scheduler = { path = "crates/nivlo-scheduler" }
+nivlo-integrations = { path = "crates/nivlo-integrations" }
+nivlo-platform = { path = "crates/nivlo-platform" }
+nivlo-platform-windows = { path = "crates/nivlo-platform-windows" }
+nivlo-platform-macos = { path = "crates/nivlo-platform-macos" }
+nivlo-platform-linux = { path = "crates/nivlo-platform-linux" }
+nivlo-common = { path = "crates/nivlo-common" }
+
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-build = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-updater = "2"
+tauri-specta = { version = "=2.0.0-rc.25", features = ["derive", "typescript"] }
+specta = { version = "=2.0.0-rc.25", features = ["derive"] }
+specta-typescript = "0.0.12"
+tokio-util = "0.7"
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Security_Credentials", "Win32_System_LibraryLoader", "Win32_System_Com", "UI_Notifications", "Data_Xml_Dom", "Foundation", "Win32_System_Power", "Win32_Graphics_Gdi", "Win32_System_DataExchange", "Win32_System_Memory", "Win32_System_Ole", "Win32_System_Threading", "Win32_System_Variant", "Win32_UI_Shell", "Win32_UI_Accessibility", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "serde"] }
+chrono-tz = "0.10"
+iana-time-zone = "0.1"
+uuid = { version = "1", features = ["v7", "serde"] }
+tracing = "0.1"
+# 汉字 → 拼音首字母（搜索的拼音首字母匹配）；只要不带声调的读音。
+pinyin = { version = "0.11", default-features = false, features = ["plain"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "std", "ansi"] }
+tracing-appender = "0.2"
+tempfile = "3"
+url = "2"
+encoding_rs = "0.8"
+flate2 = "1"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+sha2 = "0.10"
+# TLS 只链接 ring 一套加密后端：与 tauri-plugin-updater 共用，不再额外链接 aws-lc。
+# 用 rustls-no-provider 时须先安装进程级 CryptoProvider，见 nivlo-integrations `ReqwestHttp::new`。
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+regex = "1"
+mime_guess = "2"
+base64 = "0.22"
+tokio = { version = "1", features = ["sync", "time"] }
+async-trait = "0.1"
+rquickjs = "0.14"
+sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio", "migrate", "macros"] }
+
+[workspace.lints.rust]
+missing_docs = "warn"
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+undocumented_unsafe_blocks = "warn"
+missing_docs_in_private_items = "warn"
+todo = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

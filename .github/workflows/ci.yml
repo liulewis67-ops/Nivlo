@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTDOCFLAGS: "-D warnings"
+
+jobs:
+  # Windows 为必需检查（实施计划 0.2）。
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.95.0
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Frontend
+        run: |
+          pnpm format:check
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+      # 先构建前端，tauri::generate_context! 需要 frontendDist 存在。
+      - run: pnpm build:ui
+      # 视觉回归（实施计划 11.1）：基线是在开发机上生成的，CI 机器的字体 / 渲染可能不同，
+      # 所以先不作为阻塞检查；确认稳定后去掉 continue-on-error，并在 CI 上重新生成基线。
+      - name: Visual regression (non-blocking)
+        continue-on-error: true
+        run: node scripts/visual/visual.mjs
+      - name: Rust
+        run: |
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo test --workspace --locked
+          cargo doc --workspace --no-deps --locked
+      - name: Docs links
+        run: node scripts/check-doc-links/check-doc-links.mjs
+      - name: TS bindings are up to date
+        run: |
+          pnpm gen:bindings
+          git diff --exit-code apps/desktop/ui/src/bindings
+      - name: Cache sqlx-cli
+        id: sqlx-cli-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-sqlx.exe
+          key: sqlx-cli-0.8-${{ runner.os }}
+      - name: Install sqlx-cli
+        if: steps.sqlx-cli-cache.outputs.cache-hit != 'true'
+        run: cargo install sqlx-cli --version "~0.8" --no-default-features --features sqlite,rustls --locked
+      - name: SQLx offline metadata is up to date
+        run: node scripts/sqlx-prepare.mjs --check
+      - name: Clock usage
+        run: node scripts/check-clock-usage.mjs
+      - name: Dependency direction
+        run: node scripts/check-deps/check-deps.mjs
+      - uses: EmbarkStudios/cargo-deny-action@v2
+
+  # macOS / Linux 暂为非阻塞（continue-on-error），后续在 Phase 11 转为必需。
+  other-platforms:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.95.0
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:ui
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked

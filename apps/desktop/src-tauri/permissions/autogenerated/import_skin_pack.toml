@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-import-skin-pack"
+description = "Enables the import_skin_pack command without any pre-configured scope."
+commands.allow = ["import_skin_pack"]
+
+[[permission]]
+identifier = "deny-import-skin-pack"
+description = "Denies the import_skin_pack command without any pre-configured scope."
+commands.deny = ["import_skin_pack"]

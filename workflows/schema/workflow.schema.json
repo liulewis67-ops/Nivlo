@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nivlo.app/schemas/workflow-1.json",
+  "title": "Nivlo Workflow",
+  "description": "拾序 Workflow 定义格式（schemaVersion 1）：一个 Matcher + 一串线性 Step。",
+  "type": "object",
+  "required": ["schemaVersion", "id", "name", "matcher", "steps"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1, "maximum": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9._-]{1,64}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "description": { "type": "string" },
+    "publisher": { "type": "string", "maxLength": 80 },
+    "version": { "type": "integer", "minimum": 1 },
+    "priority": { "type": "integer" },
+    "enabled": { "type": "boolean" },
+    "source": { "enum": ["builtin", "user", "imported", "marketplace"] },
+    "matcher": { "$ref": "#/$defs/matcher" },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "network": { "type": "boolean" },
+        "hosts": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  },
+  "$defs": {
+    "field": {
+      "type": "string",
+      "pattern": "^(input\\.type|url\\.scheme|url\\.host|url\\.path|url\\.query\\..+|file\\.name|file\\.extension|file\\.mime|file\\.path|text|source\\.application)$"
+    },
+    "op": { "enum": ["equals", "contains", "startsWith", "endsWith", "glob", "regex", "exists"] },
+    "matcher": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["all"],
+          "additionalProperties": false,
+          "properties": { "all": { "type": "array", "items": { "$ref": "#/$defs/matcher" } } }
+        },
+        {
+          "type": "object",
+          "required": ["any"],
+          "additionalProperties": false,
+          "properties": { "any": { "type": "array", "items": { "$ref": "#/$defs/matcher" } } }
+        },
+        {
+          "type": "object",
+          "required": ["not"],
+          "additionalProperties": false,
+          "properties": { "not": { "$ref": "#/$defs/matcher" } }
+        },
+        {
+          "type": "object",
+          "required": ["field", "op"],
+          "additionalProperties": false,
+          "properties": {
+            "field": { "$ref": "#/$defs/field" },
+            "op": { "$ref": "#/$defs/op" },
+            "value": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "variable": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,39}$" },
+    "step": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "from", "pattern", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "extract" },
+            "from": { "type": "string", "minLength": 1 },
+            "pattern": { "type": "string", "minLength": 1, "maxLength": 200 },
+            "group": { "type": "integer", "minimum": 0 },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "from", "pattern", "replacement", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "regex" },
+            "from": { "type": "string", "minLength": 1 },
+            "pattern": { "type": "string", "minLength": 1, "maxLength": 200 },
+            "replacement": { "type": "string" },
+            "into": { "$ref": "#/$defs/variable" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "from", "path", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "jsonPath" },
+            "from": { "type": "string", "minLength": 1 },
+            "path": { "type": "string", "pattern": "^\\$" },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "readFile" },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "from", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "htmlMeta" },
+            "from": { "type": "string", "minLength": 1 },
+            "into": { "$ref": "#/$defs/variable" },
+            "base": { "type": "string" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "integration", "operation", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "integration" },
+            "integration": { "type": "string", "pattern": "^[a-z0-9._-]{1,40}$" },
+            "operation": { "type": "string", "minLength": 1, "maxLength": 60 },
+            "params": { "type": "object", "additionalProperties": { "type": "string" } },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "source"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "script" },
+            "source": { "type": "string", "minLength": 1, "maxLength": 65536 },
+            "hosts": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "url", "into"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "http" },
+            "url": { "type": "string", "minLength": 1 },
+            "into": { "$ref": "#/$defs/variable" },
+            "optional": { "type": "boolean" },
+            "maxBytes": { "type": "integer", "minimum": 1024, "maximum": 2097152 }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "set"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "transform" },
+            "set": {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/variable" },
+              "additionalProperties": { "type": "string" }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "var", "op"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "condition" },
+            "var": { "type": "string", "minLength": 1 },
+            "op": { "$ref": "#/$defs/op" },
+            "value": { "type": "string" },
+            "otherwise": { "enum": ["stop"] }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "itemType", "title"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "createItem" },
+            "itemType": { "enum": ["todo", "note", "tip"] },
+            "title": { "type": "string", "minLength": 1 },
+            "content": { "type": "string" },
+            "inInbox": { "type": "boolean" },
+            "tags": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "priority": { "enum": ["none", "low", "medium", "high"] },
+            "scheduled": { "type": "string" },
+            "attach": { "type": "boolean" },
+            "forEach": { "enum": ["files"] },
+            "sourceLabel": { "type": "string" },
+            "metadata": { "type": "object", "additionalProperties": { "type": "string" } }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "tag"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "addTag" },
+            "tag": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,1066 @@
+$ cargo fmt --all --check && cargo clippy --workspace --all-targets -j 2 -- -D warnings && cargo test --workspace -j 2 && node scripts/check-clock-usage.mjs && node scripts/check-deps/check-deps.mjs && node scripts/check-doc-links/check-doc-links.mjs
+    Checking nivlo-desktop v0.1.0 (E:\personal_projects\Nivlo\apps\desktop\src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 19.68s
+   Compiling nivlo-desktop v0.1.0 (E:\personal_projects\Nivlo\apps\desktop\src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 25s
+     Running unittests src\lib.rs (target\debug\deps\nivlo_application-b162bf7fc058e239.exe)
+
+running 145 tests
+test calendar::tests::next_monday_matches_the_shared_vectors ... ok
+test calendar::tests::the_unscheduled_list_has_open_todos_without_a_date_newest_first ... ok
+test calendar::tests::the_week_start_setting_changes_the_visible_range ... ok
+test capture::tests::a_failed_file_write_creates_nothing ... ok
+test capture::tests::an_image_becomes_a_note_with_a_stored_attachment ... ok
+test calendar::tests::today_follows_the_user_time_zone_not_utc ... ok
+test calendar::tests::archived_and_deleted_items_never_appear ... ok
+test capture::tests::a_failed_commit_leaves_no_records_and_removes_the_stored_image ... ok
+test calendar::tests::visible_ranges_match_the_shared_vectors ... ok
+test capture::tests::a_file_becomes_a_note_with_a_reference_attachment_and_is_not_copied ... ok
+test capture::tests::created_events_are_published_only_after_a_successful_commit ... ok
+test calendar::tests::rescheduling_moves_an_item_between_days_and_keeps_its_time ... ok
+test calendar::tests::completed_todos_stay_on_their_day_but_lose_the_deadline_marker ... ok
+test capture::tests::a_failed_undo_commit_deletes_nothing ... ok
+test capture::tests::multi_line_text_keeps_the_full_text_as_content ... ok
+test calendar::tests::entries_are_scheduled_items_plus_a_deadline_overlay_for_open_todos ... ok
+test capture::tests::url_becomes_a_note_with_the_link_as_content_and_a_web_source ... ok
+test capture::tests::origin_never_changes_what_is_created ... ok
+test capture::tests::text_becomes_a_todo_in_the_inbox_with_a_text_source ... ok
+test capture::tests::several_files_become_one_note_each_in_a_single_transaction ... ok
+test day_change::tests::a_clock_jump_over_several_days_publishes_a_single_event_with_the_latest_date ... ok
+test capture::tests::undo_restores_the_database_and_removes_only_nivlos_own_files ... ok
+test error::tests::domain_errors_map_to_codes ... ok
+test error::tests::error_codes_are_unique_uppercase_identifiers ... ok
+test error::tests::display_includes_the_code ... ok
+test day_change::tests::stops_when_shutdown_completes ... ok
+test day_change::tests::the_clock_going_backwards_does_not_spin_or_publish ... ok
+test error::tests::storage_errors_that_need_investigation_carry_an_action ... ok
+test day_change::tests::publishes_day_changed_exactly_when_local_midnight_passes ... ok
+test event::tests::clones_share_the_channel ... ok
+test event::tests::publishing_without_subscribers_does_not_panic ... ok
+test event::tests::subscribers_receive_published_events ... ok
+test error::tests::every_error_code_is_registered_in_the_docs ... ok
+test export::tests::markdown_export_is_readable_and_includes_sources ... ok
+test export::tests::per_item_files_have_safe_unique_names_and_front_matter ... ok
+test inbox::tests::a_batch_is_all_or_nothing ... ok
+test calendar::tests::the_unscheduled_list_is_capped ... ok
+test inbox::tests::a_failed_commit_changes_nothing_and_publishes_nothing ... ok
+test export::tests::json_export_contains_every_item_with_tags_sources_and_dates ... ok
+test inbox::tests::archived_items_are_not_in_the_inbox_view ... ok
+test export::tests::trashed_items_are_not_exported ... ok
+test inbox::tests::list_returns_only_inbox_items_newest_first_and_count_matches ... ok
+test inbox::tests::events_are_published_only_after_commit ... ok
+test inbox::tests::every_organize_action_makes_items_leave_the_inbox ... ok
+test inbox::tests::converting_the_type_follows_domain_rules ... ok
+test item::input::tests::default_update_is_empty ... ok
+test inbox::tests::restore_undoes_each_action_exactly ... ok
+test inbox::tests::organizing_fifty_items_is_a_single_quick_transaction ... ok
+test item::input::tests::patch_apply_semantics ... ok
+test inbox::tests::schedule_targets_resolve_against_the_local_today ... ok
+test item::search_tests::blank_queries_return_nothing_without_touching_storage ... ok
+test day_change::tests::publishes_one_event_per_day_across_several_days ... ok
+test item::search_tests::search_finds_substrings_in_titles_and_content_and_skips_archived ... ok
+test item::tests::commit_failure_publishes_no_event_and_leaves_no_data ... ok
+test item::tests::complete_and_reopen_reject_invalid_transitions_without_events ... ok
+test item::tests::complete_then_reopen_round_trips_and_publishes_events ... ok
+test item::tests::create_persists_and_publishes_item_created ... ok
+test item::tests::create_validation_failure_writes_nothing_and_publishes_nothing ... ok
+test item::tests::create_with_schedule_also_publishes_schedule_changed ... ok
+test item::tests::empty_update_is_a_no_op ... ok
+test item::tests::list_returns_newest_first_and_honors_filters ... ok
+test item::tests::failed_update_rolls_back_everything ... ok
+test item::tests::next_monday_is_strictly_after_the_given_day ... ok
+test item::tests::missing_item_reports_item_not_found ... ok
+test item::search_tests::search_is_capped ... ok
+test item::tests::quick_create_gives_todos_and_tips_today_and_notes_no_date ... ok
+test item::tests::quick_create_publishes_created_and_schedule_events_for_scheduled_types_only ... ok
+test item::tests::quick_create_rejects_blank_titles_without_writing_anything ... ok
+test item::tests::quick_create_scheduled_uses_the_given_plan_instead_of_the_default ... ok
+test item::tests::quick_create_uses_the_users_local_date_not_utc ... ok
+test item::tests::reschedule_keeps_a_specific_time_of_day ... ok
+test item::tests::reschedule_moves_the_plan_and_drops_the_item_from_the_today_order ... ok
+test item::tests::reschedule_targets_resolve_relative_to_the_local_today ... ok
+test item::tests::rescheduling_to_the_inbox_marks_it_pending_and_a_dated_restore_organizes_it_again ... ok
+test item::tests::type_change_and_dependent_field_clear_in_one_update ... ok
+test item::tests::update_changes_fields_and_publishes_item_updated ... ok
+test later_tests::rules_resolve_relative_to_today ... ok
+test item::tests::update_schedule_publishes_schedule_changed_for_the_scheduler ... ok
+test later_tests::rules_round_trip_through_their_stored_text ... ok
+test later_tests::reschedule_later_follows_the_setting ... ok
+test later_tests::the_default_is_next_monday_and_unknown_values_fall_back_to_it ... ok
+test later_tests::the_inbox_later_button_follows_the_setting_too ... ok
+test organize::tests::assigning_a_missing_project_is_rejected_and_changes_nothing ... ok
+test organize::tests::invalid_tag_name_changes_nothing ... ok
+test organize::tests::merge_moves_items_dedupes_and_removes_the_source_tag ... ok
+test organize::tests::project_counts_only_open_unarchived_items ... ok
+test organize::tests::project_lifecycle_create_rename_archive ... ok
+test organize::tests::project_names_are_validated_and_missing_projects_reported ... ok
+test organize::tests::rename_tag_updates_everywhere_and_rejects_duplicates ... ok
+test organize::tests::project_view_orders_open_first_then_priority_then_schedule ... ok
+test organize::tests::tag_filter_returns_only_tagged_items ... ok
+test organize::tests::tags_on_a_missing_item_are_rejected ... ok
+test organize::tests::set_item_tags_creates_missing_tags_and_dedupes_case_insensitively ... ok
+test organize::tests::tags_for_items_reads_a_batch_in_order ... ok
+test ports::http::charset_tests::gbk_pages_are_decoded_from_the_header_or_the_meta_tag ... ok
+test ports::http::tests::an_empty_allow_list_denies_everything ... ok
+test ports::http::tests::invalid_urls_are_reported_as_such ... ok
+test ports::http::tests::a_bare_star_allows_any_public_host_but_never_the_private_network ... ok
+test ports::http::tests::only_declared_hosts_are_allowed_and_wildcards_match_subdomains_only ... ok
+test ports::http::tests::localhost_and_private_addresses_are_denied_even_if_allow_listed ... ok
+test ports::http::tests::response_text_honours_the_declared_charset_and_replaces_bad_bytes ... ok
+test ports::http::tests::schemes_other_than_http_are_denied ... ok
+test ports::http::tests::tests_can_opt_in_to_loopback_but_not_to_unlisted_hosts ... ok
+test ports::integration::tests::the_registry_finds_what_was_registered ... ok
+test settings::tests::failed_commit_does_not_change_the_setting ... ok
+test settings::tests::missing_setting_is_none_and_written_setting_is_readable ... ok
+test settings::tests::setting_is_overwritten ... ok
+test today::tests::an_empty_database_gives_an_empty_view ... ok
+test today::tests::a_checked_tip_moves_to_completed_and_stops_counting ... ok
+test today::tests::completed_archived_and_non_todo_items_are_not_open_todos ... ok
+test today::tests::completed_today_uses_the_users_local_day_not_utc ... ok
+test today::tests::merge_order_places_kept_ids_after_their_old_predecessor ... ok
+test today::tests::crossing_local_midnight_switches_the_contents_of_today ... ok
+test today::tests::manual_today_order_wins_and_unordered_todos_are_appended ... ok
+test today::tests::overdue_todos_roll_into_today_with_the_overdue_flag ... ok
+test settings::tests::invalid_keys_and_oversized_values_are_rejected ... ok
+test today::tests::priority_and_due_date_do_not_affect_the_order ... ok
+test today::tests::reorder_ignores_unknown_stale_and_duplicate_ids ... ok
+test today::tests::reorder_appends_todos_the_caller_did_not_know_about ... ok
+test today::tests::reorder_keeps_the_slot_of_a_todo_completed_today_so_undo_returns_it ... ok
+test today::tests::reorder_persists_the_order_and_publishes_one_event ... ok
+test today::tests::stale_ids_in_the_order_table_are_ignored ... ok
+test today::tests::tips_appear_only_on_their_exact_day_and_all_day_tips_come_first ... ok
+test today::tests::todos_scheduled_today_appear_and_future_or_unscheduled_do_not ... ok
+test today::tests::todos_completed_today_are_listed_separately_in_completion_order ... ok
+test trash::tests::a_failed_purge_commit_keeps_records_and_files ... ok
+test trash::tests::deleted_items_disappear_from_every_view_and_come_back_on_restore ... ok
+test trash::tests::deleting_a_missing_item_changes_nothing ... ok
+test trash::tests::emptying_the_trash_removes_everything_in_it ... ok
+test workflow::tests::a_newer_format_version_gets_a_clear_upgrade_message ... ok
+test day_change::tests::long_idle_stretches_are_checked_in_bounded_chunks_without_events ... ok
+test workflow::tests::builtin_workflows_are_read_only_but_can_be_disabled ... ok
+test workflow::tests::builtin_sync_adds_missing_ones_and_keeps_user_choices_on_upgrade ... ok
+test trash::tests::items_are_purged_automatically_after_the_retention_period ... ok
+test workflow::tests::deleting_removes_user_workflows ... ok
+test workflow::tests::dry_run_returns_the_result_and_writes_nothing ... ok
+test trash::tests::purge_only_touches_deleted_items_and_removes_nivlos_own_files ... ok
+test workflow::tests::input_summaries_never_contain_the_full_text_query_strings_or_directories ... ok
+test trash::tests::the_trash_lists_newest_first_with_the_expiry_date ... ok
+test workflow::tests::duplicating_creates_a_user_copy_that_outranks_the_original ... ok
+test workflow::tests::list_puts_builtin_first_then_user_by_priority ... ok
+test workflow::tests::importing_marks_the_source_and_reports_parse_errors ... ok
+test workflow::tests::saving_validates_and_reports_where_the_problem_is ... ok
+test workflow::tests::imports_are_disabled_keep_the_publisher_and_never_overwrite ... ok
+test workflow::tests::run_history_is_bounded_by_count_and_by_age ... ok
+
+test result: ok. 145 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_capture-3fa27709bd1f7872.exe)
+
+running 20 tests
+test tests::a_utf8_character_cut_at_the_sniff_limit_still_counts_as_text ... ok
+test tests::clipboard_recognizes_a_url_and_ignores_blank_text_and_unknown_images ... ok
+test tests::clipboard_prefers_files_then_text_then_image ... ok
+test tests::extensions_ignore_hidden_files_and_trailing_dots ... ok
+test tests::long_text_titles_are_truncated_on_character_boundaries ... ok
+test tests::normalize_url_rejects_non_http_and_malformed_input ... ok
+test tests::a_very_long_url_title_is_truncated_too ... ok
+test tests::images_are_recognized_by_magic_bytes_and_unknown_bytes_are_rejected ... ok
+test tests::default_titles_follow_the_rules ... ok
+test tests::trailing_separators_and_unix_separators_are_handled ... ok
+test tests::windows_paths_with_chinese_and_spaces_are_parsed_without_touching_the_disk ... ok
+test tests::one_path_is_a_file_many_are_files_and_duplicates_collapse ... ok
+test tests::text_cases_from_the_fixture_are_classified_and_normalized ... ok
+test inspector::tests::missing_and_directories_are_reported ... ok
+test inspector::tests::small_files_are_read_whole ... ok
+test tests::directories_are_marked_and_have_no_size_or_mime ... ok
+test inspector::tests::huge_files_are_not_read_only_referenced ... ok
+test tests::a_real_file_gets_size_and_mime_from_the_disk ... ok
+test tests::a_moved_or_deleted_reference_is_reported_as_missing_without_error ... ok
+test tests::files_without_an_extension_are_sniffed_by_magic_bytes ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_common-c4a62e3cef58f9a1.exe)
+
+running 28 tests
+test clock::tests::advancing_across_midnight_changes_today ... ok
+test clock::tests::clones_share_time ... ok
+test clock::tests::next_midnight_across_a_daylight_saving_fall_back ... ok
+test clock::tests::next_midnight_handles_a_daylight_saving_gap_at_midnight ... ok
+test clock::tests::next_midnight_in_a_fixed_offset_zone ... ok
+test clock::tests::today_local_follows_timezone ... ok
+test clock::tests::next_midnight_follows_the_users_timezone_not_utc ... ok
+test clock::tests::start_of_local_day_is_the_utc_instant_of_local_midnight ... ok
+test id::tests::ids_sort_by_creation_time ... ok
+test logging::tests::default_config_is_conservative ... ok
+test id::tests::uses_injected_clock ... ok
+test id::tests::generates_version_7_uuid ... ok
+test paths::tests::layout_matches_architecture ... ok
+test paths::tests::linux_prefers_xdg_then_home ... ok
+test paths::tests::macos_uses_application_support ... ok
+test paths::tests::missing_env_is_an_error ... ok
+test paths::tests::override_env_wins ... ok
+test paths::tests::windows_uses_appdata ... ok
+test secret::tests::debug_and_display_are_masked ... ok
+test secret::tests::expose_returns_plaintext ... ok
+test secret::tests::deserializes_transparently ... ok
+test secret::tests::tracing_fields_are_masked ... ok
+test paths::tests::ensure_dirs_reports_failure ... ok
+test logging::tests::appender_writes_into_dated_log_file ... ok
+test logging::tests::unwritable_dir_is_reported ... ok
+test logging::tests::retention_prunes_old_files ... ok
+test paths::tests::ensure_dirs_creates_everything_and_is_idempotent ... ok
+test clock::tests::system_clock_reports_a_timezone ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_desktop_lib-b0594787c5165366.exe)
+
+running 99 tests
+test autostart::tests::prompts_only_when_never_asked ... ok
+test autostart::tests::only_the_enable_button_enables_autostart ... ok
+test commands::settings::tests::ui_pref_names_are_whitelisted ... ok
+test commands::settings::tests::enum_prefs_reject_unknown_values ... ok
+test commands::window::tests::the_grabbed_point_ends_up_under_the_cursor ... ok
+test commands::window::tests::grab_points_outside_any_window_are_rejected ... ok
+test diagnostics::tests::tail_keeps_whole_lines_within_the_limit ... ok
+test dto::tests::bad_item_id_is_invalid_input ... ok
+test dto::tests::invalid_dates_are_rejected_with_invalid_input ... ok
+test dto::tests::create_request_converts_to_new_item ... ok
+test dto::tests::date_point_round_trips_through_dto ... ok
+test events::forwarder::tests::data_events_go_to_main_and_floating_but_not_the_hidden_search_box ... ok
+test events::mapper::tests::created_maps_to_item_created ... ok
+test dto::tests::item_dto_serializes_with_camel_case_keys ... ok
+test events::mapper::tests::item_changes_collapse_into_item_updated ... ok
+test events::mapper::tests::today_events_are_forwarded ... ok
+test dto::tests::ipc_error_carries_code_and_action ... ok
+test events::mapper::tests::unrelated_events_are_not_forwarded ... ok
+test integration_service::tests::bad_input_is_rejected_without_touching_the_store ... ok
+test integration_service::tests::the_secret_goes_to_the_credential_store_and_never_to_settings ... ok
+test integration_service::tests::self_hosted_jira_keeps_the_scheme_and_port ... ok
+test integration_service::tests::reconnecting_replaces_the_credential_and_the_record ... ok
+test integration_service::tests::disconnecting_removes_the_credential_from_the_store ... ok
+test lifecycle::recovery::tests::anything_else_quits ... ok
+test lifecycle::recovery::tests::custom_buttons_map_to_choices ... ok
+test integration_service::tests::http_jira_credentials_carry_the_scheme_and_switching_removes_the_old_one ... ok
+test integration_service::tests::testing_tells_the_failure_kinds_apart_and_records_the_last_error ... ok
+test native_i18n::tests::parses_known_languages_only ... ok
+test shortcut::tests::a_binding_that_types_a_character_on_the_current_layout_is_flagged ... ok
+test shortcut::tests::a_conflict_at_startup_is_not_fatal_and_is_reported_in_the_status ... ok
+test shortcut::tests::a_conflicting_rebind_is_reported_and_keeps_the_old_binding ... ok
+test shortcut::tests::an_invalid_rebind_is_rejected_with_a_specific_code ... ok
+test shortcut::tests::an_unparsable_saved_value_falls_back_to_the_default ... ok
+test shortcut::tests::fixing_a_startup_conflict_by_rebinding_clears_the_conflict ... ok
+test shortcut::tests::disabling_unregisters_persists_and_survives_a_restart ... ok
+test shortcut::tests::no_suggestions_when_the_platform_cannot_tell_what_is_free ... ok
+test shortcut::tests::rebinding_registers_saves_and_survives_a_restart ... ok
+test shortcut::tests::starts_with_the_default_when_nothing_is_saved ... ok
+test shortcut::tests::the_search_action_has_its_own_default_and_setting ... ok
+test shortcut::tests::suggestions_skip_taken_bindings_altgr_combinations_and_ones_already_in_use ... ok
+test lifecycle::recovery::tests::export_of_a_missing_file_fails ... ok
+test source_app::tests::an_explicit_value_is_kept_and_undetectable_apps_stay_empty ... ok
+test source_app::tests::drops_and_pastes_get_the_detected_source_application ... ok
+test source_app::tests::self_authored_origins_never_record_a_source_application ... ok
+test tray::tests::disabled_and_unknown_items_have_no_action ... ok
+test tray::tests::menu_ids_map_to_actions ... ok
+test tray::tests::search_label_shows_the_shortcut_only_when_it_is_active ... ok
+test windows::floating::tests::a_display_change_while_the_panel_is_expanded_collapses_it_first ... ok
+test windows::floating::tests::a_failed_focus_leaves_the_window_unfocusable ... ok
+test windows::floating::tests::a_new_badge_size_keeps_the_badge_on_its_edge ... ok
+test windows::floating::tests::a_pending_settle_is_cancelled_on_shutdown ... ok
+test windows::floating::tests::a_pending_drag_settle_is_cancelled_by_expanding ... ok
+test windows::floating::tests::begin_input_remembers_the_foreground_then_makes_the_window_focusable_and_focused ... ok
+test windows::floating::tests::a_continuous_drag_settles_only_once_after_the_last_move ... ok
+test windows::floating::tests::collapse_restores_the_original_badge_position ... ok
+test windows::floating::tests::after_a_drag_the_window_snaps_to_the_edge_and_the_placement_is_saved ... ok
+test windows::floating::tests::being_activated_outside_input_gives_focus_straight_back ... ok
+test windows::floating::tests::corrupt_saved_placement_falls_back_to_the_default ... ok
+test windows::floating::tests::end_input_makes_the_window_unfocusable_again_and_gives_focus_back ... ok
+test windows::floating::tests::collapse_without_expanding_is_a_no_op_and_failed_expand_leaves_it_collapsed ... ok
+test windows::floating::tests::dragging_works_again_after_collapsing ... ok
+test windows::floating::tests::end_input_without_begin_is_harmless ... ok
+test windows::floating::tests::expand_places_the_panel_inside_the_work_area_and_reports_the_direction ... ok
+test windows::floating::tests::falls_back_to_the_primary_monitor_when_the_saved_one_is_gone ... ok
+test windows::floating::tests::first_run_uses_the_default_position_on_the_primary_right_edge ... ok
+test lifecycle::recovery::tests::export_copies_the_database_file ... ok
+test windows::floating::tests::moves_caused_by_the_controller_itself_do_not_trigger_a_settle ... ok
+test windows::floating::tests::focus_during_quick_create_input_is_kept ... ok
+test windows::floating::tests::re_expanding_does_not_start_a_second_watchdog ... ok
+test windows::floating::tests::repeated_expansion_keeps_returning_to_the_same_badge ... ok
+test windows::floating::tests::moves_while_expanded_are_not_treated_as_drags ... ok
+test windows::floating::tests::opening_the_main_window_cancels_the_pending_focus_return ... ok
+test diagnostics::tests::only_the_newest_log_files_are_collected_and_other_files_are_ignored ... ok
+test windows::floating::tests::restore_applies_always_on_top_and_makes_the_window_unfocusable ... ok
+test windows::floating::tests::restores_the_saved_placement_on_the_same_monitor ... ok
+test windows::floating::tests::the_settings_page_can_change_always_on_top_while_running ... ok
+test windows::floating::tests::unchanged_placement_is_not_written_twice ... ok
+test windows::search::tests::centred_horizontally_and_placed_high ... ok
+test windows::floating::tests::unplugging_the_monitor_that_holds_the_badge_moves_it_into_view_within_the_same_call ... ok
+test windows::floating::tests::watchdog_exits_on_shutdown ... ok
+test windows::search::tests::content_zoom_is_separate_from_monitor_scale_and_legacy_units ... ok
+test windows::search::tests::fit_height_is_clamped_to_the_bar_and_the_maximum ... ok
+test windows::floating::tests::watchdog_stops_after_collapsing ... ok
+test windows::search::tests::fitting_content_does_not_shift_the_anchor_or_alternate_sizes ... ok
+test windows::search::tests::narrow_mixed_dpi_work_areas_bound_size_and_position ... ok
+test windows::search::tests::respects_the_scale_factor_and_monitor_offset ... ok
+test windows::search::tests::stays_inside_a_short_work_area ... ok
+test windows::search::tests::unsupported_work_areas_and_invalid_scales_are_explicit ... ok
+test windows::floating::tests::watchdog_reports_the_pointer_leaving_once_and_only_while_expanded ... ok
+test diagnostics::tests::business_content_fields_are_never_exported ... ok
+test diagnostics::tests::log_names_cannot_escape_the_logs_folder_and_the_count_is_bounded ... ok
+test diagnostics::tests::the_bundle_never_contains_note_text_clipboard_tokens_or_file_contents ... ok
+test diagnostics::tests::credentials_urls_emails_and_home_paths_are_scrubbed ... ok
+test lifecycle::startup::tests::open_database_migrates_a_fresh_data_dir ... ok
+test backup::tests::nothing_pending_means_nothing_happens ... ok
+test lifecycle::startup::tests::broken_migration_is_reported_and_leaves_the_file_unlocked ... ok
+test backup::tests::backups_from_a_newer_app_are_refused ... ok
+test backup::tests::bad_backups_are_rejected_and_leave_no_staging_data_behind ... ok
+test backup::tests::backup_then_wipe_then_restore_gives_back_identical_data ... ok
+
+test result: ok. 99 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running unittests src\main.rs (target\debug\deps\nivlo_desktop-5ba551fe0bd66f3b.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\capabilities.rs (target\debug\deps\capabilities-b27f4b040ad82a7a.exe)
+
+running 7 tests
+test floating_capability_only_targets_the_floating_window ... ok
+test floating_only_has_whitelisted_commands ... ok
+test main_capability_only_targets_the_main_window ... ok
+test main_only_commands_are_not_exposed_to_floating ... ok
+test search_capability_only_targets_the_search_window_and_cannot_edit_or_delete ... ok
+test no_window_gets_blanket_permissions ... ok
+test every_command_in_build_rs_is_granted_to_some_window ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\integration_credentials.rs (target\debug\deps\integration_credentials-172c681aafe25816.exe)
+
+running 1 test
+test disconnecting_removes_the_credential_from_the_windows_credential_manager ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
+
+     Running tests\ipc.rs (target\debug\deps\ipc-82eb5ddc5e963929.exe)
+
+running 18 tests
+test floating_input_commands_report_an_unavailable_window_before_startup_completes ... ok
+test quick_create_accepts_a_plan_parsed_from_the_title ... ok
+test main_view_handoff_validates_the_view_and_is_taken_only_once ... ok
+test quick_create_adds_a_todo_to_today_and_rejects_blank_titles ... ok
+test errors_are_returned_as_code_message_action ... ok
+test complete_and_reopen_move_a_todo_through_today_and_keep_its_position ... ok
+test get_today_returns_todos_scheduled_today_with_the_remaining_count ... ok
+test domain_rules_are_enforced_through_ipc ... ok
+test inbox_lists_captures_with_sources_organizes_in_batch_and_undoes ... ok
+test get_calendar_returns_scheduled_and_due_entries_and_unscheduled_todos ... ok
+test capture_is_fast_lands_in_the_inbox_and_undo_restores_the_database ... ok
+test created_item_survives_a_restart ... ok
+test open_item_source_reports_missing_files_and_items_without_a_source ... ok
+test reorder_today_persists_the_order_and_never_drops_unknown_todos ... ok
+test projects_and_tags_organize_items_and_survive_a_restart ... ok
+test deleting_moves_items_to_the_trash_and_survives_a_restart ... ok
+test reschedule_removes_a_todo_from_today_and_exact_restores_it ... ok
+test update_item_patches_only_what_is_sent_enforces_domain_rules_and_persists ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
+     Running tests\secret_leak.rs (target\debug\deps\secret_leak-b65c30a4d3a899de.exe)
+
+running 1 test
+test a_stored_token_never_shows_up_in_the_database_logs_or_config ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests\windows.rs (target\debug\deps\windows-1ae523a2008ae05c.exe)
+
+running 2 tests
+test only_the_floating_window_exists_after_startup ... ok
+test main_window_is_created_on_demand_and_reused ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_domain-3d98f64be637b1d0.exe)
+
+running 64 tests
+test attachment::tests::only_stored_attachments_own_their_file ... ok
+test capture::tests::image_debug_output_never_contains_the_pixels ... ok
+test event::tests::item_id_is_extracted_when_present ... ok
+test capture::tests::image_formats_know_their_mime_and_extension ... ok
+test capture::tests::request_round_trips_and_origin_is_separate_from_input ... ok
+test id::tests::rejects_invalid_text ... ok
+test id::tests::round_trips_through_string_and_json ... ok
+test capture::tests::capture_input_round_trips_through_json_with_a_kind_tag ... ok
+test event::tests::serde_round_trip_uses_tagged_representation ... ok
+test item::kinds::tests::as_str_and_from_str_are_inverse ... ok
+test attachment::tests::serde_round_trip ... ok
+test item::kinds::tests::todo_and_tip_are_completable_but_not_note ... ok
+test item::model::tests::archive_and_unarchive ... ok
+test item::model::tests::archived_item_cannot_be_completed_or_reopened ... ok
+test item::model::tests::blank_content_is_normalized_to_none ... ok
+test item::model::tests::brief_is_one_trimmed_line_and_blank_means_none ... ok
+test item::kinds::tests::unknown_text_is_rejected ... ok
+test item::model::tests::clearing_or_noop_changes_do_not_leave_the_inbox ... ok
+test item::model::tests::create_rejects_non_applicable_fields ... ok
+test item::model::tests::create_rejects_invalid_title ... ok
+test item::model::tests::create_sets_defaults_and_emits_event ... ok
+test item::model::tests::failed_update_leaves_item_unchanged ... ok
+test item::model::tests::in_inbox_survives_a_snapshot_round_trip ... ok
+test item::model::tests::items_are_not_in_the_inbox_unless_asked ... ok
+test item::model::tests::moving_to_the_inbox_clears_the_date_and_marks_it_pending ... ok
+test item::model::tests::non_applicable_fields_are_rejected ... ok
+test item::model::tests::note_cannot_be_completed ... ok
+test item::model::tests::note_has_no_brief_and_converting_to_note_clears_it ... ok
+test item::model::tests::note_to_todo_keeps_content ... ok
+test item::model::tests::organizing_an_inbox_item_moves_it_out ... ok
+test item::model::tests::rename_and_project_update_timestamp ... ok
+test item::model::tests::restore_rejects_inconsistent_snapshots ... ok
+test item::model::tests::same_type_conversion_does_not_touch_updated_at ... ok
+test item::model::tests::scheduled_and_due_are_independent_and_emit_schedule_changed ... ok
+test item::model::tests::snapshot_round_trip ... ok
+test item::model::tests::tip_can_be_checked_off_and_reopened ... ok
+test item::model::tests::serde_round_trip_validates_on_the_way_in ... ok
+test item::model::tests::todo_can_be_completed_and_reopened ... ok
+test item::model::tests::todo_to_note_clears_completion_due_priority_and_reminder ... ok
+test item::model::tests::todo_to_tip_keeps_reminder ... ok
+test item::model::tests::too_long_brief_is_rejected_and_leaves_item_unchanged ... ok
+test item::values::tests::blank_title_is_rejected ... ok
+test item::model::tests::too_long_content_is_rejected ... ok
+test item::values::tests::date_point_from_parts_rejects_time_without_date ... ok
+test item::values::tests::date_point_orders_by_date_then_time ... ok
+test item::values::tests::title_deserialization_validates ... ok
+test item::values::tests::title_is_trimmed ... ok
+test item::values::tests::title_length_counts_characters_not_bytes ... ok
+test project::tests::archive_cycle ... ok
+test project::tests::name_is_trimmed_and_validated ... ok
+test project::tests::rename_failure_keeps_old_name ... ok
+test project::tests::serde_round_trip ... ok
+test source::tests::source_type_is_normalized ... ok
+test source::tests::serde_round_trip ... ok
+test tag::tests::key_is_case_insensitive ... ok
+test tag::tests::name_rules ... ok
+test tag::tests::serde_round_trip ... ok
+test workflow::tests::a_minimal_definition_parses_with_defaults ... ok
+test workflow::tests::conditions_other_than_exists_need_a_value ... ok
+test workflow::tests::fields_round_trip_through_their_names ... ok
+test workflow::tests::newer_schema_versions_are_refused ... ok
+test workflow::tests::validation_catches_structural_problems ... ok
+test workflow::tests::unknown_keys_and_bad_ids_are_rejected_by_the_parser ... ok
+test workflow::tests::serde_round_trip_preserves_everything ... ok
+
+test result: ok. 64 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_integrations-4b19bcb7ae4bd1c8.exe)
+
+running 25 tests
+test github::tests::issue_fields_are_mapped_and_the_token_is_sent_as_a_bearer ... ok
+test github::tests::pull_requests_report_merged_and_draft_states ... ok
+test github::tests::only_the_api_host_is_reachable ... ok
+test github::tests::bad_parameters_and_operations_are_rejected_before_any_request ... ok
+test github::tests::a_private_repository_needs_the_token_and_without_one_nothing_is_sent ... ok
+test github::tests::testing_the_connection_tells_network_auth_and_permission_problems_apart ... ok
+test github::tests::errors_are_classified_for_the_user ... ok
+test jira::tests::bad_parameters_are_rejected_before_anything_happens ... ok
+test http::tests::an_unlisted_host_is_denied_without_any_connection ... ok
+test jira::tests::no_credential_means_not_connected_and_no_request_is_sent ... ok
+test jira::tests::cloud_fields_are_mapped_and_basic_auth_is_used ... ok
+test jira::tests::errors_are_classified_for_the_user ... ok
+test jira::tests::a_connected_intranet_host_may_bypass_the_private_address_limit_but_nothing_else ... ok
+test jira::tests::server_uses_a_bearer_pat_and_missing_fields_become_empty ... ok
+test jira::tests::http_is_used_only_when_the_user_connected_over_http ... ok
+test jira::tests::testing_the_connection_tells_network_auth_and_permission_problems_apart ... ok
+test jira::tests::the_link_cannot_downgrade_the_connection_to_plain_http ... ok
+test http::tests::production_policy_refuses_the_loopback_server_even_when_listed ... ok
+test http::tests::fetches_text_from_an_allowed_host ... ok
+test http::tests::bodies_over_the_limit_are_truncated_not_buffered ... ok
+test http::tests::a_redirect_to_an_unauthorised_or_private_host_is_blocked ... ok
+test http::tests::redirects_within_allowed_hosts_are_followed ... ok
+test http::tests::endless_redirects_stop ... ok
+test http::tests::a_slow_server_times_out ... ok
+test http::tests::auth_headers_are_sent_to_the_original_origin_only ... ok
+
+test result: ok. 25 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests\github_workflow.rs (target\debug\deps\github_workflow-08b611be15161d07.exe)
+
+running 3 tests
+test a_private_issue_is_readable_once_a_token_is_configured ... ok
+test without_a_token_a_private_repository_degrades_to_the_number_only ... ok
+test a_private_pull_request_reports_merged_and_keeps_the_review_title ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\jira_workflow.rs (target\debug\deps\jira_workflow-23989c7d2b645f3b.exe)
+
+running 4 tests
+test when_everything_fails_only_the_key_remains ... ok
+test without_a_connection_the_old_page_path_is_used_quietly ... ok
+test the_api_supplies_the_full_set_of_fields ... ok
+test an_expired_credential_falls_back_to_the_page_title_and_asks_to_reconnect ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\logging.rs (target\debug\deps\logging-c548da350556b1e8.exe)
+
+running 1 test
+test logs_never_contain_query_strings_or_credential_headers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_platform-479df62e46d95995.exe)
+
+running 49 tests
+test clipboard::tests::empty_means_no_files_image_or_text ... ok
+test credential::tests::keys_are_validated_and_namespaced ... ok
+test credential::tests::memory_store_round_trips ... ok
+test credential::tests::secrets_never_show_up_in_debug_output ... ok
+test foreground::tests::a_refusal_from_the_system_is_reported ... ok
+test foreground::tests::a_window_that_was_closed_in_the_meantime_is_skipped ... ok
+test foreground::tests::falls_back_to_the_last_other_foreground_when_the_overlay_was_activated_first ... ok
+test foreground::tests::nothing_is_restored_when_nothing_was_remembered ... ok
+test open::tests::incomplete_urls_are_rejected ... ok
+test foreground::tests::restores_the_remembered_window_exactly_once ... ok
+test foreground::tests::the_current_foreground_wins_over_the_tracked_one ... ok
+test foreground::tests::the_overlay_never_remembers_itself ... ok
+test foreground::tests::the_unsupported_implementation_is_a_harmless_no_op ... ok
+test placement::tests::badge_visual_size_is_constant_across_scale_factors ... ok
+test notification::tests::anything_else_is_rejected ... ok
+test notification::tests::activation_uris_round_trip ... ok
+test open::tests::only_http_and_https_are_openable ... ok
+test placement::tests::corner_snaps_to_the_single_nearest_edge ... ok
+test placement::tests::default_placement_is_on_the_primary_right_edge ... ok
+test placement::tests::expansion_on_a_secondary_monitor_stays_on_it ... ok
+test placement::tests::falls_back_to_primary_when_the_saved_monitor_is_gone ... ok
+test placement::tests::far_from_edges_keeps_the_free_position ... ok
+test placement::tests::handles_monitors_with_negative_coordinates ... ok
+test placement::tests::no_monitors_means_no_expansion ... ok
+test placement::tests::no_monitors_means_no_placement ... ok
+test placement::tests::out_of_range_ratios_are_clamped_into_view ... ok
+test placement::tests::panel_expands_inward_from_every_edge_and_corner ... ok
+test placement::tests::panel_is_shrunk_to_fit_a_tiny_work_area ... ok
+test placement::tests::panel_size_follows_the_monitor_scale ... ok
+test placement::tests::placement_json_shape_is_stable ... ok
+test placement::tests::placement_survives_resolution_changes ... ok
+test placement::tests::rect_contains_uses_half_open_pixel_semantics ... ok
+test placement::tests::restores_onto_the_saved_monitor_when_present ... ok
+test placement::tests::snaps_to_the_left_edge_within_threshold ... ok
+test placement::tests::snaps_to_the_right_edge ... ok
+test placement::tests::snaps_to_top_and_bottom ... ok
+test placement::tests::the_badge_corner_stays_anchored_so_the_pointer_remains_over_the_panel ... ok
+test placement::tests::threshold_scales_with_dpi ... ok
+test placement::tests::window_larger_than_work_area_is_pinned_to_the_origin ... ok
+test placement::tests::window_outside_every_monitor_goes_to_the_nearest_one ... ok
+test placement::tests::window_partially_off_screen_still_snaps ... ok
+test shortcut::tests::accepts_aliases_function_keys_digits_and_arrows ... ok
+test shortcut::tests::display_is_canonical_and_round_trips ... ok
+test shortcut::tests::parses_the_default_and_is_case_and_space_insensitive ... ok
+test shortcut::tests::rejects_unusable_shortcuts_with_a_specific_reason ... ok
+test source_app::tests::all_lowercase_unknown_names_are_capitalized ... ok
+test source_app::tests::more_common_applications_including_chinese_office_tools ... ok
+test source_app::tests::unknown_applications_keep_their_executable_name ... ok
+test source_app::tests::well_known_applications_get_their_conventional_names ... ok
+
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_platform_linux-c7f5e1e39419c56f.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_platform_macos-ea98fe87dbc63d45.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_platform_windows-2afd149bd2565510.exe)
+
+running 6 tests
+test clipboard::tests::a_dib_gets_a_bmp_file_header_pointing_at_the_pixels ... ok
+test clipboard::tests::truncated_or_bogus_data_is_not_an_image ... ok
+test toast::tests::text_and_attributes_are_escaped ... ok
+test menu_key::tests::only_the_bare_alt_menu_command_is_swallowed ... ok
+test toast::tests::without_a_launch_target_the_toast_has_no_activation ... ok
+test webview_files::tests::only_well_formed_drop_messages_are_accepted ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\altgr.rs (target\debug\deps\altgr-6d48f38ed84e76e0.exe)
+
+running 3 tests
+test default_search_shortcut_is_safe_on_common_altgr_layouts_except_canadian_multilingual ... ok
+test german_altgr_combinations_type_characters ... ok
+test us_layout_has_no_altgr_characters ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\clipboard.rs (target\debug\deps\clipboard-144d5a48dddd8d51.exe)
+
+running 4 tests
+test an_empty_clipboard_reads_as_empty_not_as_an_error ... ignored, 覆盖系统剪贴板，需要交互式桌面会话
+test reads_a_screenshot_style_image_as_bytes_with_a_known_signature ... ignored, 覆盖系统剪贴板，需要交互式桌面会话
+test reads_files_copied_in_explorer_with_chinese_and_spaces ... ignored, 覆盖系统剪贴板，需要交互式桌面会话
+test reads_unicode_text ... ignored, 覆盖系统剪贴板，需要交互式桌面会话
+
+test result: ok. 0 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\credential.rs (target\debug\deps\credential-d95f0695506a2fb0.exe)
+
+running 2 tests
+test oversized_secrets_are_rejected_without_writing ... ok
+test write_overwrite_read_and_delete ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\power.rs (target\debug\deps\power-b5ed49043f4b6ab0.exe)
+
+running 2 tests
+test resume_and_time_change_messages_reach_the_callback_and_other_power_messages_do_not ... ok
+test several_listeners_can_start_and_stop_independently ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\shortcut.rs (target\debug\deps\shortcut-1e53b6abaf394937.exe)
+
+running 4 tests
+test pressing_the_combination_invokes_the_callback_once ... ignored, 需要交互式桌面会话：向系统注入真实的按键
+test a_failed_replacement_keeps_the_previous_shortcut_registered ... ok
+test unregister_frees_the_combination_and_is_idempotent ... ok
+test a_second_registration_of_the_same_combination_is_reported_as_a_conflict ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\source_app.rs (target\debug\deps\source_app-65e25e839d34e95b.exe)
+
+running 3 tests
+test a_nonexistent_process_has_no_image_name ... ok
+test reading_the_source_application_never_panics_and_never_returns_blank ... ok
+test the_image_name_of_this_process_is_found ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_scheduler-ec3aafdc3a9144c6.exe)
+
+running 24 tests
+test plan::tests::a_few_missed_triggers_are_individual_with_their_original_time ... ok
+test plan::tests::many_missed_triggers_are_merged_into_one_summary ... ok
+test plan::tests::english_notices ... ok
+test plan::tests::due_and_next_are_split_around_now_and_sorted ... ok
+test plan::tests::fired_triggers_never_fire_again_even_after_the_clock_goes_backwards ... ok
+test plan::tests::on_time_ones_stay_individual_when_mixed_with_many_missed ... ok
+test plan::tests::on_time_triggers_are_individual_and_tips_show_their_time ... ok
+test plan::tests::triggers_older_than_the_lookback_are_ignored ... ok
+test plan::tests::times_in_notifications_use_the_user_time_zone ... ok
+test service::tests::a_reminder_that_was_slept_through_is_sent_once_as_missed ... ok
+test service::tests::moving_the_clock_forward_fires_and_moving_it_back_never_repeats ... ok
+test service::tests::a_failed_notification_is_not_retried_forever ... ok
+test service::tests::changing_a_reminder_reschedules_it_and_clearing_it_cancels ... ok
+test service::tests::many_missed_reminders_become_a_single_summary ... ok
+test service::tests::a_restart_never_repeats_what_was_already_sent_but_catches_up_on_the_rest ... ok
+test service::tests::a_reminder_fires_once_when_it_comes_due ... ok
+test service::tests::a_commit_failure_records_nothing_so_the_next_run_retries ... ok
+test service::tests::completed_archived_and_deleted_items_do_not_fire ... ok
+test service::tests::paused_notifications_are_held_and_summarized_on_resume ... ok
+test service::tests::tips_with_a_time_fire_at_their_local_time ... ok
+test service::tests::the_nearest_trigger_is_reported_and_several_can_share_a_moment ... ok
+test service::tests::todos_with_a_due_time_fire_when_due_but_date_only_deadlines_do_not ... ok
+test service::tests::the_loop_wakes_on_demand_and_exits_on_shutdown ... ok
+test service::tests::the_loop_rechecks_on_its_own_even_without_a_wake ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_script-e418b9096b5791e1.exe)
+
+running 17 tests
+test tests::line_numbers_are_read_from_stack_frames ... ok
+test tests::requested_limits_are_clamped_to_the_maximums ... ok
+test tests::after_shutdown_requests_fail_cleanly ... ok
+test tests::content_must_be_a_string ... ok
+test tests::dangerous_globals_are_absent ... ok
+test tests::a_normal_script_returns_json_and_can_read_ctx ... ok
+test tests::deep_recursion_is_a_catchable_error_not_a_crash ... ok
+test tests::state_never_leaks_between_runs ... ok
+test tests::exceptions_report_the_message_and_line_and_the_worker_keeps_serving ... ok
+test tests::both_entry_forms_work_and_async_is_awaited ... ok
+test tests::invalid_results_name_the_field ... ok
+test tests::http_to_an_authorized_host_works_and_others_are_denied ... ok
+test tests::console_output_is_collected_with_limits_and_transform_gets_the_input ... ok
+test tests::exceeding_the_memory_limit_fails_and_the_worker_keeps_serving ... ok
+test tests::cancel_stops_a_running_script ... ok
+test tests::missing_entry_is_an_exception_and_infinite_loops_still_time_out ... ok
+test tests::an_infinite_loop_times_out_and_the_worker_keeps_serving ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_storage-8169d505a285e543.exe)
+
+running 9 tests
+test attachment_files::tests::plain_file_names_are_recognized ... ok
+test pinyin_initials::tests::only_chinese_characters_contribute_initials ... ok
+test codec::tests::timestamp_is_fixed_width_and_sortable ... ok
+test codec::tests::date_and_time_round_trip ... ok
+test codec::tests::garbage_is_reported_as_corrupt ... ok
+test pinyin_initials::tests::only_letter_runs_of_two_or_more_are_initials_queries ... ok
+test attachment_files::tests::remove_refuses_paths_that_escape_the_attachments_directory ... ok
+test attachment_files::tests::remove_deletes_the_file_and_tolerates_missing_ones ... ok
+test attachment_files::tests::stores_an_image_named_after_the_attachment_id_without_leaving_temp_files ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\calendar.rs (target\debug\deps\calendar-0104900feebe22d3.exe)
+
+running 3 tests
+test unscheduled_open_todos_are_newest_first_and_limited ... ok
+test calendar_returns_items_scheduled_or_due_in_the_closed_range ... ok
+test a_month_query_over_five_thousand_items_is_fast ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s
+
+     Running tests\organize.rs (target\debug\deps\organize-c223a4084d4b7d14.exe)
+
+running 10 tests
+test rename_keeps_associations_and_rejects_duplicates ... ok
+test setting_tags_for_unknown_item_or_tag_violates_constraints ... ok
+test deleting_a_project_row_keeps_its_items_unassigned ... ok
+test tags_are_unique_ignoring_case_and_can_be_found_by_name ... ok
+test updating_a_missing_project_is_not_found ... ok
+test projects_round_trip_and_survive_reopen ... ok
+test project_filter_and_view_order_match_decision_d05 ... ok
+test open_counts_skip_done_archived_and_unassigned_items ... ok
+test merge_moves_associations_once_and_deletes_the_source ... ok
+test item_tags_replace_filter_and_count ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+     Running tests\search.rs (target\debug\deps\search-3eb5e324bc0c6ada.exe)
+
+running 13 tests
+test search_ignores_case_and_requires_every_word ... ok
+test open_items_rank_above_completed_ones_on_both_paths ... ok
+test recently_opened_items_lead_the_recent_order ... ok
+test migrate_backfills_initials_for_rows_written_before_the_column_existed ... ok
+test special_characters_in_the_query_are_literal ... ok
+test chinese_substring_search_works_with_and_without_the_index ... ok
+test pinyin_initials_find_chinese_titles_after_regular_hits ... ok
+test sources_are_searchable_and_archived_items_are_excluded ... ok
+test results_are_limited ... ok
+test the_index_follows_updates_and_deletes_in_the_same_transaction ... ok
+test brief_is_searchable_and_follows_edits ... ok
+test an_existing_database_is_indexed_by_the_migration ... ok
+test searching_ten_thousand_items_is_fast ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.63s
+
+     Running tests\storage.rs (target\debug\deps\storage-1006eddc23b03519.exe)
+
+running 29 tests
+test foreign_key_is_enforced ... ok
+test list_orders_filters_and_limits ... ok
+test failure_midway_rolls_back_the_whole_transaction ... ok
+test deleting_an_item_cascades_records_but_never_touches_the_referenced_file ... ok
+test migrates_from_empty_and_is_idempotent ... ok
+test database_lives_at_app_paths_location ... ok
+test in_inbox_only_filter_returns_pending_items_and_ignores_archived ... ok
+test in_inbox_is_stored_and_cleared_by_organizing ... ok
+test an_open_read_transaction_does_not_block_writes ... ok
+test reorder_today_replaces_the_stored_order_atomically_and_survives_reopen ... ok
+test item_round_trips_with_all_fields ... ok
+test corrupt_rows_are_reported_not_hidden ... ok
+test list_can_order_by_last_update_for_notes ... ok
+test verification_rejects_files_that_are_not_healthy_databases ... ok
+test sources_and_attachments_require_an_existing_item ... ok
+test settings_round_trip_overwrite_and_roll_back ... ok
+test a_snapshot_is_a_consistent_independent_copy_that_verifies ... ok
+test source_and_attachment_records_round_trip_in_order ... ok
+test interleaved_read_then_write_transactions_both_succeed ... ok
+test update_overwrites_and_missing_item_is_not_found ... ok
+test today_queries_filter_on_the_real_database ... ok
+test workflows_round_trip_and_upsert_keeps_creation_time ... ok
+test uncommitted_transaction_is_rolled_back ... ok
+test today_service_works_end_to_end_on_sqlite ... ok
+test today_order_is_read_back_by_position ... ok
+test workflow_runs_are_listed_newest_first_with_steps_and_pruned_by_count_and_age ... ok
+test tampered_migration_is_reported_as_migration_error ... ok
+test the_wal_is_truncated_only_once_it_passes_the_limit ... ok
+test a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_way ... ok
+
+test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.59s
+
+     Running tests\trash.rs (target\debug\deps\trash-3c14079c606b83db.exe)
+
+running 5 tests
+test permanent_delete_cascades_and_clears_the_search_index ... ok
+test deleting_keeps_the_original_time_and_missing_items_are_reported ... ok
+test the_trash_is_ordered_newest_first_and_expiry_is_found_by_cutoff ... ok
+test a_deleted_item_vanishes_from_every_query_but_not_from_get ... ok
+test restore_brings_everything_back_and_survives_a_restart ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+     Running tests\triggers.rs (target\debug\deps\triggers-be868532e7b1603d.exe)
+
+running 3 tests
+test records_cascade_with_the_item_and_old_ones_are_pruned ... ok
+test trigger_sources_are_open_items_that_can_produce_a_trigger ... ok
+test fired_records_survive_a_restart_and_are_idempotent ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src\lib.rs (target\debug\deps\nivlo_workflow-34e789f9f8bab958.exe)
+
+running 64 tests
+test doc_meta::tests::markdown_ignores_hashtags_and_code_blocks ... ok
+test doc_meta::tests::markdown_prefers_front_matter_then_the_first_heading ... ok
+test doc_meta::tests::pdf_titles_support_literal_hex_utf16_and_escapes ... ok
+test doc_meta::tests::titles_are_cleaned_and_bounded ... ok
+test engine::tests::an_unmet_condition_skips_the_rest_but_keeps_earlier_results ... ok
+test engine::tests::a_step_without_a_registered_executor_is_a_fatal_error ... ok
+test engine::tests::cancellation_stops_a_running_workflow ... ok
+test engine::tests::create_item_validates_what_it_renders ... ok
+test engine::tests::for_each_files_creates_one_draft_per_file_and_add_tag_applies_to_all ... ok
+test engine::tests::steps_run_in_order_and_are_recorded ... ok
+test engine::tests::json_path_reads_values_out_of_json_text ... ok
+test engine::tests::a_failing_step_short_circuits_with_its_classification ... ok
+test builtin::schema_tests::every_shipped_definition_loads_and_is_marked_builtin ... ok
+test engine::tests::the_engine_runs_without_side_effects_and_is_repeatable ... ok
+test builtin::schema_tests::a_definition_from_a_newer_schema_is_rejected_by_validation ... ok
+test engine::tests::condition_stops_the_pipeline_when_unmet ... ok
+test facts::tests::text_inputs_only_repeat_the_text_in_the_content_when_the_title_is_not_enough ... ok
+test facts::tests::url_inputs_expose_their_parts ... ok
+test glob::tests::wildcards_match_hosts_and_file_names ... ok
+test facts::tests::file_inputs_expose_every_file_and_the_first_in_scope ... ok
+test facts::tests::images_have_no_text_url_or_file_fields ... ok
+test engine::tests::the_whole_run_times_out ... ok
+test html_meta::tests::unknown_entities_are_left_alone ... ok
+test doc_meta::tests::docx_title_comes_from_core_properties ... ok
+test jsonpath::tests::keys_indexes_and_quoted_keys ... ok
+test jsonpath::tests::syntax_errors_and_bad_json_are_errors ... ok
+test jsonpath::tests::missing_paths_and_nulls_are_none ... ok
+test glob::tests::pathological_patterns_stay_fast ... ok
+test engine::tests::extract_fails_without_a_match_unless_optional ... ok
+test matcher::tests::file_fields_and_operators ... ok
+test matcher::tests::multiple_files_match_when_any_file_satisfies ... ok
+test matcher::tests::all_any_and_not_compose ... ok
+test matcher::tests::specificity_ranks_exact_over_glob_over_contains_over_type_only ... ok
+test engine::tests::extract_and_create_item_build_a_github_style_todo ... ok
+test resolver::tests::explicit_priority_beats_specificity ... ok
+test resolver::tests::disabled_workflows_are_skipped_and_nothing_matching_gives_none ... ok
+test resolver::tests::the_more_specific_workflow_wins_at_equal_priority ... ok
+test template::tests::default_can_fall_back_to_another_variable ... ok
+test resolver::tests::ties_break_by_id_and_the_result_does_not_depend_on_list_order ... ok
+test pattern::tests::matching_is_linear_even_for_classic_backtracking_bombs ... ok
+test template::tests::escaping_and_quoted_delimiters ... ok
+test template::tests::filters_apply_in_order ... ok
+test template::tests::missing_variables_are_errors_unless_defaulted ... ok
+test template::tests::rendering_handles_non_ascii_literals_and_values ... ok
+test template::tests::syntax_errors_are_reported_at_parse_time ... ok
+test pattern::tests::compiled_patterns_are_cached_and_reused ... ok
+test template::tests::variables_are_interpolated_with_whitespace_tolerance ... ok
+test template::tests::variables_lists_every_reference ... ok
+test matcher::tests::every_url_field_and_operator_has_a_case ... ok
+test matcher::tests::text_fields_and_operators ... ok
+test html_meta::tests::missing_everything_gives_empty_fields ... ok
+test html_meta::tests::only_the_beginning_of_a_huge_page_is_scanned ... ok
+test html_meta::tests::falls_back_to_title_and_description_and_squashes_whitespace ... ok
+test html_meta::tests::apple_touch_icon_is_only_a_fallback_and_unsafe_schemes_are_dropped ... ok
+test html_meta::tests::attribute_order_quotes_and_unquoted_values_are_tolerated ... ok
+test html_meta::tests::open_graph_beats_the_plain_title_and_description ... ok
+test engine::tests::regex_replace_and_transform_compose_values ... ok
+test pattern::tests::invalid_long_and_too_complex_patterns_are_rejected ... ok
+test resolver::tests::one_hundred_workflows_resolve_quickly ... ok
+test validate::tests::the_schema_accepts_a_minimal_definition ... ok
+test validate::tests::schema_errors_carry_json_paths ... ok
+test validate::tests::not_json_and_domain_rule_violations_are_reported ... ok
+test validate::tests::deep_validation_reports_regex_and_template_problems_with_locations ... ok
+test validate::tests::every_example_and_builtin_definition_passes_schema_and_deep_validation ... ok
+
+test result: ok. 64 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s
+
+     Running tests\capture.rs (target\debug\deps\capture-d8b25613edcb5648.exe)
+
+running 5 tests
+test a_failing_workflow_never_loses_the_capture ... ok
+test a_duplicated_workflow_with_higher_priority_wins_and_tags_the_item ... ok
+test a_failed_commit_of_a_tagged_workflow_capture_leaves_nothing_behind ... ok
+test run_records_never_contain_the_full_text_or_url_secrets ... ok
+test builtin_workflows_reproduce_the_default_capture_rules ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\files.rs (target\debug\deps\files-1e9c8d45528752d3.exe)
+
+running 7 tests
+test markdown_uses_its_first_heading_as_the_title ... ok
+test meeting_notes_get_a_tag_and_their_heading ... ok
+test other_files_and_multi_file_drops_keep_the_generic_behaviour ... ok
+test oversized_missing_or_unreadable_files_are_saved_as_references_with_the_file_name ... ok
+test documents_without_a_readable_title_fall_back_to_the_file_name ... ok
+test requirement_files_become_todos ... ok
+test pdf_and_word_titles_come_from_document_properties ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\github.rs (target\debug\deps\github-5f30855dc9bc059a.exe)
+
+running 4 tests
+test the_public_api_supplies_the_title_and_state ... ok
+test when_everything_fails_only_the_number_remains ... ok
+test rate_limiting_falls_back_to_the_page_title_and_still_succeeds ... ok
+test issue_pull_and_deep_links_are_parsed_and_unrelated_urls_are_not ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+
+     Running tests\http_step.rs (target\debug\deps\http_step-6d773e3dbbffee1e.exe)
+
+running 6 tests
+test the_standard_engine_without_a_network_port_refuses_http_steps ... ok
+test a_host_that_was_not_declared_is_denied_even_when_optional ... ok
+test the_body_is_available_to_later_steps ... ok
+test a_workflow_using_http_must_declare_network_and_hosts ... ok
+test optional_steps_degrade_when_offline_or_on_error_statuses ... ok
+test required_steps_fail_with_a_classified_error ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests\integration_step.rs (target\debug\deps\integration_step-ca000ae03eb82885.exe)
+
+running 6 tests
+test the_step_needs_declared_network_permission_and_valid_ids ... ok
+test the_integration_is_called_with_rendered_params_and_its_fields_become_variables ... ok
+test instant_runs_skip_the_integration_and_unknown_integrations_fail ... ok
+test an_expired_connection_degrades_with_a_reconnect_notice_but_never_connected_stays_quiet ... ok
+test a_missing_connection_asks_the_user_to_connect_instead_of_showing_http_errors ... ok
+test optional_steps_skip_connection_problems_but_not_configuration_errors ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests\jira.rs (target\debug\deps\jira-de7d8590877c7440.exe)
+
+running 3 tests
+test the_page_title_completes_the_todo_when_it_can_be_read ... ok
+test login_pages_and_network_failures_still_produce_the_key_only_todo ... ok
+test cloud_and_self_hosted_urls_are_recognised_and_others_are_not ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\script_step.rs (target\debug\deps\script_step-37e0072ff3e54fc5.exe)
+
+running 9 tests
+test an_ungranted_script_does_not_run ... ok
+test changing_the_script_or_permissions_requires_reconfirmation ... ok
+test a_script_cannot_declare_more_than_the_workflow ... ok
+test script_errors_report_the_line_number ... ok
+test a_script_without_hosts_runs_without_confirmation_and_reports_console_output ... ok
+test a_bad_return_shape_is_invalid_input ... ok
+test a_script_without_hosts_cannot_reach_the_network ... ok
+test a_granted_script_produces_an_item_using_the_http_port ... ok
+test export_then_import_round_trips_behavior_and_carries_no_secrets ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests\web_page.rs (target\debug\deps\web_page-021c53c030a5b92f.exe)
+
+running 6 tests
+test text_captures_never_queue_enrichment ... ok
+test offline_leaves_the_instant_note_untouched ... ok
+test gbk_encoded_pages_get_a_readable_title ... ok
+test items_the_user_already_changed_are_not_overwritten ... ok
+test capture_is_instant_then_enrichment_fills_in_title_and_summary ... ok
+test rerun_overwrites_on_request_and_refuses_sources_it_cannot_replay ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests nivlo_application
+
+running 1 test
+test crates\nivlo-application\src\ports\storage.rs - ports::storage (line 5) ... ignored
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+all doctests ran in 0.39s; merged doctests compilation took 0.39s
+   Doc-tests nivlo_capture
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_common
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_desktop_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_domain
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_integrations
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_platform
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_platform_linux
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_platform_macos
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_platform_windows
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_scheduler
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_script
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_storage
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests nivlo_workflow
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+✓ 未发现直接读取系统时间的业务代码
+✓ 依赖方向检查通过
+✓ 文档内部链接有效

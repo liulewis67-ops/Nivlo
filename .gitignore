@@ -1,0 +1,28 @@
+# Rust
+/target
+**/*.rs.bk
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Tauri
+apps/desktop/src-tauri/gen/
+
+# Env / OS / IDE
+.env
+.env.*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local data
+*.db
+*.db-shm
+*.db-wal
+
+# 视觉回归的差异图
+tests/visual/diff/

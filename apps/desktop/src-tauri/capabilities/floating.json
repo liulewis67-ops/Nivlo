@@ -1,0 +1,33 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "floating-window",
+  "description": "悬浮窗的最小权限：只开放 Today / 快速创建 / 捕获 / 打开主窗口等悬浮窗真正需要的命令（架构文档 §13，实施计划 D-12）。随对应功能落地逐个加入。",
+  "windows": ["floating"],
+  "permissions": [
+    "core:event:default",
+    "allow-get-reminder-attention-ms",
+    "allow-get-today",
+    "allow-reorder-today",
+    "allow-quick-create",
+    "allow-create-item",
+    "allow-undo-created-item",
+    "allow-list-projects",
+    "allow-capture",
+    "allow-undo-capture",
+    "allow-capture-from-clipboard",
+    "allow-read-clipboard-text",
+    "allow-get-inbox-count",
+    "allow-get-ui-pref",
+    "allow-complete-item",
+    "allow-reopen-item",
+    "allow-reschedule-item",
+    "allow-begin-floating-input",
+    "allow-end-floating-input",
+    "allow-open-main",
+    "allow-open-item-in-main",
+    "allow-open-main-at",
+    "allow-start-floating-drag",
+    "allow-expand-floating",
+    "allow-collapse-floating"
+  ]
+}

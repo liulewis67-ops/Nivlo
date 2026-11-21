@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.generic-url",
+  "name": "网页链接",
+  "description": "收集到的网址变成笔记：标题是「域名/路径」，网址放进内容，进入收集箱等待整理。",
+  "version": 1,
+  "priority": 0,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": { "field": "input.type", "op": "equals", "value": "url" },
+  "steps": [
+    {
+      "type": "createItem",
+      "itemType": "note",
+      "title": "{{ input.title }}",
+      "content": "{{ input.url }}",
+      "inInbox": true
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, type AS item_type, title, brief, content, content_format, status, priority,\n                        scheduled_date, scheduled_time, due_date, due_time, reminder_at,\n                        project_id, in_inbox, created_at, updated_at, completed_at, archived_at\n                 FROM items\n                 WHERE title_initials LIKE ?1 ESCAPE '\\'\n                   AND (?2 = 1 OR archived_at IS NULL)\n                   AND deleted_at IS NULL\n                 ORDER BY status = 'done', updated_at DESC, id DESC\n                 LIMIT ?3",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "item_type",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "brief",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "content",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "content_format",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "status",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "priority",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "scheduled_date",
+        "ordinal": 8,
+        "type_info": "Text"
+      },
+      {
+        "name": "scheduled_time",
+        "ordinal": 9,
+        "type_info": "Text"
+      },
+      {
+        "name": "due_date",
+        "ordinal": 10,
+        "type_info": "Text"
+      },
+      {
+        "name": "due_time",
+        "ordinal": 11,
+        "type_info": "Text"
+      },
+      {
+        "name": "reminder_at",
+        "ordinal": 12,
+        "type_info": "Text"
+      },
+      {
+        "name": "project_id",
+        "ordinal": 13,
+        "type_info": "Text"
+      },
+      {
+        "name": "in_inbox",
+        "ordinal": 14,
+        "type_info": "Integer"
+      },
+      {
+        "name": "created_at",
+        "ordinal": 15,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at",
+        "ordinal": 16,
+        "type_info": "Text"
+      },
+      {
+        "name": "completed_at",
+        "ordinal": 17,
+        "type_info": "Text"
+      },
+      {
+        "name": "archived_at",
+        "ordinal": 18,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "a4f3ad1c46830428d7c7f17c6f916dd98e91fccfa09181b911c2687bf42a7a84"
+}

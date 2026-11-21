@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO item_sources (\n                id, item_id, source_type, source_app, source_url, source_path,\n                original_title, metadata_json, captured_at\n            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "b50a959461d8369673fbbb52c2710a6ef23411e16504d3b52b237a7348c89843"
+}

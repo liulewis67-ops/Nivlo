@@ -1,0 +1,66 @@
+  … 1 应用启动
+  … 1 Hover 悬浮窗
+  … 1 打开主窗口
+  … 1 Quick Add
+  … 1 完成 Todo
+  … 1 拖入文件
+  … 1 排期
+  … 1 提醒按时触发
+  … 1 拼音首字母搜索
+  … 1 最近使用
+  … 1 结果标签
+  … 1 快捷键停用 / 启用
+  … 1 前往设置
+  … 1 悬浮窗 Quick Create（原生）
+  … 1 Quick Create 快捷键（原生）
+  … 1 悬浮窗不抢焦点（真实鼠标）
+  … 1 拖入文件（真实 OLE 拖放）
+  … 1 拖动徽标吸附到边缘（真实鼠标）
+  … 1 全局搜索快捷键（原生）
+  … 1 200% WebView2 content zoom
+✗ 第 1 次：[200% WebView2 content zoom] Zoomed editor/badge lost its state: {"editor":{"modal":null,"title":"e2e-drag-b-1","stable":true,"selection":[1,2],"focus":false,"dates":2},"floatingDprBefore":1.25,"floatingDprAfter":1.25}
+  … 2 应用启动
+  … 2 Hover 悬浮窗
+  … 2 打开主窗口
+  … 2 Quick Add
+  … 2 完成 Todo
+  … 2 拖入文件
+  … 2 排期
+  … 2 提醒按时触发
+  … 2 拼音首字母搜索
+  … 2 最近使用
+  … 2 结果标签
+  … 2 快捷键停用 / 启用
+  … 2 前往设置
+  … 2 悬浮窗 Quick Create（原生）
+  … 2 Quick Create 快捷键（原生）
+  … 2 悬浮窗不抢焦点（真实鼠标）
+  … 2 拖入文件（真实 OLE 拖放）
+  … 2 拖动徽标吸附到边缘（真实鼠标）
+  … 2 全局搜索快捷键（原生）
+  … 2 200% WebView2 content zoom
+✗ 第 2 次：[200% WebView2 content zoom] Zoomed editor/badge lost its state: {"editor":{"modal":null,"title":"e2e-drag-b-2","stable":true,"selection":[1,2],"focus":false,"dates":2},"floatingDprBefore":1.25,"floatingDprAfter":1.25}
+  … 3 应用启动
+  … 3 Hover 悬浮窗
+  … 3 打开主窗口
+  … 3 Quick Add
+  … 3 完成 Todo
+  … 3 拖入文件
+  … 3 排期
+  … 3 提醒按时触发
+  … 3 拼音首字母搜索
+  … 3 最近使用
+  … 3 结果标签
+  … 3 快捷键停用 / 启用
+  … 3 前往设置
+  … 3 悬浮窗 Quick Create（原生）
+  … 3 Quick Create 快捷键（原生）
+  … 3 悬浮窗不抢焦点（真实鼠标）
+  … 3 拖入文件（真实 OLE 拖放）
+✗ 第 3 次：[拖入文件（真实 OLE 拖放）] 等待超时：拖入的 e2e-ole-a-3.txt 建成了条目
+✓ 主窗口未创建时从全局搜索框回车打开结果
+✓ 主窗口未创建时点徽标：主窗口到前台并留在前台
+✓ 预先准备全局搜索框：第一次唤出 41 ms，进程树多占约 86 MB
+Warm search focus: 20 runs, median 51ms, p95 90ms
+Quick Create 输入就绪：点「+ 待办」中位数 48 ms [48,33,51]；快捷键 中位数 40 ms [39,44,40]
+全局搜索唤出（按键之后到输入框拿到焦点）：第一次 中位数 318 ms [297,318]；之后 中位数 76 ms [76,73]

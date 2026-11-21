@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reorder-today"
+description = "Enables the reorder_today command without any pre-configured scope."
+commands.allow = ["reorder_today"]
+
+[[permission]]
+identifier = "deny-reorder-today"
+description = "Denies the reorder_today command without any pre-configured scope."
+commands.deny = ["reorder_today"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-fit-search"
+description = "Enables the fit_search command without any pre-configured scope."
+commands.allow = ["fit_search"]
+
+[[permission]]
+identifier = "deny-fit-search"
+description = "Denies the fit_search command without any pre-configured scope."
+commands.deny = ["fit_search"]

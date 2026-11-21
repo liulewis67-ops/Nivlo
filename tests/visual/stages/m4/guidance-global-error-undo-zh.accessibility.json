@@ -1,0 +1,841 @@
+{
+  "samples": [
+    {
+      "text": "命令",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "邮件",
+      "tag": "INPUT",
+      "placeholder": false,
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "Esc",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        238,
+        240,
+        244,
+        1
+      ],
+      "ratio": 5.222,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "待办",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "600",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.958,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "回复产品评审的",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 14.331,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "邮件",
+      "tag": "MARK",
+      "placeholder": false,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        204.21919261822376,
+        218.42861976163013,
+        250.28427527873896,
+        1
+      ],
+      "ratio": 11.818,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "#产品 #沟通 · 已完成",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 5.172,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "↵",
+      "tag": "KBD",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        232.9764705882353,
+        238.9921568627451,
+        252.9607843137255,
+        1
+      ],
+      "ratio": 5.172,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "本地数据库暂时不可用。",
+      "tag": "P",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        198,
+        40,
+        40,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 5.622,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "关闭错误提示",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        255,
+        255,
+        255,
+        1
+      ],
+      "ratio": 16.511,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "已完成「回复产品评审的邮件」",
+      "tag": "SPAN",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "400",
+      "foreground": [
+        91,
+        100,
+        117,
+        1
+      ],
+      "background": [
+        247.8,
+        249,
+        251,
+        1
+      ],
+      "ratio": 5.654,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "撤销 Ctrl+Z",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        247.8,
+        249,
+        251,
+        1
+      ],
+      "ratio": 15.667,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    },
+    {
+      "text": "键盘帮助",
+      "tag": "BUTTON",
+      "placeholder": false,
+      "fontSize": "12px",
+      "fontWeight": "500",
+      "foreground": [
+        27,
+        31,
+        39,
+        1
+      ],
+      "background": [
+        247.8,
+        249,
+        251,
+        1
+      ],
+      "ratio": 15.667,
+      "required": 4.5,
+      "disabled": false,
+      "pass": true
+    }
+  ],
+  "unmeasured": [],
+  "failures": [],
+  "viewport": {
+    "width": 640,
+    "height": 440,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/?window=search"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "命令",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "pressed",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "combobox",
+      "name": "搜索关键词",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "autocomplete",
+          "value": {
+            "type": "token",
+            "value": "list"
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "listbox"
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "activedescendant",
+          "value": {
+            "type": "idref",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 77,
+                "idref": "_r_0_-00000000-0000-4000-8000-000000000001"
+              }
+            ]
+          }
+        },
+        {
+          "name": "controls",
+          "value": {
+            "type": "idrefList",
+            "value": "_r_0_",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 12,
+                "idref": "_r_0_"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "listbox",
+      "name": "搜索结果",
+      "properties": [
+        {
+          "name": "multiselectable",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "orientation",
+          "value": {
+            "type": "token",
+            "value": "vertical"
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "alert",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "assertive"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "contentinfo",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "命令",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Esc",
+      "properties": []
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "待办",
+      "properties": [
+        {
+          "name": "labelledby",
+          "value": {
+            "type": "nodeList",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 75,
+                "idref": "_r_0_-group-todo",
+                "text": "待办"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "关闭错误提示",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "polite"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "撤销 Ctrl+Z",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "键盘帮助",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "命令",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "邮件",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Esc",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "待办",
+      "properties": []
+    },
+    {
+      "role": "option",
+      "name": "回复产品评审的邮件 #产品 #沟通 · 已完成 ↵",
+      "properties": [
+        {
+          "name": "selected",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "本地数据库暂时不可用。",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "关闭错误提示",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "已完成「回复产品评审的邮件」",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "撤销 Ctrl+Z",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "键盘帮助",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "邮件",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "待办",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "回复产品评审的",
+      "properties": []
+    },
+    {
+      "role": "mark",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "#产品 #沟通 · 已完成",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "本地数据库暂时不可用。",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "关闭错误提示",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "已完成「回复产品评审的邮件」",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "撤销 Ctrl+Z",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "键盘帮助",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回复产品评审的",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "邮件",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "#产品 #沟通 · 已完成",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "↵",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "邮件",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "↵",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

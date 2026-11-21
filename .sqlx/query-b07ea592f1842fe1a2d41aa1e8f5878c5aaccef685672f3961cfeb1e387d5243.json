@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT item_id FROM daily_item_order WHERE date = ? ORDER BY position ASC",
+  "describe": {
+    "columns": [
+      {
+        "name": "item_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b07ea592f1842fe1a2d41aa1e8f5878c5aaccef685672f3961cfeb1e387d5243"
+}

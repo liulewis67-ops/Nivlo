@@ -1,0 +1,80 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, workflow_id, workflow_name, input_kind, input_summary, status,\n                    error_kind, error_message, items_created, duration_ms, started_at\n             FROM workflow_runs ORDER BY started_at DESC, id DESC LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "workflow_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "workflow_name",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "input_kind",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "input_summary",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "status",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "error_kind",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "error_message",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "items_created",
+        "ordinal": 8,
+        "type_info": "Integer"
+      },
+      {
+        "name": "duration_ms",
+        "ordinal": 9,
+        "type_info": "Integer"
+      },
+      {
+        "name": "started_at",
+        "ordinal": 10,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6ad64459d3d8b971ef4119f97627d5528fe8c577a34472b73bd2f3b38a8c1c40"
+}

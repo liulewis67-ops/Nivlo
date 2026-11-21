@@ -1,0 +1,516 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/*
+ * Tailwind 主题：把 Token 暴露为工具类（如 `bg-surface`、`text-muted`、`rounded-md`），
+ * `inline` 保证工具类直接引用 `var(--nv-*)`，主题切换时无需重新生成。
+ */
+@theme inline {
+  --font-sans: var(--nv-font-sans);
+  --font-mono: var(--nv-font-mono);
+
+  --color-bg: var(--nv-bg);
+  --color-surface: var(--nv-surface);
+  --color-surface-hover: var(--nv-surface-hover);
+  --color-border: var(--nv-border);
+  --color-text: var(--nv-text);
+  --color-muted: var(--nv-text-muted);
+  --color-primary: var(--nv-primary);
+  --color-primary-hover: var(--nv-primary-hover);
+  --color-primary-contrast: var(--nv-primary-contrast);
+  --color-danger: var(--nv-danger);
+  --color-danger-contrast: var(--nv-danger-contrast);
+  --color-success: var(--nv-success);
+  --color-tip: var(--nv-tip);
+  --color-focus: var(--nv-focus-ring);
+
+  --radius-sm: var(--nv-radius-sm);
+  --radius-md: var(--nv-radius-md);
+  --radius-lg: var(--nv-radius-lg);
+
+  --shadow-md: var(--nv-shadow-md);
+  --shadow-lg: var(--nv-shadow-lg);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.nv-detail-panel {
+  width: min(var(--nv-detail-width), calc(100vw - 2rem));
+}
+
+/* 日期输入在窄侧页 / 放大后的有效宽度下纵向排列。 */
+.nv-detail-panel {
+  container-type: inline-size;
+}
+@container (max-width: 300px) {
+  .nv-detail-date {
+    flex-direction: column;
+  }
+  .nv-detail-date input {
+    width: 100%;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--nv-bg);
+  color: var(--nv-text);
+  font-family: var(--nv-font-sans);
+  font-size: var(--nv-text-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 悬浮窗是透明窗口，页面背景必须透明，只有内容本身有底色。 */
+html[data-window="floating"],
+html[data-window="floating"] body {
+  background: transparent;
+  /* 悬浮窗的页面本身不滚动：展开动画与阴影不应撑出页面级滚动条。 */
+  overflow: hidden;
+}
+
+/* 列表里的滚动条平时不显示，鼠标移到列表上才出现，避免悬浮窗一展开就闪出滚动条。 */
+.nv-scroll-hover {
+  scrollbar-color: transparent transparent;
+}
+.nv-scroll-hover:hover {
+  scrollbar-color: var(--nv-scrollbar-thumb) transparent;
+}
+
+/*
+ * 统一键盘焦点样式，各 WebView 默认的焦点环不一致。
+ * 放在 base 层：不分层的样式会压过所有 Tailwind 工具类，组件里的 `focus-visible:outline-none`
+ * 就失效了（全局搜索框的输入框外面会多出一个蓝框）。
+ */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--nv-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+/* 统一滚动条外观（WebView2 / WebKit 均支持），避免系统默认滚动条破坏一致性。 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--nv-scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--nv-scrollbar-thumb);
+  border: 2px solid transparent;
+  border-radius: var(--nv-radius-full);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--nv-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 悬浮面板展开动画：只用 transform 与 opacity，时长来自 Token，尊重"减少动态效果"。 */
+@keyframes nv-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.nv-panel-in {
+  animation: nv-panel-in var(--nv-duration-normal) var(--nv-ease-standard);
+}
+
+/* 拖拽悬停提示：只用 opacity，尊重"减少动态效果"。 */
+@keyframes nv-drop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.nv-drop-zone {
+  animation: nv-drop-in var(--nv-duration-fast, 120ms) var(--nv-ease-standard);
+}
+
+/* 首次运行引导里的小动效：徽标呼吸、输入光标闪烁；只在用户没有要求减少动态效果时播放。 */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes nv-onboarding-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes nv-onboarding-caret {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .nv-onboarding-pulse {
+    animation: nv-onboarding-pulse 2.4s var(--nv-ease-standard) infinite;
+  }
+
+  .nv-onboarding-caret {
+    animation: nv-onboarding-caret 1s steps(1) infinite;
+  }
+}
+
+/*
+ * 悬浮窗外观定制：强调色（覆盖主色 Token）、圆角、质感、整体不透明度。
+ * 数据属性由 appearance-store 写到根元素。
+ */
+:root {
+  --nv-float-opacity: 1;
+  --nv-float-radius: 1rem;
+}
+
+html[data-corners="soft"] {
+  --nv-float-radius: 0.5rem;
+}
+
+html[data-accent="violet"] {
+  --nv-primary: #6d3fef;
+  --nv-primary-hover: #5b2fd6;
+  --nv-focus-ring: #6d3fef;
+}
+html[data-accent="teal"] {
+  --nv-primary: #0f766e;
+  --nv-primary-hover: #115e59;
+  --nv-focus-ring: #0f766e;
+}
+html[data-accent="rose"] {
+  --nv-primary: #be123c;
+  --nv-primary-hover: #9f1239;
+  --nv-focus-ring: #be123c;
+}
+html[data-accent="amber"] {
+  --nv-primary: #b45309;
+  --nv-primary-hover: #92400e;
+  --nv-focus-ring: #b45309;
+}
+html[data-theme="dark"][data-accent="violet"] {
+  --nv-primary: #a78bfa;
+  --nv-primary-hover: #c4b5fd;
+  --nv-primary-contrast: #120a2b;
+  --nv-focus-ring: #c4b5fd;
+}
+html[data-theme="dark"][data-accent="teal"] {
+  --nv-primary: #2dd4bf;
+  --nv-primary-hover: #5eead4;
+  --nv-primary-contrast: #04201c;
+  --nv-focus-ring: #5eead4;
+}
+html[data-theme="dark"][data-accent="rose"] {
+  --nv-primary: #fb7185;
+  --nv-primary-hover: #fda4af;
+  --nv-primary-contrast: #2a050c;
+  --nv-focus-ring: #fda4af;
+}
+html[data-theme="dark"][data-accent="amber"] {
+  --nv-primary: #fbbf24;
+  --nv-primary-hover: #fcd34d;
+  --nv-primary-contrast: #1a1203;
+  --nv-focus-ring: #fcd34d;
+}
+
+/*
+ * 收起态悬浮徽标：整体不透明度由用户设置。
+ *
+ * 悬浮窗是和内容一样大的透明窗口，形状以外的像素必须完全透明：任何画到形状外面的东西
+ * （外阴影、放大动效）都会被窗口的矩形边界截断，露出一个"矩形框"。所以立体感全部用
+ * 形状内部的手段表达：顶部高光 + 底部暗边 + 发丝内描边 + 自上而下的轻微渐变。
+ */
+.nv-float {
+  --nv-float-tint: transparent;
+  --nv-float-edge: color-mix(in srgb, var(--nv-text) 12%, transparent);
+  --nv-float-highlight: color-mix(in srgb, white 70%, transparent);
+  --nv-float-lowlight: color-mix(in srgb, var(--nv-text) 6%, transparent);
+  opacity: var(--nv-float-opacity);
+  border-radius: var(--nv-float-radius);
+  background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
+    linear-gradient(180deg, color-mix(in srgb, white 55%, var(--nv-surface)), var(--nv-surface) 60%);
+  box-shadow:
+    inset 0 1px 0 var(--nv-float-highlight),
+    inset 0 -1px 0 var(--nv-float-lowlight),
+    inset 0 0 0 1px var(--nv-float-edge);
+}
+
+html[data-theme="dark"] .nv-float {
+  --nv-float-edge: color-mix(in srgb, white 14%, transparent);
+  --nv-float-highlight: color-mix(in srgb, white 12%, transparent);
+  --nv-float-lowlight: rgb(0 0 0 / 30%);
+  background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
+    linear-gradient(180deg, color-mix(in srgb, white 6%, var(--nv-surface)), var(--nv-surface) 60%);
+}
+
+/* 通透质感：半透明底色 + 主色高光。透明窗口里 backdrop-filter 模糊不到桌面，所以不用它。 */
+html[data-surface="glass"] .nv-float {
+  background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--nv-primary) 12%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(180deg, color-mix(in srgb, white 30%, transparent), transparent 60%),
+    color-mix(in srgb, var(--nv-surface) 82%, transparent);
+}
+html[data-theme="dark"][data-surface="glass"] .nv-float {
+  background:
+    linear-gradient(var(--nv-float-tint), var(--nv-float-tint)),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--nv-primary) 16%, transparent),
+      transparent 55%
+    ),
+    color-mix(in srgb, var(--nv-surface) 82%, transparent);
+}
+
+/* 展开的面板只在底色应用透明度，文字和控件保持原有对比度。 */
+.nv-floating-panel {
+  --nv-panel-opacity: calc(var(--nv-float-opacity) * 100%);
+  border: 0.5px solid var(--nv-border);
+  border-radius: var(--nv-float-radius);
+  background: color-mix(in srgb, var(--nv-surface) var(--nv-panel-opacity), transparent);
+}
+html[data-surface="glass"] .nv-floating-panel {
+  --nv-panel-opacity: calc(var(--nv-float-opacity) * 97%);
+}
+.nv-floating-panel[data-grabbed] {
+  border-color: var(--nv-primary);
+  cursor: grabbing;
+}
+
+/*
+ * 收起态徽标铺满整个窗口（窗口和形状一样大）：悬停不能放大（放大会被窗口边界截成方角），
+ * 改为主色轻染 + 内描边加深；按下只缩小，不会越界。
+ */
+.nv-badge {
+  --nv-ring-track: color-mix(in srgb, var(--nv-text) 13%, transparent);
+  cursor: default;
+  transition:
+    transform var(--nv-duration-fast) var(--nv-ease-standard),
+    box-shadow var(--nv-duration-fast) var(--nv-ease-standard);
+}
+html[data-theme="dark"] .nv-badge {
+  --nv-ring-track: color-mix(in srgb, white 16%, transparent);
+}
+.nv-badge:hover {
+  --nv-float-edge: color-mix(in srgb, var(--nv-primary) 40%, transparent);
+  --nv-float-tint: color-mix(in srgb, var(--nv-primary) 7%, transparent);
+  --nv-ring-track: color-mix(in srgb, var(--nv-primary) 22%, transparent);
+}
+.nv-badge:active {
+  transform: scale(0.94);
+}
+/* 长按选中（可以拖动了）：从按下时的缩小弹回原大小，主色描边 + 染色，读作"拿起来了"。
+   窗口和徽标一样大，不能放大，否则会被窗口裁掉。 */
+.nv-badge[data-selected],
+.nv-badge[data-selected]:active {
+  --nv-float-tint: color-mix(in srgb, var(--nv-primary) 16%, transparent);
+  --nv-ring-track: color-mix(in srgb, var(--nv-primary) 30%, transparent);
+  cursor: grabbing;
+  transform: none;
+  /* 直接写主色而不是改 --nv-float-edge：深色主题对 .nv-float 的选择器更具体，会盖掉变量。 */
+  box-shadow:
+    inset 0 1px 0 var(--nv-float-highlight),
+    inset 0 0 0 1.5px color-mix(in srgb, var(--nv-primary) 75%, transparent);
+}
+/* 今天的事全部完成：整块轻染主色，对勾用主色。 */
+.nv-badge[data-done] {
+  --nv-float-tint: color-mix(in srgb, var(--nv-primary) 12%, transparent);
+  --nv-float-edge: color-mix(in srgb, var(--nv-primary) 30%, transparent);
+}
+/* 键盘焦点：默认 outline 有 offset，会画到窗口外被截断，徽标上改为内描边。 */
+.nv-badge:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--nv-focus-ring);
+}
+.nv-robot-badge {
+  border-radius: 8px;
+  opacity: var(--nv-float-opacity);
+}
+.nv-robot-badge[data-selected]:not(:focus-visible) {
+  box-shadow: none;
+}
+.nv-robot-figure {
+  display: block;
+  width: 52px;
+  height: 40px;
+  flex: none;
+}
+.nv-robot-badge:has(.nv-robot-counter) .nv-robot-figure {
+  width: 42px;
+}
+.nv-robot-counter {
+  flex: none;
+  display: grid;
+  min-width: 20px;
+  min-height: 20px;
+  padding-inline: 2px;
+  place-items: center;
+  border: 1px solid #b3d4ef;
+  border-radius: 5px;
+  background: #20364d;
+  color: #f5fbff;
+  font-size: 14px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.nv-robot-counter .nv-badge-count {
+  color: inherit;
+}
+/* 内描边留在原生窗边界以内，不改变按钮的命中区域。 */
+[data-reminder-attention] :is(.nv-badge, .nv-floating-panel)::after {
+  position: absolute;
+  inset: 1px;
+  border: 2px solid var(--nv-tip);
+  border-radius: inherit;
+  pointer-events: none;
+  content: "";
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-reminder-attention] :is(.nv-badge, .nv-floating-panel)::after,
+  [data-reminder-attention] .nv-robot-figure {
+    animation: nv-reminder-pulse 1.2s ease-in-out infinite;
+  }
+  .nv-robot-head {
+    transition: transform var(--nv-duration-fast) var(--nv-ease-standard);
+  }
+  .nv-robot[data-expression="hover"] .nv-robot-head,
+  .nv-robot[data-expression="grabbed"] .nv-robot-head {
+    transform: translateY(-1px);
+  }
+}
+@keyframes nv-reminder-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+.nv-badge-ring circle {
+  fill: none;
+}
+.nv-badge-ring-track {
+  stroke: var(--nv-ring-track);
+}
+.nv-badge-ring-value {
+  stroke: var(--nv-primary);
+  stroke-linecap: round;
+}
+.nv-badge-ring .nv-badge-ring-core {
+  fill: var(--nv-primary);
+}
+.nv-badge-check {
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--nv-primary);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* 数字变化时轻轻弹一下；时长来自 Token，「减少动态效果」时为 0。 */
+@keyframes nv-badge-count-pop {
+  from {
+    opacity: 0.4;
+    transform: translateY(3px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.nv-badge-count {
+  display: inline-block;
+}
+.nv-badge-count-pop {
+  animation: nv-badge-count-pop var(--nv-duration-normal) var(--nv-ease-standard);
+}
+
+/* 自定义皮肤：像素风最近邻缩放 + 附加动效。 */
+.nv-skin {
+  display: block;
+}
+.nv-skin-pixel {
+  image-rendering: pixelated;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nv-skin-float {
+    animation: nv-skin-float 2.4s ease-in-out infinite;
+  }
+  .nv-skin-breathe {
+    animation: nv-skin-breathe 3s ease-in-out infinite;
+  }
+  .nv-skin-bounce {
+    animation: nv-skin-bounce 0.9s cubic-bezier(0.3, 0, 0.4, 1) infinite;
+  }
+}
+@keyframes nv-skin-float {
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@keyframes nv-skin-breathe {
+  50% {
+    transform: scale(1.06);
+  }
+}
+@keyframes nv-skin-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-3px) scaleY(1.03);
+  }
+}
+
+/* 用户在设置中关闭悬浮窗动画时，统一停止一切悬浮窗关键帧与过渡。 */
+html[data-floating-animation="off"]
+  :is(
+    .nv-panel-in,
+    .nv-drop-zone,
+    .nv-badge-count-pop,
+    .nv-skin-float,
+    .nv-skin-breathe,
+    .nv-skin-bounce,
+    [data-reminder-attention] .nv-badge::after,
+    [data-reminder-attention] .nv-floating-panel::after,
+    [data-reminder-attention] .nv-robot-figure
+  ) {
+  animation: none !important;
+}
+html[data-floating-animation="off"] .nv-robot-head,
+html[data-floating-animation="off"] .nv-badge {
+  transition: none !important;
+}

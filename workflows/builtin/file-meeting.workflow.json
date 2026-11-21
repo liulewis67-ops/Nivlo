@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.file-meeting",
+  "name": "会议纪要（meeting-*.md）",
+  "description": "文件名形如 meeting-2026-10-11.md 的 Markdown 文件变成带 meeting 标签的笔记，标题取文档里的第一个标题。",
+  "version": 1,
+  "priority": 10,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": {
+    "all": [
+      { "field": "input.type", "op": "equals", "value": "file" },
+      { "field": "file.name", "op": "glob", "value": "meeting-*.md" }
+    ]
+  },
+  "steps": [
+    { "type": "readFile", "into": "doc", "optional": true },
+    {
+      "type": "createItem",
+      "itemType": "note",
+      "title": "{{ vars.doc_title | default(file.stem) | truncate(120) }}",
+      "inInbox": true,
+      "tags": ["meeting"]
+    }
+  ]
+}

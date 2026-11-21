@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-unarchive-project"
+description = "Enables the unarchive_project command without any pre-configured scope."
+commands.allow = ["unarchive_project"]
+
+[[permission]]
+identifier = "deny-unarchive-project"
+description = "Denies the unarchive_project command without any pre-configured scope."
+commands.deny = ["unarchive_project"]

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "example.github-pr",
+  "name": "GitHub PR → 待办",
+  "description": "把 GitHub Pull Request 链接变成「评审 PR #123」的待办，带 github 标签，今天处理。",
+  "priority": 10,
+  "matcher": {
+    "all": [
+      { "field": "input.type", "op": "equals", "value": "url" },
+      { "field": "url.host", "op": "equals", "value": "github.com" },
+      { "field": "url.path", "op": "regex", "value": "^/[^/]+/[^/]+/pull/\\d+" }
+    ]
+  },
+  "steps": [
+    { "type": "extract", "from": "url.path", "pattern": "^/([^/]+/[^/]+)/pull/(\\d+)", "group": 2, "into": "number" },
+    { "type": "extract", "from": "url.path", "pattern": "^/([^/]+/[^/]+)/pull/", "into": "repo" },
+    {
+      "type": "createItem",
+      "itemType": "todo",
+      "title": "评审 PR #{{ vars.number }}（{{ vars.repo }}）",
+      "content": "{{ input.url }}",
+      "scheduled": "{{ now.date }}",
+      "inInbox": false,
+      "tags": ["github", "review"]
+    }
+  ]
+}

@@ -1,0 +1,830 @@
+{
+  "samples": [],
+  "unmeasured": [
+    {
+      "text": "Today",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "Sat, Oct 10",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "Inbox 3",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "回复产品评审的邮件",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "整理本周周报",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "下午三点：站会",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "To-do",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "Note",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "Tip",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "Capture draft / 保留草稿",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "The local database is temporarily unavailable.",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    },
+    {
+      "text": "Edit and retry",
+      "reason": "gradient/backdrop requires separate painted-background review"
+    }
+  ],
+  "failures": [],
+  "viewport": {
+    "width": 300,
+    "height": 380,
+    "dpr": 1
+  },
+  "modal": null,
+  "accessibilityTree": [
+    {
+      "role": "RootWebArea",
+      "name": "Nivlo",
+      "properties": [
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "url",
+          "value": {
+            "type": "string",
+            "value": "http://localhost:1420/?window=floating"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "group",
+      "name": "Nivlo floating badge",
+      "properties": []
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "region",
+      "name": "Today panel",
+      "properties": []
+    },
+    {
+      "role": "sectionheader",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "list",
+      "name": "To-dos",
+      "properties": []
+    },
+    {
+      "role": "status",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "assertive"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "list",
+      "name": "Tips",
+      "properties": []
+    },
+    {
+      "role": "radiogroup",
+      "name": "Capture type",
+      "properties": [
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "textbox",
+      "name": "Title",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "focused",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        },
+        {
+          "name": "settable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "multiline",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "readonly",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        },
+        {
+          "name": "required",
+          "value": {
+            "type": "boolean",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "alert",
+      "name": "",
+      "properties": [
+        {
+          "name": "live",
+          "value": {
+            "type": "token",
+            "value": "assertive"
+          }
+        },
+        {
+          "name": "atomic",
+          "value": {
+            "type": "boolean",
+            "value": true
+          }
+        },
+        {
+          "name": "relevant",
+          "value": {
+            "type": "tokenList",
+            "value": "additions text"
+          }
+        }
+      ]
+    },
+    {
+      "role": "heading",
+      "name": "TodaySat, Oct 10",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 2
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Inbox 3",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Open main window",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "listitem",
+      "name": "",
+      "properties": [
+        {
+          "name": "level",
+          "value": {
+            "type": "integer",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "To-do",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "Note",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "true"
+          }
+        }
+      ]
+    },
+    {
+      "role": "radio",
+      "name": "Tip",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "generic",
+      "name": "",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "paragraph",
+      "name": "",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Edit and retry",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "Today",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Sat, Oct 10",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Inbox 3",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "Drag to reorder “回复产品评审的邮件”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "describedby",
+          "value": {
+            "type": "idrefList",
+            "value": "DndDescribedBy-0",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 68,
+                "idref": "DndDescribedBy-0"
+              }
+            ]
+          }
+        },
+        {
+          "name": "roledescription",
+          "value": {
+            "type": "string",
+            "value": "sortable"
+          }
+        }
+      ]
+    },
+    {
+      "role": "checkbox",
+      "name": "Complete “回复产品评审的邮件”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "回复产品评审的邮件",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "More actions for “回复产品评审的邮件”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "button",
+      "name": "Drag to reorder “整理本周周报”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "describedby",
+          "value": {
+            "type": "idrefList",
+            "value": "DndDescribedBy-0",
+            "relatedNodes": [
+              {
+                "backendDOMNodeId": 68,
+                "idref": "DndDescribedBy-0"
+              }
+            ]
+          }
+        },
+        {
+          "name": "roledescription",
+          "value": {
+            "type": "string",
+            "value": "sortable"
+          }
+        }
+      ]
+    },
+    {
+      "role": "checkbox",
+      "name": "Complete “整理本周周报”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "整理本周周报",
+      "properties": []
+    },
+    {
+      "role": "button",
+      "name": "More actions for “整理本周周报”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "hasPopup",
+          "value": {
+            "type": "token",
+            "value": "menu"
+          }
+        },
+        {
+          "name": "expanded",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": false
+          }
+        }
+      ]
+    },
+    {
+      "role": "checkbox",
+      "name": "Complete “下午三点：站会”",
+      "properties": [
+        {
+          "name": "invalid",
+          "value": {
+            "type": "token",
+            "value": "false"
+          }
+        },
+        {
+          "name": "focusable",
+          "value": {
+            "type": "booleanOrUndefined",
+            "value": true
+          }
+        },
+        {
+          "name": "checked",
+          "value": {
+            "type": "tristate",
+            "value": "false"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "下午三点：站会",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "To-do",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Note",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Tip",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Capture draft / 保留草稿",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "StaticText",
+      "name": "The local database is temporarily unavailable.",
+      "properties": []
+    },
+    {
+      "role": "StaticText",
+      "name": "Edit and retry",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Today",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Sat, Oct 10",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Inbox 3",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "回复产品评审的邮件",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "整理本周周报",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "下午三点：站会",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "To-do",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Note",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Tip",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Capture draft / 保留草稿",
+      "properties": [
+        {
+          "name": "editable",
+          "value": {
+            "type": "token",
+            "value": "plaintext"
+          }
+        }
+      ]
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "The local database is temporarily unavailable.",
+      "properties": []
+    },
+    {
+      "role": "InlineTextBox",
+      "name": "Edit and retry",
+      "properties": []
+    }
+  ],
+  "scope": "Visible text on flat composited backgrounds; disabled text measured but exempt. Browser AX tree is not an NVDA announcement record."
+}

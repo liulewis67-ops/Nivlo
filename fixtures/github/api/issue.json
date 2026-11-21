@@ -1,0 +1,18 @@
+{
+  "url": "https://api.github.com/repos/acme/web/issues/123",
+  "html_url": "https://github.com/acme/web/issues/123",
+  "number": 123,
+  "state": "open",
+  "title": "Crash on startup",
+  "body": "Steps to reproduce:\n1. Launch the app\n2. It crashes",
+  "user": { "login": "octocat", "id": 1 },
+  "labels": [
+    { "id": 208045946, "name": "bug", "color": "d73a4a" },
+    { "id": 208045947, "name": "p1", "color": "ededed" }
+  ],
+  "assignees": [
+    { "login": "hubot", "id": 2 },
+    { "login": "monalisa", "id": 3 }
+  ],
+  "milestone": { "number": 4, "title": "v1.2", "state": "open" }
+}

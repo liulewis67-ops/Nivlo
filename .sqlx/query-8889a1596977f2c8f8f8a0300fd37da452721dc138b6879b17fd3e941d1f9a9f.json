@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE items SET\n                type = ?, title = ?, brief = ?, content = ?, content_format = ?, status = ?,\n                priority = ?,\n                scheduled_date = ?, scheduled_time = ?, due_date = ?, due_time = ?,\n                reminder_at = ?, project_id = ?, in_inbox = ?, updated_at = ?, completed_at = ?,\n                archived_at = ?\n            WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 18
+    },
+    "nullable": []
+  },
+  "hash": "8889a1596977f2c8f8f8a0300fd37da452721dc138b6879b17fd3e941d1f9a9f"
+}

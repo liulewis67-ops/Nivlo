@@ -1,0 +1,25 @@
+{
+  "urls": [
+    { "url": "https://acme.atlassian.net/browse/AI-128", "key": "AI-128" },
+    { "url": "https://acme.atlassian.net/browse/PROJ_X2-7?focusedCommentId=100", "key": "PROJ_X2-7" },
+    { "url": "https://jira.corp.example.com/browse/REQ-12", "key": "REQ-12" },
+    { "url": "https://jira.example.org:8443/browse/OPS-9/", "key": "OPS-9" },
+    { "url": "https://acme.atlassian.net/jira/software/projects/AI/boards/1", "key": null },
+    { "url": "https://acme.atlassian.net/browse/lowercase-1", "key": null },
+    { "url": "https://example.com/browse/readme", "key": null }
+  ],
+  "pages": {
+    "issue": {
+      "contentType": "text/html; charset=utf-8",
+      "body": "<html><head><title>[AI-128] 修复登录失败 - Jira</title><meta property=\"og:title\" content=\"[AI-128] 修复登录失败 - Jira\"></head></html>"
+    },
+    "issue-without-suffix": {
+      "contentType": "text/html; charset=utf-8",
+      "body": "<html><head><title>[REQ-12] 导出报表 [beta]</title></head></html>"
+    },
+    "login": {
+      "contentType": "text/html; charset=utf-8",
+      "body": "<html><head><title>Log in with Atlassian account</title></head></html>"
+    }
+  }
+}

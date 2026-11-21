@@ -1,0 +1,50 @@
+(node:10708) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+guidance-inbox-960-zh: 34 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-inbox-960-zh
+guidance-inbox-400-en-dark: 17 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-inbox-400-en-dark
+guidance-settings-960-zh: 46 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-settings-960-zh
+guidance-settings-400-en-dark: 21 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-settings-400-en-dark
+guidance-workflows-960-zh: 57 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-workflows-960-zh
+guidance-workflows-400-en-dark: 41 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-workflows-400-en-dark
+guidance-notes-960-zh: 34 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-notes-960-zh
+guidance-notes-400-en-dark: 20 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-notes-400-en-dark
+guidance-projects-960-zh: 32 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-projects-960-zh
+guidance-projects-400-en-dark: 18 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-projects-400-en-dark
+guidance-today-960-zh: 23 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-today-960-zh
+guidance-today-400-en-dark: 9 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-today-400-en-dark
+guidance-trash-960-zh: 19 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-trash-960-zh
+guidance-trash-400-en-dark: 5 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-trash-400-en-dark
+guidance-onboarding-960-zh: 6 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-onboarding-960-zh
+guidance-onboarding-400-en-dark: 6 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-onboarding-400-en-dark
+guidance-palette-zh: 24 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-palette-zh
+guidance-palette-en-dark: 24 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-palette-en-dark
+guidance-global-zh: 22 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-global-zh
+guidance-global-en-dark: 17 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-global-en-dark
+guidance-capture-zh: 0 contrast samples, 0 failures, 10 gradient samples unmeasured
+新建基线：guidance-capture-zh
+guidance-capture-en-dark: 0 contrast samples, 0 failures, 12 gradient samples unmeasured
+新建基线：guidance-capture-en-dark
+guidance-global-error-undo-zh: 13 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-global-error-undo-zh
+guidance-global-error-undo-320-zh: 13 contrast samples, 0 failures, 0 gradient samples unmeasured
+新建基线：guidance-global-error-undo-320-zh

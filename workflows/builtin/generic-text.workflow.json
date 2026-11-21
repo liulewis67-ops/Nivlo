@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "builtin.generic-text",
+  "name": "文字",
+  "description": "收集到的文字变成待办：第一行是标题，多行时完整内容放进描述，进入收集箱等待整理。",
+  "version": 1,
+  "priority": 0,
+  "enabled": true,
+  "source": "builtin",
+  "matcher": { "field": "input.type", "op": "equals", "value": "text" },
+  "steps": [
+    {
+      "type": "createItem",
+      "itemType": "todo",
+      "title": "{{ input.title }}",
+      "content": "{{ input.extra }}",
+      "inInbox": true
+    }
+  ]
+}
