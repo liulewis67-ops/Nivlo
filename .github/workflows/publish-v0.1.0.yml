@@ -1,0 +1,16 @@
+name: Publish Nivlo 0.1.0
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/publish-v0.1.0.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: v0.1.0
+    secrets: inherit

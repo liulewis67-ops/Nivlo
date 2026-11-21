@@ -9,6 +9,12 @@ on:
         description: Version tag to publish
         required: true
         default: v0.1.0
+  workflow_call:
+    inputs:
+      tag:
+        description: Version tag to publish
+        required: true
+        type: string
 
 permissions:
   contents: write
