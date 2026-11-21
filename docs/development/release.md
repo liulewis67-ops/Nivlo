@@ -7,10 +7,18 @@
 | 安装包 | `pnpm tauri build` → `target/release/bundle/nsis/Nivlo_<版本>_x64-setup.exe` | NSIS，**当前用户安装**（不需要管理员权限），中 / 英文安装界面 |
 | 更新包签名 | 同目录 `*.exe.sig` | minisign 签名；公钥写在 `tauri.conf.json` 的 `plugins.updater.pubkey` |
 | 更新清单 | `latest.json`（`scripts/release/make-latest-json.mjs` 生成） | 版本、说明、各平台的下载地址与签名 |
-| 更新端点 | `tauri.conf.json` → `plugins.updater.endpoints` | **目前是占位地址 `REPLACE-WITH-YOUR-UPDATE-HOST`，发布前必须改成真实地址** |
-| 自动发布 | `.github/workflows/release.yml` | 打 `v*` Tag 触发；尚未在真实仓库上运行过 |
+| 更新端点 | `tauri.conf.json` → `plugins.updater.endpoints` | `https://github.com/liulewis67-ops/Nivlo/releases/latest/download/latest.json` |
+| 自动发布 | `.github/workflows/release.yml` | 打 `v*` Tag 触发，也可手动从 `main` 指定版本发布并创建 Tag；没有更新签名密钥时仅发布安装包 |
 
 ## 密钥
+
+GitHub Actions 未配置更新签名密钥时，构建会关闭更新产物生成，但保留客户端的签名验证，发布安装包与 SHA256 校验文件，不生成 `latest.json`。如需应用内自动更新，发布前配置与客户端公钥对应的私钥及可选密码。流水线先上传到草稿 Release，全部成功后再公开，已公开的同版本产物不会被重跑覆盖。
+
+## GitHub Pages
+
+宣传页位于 `apps/landing`，无需 npm 构建。仓库 Settings → Pages → Build and deployment → Source 选择 **GitHub Actions**。之后推送 `main` 上的宣传页改动会触发 `.github/workflows/pages.yml`，也可以手动运行。
+
+部署目标：<https://liulewis67-ops.github.io/Nivlo/>。下载按钮指向 0.1.0 的 GitHub Release，发布后检查中英文页面、深浅主题、交互演示与安装包下载。
 
 * **更新签名私钥**：`pnpm tauri signer generate -w <路径>` 生成，**丢失后无法再给已安装的用户推送更新**。
   不要提交到仓库；CI 里放进 Secret `TAURI_SIGNING_PRIVATE_KEY`（密码放 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`，没有则留空）。

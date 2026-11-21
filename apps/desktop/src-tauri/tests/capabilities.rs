@@ -14,6 +14,8 @@ use serde_json::Value;
 /// 这里是**上限**：任何不在其中的命令都不得出现在 `floating.json`。
 const FLOATING_ALLOWED: &[&str] = &[
     "get_today",
+    // 悬浮窗重载后只读恢复尚未结束的提醒动画，不允许修改提醒配置。
+    "get_reminder_attention_ms",
     // 悬浮窗用只读界面偏好同步显示配置。
     "get_ui_pref",
     "quick_create",

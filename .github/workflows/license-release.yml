@@ -1,0 +1,37 @@
+name: Sync release license
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/license-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-license-v0.1.0
+  cancel-in-progress: false
+
+jobs:
+  license:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Attach license and update release notice
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload v0.1.0 LICENSE NOTICE --clobber
+          gh release view v0.1.0 --json body --jq .body > release-notes.md
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const file = 'release-notes.md';
+          const body = readFileSync(file, 'utf8');
+          const marker = '<!-- nivlo-apache-2.0 -->';
+          if (!body.includes(marker)) {
+            writeFileSync(file, body.trimEnd() + '\n\n' + marker + '\n## 开源协议 / License\n\nNivlo v0.1.0 的源码与 Nivlo 自身的二进制程序采用 Apache License 2.0。许可证与归属声明随本 Release 的 `LICENSE`、`NOTICE` 附件提供；第三方依赖遵循各自的许可证。\n\nNivlo v0.1.0 source code and Nivlo\'s own compiled binaries are licensed under Apache License 2.0. See the attached LICENSE and NOTICE files. Third-party dependencies retain their respective licenses.\n');
+          }
+          NODE
+          gh release edit v0.1.0 --notes-file release-notes.md

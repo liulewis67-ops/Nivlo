@@ -20,6 +20,9 @@ const MAX_SKIN_MANIFEST_BYTES: usize = 256 * 1024;
 /// 皮肤包内允许的最大帧图文件数量。
 const MAX_SKIN_PACK_ASSETS: usize = 180;
 
+/// Validated manifest and decoded image payloads read from a skin pack.
+type SkinPackContents = (String, Vec<(SkinAssetFormat, Vec<u8>)>);
+
 /// 把导出/导入文件操作错误统一转换为 `EXPORT_FAILED`。
 fn pack_failed(error: &impl std::fmt::Display) -> IpcError {
     IpcError::from(AppError::new(
@@ -130,9 +133,7 @@ fn write_skin_pack_zip(
 }
 
 /// 校验并解包皮肤 zip，返回 `(manifest_json, Vec<(SkinAssetFormat, bytes)>)`。
-fn read_skin_pack_zip(
-    source: &Path,
-) -> Result<(String, Vec<(SkinAssetFormat, Vec<u8>)>), IpcError> {
+fn read_skin_pack_zip(source: &Path) -> Result<SkinPackContents, IpcError> {
     let file = File::open(source).map_err(|e| pack_failed(&e))?;
     let mut archive = zip::ZipArchive::new(file).map_err(|e| pack_failed(&e))?;
 

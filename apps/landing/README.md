@@ -14,4 +14,6 @@ node apps/desktop/ui/node_modules/vite/bin/vite.js apps/landing --host 127.0.0.1
 
 「捕获」演示是一段拖放场景：演示区进入视野后，虚拟光标会把示例链接拖进悬浮窗，再由访客把文件拖进去。卡片支持鼠标、触屏和触控笔拖动，拖到别处松开会弹回，按 Esc 取消；也可以聚焦卡片后按 Enter，让卡片自己飞进去。访客还能从电脑上把真实的文件、链接或文字拖到演示区，页面只读取文件名或一段简短文字，不会上传。全部收下后可以重新演示。
 
-页面以交互演示为主入口。示例数据只用于展示；演示不会调用桌面应用，也不会写入真实任务。支持静态托管，发布时上传本目录内容，并把社交预览图地址改成公开的绝对 URL。接入公开下载前，请核实安装包地址和发布状态。
+页面包含 Windows 0.1.0 下载入口及交互演示。示例数据只用于展示；演示不会调用桌面应用，也不会写入真实任务。下载入口指向 GitHub Release，社交预览图使用 GitHub Pages 的绝对 URL。
+
+推送到 `main` 会触发 `.github/workflows/pages.yml`，部署本目录到 <https://liulewis67-ops.github.io/Nivlo/>。首次需在仓库 Settings → Pages 中将 Source 设为 GitHub Actions；也可手动运行部署工作流。应在 Release 安装包发布成功后对外宣传下载地址。

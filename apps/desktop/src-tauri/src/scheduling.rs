@@ -18,6 +18,7 @@ use crate::app::AppState;
 use crate::events::ReminderAttentionEvent;
 use crate::windows::FLOATING_WINDOW_LABEL;
 
+/// Initial reminder animation duration before the saved preference is loaded.
 const DEFAULT_FLASH_SECONDS: u8 = 8;
 
 /// 设置页可配置的单次提醒时长（秒）。
@@ -25,7 +26,9 @@ pub const FLASH_SECONDS_OPTIONS: [u8; 7] = [3, 5, 8, 10, 15, 20, 30];
 
 /// 保留最近一次提醒的动画结束时间，供尚未完成加载的悬浮窗读取。
 pub struct ReminderAttention {
+    /// Animation duration to use when the next reminder starts.
     flash_seconds: AtomicU8,
+    /// End time of the currently active reminder animation, if any.
     deadline: Mutex<Option<Instant>>,
 }
 
@@ -49,6 +52,7 @@ impl ReminderAttention {
         self.flash_seconds.load(Ordering::Relaxed)
     }
 
+    /// Start a new attention interval and return its duration in milliseconds.
     fn start(&self) -> u32 {
         let duration_ms = u32::from(self.flash_seconds()) * 1_000;
         let mut deadline = self

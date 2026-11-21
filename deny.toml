@@ -22,8 +22,8 @@ allow = [
   "CDLA-Permissive-2.0",
 ]
 confidence-threshold = 0.8
-# 本仓库自身的 crate 为 UNLICENSED 私有包，不参与 License 检查。
-private = { ignore = true }
+# 本仓库自身的 crate 使用 Apache-2.0，一并纳入许可证检查。
+private = { ignore = false }
 
 [bans]
 multiple-versions = "warn"

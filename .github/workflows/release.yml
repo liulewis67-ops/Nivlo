@@ -1,55 +1,116 @@
 name: Release
 
-# 打 Tag（v*）即构建、签名并发布：安装包 + 更新清单 latest.json 都上传到该 Tag 的 GitHub Release。
-# 更新端点（tauri.conf.json）应指向：
-#   https://github.com/<owner>/<repo>/releases/latest/download/latest.json
-# 注意：这条流水线尚未在真实仓库上运行过。需要的 Secrets：
-#   TAURI_SIGNING_PRIVATE_KEY（updater 私钥内容）、TAURI_SIGNING_PRIVATE_KEY_PASSWORD（没有密码则留空）。
-# 代码签名证书（Authenticode）另需配置，见 docs/development/release.md。
-
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version tag to publish
+        required: true
+        default: v0.1.0
+  workflow_call:
+    inputs:
+      tag:
+        description: Version tag to publish
+        required: true
+        type: string
 
 permissions:
   contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
   windows:
     runs-on: windows-latest
     env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.95.0
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: 版本号必须与 Tag 一致
+      - name: Validate release version
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          version="${RELEASE_TAG#v}"
           conf=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
-          [ "$version" = "$conf" ] || { echo "Tag $version 与 tauri.conf.json 的版本 $conf 不一致"; exit 1; }
-      - run: pnpm tauri build
-      - name: 生成更新清单
+          [ "$version" = "$conf" ] || { echo "Tag $version does not match app version $conf"; exit 1; }
+          test -f "docs/development/releases/$RELEASE_TAG.md"
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            [ "$(git rev-list -n 1 "$RELEASE_TAG")" = "$(git rev-parse HEAD)" ] || { echo 'Existing tag points to another commit'; exit 1; }
+          else
+            git tag "$RELEASE_TAG" HEAD
+            git push origin "refs/tags/$RELEASE_TAG"
+          fi
+      - name: Build with updater signature
+        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
+        run: pnpm tauri build
+      - name: Build without updater artifacts
+        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
-          node scripts/release/make-latest-json.mjs --version "$version" \
-            --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}" \
-            --notes "Nivlo $version"
-      - name: 发布
+          echo '::notice::No updater key configured. Publishing installer only; no update feed will be published.'
+          pnpm tauri build --config '{"bundle":{"createUpdaterArtifacts":false}}'
+      - name: Generate update manifest
+        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
         shell: bash
+        run: |
+          node scripts/release/make-latest-json.mjs --version "${RELEASE_TAG#v}" \
+            --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}" \
+            --notes "Nivlo ${RELEASE_TAG#v}"
+      - name: Preserve Windows build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nivlo-windows-${{ env.RELEASE_TAG }}
+          path: |
+            target/release/bundle/nsis/*-setup.exe
+            target/release/bundle/nsis/*-setup.exe.sig
+            latest.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish installer and checksums
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" --title "Nivlo ${GITHUB_REF_NAME#v}" --generate-notes \
-            target/release/bundle/nsis/*-setup.exe target/release/bundle/nsis/*-setup.exe.sig latest.json
+          $files = @(Get-ChildItem target/release/bundle/nsis/*-setup.exe)
+          if ($files.Count -ne 1) { throw 'Expected exactly one Windows installer' }
+          $files | ForEach-Object {
+            $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          } | Set-Content -Encoding utf8 SHA256SUMS.txt
+          $assets = @($files.FullName) + 'SHA256SUMS.txt'
+          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
+            $assets += @(Get-ChildItem target/release/bundle/nsis/*-setup.exe.sig).FullName
+            $assets += 'latest.json'
+          }
+          gh release view $env:RELEASE_TAG --json isDraft --jq .isDraft > release-state.txt 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:RELEASE_TAG --verify-tag --draft --title "Nivlo $($env:RELEASE_TAG.Substring(1))" --notes-file "docs/development/releases/$env:RELEASE_TAG.md"
+            if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
+          } elseif ((Get-Content release-state.txt -Raw).Trim() -ne 'true') {
+            throw 'This release is already published. Refusing to replace public artifacts.'
+          }
+          gh release upload $env:RELEASE_TAG @assets --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }
+          gh release edit $env:RELEASE_TAG --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

@@ -18,6 +18,12 @@
   },
   "bundle": {
     "active": true,
+    "license": "Apache-2.0",
+    "licenseFile": "../../../LICENSE",
+    "resources": {
+      "../../../LICENSE": "LICENSE",
+      "../../../NOTICE": "NOTICE"
+    },
     "targets": [
       "nsis"
     ],
@@ -48,7 +54,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEU1QTg3MEYzM0U1QkUyNjMKUldSajRscys4M0NvNWNEK2FKSllYM2VidmJFK05yM1VBcVVvMzRZUzhJL2FXSWNnUmExVmtobksK",
       "endpoints": [
-        "https://REPLACE-WITH-YOUR-UPDATE-HOST/nivlo/latest.json"
+        "https://github.com/liulewis67-ops/Nivlo/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "quiet"

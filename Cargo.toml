@@ -5,7 +5,7 @@ members = ["crates/*", "apps/desktop/src-tauri"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-license = "UNLICENSED"
+license = "Apache-2.0"
 publish = false
 
 # 所有依赖版本在此统一声明，子 crate 使用 `xxx.workspace = true` 引用（后端规范 §2.2）。
