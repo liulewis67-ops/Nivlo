@@ -387,7 +387,8 @@ export function CreateConfiguration({
     };
   }, [embedded]);
   useEffect(() => {
-    if (ready && !confirmDiscard) inputRef.current?.focus();
+    // 原生放大窗口的消息可能晚于 IPC 完成；徽标大小下聚焦不能把表单卷离起点。
+    if (ready && !confirmDiscard) inputRef.current?.focus({ preventScroll: true });
   }, [ready, confirmDiscard]);
   useEffect(() => {
     if (confirmDiscard) keepRef.current?.focus();
@@ -711,7 +712,7 @@ export function CreateConfiguration({
 
   /** 关联资料列表（拖入的网页、本地文件引用）。 */
   const linksSection = links.length > 0 && (
-    <section className="flex flex-col gap-2" aria-labelledby={linksId}>
+    <section className="flex min-w-0 flex-col gap-2" aria-labelledby={linksId}>
       <h2 id={linksId} className="text-sm font-medium text-text">
         {t("dropCreate.links", { count: links.length })}
       </h2>
@@ -775,7 +776,7 @@ export function CreateConfiguration({
       aria-modal={embedded ? undefined : true}
       aria-labelledby={headingId}
       aria-describedby={hintId}
-      className="relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-xl bg-surface text-text"
+      className="relative flex h-full min-h-0 min-w-0 w-full flex-col overflow-hidden rounded-xl bg-surface text-text"
       onSubmit={(event) => {
         event.preventDefault();
         submit();
@@ -924,7 +925,7 @@ export function CreateConfiguration({
           </header>
           <fieldset
             disabled={!ready || create.isPending || confirmDiscard}
-            className="min-h-0 flex-1 overflow-y-auto border-0 p-6"
+            className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto border-0 p-6"
           >
             <div className="flex flex-col gap-5">
               {kindSwitch}

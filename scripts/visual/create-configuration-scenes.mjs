@@ -2,6 +2,7 @@
 export function createConfigurationScenes({ app, sleep }) {
   return [
     { name: "create-desktop-light-zh", w: 640, h: 720 },
+    { name: "create-compact-drop-light-zh", w: 640, h: 720, compactDrop: true },
     { name: "create-desktop-dark-en", w: 640, h: 720, en: true, dark: true },
     { name: "create-narrow-light-zh", w: 400, h: 560, bottom: true },
     { name: "create-failed-dark-en", w: 400, h: 560, en: true, dark: true, fail: true },
@@ -15,8 +16,24 @@ export function createConfigurationScenes({ app, sleep }) {
     }
     if (scene.en) await page.evaluate("import('/src/i18n/index.ts').then(m => m.setLanguage('en'))");
     if (scene.dark) await page.evaluate("import('/src/stores/theme-store.ts').then(m => m.useThemeStore.getState().setPreference('dark'))");
-    await page.evaluate("document.querySelector('button').dispatchEvent(new MouseEvent('contextmenu', {bubbles:true, cancelable:true, button:2}))");
+    if (scene.compactDrop) {
+      await page.send('Emulation.setDeviceMetricsOverride', { width: 64, height: 32, deviceScaleFactor: 1, mobile: false });
+      await page.evaluate(`(() => {
+        const data = new DataTransfer();
+        data.setData('text/plain', 'img_v3_0217l_98167668-d756-4016-b761-fd4182151b7g.jpg\\nhttps://example.com/98167668-d756-4016-b761-fd4182151b7g.jpg');
+        document.querySelector('button').dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
+      })()`);
+    } else await page.evaluate("document.querySelector('button').dispatchEvent(new MouseEvent('contextmenu', {bubbles:true, cancelable:true, button:2}))");
     await sleep(200);
+    if (scene.compactDrop) {
+      await page.send('Emulation.setDeviceMetricsOverride', { width: scene.w, height: scene.h, deviceScaleFactor: 1, mobile: false });
+      await sleep(200);
+      const openingScroll = await page.evaluate(`(() => {
+        const fields = document.querySelector('[role=dialog] fieldset');
+        return { x: fields.scrollLeft, y: fields.scrollTop, pageX: scrollX, pageY: scrollY };
+      })()`);
+      if (Object.values(openingScroll).some(value => value !== 0)) throw Error('Opening focus displaced the form: ' + JSON.stringify(openingScroll));
+    }
     const message = scene.en
       ? "Send the updated quote\nThe customer asked for the new totals.\nReference: https://example.com/quote"
       : "发给客户新版报价\n客户需要更新后的合计。\n参考资料：https://example.com/quote";
@@ -54,6 +71,7 @@ export function createConfigurationScenes({ app, sleep }) {
       const fields = form.querySelector('fieldset');
       return {
         dialog: !!form,
+        aligned: form.getBoundingClientRect().left === 0 && form.getBoundingClientRect().top === 0,
         overflow: document.documentElement.scrollWidth > innerWidth || fields.scrollWidth > fields.clientWidth,
         footerVisible: footer.top >= 0 && footer.bottom <= innerHeight,
         draftRetained: form.querySelector('textarea').value.length > 0,
@@ -67,6 +85,6 @@ export function createConfigurationScenes({ app, sleep }) {
         discardProtected: ${scene.discard ? "form.querySelector('fieldset').disabled && !form.querySelector('button[type=submit]')" : "true"}
       };
     })()`);
-    if (!result.dialog || result.overflow || !result.footerVisible || !result.draftRetained || !result.importPreserved || !result.errorVisible || !result.discardProtected) throw Error(JSON.stringify(result));
+    if (!result.dialog || !result.aligned || result.overflow || !result.footerVisible || !result.draftRetained || !result.importPreserved || !result.errorVisible || !result.discardProtected) throw Error(JSON.stringify(result));
   } }));
 }
