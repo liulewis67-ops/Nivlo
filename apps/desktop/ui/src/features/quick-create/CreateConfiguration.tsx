@@ -1,6 +1,6 @@
 import { isImeKey } from "@/lib/ime";
 import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
-import type { ClipboardEvent, ReactNode } from "react";
+import type { ClipboardEvent, MouseEvent, ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Textarea } from "@/components";
@@ -769,6 +769,18 @@ export function CreateConfiguration({
   const scheduledToday = !inInbox && scheduledDate !== "" && scheduledDate === today;
   const selectedDate = !inInbox && scheduledDate !== "" && scheduledDate !== today;
 
+  /** 独立创建窗口的标题区交给系统拖动；内嵌弹窗及标题栏控件保留自己的操作。 */
+  function startWindowDrag(event: MouseEvent<HTMLElement>): void {
+    if (embedded || event.button !== 0) return;
+    if (
+      event.target instanceof Element &&
+      event.target.closest("button, input, textarea, select, a, [role='button'], [role='radio']")
+    )
+      return;
+    event.preventDefault();
+    void ipc.startFloatingDrag().catch(reportError);
+  }
+
   return (
     <form
       ref={formRef}
@@ -810,7 +822,10 @@ export function CreateConfiguration({
     >
       {isDocument ? (
         <>
-          <header className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-5 py-3">
+          <header
+            onMouseDown={startWindowDrag}
+            className={`flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-5 py-3${embedded ? "" : " cursor-move select-none"}`}
+          >
             <div className="mr-auto min-w-0">
               <h1 id={headingId} className="text-base font-semibold">
                 {t("createConfiguration.noteTitle")}
@@ -915,7 +930,10 @@ export function CreateConfiguration({
         </>
       ) : (
         <>
-          <header className="shrink-0 border-b border-border px-6 py-4">
+          <header
+            onMouseDown={startWindowDrag}
+            className={`shrink-0 border-b border-border px-6 py-4${embedded ? "" : " cursor-move select-none"}`}
+          >
             <h1 id={headingId} className="text-xl font-semibold">
               {t("createConfiguration.title")}
             </h1>

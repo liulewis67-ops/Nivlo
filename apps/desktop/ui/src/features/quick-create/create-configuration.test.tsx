@@ -19,6 +19,33 @@ async function ready(ipc = createMemoryIpc()) {
 }
 
 describe("完整新增配置", () => {
+  it("待办和笔记标题区可左键拖动，右键及表单控件不触发拖动", async () => {
+    const { ipc } = await ready();
+    const drag = vi.spyOn(ipc, "startFloatingDrag");
+    const heading = screen.getByRole("heading", { level: 1 });
+    fireEvent.mouseDown(heading, { button: 2 });
+    fireEvent.mouseDown(screen.getByLabelText("标题"), { button: 0 });
+    expect(drag).not.toHaveBeenCalled();
+    fireEvent.mouseDown(heading, { button: 0 });
+    expect(drag).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("radio", { name: "笔记" }));
+    const noteHeading = screen.getByRole("heading", { level: 1 });
+    fireEvent.mouseDown(screen.getByRole("radio", { name: "待办" }), { button: 0 });
+    fireEvent.mouseDown(screen.getByRole("button", { name: "Markdown" }), { button: 0 });
+    expect(drag).toHaveBeenCalledTimes(1);
+    fireEvent.mouseDown(noteHeading, { button: 0 });
+    expect(drag).toHaveBeenCalledTimes(2);
+  });
+
+  it("内嵌创建弹窗的标题不会拖动主窗口", () => {
+    const ipc = createMemoryIpc();
+    const drag = vi.spyOn(ipc, "startFloatingDrag");
+    renderWithProviders(<CreateConfiguration embedded kind="todo" onDone={vi.fn()} />, ipc);
+    fireEvent.mouseDown(screen.getByRole("heading", { level: 1 }), { button: 0 });
+    expect(drag).not.toHaveBeenCalled();
+  });
+
   it("从剪贴板导入多行消息，确认后才创建未排期的收集箱待办", async () => {
     const { ipc } = await ready();
     const message = "发给客户新版报价\n小李：附件已经更新";
