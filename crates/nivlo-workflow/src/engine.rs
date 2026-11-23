@@ -3,7 +3,7 @@
 //! * **线性管道**：没有分支图。Fatal 错误短路；`condition` 不满足时停止后续 Step（已有产出保留）；
 //! * 支持整体超时与取消（[`CancellationToken`]）；
 //! * 返回每个 Step 的记录（种类、状态、耗时、说明），供 Run 记录与「试运行」展示；
-//! * Engine 里**没有任何具体领域逻辑**：它只认识 [`StepExecutor`] 与变量表；
+//! * Engine 里**没有任何具体领域逻辑**：它只认识 [`StepExecutor`](crate::executor::StepExecutor) 与变量表；
 //! * 不碰数据库、文件系统、网络——产出的是待创建的 [`ItemDraft`]，由 Application 层在事务里落库。
 //!   因此「试运行」就是照常运行 Engine 再把草稿丢掉，不可能有副作用。
 

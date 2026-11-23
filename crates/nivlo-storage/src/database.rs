@@ -254,7 +254,7 @@ impl Database {
 
 #[async_trait]
 impl UnitOfWork for Database {
-    /// 从连接池取一个连接并开启事务（立即拿写锁，见 [`BEGIN_WRITE`]）。
+    /// 从连接池取一个连接并开启 `BEGIN IMMEDIATE` 事务，立即取得写锁。
     async fn begin(&self) -> Result<Box<dyn Transaction>, StorageError> {
         let tx = self.pool.begin_with(BEGIN_WRITE).await.map_err(map_sqlx)?;
         Ok(Box::new(SqliteTransaction::new(tx)))

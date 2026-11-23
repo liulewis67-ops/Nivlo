@@ -179,7 +179,7 @@ impl ScriptHandle {
     ///
     /// # Errors
     ///
-    /// 见 [\`ScriptError\`]。
+    /// 见 [`ScriptError`]。
     pub async fn run(&self, request: ScriptRequest) -> Result<ScriptOutput, ScriptError> {
         let (reply, response) = oneshot::channel();
         self.sender

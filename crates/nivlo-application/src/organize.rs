@@ -1,7 +1,7 @@
 //! `ProjectService` 与 `TagService`：项目与标签的组织能力（实施计划 3.3）。
 //!
 //! 与 [`crate::item::ItemService`] 一样遵循「事务 → 领域规则 → 提交 → 发布事件」的模式。
-//! 项目的 Item 排序见 D-05：未完成 → 优先级 → 计划日期 → 创建时间（[`ItemOrder::ProjectView`]）。
+//! 项目的 Item 排序见 D-05：未完成 → 优先级 → 计划日期 → 创建时间（[`ItemOrder::ProjectView`](crate::ports::ItemOrder::ProjectView)）。
 
 use std::collections::HashMap;
 use std::sync::Arc;

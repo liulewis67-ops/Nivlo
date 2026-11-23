@@ -3,7 +3,7 @@
 //! * **秘密只在系统凭据库里**：Token / 密码经 [`CredentialPort`] 保存与删除；`settings` 表里的
 //!   `integrations.connections` 只存非秘密的元数据（集成、账号、协议、连接时间、最近一次测试结果）。
 //! * 前端只能「写入」凭据，没有任何接口读回它。
-//! * 测试连接由对应的 [`Integration::test_connection`] 完成，并把结果区分成：成功 / 没连接 /
+//! * 测试连接由对应的 [`Integration::test_connection`](nivlo_application::ports::integration::Integration::test_connection) 完成，并把结果区分成：成功 / 没连接 /
 //!   认证失败 / 权限不足 / 网络问题 / 其他。
 
 use std::sync::Arc;
