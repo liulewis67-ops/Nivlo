@@ -36,7 +36,7 @@ pub fn show<R: Runtime>(app: &AppHandle<R>, item_id: &str) -> tauri::Result<()> 
                 .title("Nivlo")
                 .inner_size(width, height)
                 .min_inner_size(width.min(400.0), height.min(360.0))
-                .decorations(true)
+                .decorations(false)
                 .visible(false)
                 .center()
                 .zoom_hotkeys_enabled(cfg!(target_os = "windows"))

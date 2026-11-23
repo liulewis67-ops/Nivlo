@@ -8,6 +8,7 @@ import { ipc, isRunningInTauri } from "@/lib/ipc";
 import { queryKeys } from "@/lib/query-keys";
 import { reportError } from "@/lib/report-error";
 import { useDraftTransitionStore } from "@/stores/draft-transition-store";
+import { WindowTitlebar } from "@/app/main/WindowTitlebar";
 
 /** 真正销毁已完成保存的独立窗口；浏览器预览关闭对应的标签页。 */
 function closeWindow(): void {
@@ -54,39 +55,45 @@ export function DetailApp({
     };
   }, []);
   return (
-    <main className="h-full min-h-0 w-full overflow-hidden bg-surface">
-      {deleted ? (
-        <section
-          aria-label={t("detail.label")}
-          className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center"
-        >
-          <p className="text-sm">{t("trash.deleted", { title: item?.title ?? "" })}</p>
-          <div className="flex gap-2">
-            <Button
-              onClick={() =>
-                void ipc
-                  .restoreDeletedItems([id])
-                  .then(async () => {
-                    await query.refetch();
-                    setDeleted(false);
-                  })
-                  .catch(reportError)
-              }
-            >
-              {t("today.undo")}
-            </Button>
-            <Button onClick={closeWindow}>{t("detail.close")}</Button>
-          </div>
-        </section>
-      ) : (
-        <ItemDetailPanel
-          key={id}
-          id={id}
-          standalone
-          onClose={closeWindow}
-          onDeleted={() => setDeleted(true)}
-        />
-      )}
-    </main>
+    <div className="flex h-full min-h-0 flex-col bg-surface">
+      <WindowTitlebar
+        title={title}
+        onClose={() => useDraftTransitionStore.getState().request(closeWindow)}
+      />
+      <main className="min-h-0 w-full flex-1 overflow-hidden bg-surface">
+        {deleted ? (
+          <section
+            aria-label={t("detail.label")}
+            className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center"
+          >
+            <p className="text-sm">{t("trash.deleted", { title: item?.title ?? "" })}</p>
+            <div className="flex gap-2">
+              <Button
+                onClick={() =>
+                  void ipc
+                    .restoreDeletedItems([id])
+                    .then(async () => {
+                      await query.refetch();
+                      setDeleted(false);
+                    })
+                    .catch(reportError)
+                }
+              >
+                {t("today.undo")}
+              </Button>
+              <Button onClick={closeWindow}>{t("detail.close")}</Button>
+            </div>
+          </section>
+        ) : (
+          <ItemDetailPanel
+            key={id}
+            id={id}
+            standalone
+            onClose={closeWindow}
+            onDeleted={() => setDeleted(true)}
+          />
+        )}
+      </main>
+    </div>
   );
 }

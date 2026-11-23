@@ -12,12 +12,24 @@ const native = vi.hoisted(() => ({
   destroy: vi.fn(async () => undefined),
   setTitle: vi.fn(async () => undefined),
   stop: vi.fn(),
+  stopResize: vi.fn(),
+  minimize: vi.fn(async () => undefined),
+  toggleMaximize: vi.fn(async () => undefined),
+  isMaximized: vi.fn(async () => false),
+  resize: undefined as (() => void) | undefined,
   listener: undefined as ((event: { preventDefault: () => void }) => void) | undefined,
 }));
 vi.mock("@tauri-apps/api/window", () => ({
   getCurrentWindow: () => ({
     destroy: native.destroy,
     setTitle: native.setTitle,
+    minimize: native.minimize,
+    toggleMaximize: native.toggleMaximize,
+    isMaximized: native.isMaximized,
+    onResized: async (callback: () => void) => {
+      native.resize = callback;
+      return native.stopResize;
+    },
     onCloseRequested: async (callback: typeof native.listener) => {
       native.listener = callback;
       return native.stop;
@@ -46,6 +58,7 @@ describe("独立详情窗口", () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     native.listener = undefined;
+    native.resize = undefined;
     vi.spyOn(ipcModule, "isRunningInTauri").mockReturnValue(true);
   });
   afterEach(() => {
@@ -63,35 +76,64 @@ describe("独立详情窗口", () => {
     expect(screen.getByLabelText("标题")).toHaveValue(item.title);
     unmount();
     expect(native.stop).toHaveBeenCalledTimes(1);
+    expect(native.stopResize).toHaveBeenCalledTimes(1);
   });
 
-  it.each(["native", "button", "escape"])("%s 关闭会先保存修改再销毁窗口", async (mode) => {
-    const { ipc, item } = await openDetail();
-    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "已修改" } });
-    const preventDefault = vi.fn();
-    if (mode === "native") act(() => native.listener?.({ preventDefault }));
-    else if (mode === "button") fireEvent.click(screen.getByRole("button", { name: "关闭详情" }));
-    else fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Escape" });
-    await advance();
-    if (mode === "native") expect(preventDefault).toHaveBeenCalledOnce();
-    expect((await ipc.getItem(item.id)).title).toBe("已修改");
-    expect(native.destroy).toHaveBeenCalledOnce();
+  it("自绘标题栏区分拖动区与按钮，可最小化、最大化并同步还原状态", async () => {
+    await openDetail();
+    const title = screen.getByText("独立事项 · Nivlo");
+    expect(title.closest("[data-tauri-drag-region]")).toHaveAttribute(
+      "data-tauri-drag-region",
+      "deep",
+    );
+    const minimize = screen.getByRole("button", { name: "最小化" });
+    expect(minimize.closest("[data-tauri-drag-region]")).toBeNull();
+    fireEvent.click(minimize);
+    expect(native.minimize).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "最大化" }));
+    expect(native.toggleMaximize).toHaveBeenCalledOnce();
+    native.isMaximized.mockResolvedValueOnce(true);
+    act(() => native.resize?.());
+    await advance(100);
+    expect(screen.getByRole("button", { name: "还原窗口" })).toBeInTheDocument();
   });
 
-  it("原生关闭保存失败保留窗口与草稿，重试成功后才销毁", async () => {
-    const { ipc, item } = await openDetail();
-    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "保留草稿" } });
-    ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "offline"));
-    act(() => native.listener?.({ preventDefault: vi.fn() }));
-    await advance();
-    expect(native.destroy).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("标题")).toHaveValue("保留草稿");
-    expect(screen.getByRole("alert")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "重试" }));
-    await advance();
-    expect((await ipc.getItem(item.id)).title).toBe("保留草稿");
-    expect(native.destroy).toHaveBeenCalledOnce();
-  });
+  it.each(["native", "button", "titlebar", "escape"])(
+    "%s 关闭会先保存修改再销毁窗口",
+    async (mode) => {
+      const { ipc, item } = await openDetail();
+      fireEvent.change(screen.getByLabelText("标题"), { target: { value: "已修改" } });
+      const preventDefault = vi.fn();
+      if (mode === "native") act(() => native.listener?.({ preventDefault }));
+      else if (mode === "titlebar")
+        fireEvent.click(screen.getByRole("button", { name: "关闭窗口" }));
+      else if (mode === "button") fireEvent.click(screen.getByRole("button", { name: "关闭详情" }));
+      else fireEvent.keyDown(screen.getByLabelText("标题"), { key: "Escape" });
+      await advance();
+      if (mode === "native") expect(preventDefault).toHaveBeenCalledOnce();
+      expect((await ipc.getItem(item.id)).title).toBe("已修改");
+      expect(native.destroy).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(["native", "titlebar"])(
+    "%s 关闭保存失败保留窗口与草稿，重试成功后才销毁",
+    async (mode) => {
+      const { ipc, item } = await openDetail();
+      fireEvent.change(screen.getByLabelText("标题"), { target: { value: "保留草稿" } });
+      ipc.failNextUpdateWith(new AppError("STORAGE_UNAVAILABLE", "offline"));
+      if (mode === "native") act(() => native.listener?.({ preventDefault: vi.fn() }));
+      else fireEvent.click(screen.getByRole("button", { name: "关闭窗口" }));
+      await advance();
+      expect(native.destroy).not.toHaveBeenCalled();
+      expect(screen.getByLabelText("标题")).toHaveValue("保留草稿");
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "重试" }));
+      await advance();
+      expect((await ipc.getItem(item.id)).title).toBe("保留草稿");
+      expect(native.destroy).toHaveBeenCalledOnce();
+    },
+  );
 
   it("关闭等待在途保存及其后输入，保留同一输入节点和最终版本", async () => {
     const { ipc, item } = await openDetail();

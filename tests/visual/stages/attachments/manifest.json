@@ -1,0 +1,60 @@
+{
+  "sourceCommit": "8a90f912f7097181aa094baef774edcc538690de",
+  "fixtureRevision": "m5 regression: pinned 2026-10-13 clock/IDs, demo backend Today 2026-10-10; actual compact/expanded dimensions",
+  "platform": "win32",
+  "clock": "2026-10-13T04:00:00.000Z",
+  "motion": "reduce; screenshot animations disabled",
+  "sourceFiles": {
+    "scripts/visual/visual.mjs": "42ff3534613bf21b1eefadfaed76ac1421c0ee1d08e283dd0f50bba1c2616fcb",
+    "apps/desktop/ui/src/test/dev-seed.ts": "190f1daa3ff2cfbdc1e26c6fd306f72d94cf4422c8a39eb4a3ad071b2e2f3188",
+    "apps/desktop/ui/src/styles/tokens.css": "83cfaa7b0f9a002ff7dbbad86820c2299fe43408c8bf4a73938e0bcfd6ec020c",
+    "apps/desktop/ui/src/styles/global.css": "94e44e7c5949209099175a1634d137874132d0221ca0e651224d740582f80a09"
+  },
+  "artifacts": [
+    {
+      "name": "attachment-detail-text-680-zh",
+      "file": "attachment-detail-text-680-zh.png",
+      "viewport": {
+        "width": 680,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "fdab801b6f0b307060460172df0168980a2093adff6c949e50d8e438c32f0852"
+    },
+    {
+      "name": "attachment-detail-image-400-en",
+      "file": "attachment-detail-image-400-en.png",
+      "viewport": {
+        "width": 400,
+        "height": 640
+      },
+      "locale": "en",
+      "theme": "dark",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "3379fe2734def6f827320fe22cb4a6e2b8955f78bccb388ced3266eedd8e214b"
+    },
+    {
+      "name": "attachment-main-text-1100-zh",
+      "file": "attachment-main-text-1100-zh.png",
+      "viewport": {
+        "width": 1100,
+        "height": 720
+      },
+      "locale": "zh-CN",
+      "theme": "light",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+      "devicePixelRatio": 1,
+      "clock": "2026-10-13T04:00:00.000Z",
+      "pageOverflow": false,
+      "sha256": "fcefcad9f3caebb42a06d6049ef93f98037a882db374165e94f99f2001859a15"
+    }
+  ]
+}

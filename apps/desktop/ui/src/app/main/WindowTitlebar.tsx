@@ -10,8 +10,8 @@ const CONTROL_CLASS =
   "grid h-full w-11 place-items-center text-muted transition-colors focus-visible:outline-offset-[-3px]";
 const STANDARD_CONTROL = `${CONTROL_CLASS} hover:bg-surface-hover hover:text-text`;
 
-/** 主窗口标题栏。Tauri 接管标题区的拖动和双击，窗口按钮在独立的区域。 */
-export function WindowTitlebar() {
+/** 自绘窗口标题栏；详情可提供事项名及保存后关闭的回调。 */
+export function WindowTitlebar({ title, onClose }: { title?: string; onClose?: () => void } = {}) {
   const { t } = useTranslation();
   const native = isRunningInTauri();
   const [maximized, setMaximized] = useState(false);
@@ -56,7 +56,7 @@ export function WindowTitlebar() {
           className="size-5 shrink-0 bg-contain bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${appIcon})` }}
         />
-        <span className="truncate text-sm font-semibold text-text">{t("app.name")}</span>
+        <span className="truncate text-sm font-semibold text-text">{title ?? t("app.name")}</span>
       </div>
       <div className="flex shrink-0 items-stretch">
         <button
@@ -93,7 +93,10 @@ export function WindowTitlebar() {
           title={t("shell.window.close")}
           className={`${CONTROL_CLASS} hover:bg-danger hover:text-danger-contrast`}
           disabled={!native}
-          onClick={() => getCurrentWindow().close().catch(reportError)}
+          onClick={() => {
+            if (onClose) onClose();
+            else void getCurrentWindow().close().catch(reportError);
+          }}
         >
           <svg viewBox="0 0 16 16" className="size-4" aria-hidden="true">
             <path d="m4 4 8 8m0-8-8 8" stroke="currentColor" strokeLinecap="round" />
