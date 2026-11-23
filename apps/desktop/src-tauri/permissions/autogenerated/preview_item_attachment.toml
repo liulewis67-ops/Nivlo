@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-preview-item-attachment"
+description = "Enables the preview_item_attachment command without any pre-configured scope."
+commands.allow = ["preview_item_attachment"]
+
+[[permission]]
+identifier = "deny-preview-item-attachment"
+description = "Denies the preview_item_attachment command without any pre-configured scope."
+commands.deny = ["preview_item_attachment"]

@@ -12,6 +12,7 @@ import type {
   DatePointDto,
   ExpandedLayoutDto,
   InboxEntryDto,
+  AttachmentPreviewDto,
   IpcError,
   ItemDto,
   ItemTagsDto,
@@ -60,6 +61,7 @@ export type {
   LaterRuleDto,
   ItemOrderDto,
   AttachmentDto,
+  AttachmentPreviewDto,
   CaptureInputDto,
   CaptureOriginDto,
   CaptureRequestDto,
@@ -131,6 +133,10 @@ export interface IpcClient {
    * 文件已不在原处抛出 `SOURCE_FILE_MISSING`；没有可打开的来源抛出 `SOURCE_OPEN_FAILED`。
    */
   openItemSource(id: string): Promise<void>;
+  /** 只读预览已关联的附件，不接受磁盘路径。 */
+  previewItemAttachment(id: string, index: number): Promise<AttachmentPreviewDto>;
+  /** 在文件管理器中定位指定附件。 */
+  revealItemAttachment(id: string, index: number): Promise<void>;
   /** 按 ID 读取一个 Item。 */
   getItem(id: string): Promise<ItemDto>;
   /** 列出 Item，创建时间从新到旧。 */
@@ -498,6 +504,11 @@ const tauriIpc: IpcClient = {
   openItemSource: async (id) => {
     await call("open_item_source", commands.openItemSource(id));
   },
+  previewItemAttachment: (id, index) =>
+    call("preview_item_attachment", commands.previewItemAttachment(id, index)),
+  revealItemAttachment: async (id, index) => {
+    await call("reveal_item_attachment", commands.revealItemAttachment(id, index));
+  },
   listItems: (request) => call("list_items", commands.listItems(request)),
   getAppSettings: () => call("get_app_settings", commands.getAppSettings()),
   setAutostart: (enabled) => call("set_autostart", commands.setAutostart(enabled)),
@@ -730,6 +741,8 @@ export const ipc: IpcClient = {
   getItemDetail: (id) => current.getItemDetail(id),
   updateItem: (id, request) => current.updateItem(id, request),
   openItemSource: (id) => current.openItemSource(id),
+  previewItemAttachment: (id, index) => current.previewItemAttachment(id, index),
+  revealItemAttachment: (id, index) => current.revealItemAttachment(id, index),
   listItems: (request) => current.listItems(request),
   getAppSettings: () => current.getAppSettings(),
   setAutostart: (enabled) => current.setAutostart(enabled),

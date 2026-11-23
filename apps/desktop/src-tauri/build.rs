@@ -11,6 +11,8 @@ const COMMANDS: &[&str] = &[
     "get_item_detail",
     "update_item",
     "open_item_source",
+    "preview_item_attachment",
+    "reveal_item_attachment",
     "delete_items",
     "undo_created_item",
     "restore_deleted_items",

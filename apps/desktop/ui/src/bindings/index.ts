@@ -84,6 +84,20 @@ export const commands = {
 	 */
 	openItemSource: (id: string) => typedError<null, IpcError>(__TAURI_INVOKE("open_item_source", { id })),
 	/**
+	 *  查看一个已关联附件的图片或文本内容。
+	 * 
+	 *  # Errors
+	 *  事项 / 附件不存在、文件已丢失或无法读取时返回错误。
+	 */
+	previewItemAttachment: (id: string, index: number) => typedError<AttachmentPreviewDto, IpcError>(__TAURI_INVOKE("preview_item_attachment", { id, index })),
+	/**
+	 *  在文件管理器中定位指定关联附件（包括 Nivlo 保存的截图）。
+	 * 
+	 *  # Errors
+	 *  事项 / 附件不存在、文件已丢失或系统定位失败时返回错误。
+	 */
+	revealItemAttachment: (id: string, index: number) => typedError<null, IpcError>(__TAURI_INVOKE("reveal_item_attachment", { id, index })),
+	/**
 	 *  删除一批 Item：移进回收站（软删除），30 天内可以恢复。
 	 * 
 	 *  全部在一个事务里：任何一个不存在，整批不变。成功后界面通过 `item_updated` 事件刷新。
@@ -948,6 +962,19 @@ export type AttachmentDto = {
 	/**  被引用的文件现在是否还在；保存的图片恒为 `true`。展示「文件不存在」状态用，不会因此报错。 */
 	exists: boolean,
 };
+
+/**  附件的只读预览结果。 */
+export type AttachmentPreviewDto = 
+/**  作为图片展示的栅格图像，不解释 HTML 或 SVG。 */
+{ kind: "image"; 
+/**  带 MIME 的 Base64 图片地址。 */
+url: string } | 
+/**  原样展示的文本，不执行其中的脚本或标记。 */
+{ kind: "text"; 
+/**  文本内容。 */
+content: string } | 
+/**  文件过大、格式不受支持或路径是文件夹。 */
+{ kind: "unavailable" };
 
 /**  Calendar 查询的结果（IPC 表示）。 */
 export type CalendarDto = {

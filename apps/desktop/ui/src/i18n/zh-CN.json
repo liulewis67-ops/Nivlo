@@ -1358,5 +1358,18 @@
     "titleMany": "{{first}} 等 {{count}} 项",
     "appendTitle": "松手添加为关联资料",
     "appendHint": "网页和文件会加到这条事项里，不会另开一页"
+  },
+  "attachments": {
+    "label": "关联文件",
+    "view": "查看",
+    "viewNamed": "查看「{{name}}」",
+    "revealNamed": "在文件夹中显示「{{name}}」",
+    "previewNamed": "预览「{{name}}」",
+    "loading": "正在读取文件…",
+    "retry": "重试",
+    "imageFailed": "图片无法显示，文件可能已损坏。",
+    "unavailable": "此格式或大小暂不支持内置预览，请在文件夹中查看。支持 16 MB 以内的常见图片和 512 KB 以内的 UTF-8 / UTF-16 文本。",
+    "readOnly": "只读预览",
+    "close": "关闭预览"
   }
 }

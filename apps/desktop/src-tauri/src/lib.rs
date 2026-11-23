@@ -76,6 +76,8 @@ macro_rules! bindings_builder {
                 $crate::commands::item::get_item_detail,
                 $crate::commands::item::update_item,
                 $crate::commands::source::open_item_source::<$runtime>,
+                $crate::commands::attachment::preview_item_attachment,
+                $crate::commands::attachment::reveal_item_attachment::<$runtime>,
                 $crate::commands::trash::delete_items,
                 $crate::commands::trash::undo_created_item,
                 $crate::commands::trash::restore_deleted_items,

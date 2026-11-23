@@ -1364,5 +1364,18 @@
     "titleMany": "{{first}} and others ({{count}} items)",
     "appendTitle": "Release to add as linked material",
     "appendHint": "Pages and files are added to this item instead of opening a new one"
+  },
+  "attachments": {
+    "label": "Linked files",
+    "view": "View",
+    "viewNamed": "View “{{name}}”",
+    "revealNamed": "Show “{{name}}” in folder",
+    "previewNamed": "Preview “{{name}}”",
+    "loading": "Reading file…",
+    "retry": "Retry",
+    "imageFailed": "The image could not be displayed. The file may be damaged.",
+    "unavailable": "This format or size cannot be previewed here. Show the file in its folder to view it. Common images up to 16 MB and UTF-8 / UTF-16 text up to 512 KB are supported.",
+    "readOnly": "Read-only preview",
+    "close": "Close preview"
   }
 }

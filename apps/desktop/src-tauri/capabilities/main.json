@@ -20,6 +20,8 @@
     "allow-get-item-detail",
     "allow-update-item",
     "allow-open-item-source",
+    "allow-preview-item-attachment",
+    "allow-reveal-item-attachment",
     "allow-delete-items",
     "allow-restore-deleted-items",
     "allow-list-trash",

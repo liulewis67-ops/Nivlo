@@ -13,6 +13,7 @@ import { ProjectSelect, TagsField } from "@/features/organize";
 import { useDeleteItems } from "@/features/trash";
 import { reminderPresets } from "./model/reminder-presets";
 import { SourceSection } from "./SourceSection";
+import { AttachmentsSection } from "./AttachmentsSection";
 import { useItemDraft } from "./use-item-draft";
 import { DraftRecovery } from "./DraftRecovery";
 import { useDraftTransitionStore } from "@/stores/draft-transition-store";
@@ -490,6 +491,7 @@ export function ItemDetailPanel({
               <TagsField itemId={id} tags={query.data.tags} />
             </Field>
             <SourceSection detail={query.data} onOpen={openSource} onRerun={rerun} />
+            <AttachmentsSection detail={query.data} />
             <Field label={t("detail.field.type")}>
               <Segmented
                 label={t("detail.field.type")}

@@ -1057,6 +1057,8 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
       }
       return Promise.resolve();
     },
+    previewItemAttachment: () => Promise.resolve({ kind: "unavailable" as const }),
+    revealItemAttachment: () => Promise.resolve(),
     setClipboard: (content: { text?: string; files?: string[] } | null) => {
       clipboard = content;
     },
