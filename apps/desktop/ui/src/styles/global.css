@@ -43,6 +43,7 @@ body,
 }
 
 /* 日期输入在窄侧页 / 放大后的有效宽度下纵向排列。 */
+.nv-detail-window,
 .nv-detail-panel {
   container-type: inline-size;
 }

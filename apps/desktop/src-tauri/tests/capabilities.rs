@@ -141,11 +141,36 @@ fn main_only_commands_are_not_exposed_to_floating() {
 }
 
 #[test]
+fn detail_windows_can_save_and_preview_but_cannot_manage_the_app() {
+    let detail = parse(include_str!("../capabilities/detail.json"));
+    assert_eq!(windows(&detail), ["detail-*"]);
+    let commands = allowed_commands(&detail);
+    for required in [
+        "get_item_detail",
+        "update_item",
+        "preview_item_attachment",
+        "reveal_item_attachment",
+    ] {
+        assert!(commands.iter().any(|command| command == required));
+    }
+    for forbidden in [
+        "quit_app",
+        "purge_items",
+        "reset_all_data",
+        "set_shortcut",
+        "install_update",
+    ] {
+        assert!(!commands.iter().any(|command| command == forbidden));
+    }
+}
+
+#[test]
 fn no_window_gets_blanket_permissions() {
     for text in [
         include_str!("../capabilities/floating.json"),
         include_str!("../capabilities/main.json"),
         include_str!("../capabilities/search.json"),
+        include_str!("../capabilities/detail.json"),
     ] {
         let capability = parse(text);
         for permission in capability["permissions"].as_array().unwrap() {

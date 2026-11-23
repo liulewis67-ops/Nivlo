@@ -361,7 +361,7 @@ describe("窄窗口待安排侧页", () => {
     vi.restoreAllMocks();
   });
 
-  it("保持日历宽度，循环焦点，打开详情后只保留一个模态，关闭详情回到工具栏", async () => {
+  it("待安排保持日历宽度与循环焦点，打开主内容区详情后关闭侧页", async () => {
     // jsdom 无 top-layer；此处仅验证调用与焦点协调，浏览器场景另验真正的模态背景。
     Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
       configurable: true,
@@ -394,8 +394,8 @@ describe("窄窗口待安排侧页", () => {
     const item = within(sheet).getByRole("button", { name: "待安排的长标题" });
     expect(item).toHaveFocus();
     await userEvent.setup().keyboard("{Enter}");
-    const detail = await screen.findByRole("dialog", { name: "条目详情" });
-    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    const detail = await screen.findByLabelText("条目详情");
+    expect(ipc.openedItems).toEqual([]);
     fireEvent.click(within(detail).getByRole("button", { name: "关闭详情" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(trigger).toHaveFocus();

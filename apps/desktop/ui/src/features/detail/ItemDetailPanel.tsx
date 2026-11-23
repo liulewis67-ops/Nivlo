@@ -40,6 +40,10 @@ export type ItemDetailPanelProps = {
   modal?: boolean;
   /** 搜索等临时模态拥有焦点时暂停当前表面。 */
   suspended?: boolean;
+  /** 在主窗口详情页或独立窗口中占满空间，不使用侧页宽度及定位。 */
+  standalone?: boolean;
+  /** 独立窗口删除后保留恢复操作，由窗口外壳展示。 */
+  onDeleted?: () => void;
 };
 
 /** [`Segmented`] 的 Props。 */
@@ -138,6 +142,8 @@ export function ItemDetailPanel({
   onClose,
   modal = false,
   suspended = false,
+  standalone = false,
+  onDeleted,
 }: ItemDetailPanelProps) {
   const { t } = useTranslation();
   const { query, detail, draft, status, problem, owner, edit, save } = useItemDraft(id, 20);
@@ -255,8 +261,10 @@ export function ItemDetailPanel({
         aria-label={t("detail.label")}
         onKeyDown={handleKeyDown}
         className={cx(
-          "nv-detail-panel flex min-h-0 flex-col border-l border-border bg-surface focus-visible:outline-none",
-          modal ? "fixed inset-y-0 right-0 z-(--nv-z-dialog) shadow-lg" : "row-start-2 h-full",
+          "flex min-h-0 flex-col bg-surface focus-visible:outline-none",
+          standalone ? "nv-detail-window h-full w-full" : "nv-detail-panel border-l border-border",
+          !standalone &&
+            (modal ? "fixed inset-y-0 right-0 z-(--nv-z-dialog) shadow-lg" : "row-start-2 h-full"),
           suspended && "invisible",
         )}
       >
@@ -283,7 +291,9 @@ export function ItemDetailPanel({
                   isDisabled: item === undefined,
                   onSelect: () =>
                     useDraftTransitionStore.getState().request(() => {
-                      if (item)
+                      if (item && standalone && onDeleted) {
+                        void ipc.deleteItems([id]).then(onDeleted).catch(reportError);
+                      } else if (item)
                         void remove([id], item.title).then((deleted) => {
                           if (deleted) onClose();
                         });

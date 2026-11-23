@@ -3,7 +3,7 @@ import { createContext, useContext } from "react";
 /**
  * 「打开这个条目的详情」的能力。
  *
- * 主窗口打开自己的详情面板；悬浮窗通过 IPC 在主窗口打开对应事项。
+ * 主窗口在内容区展示详情；悬浮窗与全局搜索通过 IPC 打开独立详情窗口。
  */
 export const OpenItemContext = createContext<((id: string) => void) | null>(null);
 

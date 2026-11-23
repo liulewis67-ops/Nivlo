@@ -1,0 +1,25 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "detail-window",
+  "description": "独立事项详情窗口：编辑当前事项、只读查看关联资料及保存后关闭。",
+  "windows": ["detail-*"],
+  "permissions": [
+    "core:event:default",
+    "core:window:allow-destroy",
+    "core:window:allow-set-title",
+    "allow-get-item-detail",
+    "allow-update-item",
+    "allow-mark-item-opened",
+    "allow-open-item-source",
+    "allow-preview-item-attachment",
+    "allow-reveal-item-attachment",
+    "allow-list-projects",
+    "allow-list-tags",
+    "allow-set-item-tags",
+    "allow-delete-items",
+    "allow-restore-deleted-items",
+    "allow-rerun-workflow",
+    "allow-get-ui-pref",
+    "allow-set-ui-pref"
+  ]
+}

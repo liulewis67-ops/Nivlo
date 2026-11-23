@@ -125,9 +125,8 @@ describe("全局搜索（Ctrl+K）", () => {
 
     fireEvent.keyDown(input, { key: "Enter" });
     expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
-    expect(await screen.findByLabelText("条目详情")).toBeInTheDocument();
-    await waitFor(() => expect(ipc.calls).toContain("getItemDetail"));
     expect(await screen.findByDisplayValue("登录二")).toBeInTheDocument();
+    expect(ipc.openedItems).toEqual([]);
     expect(ipc.items.find((i) => i.id === second)?.title).toBe("登录二");
   });
 
@@ -141,6 +140,7 @@ describe("全局搜索（Ctrl+K）", () => {
     fireEvent.click(await screen.findByRole("button", { name: /新建待办「预约体检」/ }));
     const detail = await screen.findByLabelText("条目详情");
     expect(await within(detail).findByDisplayValue("预约体检")).toBeInTheDocument();
+    expect(ipc.openedItems).toEqual([]);
     expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
     expect(ipc.items.find((item) => item.title === "预约体检")?.itemType).toBe("todo");
   });
@@ -250,6 +250,7 @@ describe("全局搜索（Ctrl+K）", () => {
     await screen.findByRole("listbox", { name: "搜索结果" });
     fireEvent.click(await screen.findByRole("option", { name: /读书笔记/ }));
     expect(await screen.findByDisplayValue("读书笔记")).toBeInTheDocument();
+    expect(ipc.openedItems).toEqual([]);
     expect(dialog).not.toBeInTheDocument();
 
     pressCtrlK();

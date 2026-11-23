@@ -112,9 +112,8 @@ export function MainShell() {
   const today = useTodayQuery().data;
   const remaining = today?.remainingCount ?? null;
   const inboxCount = useInboxCountQuery().data ?? null;
-  /** 详情面板里正在编辑的条目；`null` 表示面板关闭。 */
-  const openId = useNavStore((state) => state.detailId);
   const setOpenId = useNavStore((state) => state.openItem);
+  const openId = useNavStore((state) => state.detailId);
   /** 搜索面板（Ctrl+K）是否打开。 */
   const [searching, setSearching] = useState(false);
   /** 键盘快捷键一览是否打开。 */
@@ -132,10 +131,7 @@ export function MainShell() {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const width = useContainerWidth(shellRef);
   const compact = width < LAYOUT.compactShell;
-  const detailSheet = openId !== null && width < LAYOUT.dockedDetail;
-  const detailModal = detailSheet && !searching && !showingShortcuts && !onboarding;
-  const navModal =
-    compact && navigationOpen && !detailModal && !searching && !showingShortcuts && !onboarding;
+  const navModal = compact && navigationOpen && !searching && !showingShortcuts && !onboarding;
   /** 选择当前页面也要退出导航抽屉，避免把本页留在遮罩后。 */
   function selectView(target: MainView): void {
     setView(target);
@@ -372,12 +368,12 @@ export function MainShell() {
           "grid h-full grid-rows-[auto_minmax(0,1fr)] bg-bg",
           compact
             ? "grid-cols-[minmax(0,1fr)]"
-            : "grid-cols-[var(--nv-sidebar-width)_minmax(0,1fr)_auto]",
+            : "grid-cols-[var(--nv-sidebar-width)_minmax(0,1fr)]",
         )}
       >
         <header
           hidden={!compact}
-          inert={detailModal || navModal || searching || showingShortcuts || onboarding}
+          inert={navModal || searching || showingShortcuts || onboarding}
           className={cx(
             "col-span-full items-center gap-3 border-b border-border bg-surface px-3 py-2",
             compact ? "flex" : "hidden",
@@ -414,7 +410,7 @@ export function MainShell() {
           role={navModal ? "dialog" : undefined}
           aria-modal={navModal ? true : undefined}
           aria-label={navModal ? t("shell.navigation") : undefined}
-          inert={detailModal || searching || showingShortcuts || onboarding}
+          inert={searching || showingShortcuts || onboarding}
           onKeyDown={(event) => {
             if (!navModal || event.defaultPrevented) return;
             if (event.key === "Escape") {
@@ -492,22 +488,27 @@ export function MainShell() {
           </div>
         </aside>
         <main
-          inert={detailModal || navModal || searching || showingShortcuts || onboarding}
+          inert={navModal || searching || showingShortcuts || onboarding}
           className="row-start-2 min-h-0 min-w-0 overflow-hidden"
         >
-          {view === "inbox" && <InboxPage />}
-          {view === "notes" && <NotesPage />}
-          {view === "today" && <TodayPage />}
-          {view === "dev" && (
-            <div className="h-full overflow-y-auto">
-              <DevConsole />
-            </div>
+          <div hidden={openId !== null} className="h-full min-h-0">
+            {view === "inbox" && <InboxPage />}
+            {view === "notes" && <NotesPage />}
+            {view === "today" && <TodayPage />}
+            {view === "dev" && (
+              <div className="h-full overflow-y-auto">
+                <DevConsole />
+              </div>
+            )}
+            {view === "projects" && <ProjectsPage />}
+            {view === "workflows" && <WorkflowsPage />}
+            {view === "trash" && <TrashPage />}
+            {view === "settings" && <SettingsPage />}
+            {view === "calendar" && <CalendarPage />}
+          </div>
+          {openId !== null && (
+            <ItemDetailPanel key={openId} id={openId} standalone onClose={() => setOpenId(null)} />
           )}
-          {view === "projects" && <ProjectsPage />}
-          {view === "workflows" && <WorkflowsPage />}
-          {view === "trash" && <TrashPage />}
-          {view === "settings" && <SettingsPage />}
-          {view === "calendar" && <CalendarPage />}
         </main>
         {onboarding && (
           <OnboardingDialog
@@ -547,15 +548,6 @@ export function MainShell() {
                     item.itemType === "note" ? openNote(item.id) : setOpenId(item.id),
                 })
             }
-          />
-        )}
-        {openId !== null && (
-          <ItemDetailPanel
-            key={openId}
-            id={openId}
-            onClose={() => setOpenId(null)}
-            modal={detailSheet}
-            suspended={searching || showingShortcuts || onboarding}
           />
         )}
       </div>

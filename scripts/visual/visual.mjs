@@ -22,6 +22,7 @@ import { guidanceScenes } from "./guidance-scenes.mjs";
 import { accessibilityAudit } from "./accessibility-audit.mjs";
 import { releaseScenes } from "./release-scenes.mjs";
 import { createConfigurationScenes } from "./create-configuration-scenes.mjs";
+import { attachmentScenes } from "./attachment-scenes.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const PLATFORM = process.platform;
@@ -32,10 +33,11 @@ const GUIDANCE_STAGE = process.argv.includes("--guidance-stage");
 const ACCESSIBILITY_STAGE = process.argv.includes("--accessibility-stage");
 const RELEASE_STAGE = process.argv.includes("--release-stage");
 const CREATE_STAGE = process.argv.includes("--create-stage");
+const ATTACHMENT_STAGE = process.argv.includes("--attachment-stage");
 const releaseMeasurements = [];
 let contrastFailures = 0;
 const IMPLEMENTATION = process.argv.includes("--implementation-baseline") || DETAIL_STAGE || CALENDAR_STAGE || FOCUS_AUDIT || GUIDANCE_STAGE || ACCESSIBILITY_STAGE || RELEASE_STAGE;
-const BASELINES = CREATE_STAGE ? join(ROOT,"apps","desktop","ui",".impeccable","review") : RELEASE_STAGE ? join(ROOT,"tests","visual","stages","m5") : ACCESSIBILITY_STAGE ? join(ROOT,"tests","visual","stages","m4") : GUIDANCE_STAGE ? join(ROOT, "tests", "visual", "stages", "m3") : FOCUS_AUDIT ? join(ROOT, "tests", "visual", "stages", "m3", "before-focus") : CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
+const BASELINES = (ATTACHMENT_STAGE || DETAIL_STAGE) ? join(ROOT,"tests","visual","stages","attachments") : CREATE_STAGE ? join(ROOT,"apps","desktop","ui",".impeccable","review") : RELEASE_STAGE ? join(ROOT,"tests","visual","stages","m5") : ACCESSIBILITY_STAGE ? join(ROOT,"tests","visual","stages","m4") : GUIDANCE_STAGE ? join(ROOT, "tests", "visual", "stages", "m3") : FOCUS_AUDIT ? join(ROOT, "tests", "visual", "stages", "m3", "before-focus") : CALENDAR_STAGE ? join(ROOT, "tests", "visual", "stages", "m2") : DETAIL_STAGE ? join(ROOT, "tests", "visual", "stages", "m1") : IMPLEMENTATION
   ? join(ROOT, "tests", "visual", "implementation-baseline")
   : join(ROOT, "tests", "visual", "baselines", PLATFORM);
 const DIFFS = join(ROOT, "tests", "visual", "diff");
@@ -213,7 +215,7 @@ const STABILIZE = `
 `;
 
 // M1 的独立验收集；不覆盖 W0 或历史回归图片。
-if (DETAIL_STAGE || RELEASE_STAGE) {
+if (RELEASE_STAGE) {
   SCENARIOS.length = 0;
   for (const scene of [
     { name: "detail-960-light-zh", w: 960, h: 640 },
@@ -411,6 +413,11 @@ if (ACCESSIBILITY_STAGE) {
 if (RELEASE_STAGE) {
   SCENARIOS.push(...guidanceScenes({app:APP,click:clickWhenReady,sleep}));
   SCENARIOS.push(...releaseScenes({app:APP,click:clickWhenReady,sleep,record:(scene,value)=>releaseMeasurements.push({scene,...value})}));
+}
+
+if (ATTACHMENT_STAGE || DETAIL_STAGE) {
+  SCENARIOS.length = 0;
+  SCENARIOS.push(...attachmentScenes({ app: APP, sleep }));
 }
 
 if (CREATE_STAGE) {

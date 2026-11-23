@@ -14,6 +14,8 @@ System UI stack, starting with Microsoft YaHei UI; Cascadia Mono for code. Incum
 
 ## Layout
 
+2026-11-23: Details opened inside the main window fill its content area, with the existing page retained behind it and restored on close. This replaces the M1 docked/modal detail drawer described below. Floating-panel and global-search entries open independent native windows; each item reuses its own resizable window. Both surfaces wait for draft saving before leaving, and preserve recovery controls on failure. Linked-file previews remain read-only.
+
 Use the existing 4px rhythm, 8px compact gaps, 12–16px related fields and 24px major sections. Observed main grid reserves 216px navigation and a 384px detail panel regardless of viewport; default native main size is 960×640. This compresses list titles.
 
 Implemented in M1: at least 1200px shell width permits docked details; 800–1199px uses a modal detail sheet; below 800px uses a labeled navigation drawer. One detail instance changes positioning without reparenting or saving merely because of resize. Modal sheets contain Tab and make the background inert. The default native size stays unchanged. M1 browser acceptance covers details and navigation at effective widths down to 400px; other pages' reflow, actual 200% zoom/native and assistive-technology acceptance remain in their owning stages and the integrated sweep.

@@ -38,7 +38,7 @@ describe("搜索的可见操作与焦点", () => {
     expect(opener).toHaveFocus();
   });
 
-  it("可见的打开按钮转移到详情；搜索清理不抢回焦点", async () => {
+  it("主窗口搜索在内容区打开详情并关闭搜索", async () => {
     const user = userEvent.setup();
     const ipc = createMemoryIpc();
     const item = await ipc.quickCreate("todo", "需要打开的条目");
@@ -46,9 +46,10 @@ describe("搜索的可见操作与焦点", () => {
     await user.click(screen.getByRole("button", { name: /搜索/ }));
     await screen.findByRole("option", { name: /需要打开的条目/ });
     await user.click(screen.getByRole("button", { name: "打开" }));
-    const detail = await screen.findByRole("dialog", { name: "条目详情" });
+    expect(await screen.findByDisplayValue(item.title)).toBeInTheDocument();
+    expect(ipc.openedItems).toEqual([]);
     expect(useNavStore.getState().detailId).toBe(item.id);
-    expect(detail).toHaveFocus();
+    expect(screen.getByLabelText("条目详情")).toHaveFocus();
     expect(screen.queryByRole("dialog", { name: "搜索" })).not.toBeInTheDocument();
   });
 

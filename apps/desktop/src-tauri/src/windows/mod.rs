@@ -10,6 +10,7 @@
 //! 两个窗口的 IPC 权限由 `capabilities/` 下各自的文件决定（架构文档 §13）。
 //! 悬浮窗的位置、吸附与持久化见 [`floating`]。
 
+pub mod detail;
 pub mod floating;
 pub mod floating_port;
 pub mod search;
@@ -179,7 +180,7 @@ pub fn handle_activation<R: Runtime>(app: &AppHandle<R>, args: &[String]) -> boo
     true
 }
 
-/// 打开主窗口并定位到一个 Item 的详情（点击通知、全局搜索选中结果）。
+/// 打开一个事项的独立详情窗口（点击通知、全局搜索选中结果）。
 ///
 /// `item_id` 必须已经校验过。
 ///
@@ -187,17 +188,12 @@ pub fn handle_activation<R: Runtime>(app: &AppHandle<R>, args: &[String]) -> boo
 ///
 /// 主窗口创建或显示失败时返回 Tauri 错误。
 pub fn open_item_in_main<R: Runtime>(app: &AppHandle<R>, item_id: &str) -> tauri::Result<()> {
-    let view = format!("item:{item_id}");
-    // 先记下要打开的 Item：主窗口可能刚创建、还没监听事件，启动时会取走它。
-    if let Some(state) = app.try_state::<AppState>() {
-        state.runtime.set_pending_main_view(view.clone());
+    if let Some(state) = app.try_state::<AppState>()
+        && let Some(floating) = state.runtime.floating()
+    {
+        floating.cancel_focus_return();
     }
-    show_main_window(app)?;
-    let event = crate::events::MainViewRequestedEvent { view };
-    if let Err(error) = tauri_specta::Event::emit_to(&event, app, MAIN_WINDOW_LABEL) {
-        tracing::warn!(event = "open_item_event_failed", %error, "无法通知主窗口打开 Item");
-    }
-    Ok(())
+    detail::show(app, item_id)
 }
 
 /// 处理窗口事件。

@@ -3,7 +3,7 @@ import { OpenItemContext } from "@/features/detail";
 import { ipc } from "@/lib/ipc";
 import { reportError } from "@/lib/report-error";
 
-/** 悬浮窗的事项详情由主窗口承载，沿用按 ID 定位的窗口接口。 */
+/** 悬浮窗通过按 ID 定位的接口打开独立详情窗口。 */
 function openItem(id: string): void {
   void ipc.openItemInMain(id).catch(reportError);
 }

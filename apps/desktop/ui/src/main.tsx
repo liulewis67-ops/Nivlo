@@ -30,6 +30,8 @@ const SEARCH_WINDOW_LABEL = "search";
  * @returns 根组件。
  */
 async function loadRoot(label: string): Promise<ComponentType> {
+  if (label.startsWith("detail-") || label === "detail")
+    return (await import("@/app/detail/DetailApp")).DetailApp;
   if (label === FLOATING_WINDOW_LABEL)
     return (await import("@/app/floating/FloatingApp")).FloatingApp;
   if (label === SEARCH_WINDOW_LABEL) return (await import("@/features/search/SearchApp")).SearchApp;
@@ -94,9 +96,19 @@ async function bootstrap(): Promise<void> {
     const { seedDemoData } = await import("@/test/dev-seed");
     const memory = createMemoryIpc();
     await seedDemoData(memory);
-    setIpcClient(memory);
     // 预览悬浮窗：http://localhost:1420/?window=floating；全局搜索框：?window=search
     label = new URLSearchParams(window.location.search).get("window") ?? "main";
+    if (
+      label === "detail" &&
+      !new URLSearchParams(window.location.search).has("item") &&
+      memory.items[0]
+    ) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("item", memory.items[0].id);
+      history.replaceState(null, "", url);
+    }
+    const { previewWindows } = await import("@/test/preview-windows");
+    setIpcClient(previewWindows(memory, label));
   } else {
     throw new Error(
       "Nivlo UI must run inside Tauri; use the Vite dev server for a browser preview.",

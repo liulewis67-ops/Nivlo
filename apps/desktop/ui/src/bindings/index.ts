@@ -894,7 +894,7 @@ export const commands = {
 	 */
 	endFloatingInput: () => typedError<null, IpcError>(__TAURI_INVOKE("end_floating_input")),
 	/**
-	 *  打开主窗口并定位到一个 Item 的详情（全局搜索框选中结果时调用），同时隐藏搜索框。
+	 *  打开一个事项的独立详情窗口，同时隐藏搜索框；保留历史 IPC 名称供各入口调用。
 	 * 
 	 *  # Errors
 	 * 

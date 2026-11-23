@@ -39,9 +39,9 @@ export function parseMainView(name: string): MainView | null {
 type NavState = {
   /** 当前显示的视图。 */
   view: MainView;
-  /** 活动详情，仅在成功保存或确认放弃后切换。 */
+  /** 主内容区正在查看的事项；null 表示显示当前页面。 */
   detailId: string | null;
-  /** 打开 / 关闭详情，经过所有活动草稿。 */
+  /** 在主内容区打开详情，先检查当前草稿；null 返回原页面。 */
   openItem: (id: string | null) => void;
   /** 切换视图。 */
   setView: (view: MainView) => void;
@@ -95,7 +95,9 @@ export const useNavStore = create<NavState>((set, get) => {
     view: "today",
     detailId: null,
     openItem: (id) => {
-      useDraftTransitionStore.getState().request(() => set({ detailId: id }));
+      useDraftTransitionStore.getState().request(() => {
+        set({ detailId: id });
+      });
     },
     // 离开 Notes 后「刚新建」不再成立：回来时不再全选标题，免得打字覆盖已经写好的标题。
     setView: (view) => {
