@@ -2675,7 +2675,7 @@ checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
 name = "nivlo-application"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -2694,7 +2694,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-capture"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "mime_guess",
@@ -2711,7 +2711,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-common"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -2729,7 +2729,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-desktop"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -2775,7 +2775,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-domain"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "serde",
@@ -2787,7 +2787,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-integrations"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -2807,7 +2807,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-platform"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "nivlo-common",
  "serde",
@@ -2818,15 +2818,15 @@ dependencies = [
 
 [[package]]
 name = "nivlo-platform-linux"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "nivlo-platform-macos"
-version = "0.1.1"
+version = "0.1.2"
 
 [[package]]
 name = "nivlo-platform-windows"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "nivlo-platform",
  "tempfile",
@@ -2836,7 +2836,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-scheduler"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -2851,7 +2851,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-script"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "rquickjs",
  "serde_json",
@@ -2862,7 +2862,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-storage"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "chrono",
@@ -2882,7 +2882,7 @@ dependencies = [
 
 [[package]]
 name = "nivlo-workflow"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "async-trait",
  "chrono",
