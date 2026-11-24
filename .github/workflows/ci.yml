@@ -26,6 +26,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Release manifest regression tests
+        run: node --test scripts/release/make-latest-json.test.mjs
       - name: Frontend
         run: |
           $PSNativeCommandUseErrorActionPreference = $true

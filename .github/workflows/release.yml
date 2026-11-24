@@ -8,7 +8,7 @@ on:
       tag:
         description: Version tag to publish
         required: true
-        default: v0.1.0
+        default: v0.1.1
   workflow_call:
     inputs:
       tag:
@@ -31,6 +31,10 @@ jobs:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
+      - name: Require updater signing key
+        shell: bash
+        run: |
+          [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] || { echo '::error::Configure TAURI_SIGNING_PRIVATE_KEY matching the shipped client public key before publishing.'; exit 1; }
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
@@ -62,21 +66,14 @@ jobs:
             git push origin "refs/tags/$RELEASE_TAG"
           fi
       - name: Build with updater signature
-        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
         run: pnpm tauri build
-      - name: Build without updater artifacts
-        if: env.TAURI_SIGNING_PRIVATE_KEY == ''
-        shell: bash
-        run: |
-          echo '::notice::No updater key configured. Publishing installer only; no update feed will be published.'
-          pnpm tauri build --config '{"bundle":{"createUpdaterArtifacts":false}}'
       - name: Generate update manifest
-        if: env.TAURI_SIGNING_PRIVATE_KEY != ''
         shell: bash
         run: |
+          node --test scripts/release/make-latest-json.test.mjs
           node scripts/release/make-latest-json.mjs --version "${RELEASE_TAG#v}" \
             --base-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}" \
-            --notes "Nivlo ${RELEASE_TAG#v}"
+            --notes-file "docs/development/releases/${RELEASE_TAG}.md"
       - name: Preserve Windows build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -98,11 +95,9 @@ jobs:
             $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             "$hash  $($_.Name)"
           } | Set-Content -Encoding utf8 SHA256SUMS.txt
-          $assets = @($files.FullName) + 'SHA256SUMS.txt'
-          if ($env:TAURI_SIGNING_PRIVATE_KEY) {
-            $assets += @(Get-ChildItem target/release/bundle/nsis/*-setup.exe.sig).FullName
-            $assets += 'latest.json'
-          }
+          $signature = "$($files[0].FullName).sig"
+          if (!(Test-Path -LiteralPath $signature) -or !(Test-Path latest.json)) { throw 'Missing updater signature or manifest' }
+          $assets = @($files.FullName) + @('SHA256SUMS.txt', $signature, 'latest.json')
           gh release view $env:RELEASE_TAG --json isDraft --jq .isDraft > release-state.txt 2>$null
           if ($LASTEXITCODE -ne 0) {
             gh release create $env:RELEASE_TAG --verify-tag --draft --title "Nivlo $($env:RELEASE_TAG.Substring(1))" --notes-file "docs/development/releases/$env:RELEASE_TAG.md"
@@ -114,3 +109,5 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Release upload failed' }
           gh release edit $env:RELEASE_TAG --draft=false --latest
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
+      - name: Verify public updater feed and signed download
+        run: cargo test -p nivlo-desktop --test release_update -- --ignored --nocapture
