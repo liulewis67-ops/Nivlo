@@ -20,7 +20,7 @@ GitHub Actions 必须配置与已发布客户端公钥对应的私钥 `TAURI_SIG
 
 宣传页位于 `apps/landing`，无需 npm 构建。仓库 Settings → Pages → Build and deployment → Source 选择 **GitHub Actions**。之后推送 `main` 上的宣传页改动会触发 `.github/workflows/pages.yml`，也可以手动运行。
 
-部署目标：<https://liulewis67-ops.github.io/Nivlo/>。下载按钮直接指向 0.1.1 的 GitHub Release 安装包文件，发布后检查中英文页面、深浅主题、交互演示与安装包下载。
+部署目标：<https://liulewis67-ops.github.io/Nivlo/>。下载按钮直接指向 0.1.2 的 GitHub Release 安装包文件，发布后检查中英文页面、深浅主题、交互演示与安装包下载。
 
 * **更新签名私钥**：`pnpm tauri signer generate -w <路径>` 生成，**丢失后无法再给已安装的用户推送更新**。
   不要提交到仓库；CI 里放进 Secret `TAURI_SIGNING_PRIVATE_KEY`（密码放 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`，没有则留空）。

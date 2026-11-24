@@ -45,9 +45,9 @@ const copy = {
       ['收下的东西会放在哪里？', '你可以在收件箱查找新收下的内容，并把它整理为待办、笔记或提示。'],
       ['一定要配置工作流吗？', '不需要。你可以直接收集和手动整理；需要自动识别和处理常见内容时，再使用工作流。'],
       ['资料保存在哪里？', 'Nivlo 优先在本机保存资料。某些工作流需要访问网页或外部服务，使用时需要网络。'],
-      ['现在可以下载吗？', '0.1.1 提供 Windows x64 安装包，点击下载按钮即可直接下载安装包。安装包未配置 Windows 代码签名，系统可能显示发布者未知。'],
+      ['现在可以下载吗？', '0.1.2 提供 Windows x64 安装包，点击下载按钮即可直接下载安装包。安装包未配置 Windows 代码签名，系统可能显示发布者未知。'],
     ],
-    end: '先收下一条线索。', endLead: '下载 Nivlo 0.1.1，把零散的信息变成可安排的事项。', foot: '拾取散落的信息，让事情各归其序。',
+    end: '先收下一条线索。', endLead: '下载 Nivlo 0.1.2，把零散的信息变成可安排的事项。', foot: '拾取散落的信息，让事情各归其序。',
   },
   en: {
     title: 'Nivlo · Turn scattered information into your next action',
@@ -95,9 +95,9 @@ const copy = {
       ['Where do captured items go?', 'Find new items in your inbox and organize them as tasks, notes or tips.'],
       ['Do I need to configure a workflow?', 'No. You can capture and organize items manually. Use workflows when you want to recognize and process familiar content automatically.'],
       ['Where is my data stored?', 'Nivlo keeps your data on your computer by default. Workflows that look up webpages or use external services need a network connection.'],
-      ['Can I download it now?', 'Version 0.1.1 provides a Windows x64 installer that downloads directly from the download button. The installer has no Windows code-signing certificate, so Windows may show an unknown publisher.'],
+      ['Can I download it now?', 'Version 0.1.2 provides a Windows x64 installer that downloads directly from the download button. The installer has no Windows code-signing certificate, so Windows may show an unknown publisher.'],
     ],
-    end: 'Start with one thing.', endLead: 'Download Nivlo 0.1.1 and turn loose pieces of information into your next action.', foot: 'Pick up what’s scattered. Give it a place.',
+    end: 'Start with one thing.', endLead: 'Download Nivlo 0.1.2 and turn loose pieces of information into your next action.', foot: 'Pick up what’s scattered. Give it a place.',
   },
 };
 
@@ -220,7 +220,7 @@ function render(introMotion = false) {
   for (const [property, content] of [['og:title', t.title], ['og:description', t.description]]) {
     document.querySelector(`meta[property="${property}"]`).content = content;
   }
-  const action = `<a class="button-md primary" href="https://github.com/liulewis67-ops/Nivlo/releases/download/v0.1.1/Nivlo_0.1.1_x64-setup.exe">${t.cta} ${icon('arrow')}</a>`;
+  const action = `<a class="button-md primary" href="https://github.com/liulewis67-ops/Nivlo/releases/download/v0.1.2/Nivlo_0.1.2_x64-setup.exe">${t.cta} ${icon('arrow')}</a>`;
   site.innerHTML = `
     <a class="skip" href="#main">${t.skip}</a>
     <header id="top" class="wrap header">
