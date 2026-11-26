@@ -206,7 +206,7 @@ export function WorkflowsPage() {
         setTab("rules");
       })
       .catch((failure: unknown) => {
-        // 定义不合法（含「需要升级拾序」）时，把后端说明原样告诉用户；其他错误走通用提示。
+        // 定义不合法（含「需要升级StarDeskBox」）时，把后端说明原样告诉用户；其他错误走通用提示。
         const app = toAppError(failure);
         if (app.code === "WORKFLOW_INVALID") useToastStore.getState().push("error", app.message);
         else reportError(failure);

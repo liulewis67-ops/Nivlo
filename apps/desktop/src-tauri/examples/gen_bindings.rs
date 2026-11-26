@@ -15,7 +15,9 @@ fn main() -> ExitCode {
         .join("src")
         .join("bindings")
         .join("index.ts");
-    match nivlo_desktop_lib::bindings_builder!(tauri::Wry).export(Typescript::default(), &target) {
+    match stardeskbox_desktop_lib::bindings_builder!(tauri::Wry)
+        .export(Typescript::default(), &target)
+    {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("生成 Binding 失败: {error}");

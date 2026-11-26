@@ -1,6 +1,6 @@
 //! Item 相关的 Command。
 
-use nivlo_domain::item::DatePoint;
+use stardeskbox_domain::item::DatePoint;
 use tauri::State;
 
 use crate::app::AppState;

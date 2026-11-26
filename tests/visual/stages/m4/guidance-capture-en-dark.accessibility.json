@@ -60,7 +60,7 @@
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -92,7 +92,7 @@
     },
     {
       "role": "group",
-      "name": "Nivlo floating badge",
+      "name": "StarDeskBox floating badge",
       "properties": []
     },
     {

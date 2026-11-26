@@ -29,7 +29,7 @@ export function DetailApp({
     queryFn: () => ipc.getItemDetail(id),
   });
   const item = query.data?.item;
-  const title = `${item?.title ?? t("detail.title")} · Nivlo`;
+  const title = `${item?.title ?? t("detail.title")} · StarDeskBox`;
   useEffect(() => {
     document.title = title;
     if (isRunningInTauri()) void getCurrentWindow().setTitle(title).catch(reportError);

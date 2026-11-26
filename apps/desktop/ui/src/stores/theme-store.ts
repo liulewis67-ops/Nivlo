@@ -5,7 +5,7 @@ import { ipc } from "@/lib/ipc";
 export type ThemePreference = "system" | "light" | "dark";
 
 /** 偏好在 localStorage 中的 key；仅是 UI 便利，读取失败时回退到跟随系统。 */
-const STORAGE_KEY = "nivlo.theme";
+const STORAGE_KEY = "stardeskbox.theme";
 
 /**
  * 读取已保存的主题偏好。

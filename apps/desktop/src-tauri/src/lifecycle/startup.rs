@@ -3,23 +3,23 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use nivlo_application::calendar::CalendarService;
-use nivlo_application::capture::CaptureService;
-use nivlo_application::event::EventBus;
-use nivlo_application::export::ExportService;
-use nivlo_application::inbox::InboxService;
-use nivlo_application::item::ItemService;
-use nivlo_application::organize::{ProjectService, TagService};
-use nivlo_application::ports::StorageError;
-use nivlo_application::settings::SettingsService;
-use nivlo_application::today::TodayService;
-use nivlo_application::trash::TrashService;
-use nivlo_application::workflow::{WorkflowEngine, WorkflowService};
-use nivlo_common::clock::SystemClock;
-use nivlo_common::logging::{LogConfig, LogError, LogGuard, init_logging};
-use nivlo_common::paths::{AppPaths, PathsError};
-use nivlo_storage::{Database, FsAttachmentFiles, FsSkinAssetStore};
-use nivlo_workflow::WorkflowEngineAdapter;
+use stardeskbox_application::calendar::CalendarService;
+use stardeskbox_application::capture::CaptureService;
+use stardeskbox_application::event::EventBus;
+use stardeskbox_application::export::ExportService;
+use stardeskbox_application::inbox::InboxService;
+use stardeskbox_application::item::ItemService;
+use stardeskbox_application::organize::{ProjectService, TagService};
+use stardeskbox_application::ports::StorageError;
+use stardeskbox_application::settings::SettingsService;
+use stardeskbox_application::today::TodayService;
+use stardeskbox_application::trash::TrashService;
+use stardeskbox_application::workflow::{WorkflowEngine, WorkflowService};
+use stardeskbox_common::clock::SystemClock;
+use stardeskbox_common::logging::{LogConfig, LogError, LogGuard, init_logging};
+use stardeskbox_common::paths::{AppPaths, PathsError};
+use stardeskbox_storage::{Database, FsAttachmentFiles, FsSkinAssetStore};
+use stardeskbox_workflow::WorkflowEngineAdapter;
 
 use crate::app::{AppState, ApplicationServices, RuntimeHandles};
 
@@ -103,8 +103,8 @@ pub fn build_app_state(
     );
     // 网络只通过 HttpPort：Workflow 声明了 hosts 才能访问，初始化失败时退回没有 http Step 的引擎。
     // 文件内容只通过 FileInspector：只读被拖入的那个文件，有大小上限。
-    let http: Option<Arc<dyn nivlo_application::ports::http::HttpPort>> =
-        match nivlo_integrations::ReqwestHttp::new() {
+    let http: Option<Arc<dyn stardeskbox_application::ports::http::HttpPort>> =
+        match stardeskbox_integrations::ReqwestHttp::new() {
             Ok(http) => Some(Arc::new(http)),
             Err(error) => {
                 tracing::warn!(event = "http_unavailable", %error, "网络组件初始化失败，http Step 不可用");
@@ -112,10 +112,10 @@ pub fn build_app_state(
             }
         };
     // 脚本只在独立的 Worker 线程里运行；授权记录存在 settings 表（指纹变化需重新确认）。
-    let script_worker = nivlo_script::ScriptWorker::spawn();
+    let script_worker = stardeskbox_script::ScriptWorker::spawn();
     let mut adapter = WorkflowEngineAdapter::with_ports(
         http.clone(),
-        Some(Arc::new(nivlo_capture::FsFileInspector)),
+        Some(Arc::new(stardeskbox_capture::FsFileInspector)),
     )
     .with_script(
         script_worker.handle(),
@@ -126,11 +126,11 @@ pub fn build_app_state(
     );
     // 第三方集成只经 IntegrationRegistry 抽象调用；凭据只在各集成内部从系统凭据库读取。
     let credentials = crate::credentials::system_credentials();
-    let mut registry = nivlo_application::ports::integration::IntegrationRegistry::new();
-    registry.register(Arc::new(nivlo_integrations::JiraIntegration::new(
+    let mut registry = stardeskbox_application::ports::integration::IntegrationRegistry::new();
+    registry.register(Arc::new(stardeskbox_integrations::JiraIntegration::new(
         credentials.clone(),
     )));
-    registry.register(Arc::new(nivlo_integrations::GithubIntegration::new(
+    registry.register(Arc::new(stardeskbox_integrations::GithubIntegration::new(
         credentials.clone(),
     )));
     let registry = Arc::new(registry);
@@ -179,7 +179,7 @@ pub fn build_app_state(
         || attachments_dir.join("skins").join("assets"),
         |root| root.join("skins").join("assets"),
     );
-    let skin_assets: Arc<dyn nivlo_application::ports::SkinAssetStore> =
+    let skin_assets: Arc<dyn stardeskbox_application::ports::SkinAssetStore> =
         Arc::new(FsSkinAssetStore::new(skins_assets_dir));
     let runtime = RuntimeHandles::new(event_bus, database, clock, log_guard);
     runtime.set_enrichment_queue(enrichment_rx);
@@ -216,7 +216,7 @@ mod tests {
     #[tokio::test]
     async fn open_database_migrates_a_fresh_data_dir() {
         let dir = tempfile::tempdir().unwrap();
-        let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+        let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
         paths.ensure_dirs().unwrap();
         let database = open_database(&paths).await.unwrap();
         assert_eq!(database.schema_version().await.unwrap(), Some(9));
@@ -225,7 +225,7 @@ mod tests {
     #[tokio::test]
     async fn broken_migration_is_reported_and_leaves_the_file_unlocked() {
         let dir = tempfile::tempdir().unwrap();
-        let paths = AppPaths::from_root(dir.path().join("Nivlo"));
+        let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
         paths.ensure_dirs().unwrap();
         open_database(&paths).await.unwrap().close().await;
 

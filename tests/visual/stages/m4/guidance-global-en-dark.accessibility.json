@@ -403,7 +403,7 @@
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",

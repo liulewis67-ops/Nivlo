@@ -5,10 +5,10 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use chrono::{TimeZone, Utc};
-use nivlo_application::testing::FakeUnitOfWork;
-use nivlo_common::clock::FakeClock;
-use nivlo_platform::foreground::ForegroundPort;
-use nivlo_platform::placement::{Edge, MonitorInfo, Rect};
+use stardeskbox_application::testing::FakeUnitOfWork;
+use stardeskbox_common::clock::FakeClock;
+use stardeskbox_platform::foreground::ForegroundPort;
+use stardeskbox_platform::placement::{Edge, MonitorInfo, Rect};
 
 use super::*;
 
@@ -499,11 +499,11 @@ async fn expand_places_the_panel_inside_the_work_area_and_reports_the_direction(
     // 徽标在右上角：面板向左、向下展开，右缘与徽标右缘对齐。
     assert_eq!(
         layout.horizontal,
-        nivlo_platform::placement::HorizontalAnchor::Right
+        stardeskbox_platform::placement::HorizontalAnchor::Right
     );
     assert_eq!(
         layout.vertical,
-        nivlo_platform::placement::VerticalAnchor::Top
+        stardeskbox_platform::placement::VerticalAnchor::Top
     );
     assert_eq!(bounds.x + 300, 1920);
 }

@@ -2674,238 +2674,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
 
 [[package]]
-name = "nivlo-application"
-version = "0.1.2"
-dependencies = [
- "async-trait",
- "chrono",
- "chrono-tz",
- "encoding_rs",
- "nivlo-capture",
- "nivlo-common",
- "nivlo-domain",
- "serde_json",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "nivlo-capture"
-version = "0.1.2"
-dependencies = [
- "async-trait",
- "mime_guess",
- "nivlo-application",
- "nivlo-common",
- "nivlo-domain",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "url",
-]
-
-[[package]]
-name = "nivlo-common"
-version = "0.1.2"
-dependencies = [
- "chrono",
- "chrono-tz",
- "encoding_rs",
- "iana-time-zone",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.21",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "uuid",
-]
-
-[[package]]
-name = "nivlo-desktop"
-version = "0.1.2"
-dependencies = [
- "async-trait",
- "base64 0.22.1",
- "chrono",
- "nivlo-application",
- "nivlo-capture",
- "nivlo-common",
- "nivlo-domain",
- "nivlo-integrations",
- "nivlo-platform",
- "nivlo-platform-linux",
- "nivlo-platform-macos",
- "nivlo-platform-windows",
- "nivlo-scheduler",
- "nivlo-script",
- "nivlo-storage",
- "nivlo-workflow",
- "regex",
- "serde",
- "serde_json",
- "specta",
- "specta-typescript",
- "sqlx",
- "sys-locale",
- "tauri",
- "tauri-build",
- "tauri-plugin-autostart",
- "tauri-plugin-dialog",
- "tauri-plugin-notification",
- "tauri-plugin-opener",
- "tauri-plugin-single-instance",
- "tauri-plugin-updater",
- "tauri-specta",
- "tempfile",
- "thiserror 2.0.21",
- "tokio",
- "tokio-util",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "zip 2.4.2",
-]
-
-[[package]]
-name = "nivlo-domain"
-version = "0.1.2"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "nivlo-integrations"
-version = "0.1.2"
-dependencies = [
- "async-trait",
- "base64 0.22.1",
- "chrono",
- "nivlo-application",
- "nivlo-capture",
- "nivlo-platform",
- "nivlo-workflow",
- "reqwest",
- "rustls",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "url",
-]
-
-[[package]]
-name = "nivlo-platform"
-version = "0.1.2"
-dependencies = [
- "nivlo-common",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "tracing",
-]
-
-[[package]]
-name = "nivlo-platform-linux"
-version = "0.1.2"
-
-[[package]]
-name = "nivlo-platform-macos"
-version = "0.1.2"
-
-[[package]]
-name = "nivlo-platform-windows"
-version = "0.1.2"
-dependencies = [
- "nivlo-platform",
- "tempfile",
- "webview2-com",
- "windows",
-]
-
-[[package]]
-name = "nivlo-scheduler"
-version = "0.1.2"
-dependencies = [
- "chrono",
- "chrono-tz",
- "nivlo-application",
- "nivlo-common",
- "nivlo-domain",
- "nivlo-platform",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "nivlo-script"
-version = "0.1.2"
-dependencies = [
- "rquickjs",
- "serde_json",
- "thiserror 2.0.21",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "nivlo-storage"
-version = "0.1.2"
-dependencies = [
- "async-trait",
- "chrono",
- "chrono-tz",
- "nivlo-application",
- "nivlo-common",
- "nivlo-domain",
- "pinyin",
- "serde_json",
- "sha2",
- "sqlx",
- "tempfile",
- "tokio",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "nivlo-workflow"
-version = "0.1.2"
-dependencies = [
- "async-trait",
- "chrono",
- "flate2",
- "jsonschema",
- "nivlo-application",
- "nivlo-capture",
- "nivlo-common",
- "nivlo-domain",
- "nivlo-script",
- "regex",
- "serde",
- "serde_json",
- "sha2",
- "thiserror 2.0.21",
- "tokio",
- "tokio-util",
- "tracing",
- "url",
- "zip 2.4.2",
-]
-
-[[package]]
 name = "nix"
 version = "0.31.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4900,6 +4668,238 @@ name = "stable_deref_trait"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
+
+[[package]]
+name = "stardeskbox-application"
+version = "0.1.3"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "chrono-tz",
+ "encoding_rs",
+ "serde_json",
+ "stardeskbox-capture",
+ "stardeskbox-common",
+ "stardeskbox-domain",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "stardeskbox-capture"
+version = "0.1.3"
+dependencies = [
+ "async-trait",
+ "mime_guess",
+ "serde",
+ "serde_json",
+ "stardeskbox-application",
+ "stardeskbox-common",
+ "stardeskbox-domain",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "url",
+]
+
+[[package]]
+name = "stardeskbox-common"
+version = "0.1.3"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "encoding_rs",
+ "iana-time-zone",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
+name = "stardeskbox-desktop"
+version = "0.1.3"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "chrono",
+ "regex",
+ "serde",
+ "serde_json",
+ "specta",
+ "specta-typescript",
+ "sqlx",
+ "stardeskbox-application",
+ "stardeskbox-capture",
+ "stardeskbox-common",
+ "stardeskbox-domain",
+ "stardeskbox-integrations",
+ "stardeskbox-platform",
+ "stardeskbox-platform-linux",
+ "stardeskbox-platform-macos",
+ "stardeskbox-platform-windows",
+ "stardeskbox-scheduler",
+ "stardeskbox-script",
+ "stardeskbox-storage",
+ "stardeskbox-workflow",
+ "sys-locale",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-autostart",
+ "tauri-plugin-dialog",
+ "tauri-plugin-notification",
+ "tauri-plugin-opener",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-updater",
+ "tauri-specta",
+ "tempfile",
+ "thiserror 2.0.21",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "zip 2.4.2",
+]
+
+[[package]]
+name = "stardeskbox-domain"
+version = "0.1.3"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "stardeskbox-integrations"
+version = "0.1.3"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "chrono",
+ "reqwest",
+ "rustls",
+ "serde_json",
+ "stardeskbox-application",
+ "stardeskbox-capture",
+ "stardeskbox-platform",
+ "stardeskbox-workflow",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+]
+
+[[package]]
+name = "stardeskbox-platform"
+version = "0.1.3"
+dependencies = [
+ "serde",
+ "serde_json",
+ "stardeskbox-common",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
+name = "stardeskbox-platform-linux"
+version = "0.1.3"
+
+[[package]]
+name = "stardeskbox-platform-macos"
+version = "0.1.3"
+
+[[package]]
+name = "stardeskbox-platform-windows"
+version = "0.1.3"
+dependencies = [
+ "stardeskbox-platform",
+ "tempfile",
+ "webview2-com",
+ "windows",
+]
+
+[[package]]
+name = "stardeskbox-scheduler"
+version = "0.1.3"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "stardeskbox-application",
+ "stardeskbox-common",
+ "stardeskbox-domain",
+ "stardeskbox-platform",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "stardeskbox-script"
+version = "0.1.3"
+dependencies = [
+ "rquickjs",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "stardeskbox-storage"
+version = "0.1.3"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "chrono-tz",
+ "pinyin",
+ "serde_json",
+ "sha2",
+ "sqlx",
+ "stardeskbox-application",
+ "stardeskbox-common",
+ "stardeskbox-domain",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "stardeskbox-workflow"
+version = "0.1.3"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "flate2",
+ "jsonschema",
+ "regex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "stardeskbox-application",
+ "stardeskbox-capture",
+ "stardeskbox-common",
+ "stardeskbox-domain",
+ "stardeskbox-script",
+ "thiserror 2.0.21",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "url",
+ "zip 2.4.2",
+]
 
 [[package]]
 name = "string_cache"

@@ -10,7 +10,7 @@ import { HOVER_ENTER_DELAY_MS, HOVER_LEAVE_DELAY_MS } from "./model/floating-mac
 
 /** 悬浮窗根元素（同时是徽标与面板的容器，展开 / 收起时都存在）。 */
 function root(): HTMLElement {
-  return screen.getByRole("group", { name: "拾序悬浮窗" });
+  return screen.getByRole("group", { name: "StarDeskBox悬浮窗" });
 }
 
 /** 推进虚拟时间并让挂起的 Promise 完成。 */
@@ -103,7 +103,9 @@ describe("FloatingRoot", () => {
     act(() => useAppearanceStore.getState().update({ badgeScale: 75 }));
     await advance(0);
     expect(ipc.lastCollapse).toEqual({ width: 60, height: 30 });
-    expect(screen.getByRole("button", { name: /打开拾序主窗口/ })).toHaveStyle({ zoom: "0.75" });
+    expect(screen.getByRole("button", { name: /打开StarDeskBox主窗口/ })).toHaveStyle({
+      zoom: "0.75",
+    });
 
     fireEvent.pointerEnter(root());
     await advance(HOVER_ENTER_DELAY_MS);
@@ -122,7 +124,7 @@ describe("FloatingRoot", () => {
     renderWithProviders(<FloatingRoot />, ipc);
     await advance(0);
 
-    fireEvent.contextMenu(screen.getByRole("button", { name: /打开拾序主窗口/ }));
+    fireEvent.contextMenu(screen.getByRole("button", { name: /打开StarDeskBox主窗口/ }));
     await advance(0);
 
     expect(ipc.calls).toContain("beginFloatingInput");
@@ -267,7 +269,7 @@ describe("FloatingRoot", () => {
     fireEvent.pointerLeave(root());
     await advance(HOVER_LEAVE_DELAY_MS);
 
-    expect(screen.getByRole("button", { name: /打开拾序主窗口/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /打开StarDeskBox主窗口/ })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "今日面板" })).not.toBeInTheDocument();
   });
 
@@ -350,7 +352,7 @@ describe("FloatingRoot", () => {
   it("Today 尚未加载完成时徽标显示占位而不是 0", () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingRoot />, ipc);
-    expect(screen.getByRole("button", { name: "打开拾序主窗口" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "打开StarDeskBox主窗口" })).toBeInTheDocument();
   });
 
   it("展开后面板显示 Today 的待办、提示与已完成", async () => {

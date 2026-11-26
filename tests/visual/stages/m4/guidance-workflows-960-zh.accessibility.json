@@ -1,7 +1,7 @@
 {
   "samples": [
     {
-      "text": "拾序",
+      "text": "StarDeskBox",
       "tag": "SPAN",
       "placeholder": false,
       "fontSize": "18px",
@@ -852,7 +852,7 @@
       "pass": true
     },
     {
-      "text": "粘贴的图片变成一条笔记，图片作为附件保存在 Nivlo 自己的目录里。",
+      "text": "粘贴的图片变成一条笔记，图片作为附件保存在 StarDeskBox 自己的目录里。",
       "tag": "SPAN",
       "placeholder": false,
       "fontSize": "12px",
@@ -1323,7 +1323,7 @@
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -1378,7 +1378,7 @@
     },
     {
       "role": "StaticText",
-      "name": "拾序",
+      "name": "StarDeskBox",
       "properties": []
     },
     {
@@ -1541,7 +1541,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "拾序",
+      "name": "StarDeskBox",
       "properties": []
     },
     {
@@ -2305,7 +2305,7 @@
     },
     {
       "role": "button",
-      "name": "图片 粘贴的图片变成一条笔记，图片作为附件保存在 Nivlo 自己的目录里。",
+      "name": "图片 粘贴的图片变成一条笔记，图片作为附件保存在 StarDeskBox 自己的目录里。",
       "properties": [
         {
           "name": "invalid",
@@ -2624,7 +2624,7 @@
     },
     {
       "role": "StaticText",
-      "name": "粘贴的图片变成一条笔记，图片作为附件保存在 Nivlo 自己的目录里。",
+      "name": "粘贴的图片变成一条笔记，图片作为附件保存在 StarDeskBox 自己的目录里。",
       "properties": []
     },
     {
@@ -2864,7 +2864,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "粘贴的图片变成一条笔记，图片作为附件保存在 Nivlo 自己的目录里。",
+      "name": "粘贴的图片变成一条笔记，图片作为附件保存在 StarDeskBox 自己的目录里。",
       "properties": []
     },
     {

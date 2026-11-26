@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Instant;
 
-use nivlo_platform::foreground::{ForegroundPort, UnsupportedForeground};
+use stardeskbox_platform::foreground::{ForegroundPort, UnsupportedForeground};
 use tauri::webview::PageLoadEvent;
 use tauri::{
     AppHandle, LogicalSize, Manager, PhysicalPosition, Runtime, WebviewUrl, WebviewWindow,
@@ -278,7 +278,7 @@ fn create<R: Runtime>(
         SEARCH_WINDOW_LABEL,
         WebviewUrl::App("index.html".into()),
     )
-    .title("Nivlo")
+    .title("StarDeskBox")
     .inner_size(SEARCH_WIDTH, SEARCH_HEIGHT)
     .zoom_hotkeys_enabled(cfg!(target_os = "windows"))
     .decorations(false)

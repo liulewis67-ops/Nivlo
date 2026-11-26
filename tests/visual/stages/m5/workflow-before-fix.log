@@ -1,5 +1,5 @@
 
- RUN  v5.0.3 E:/personal_projects/Nivlo/apps/desktop/ui
+ RUN  v5.0.3 E:/personal_projects/StarDeskBox/apps/desktop/ui
 
 stderr | src/features/workflows/workflows.test.tsx > 首次加载失败不宣称规则为空，重试后显示实际规则
 [STORAGE_UNAVAILABLE] fixture
@@ -899,5 +899,5 @@ Ignored nodes: comments, script, style
    Duration  12.29s (tests 67%, environment 17%, import 9%, setup 6%, worker 1%)
 
 undefined
-E:\personal_projects\Nivlo\apps\desktop\ui:
+E:\personal_projects\StarDeskBox\apps\desktop\ui:
 [ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/features/workflows/workflows.test.tsx

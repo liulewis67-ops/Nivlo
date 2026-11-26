@@ -107,7 +107,7 @@ describe("summarizeEntry", () => {
     expect(summary).toMatchObject({ kind: "file", detail: "b.pdf", missingFile: true });
   });
 
-  it("保存在 Nivlo 里的图片不会被当成缺失文件", () => {
+  it("保存在 StarDeskBox 里的图片不会被当成缺失文件", () => {
     const summary = summarizeEntry(
       entry({
         sources: [source("image")],

@@ -146,11 +146,11 @@
     "height": 640,
     "dpr": 1
   },
-  "modal": "欢迎使用拾序",
+  "modal": "欢迎使用StarDeskBox",
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -192,7 +192,7 @@
     },
     {
       "role": "dialog",
-      "name": "欢迎使用拾序",
+      "name": "欢迎使用StarDeskBox",
       "properties": [
         {
           "name": "modal",

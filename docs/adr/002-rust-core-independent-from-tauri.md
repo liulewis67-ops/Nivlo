@@ -10,7 +10,7 @@
 
 ## 决策
 
-`nivlo-domain` 与 `nivlo-application` 不依赖 Tauri、SQLx、reqwest、rquickjs、windows；Adapter crate 实现 Application 定义的 Port；只有 `src-tauri` 作为 Composition Root 依赖所有 crate。依赖方向由 `scripts/check-deps` 在 CI 中强制。
+`stardeskbox-domain` 与 `stardeskbox-application` 不依赖 Tauri、SQLx、reqwest、rquickjs、windows；Adapter crate 实现 Application 定义的 Port；只有 `src-tauri` 作为 Composition Root 依赖所有 crate。依赖方向由 `scripts/check-deps` 在 CI 中强制。
 
 ## 后果
 

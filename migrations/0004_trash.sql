@@ -5,7 +5,7 @@
 -- * 与 archived_at 的区别：归档是长期保留、随时可翻出来的整理动作；删除是「我不要了」，
 --   在回收站里停留 30 天后自动永久清除（也可以手动彻底删除或清空）。
 -- * 永久删除沿用既有的外键级联（来源、附件记录、标签关联、Today 顺序随 Item 一起删除），
---   被引用的用户文件永远不会被 Nivlo 删除。
+--   被引用的用户文件永远不会被 StarDeskBox 删除。
 
 ALTER TABLE items ADD COLUMN deleted_at TEXT;
 

@@ -6,7 +6,7 @@
 
 ## 背景
 
-Nivlo 是 Local First 应用，需要可靠持久化、事务与全文搜索，且不依赖网络。
+StarDeskBox 是 Local First 应用，需要可靠持久化、事务与全文搜索，且不依赖网络。
 
 ## 决策
 

@@ -1,7 +1,7 @@
 {
   "samples": [
     {
-      "text": "拾序",
+      "text": "StarDeskBox",
       "tag": "SPAN",
       "placeholder": false,
       "fontSize": "18px",
@@ -794,7 +794,7 @@
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -849,7 +849,7 @@
     },
     {
       "role": "StaticText",
-      "name": "拾序",
+      "name": "StarDeskBox",
       "properties": []
     },
     {
@@ -1012,7 +1012,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "拾序",
+      "name": "StarDeskBox",
       "properties": []
     },
     {

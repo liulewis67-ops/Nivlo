@@ -14,7 +14,7 @@ export const LANGUAGES = ["zh-CN", "en"] as const;
 export type Language = (typeof LANGUAGES)[number];
 
 /** 语言偏好在 localStorage 中的 key；仅是 UI 便利，读取失败时用默认语言。 */
-const STORAGE_KEY = "nivlo.language";
+const STORAGE_KEY = "stardeskbox.language";
 
 /**
  * 判断一个值是不是支持的语言。

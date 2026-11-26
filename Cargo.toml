@@ -3,26 +3,26 @@ resolver = "3"
 members = ["crates/*", "apps/desktop/src-tauri"]
 
 [workspace.package]
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 license = "Apache-2.0"
 publish = false
 
 # 所有依赖版本在此统一声明，子 crate 使用 `xxx.workspace = true` 引用（后端规范 §2.2）。
 [workspace.dependencies]
-nivlo-domain = { path = "crates/nivlo-domain" }
-nivlo-application = { path = "crates/nivlo-application" }
-nivlo-storage = { path = "crates/nivlo-storage" }
-nivlo-capture = { path = "crates/nivlo-capture" }
-nivlo-workflow = { path = "crates/nivlo-workflow" }
-nivlo-script = { path = "crates/nivlo-script" }
-nivlo-scheduler = { path = "crates/nivlo-scheduler" }
-nivlo-integrations = { path = "crates/nivlo-integrations" }
-nivlo-platform = { path = "crates/nivlo-platform" }
-nivlo-platform-windows = { path = "crates/nivlo-platform-windows" }
-nivlo-platform-macos = { path = "crates/nivlo-platform-macos" }
-nivlo-platform-linux = { path = "crates/nivlo-platform-linux" }
-nivlo-common = { path = "crates/nivlo-common" }
+stardeskbox-domain = { path = "crates/stardeskbox-domain" }
+stardeskbox-application = { path = "crates/stardeskbox-application" }
+stardeskbox-storage = { path = "crates/stardeskbox-storage" }
+stardeskbox-capture = { path = "crates/stardeskbox-capture" }
+stardeskbox-workflow = { path = "crates/stardeskbox-workflow" }
+stardeskbox-script = { path = "crates/stardeskbox-script" }
+stardeskbox-scheduler = { path = "crates/stardeskbox-scheduler" }
+stardeskbox-integrations = { path = "crates/stardeskbox-integrations" }
+stardeskbox-platform = { path = "crates/stardeskbox-platform" }
+stardeskbox-platform-windows = { path = "crates/stardeskbox-platform-windows" }
+stardeskbox-platform-macos = { path = "crates/stardeskbox-platform-macos" }
+stardeskbox-platform-linux = { path = "crates/stardeskbox-platform-linux" }
+stardeskbox-common = { path = "crates/stardeskbox-common" }
 
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-build = { version = "2", features = [] }
@@ -56,7 +56,7 @@ flate2 = "1"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 sha2 = "0.10"
 # TLS 只链接 ring 一套加密后端：与 tauri-plugin-updater 共用，不再额外链接 aws-lc。
-# 用 rustls-no-provider 时须先安装进程级 CryptoProvider，见 nivlo-integrations `ReqwestHttp::new`。
+# 用 rustls-no-provider 时须先安装进程级 CryptoProvider，见 stardeskbox-integrations `ReqwestHttp::new`。
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 regex = "1"

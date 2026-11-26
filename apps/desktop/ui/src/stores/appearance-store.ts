@@ -49,7 +49,7 @@ export const MAX_BADGE_SCALE = 150;
 export const BADGE_SCALE_STEP = 5;
 
 /** 偏好在 localStorage 中的 key；悬浮窗与主窗口共用，靠 `storage` 事件同步。 */
-export const APPEARANCE_STORAGE_KEY = "nivlo.appearance";
+export const APPEARANCE_STORAGE_KEY = "stardeskbox.appearance";
 
 /** 按白名单取值，非法时回退。 */
 function pick<T extends string>(list: readonly T[], value: unknown, fallback: T): T {

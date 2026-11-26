@@ -1,0 +1,333 @@
+//! `SettingsService`：业务设置的读写。
+//!
+//! 设置是键值对，值为字符串（通常是 JSON）。窗口位置、置顶、快捷键等都放在这里，
+//! 存储在 SQLite 的 `settings` 表中，因此和其他业务数据一样是事务性的。
+//! 具体某个设置的结构由使用它的模块定义和解析，本服务只负责存取。
+
+use std::sync::Arc;
+
+use chrono::{Duration, NaiveDate};
+use stardeskbox_common::clock::Clock;
+
+use crate::calendar::WeekStart;
+use crate::error::{AppError, ErrorCode};
+use crate::item::next_monday_after;
+use crate::ports::{Transaction, UnitOfWork};
+
+/// 已登记的设置 key。新增设置时在这里集中定义，避免魔法字符串散落各处。
+pub mod keys {
+    /// 悬浮窗的持久化位置（JSON，见 `stardeskbox_platform::placement::Placement`）。
+    pub const FLOATING_PLACEMENT: &str = "floating.placement";
+    /// 悬浮窗是否置顶（`"true"` / `"false"`），缺省为 `true`。
+    pub const FLOATING_ALWAYS_ON_TOP: &str = "floating.always_on_top";
+    /// 是否已经问过用户「开机自动启动」（有值即问过，不再询问）。
+    pub const AUTOSTART_PROMPTED: &str = "autostart.prompted";
+    /// 「稍后」指哪一天（`next_monday` / `in_three_days` / `in_one_week`），缺省为下周一。
+    pub const LATER_RULE: &str = "schedule.later";
+    /// 是否暂停系统通知（`"true"` / `"false"`，托盘「暂停通知」），缺省为 `false`。
+    pub const NOTIFICATIONS_PAUSED: &str = "notifications.paused";
+    /// 每次悬浮窗提醒的显示时长（秒）。
+    pub const REMINDER_FLASH_SECONDS: &str = "notifications.flash_seconds";
+    /// 每次到点提醒的通知总次数。
+    pub const REMINDER_COUNT: &str = "notifications.reminder_count";
+    /// 是否在启动后空闲时预先创建全局搜索框（`"true"` / `"false"`），缺省为否：
+    /// 第一次按快捷键更快，代价是多占一个 WebView 的内存。
+    pub const SEARCH_PREWARM: &str = "search.prewarm";
+    /// 是否已经看过（或跳过）首次运行引导（`"true"`），缺省为未看过。
+    pub const ONBOARDING_COMPLETED: &str = "onboarding.completed";
+    /// 悬浮窗外观偏好（JSON，前端定义结构，D-14）。
+    pub const UI_APPEARANCE: &str = "ui.appearance";
+    /// 悬浮窗自定义皮肤（JSON，含 PNG 帧 data URL，D-14）。
+    pub const UI_SKIN: &str = "ui.skin";
+    /// 界面语言（`zh-CN` / `en`）；Rust 侧的托盘、对话框、通知文案据此选择语言（D-14）。
+    pub const UI_LANGUAGE: &str = "ui.language";
+    /// 主题偏好（`system` / `light` / `dark`）。
+    pub const UI_THEME: &str = "ui.theme";
+    /// Today 是否隐藏今日已完成的 Todo（`"true"` / `"false"`），缺省为显示。
+    pub const UI_HIDE_COMPLETED: &str = "ui.hide_completed";
+    /// 已连接的集成账号（JSON，只含非秘密的元数据；秘密只在系统凭据库里，实施计划 9.5）。
+    pub const INTEGRATION_CONNECTIONS: &str = "integrations.connections";
+    /// 日历一周从哪天开始（`monday` / `sunday`），缺省为周一。
+    pub const WEEK_START: &str = "calendar.week_start";
+}
+
+/// 「稍后」（推迟）指哪一天（实施计划 3.5）。
+///
+/// 悬浮窗与收集箱的「稍后」按钮都按这个规则算日期；默认是下周一。
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum LaterRule {
+    /// 严格晚于今天的下一个周一（今天是周一则为 7 天后）。
+    #[default]
+    NextMonday,
+    /// 3 天后。
+    InThreeDays,
+    /// 7 天后。
+    InOneWeek,
+}
+
+impl LaterRule {
+    /// 存进设置表的稳定文本。
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::NextMonday => "next_monday",
+            Self::InThreeDays => "in_three_days",
+            Self::InOneWeek => "in_one_week",
+        }
+    }
+
+    /// 从设置里的文本还原；不认识的值返回 `None`（调用方退回默认规则）。
+    pub fn parse(text: &str) -> Option<Self> {
+        match text {
+            "next_monday" => Some(Self::NextMonday),
+            "in_three_days" => Some(Self::InThreeDays),
+            "in_one_week" => Some(Self::InOneWeek),
+            _ => None,
+        }
+    }
+
+    /// 以 `today` 为基准，「稍后」是哪一天。
+    pub fn resolve(self, today: NaiveDate) -> NaiveDate {
+        match self {
+            Self::NextMonday => next_monday_after(today),
+            Self::InThreeDays => today + Duration::days(3),
+            Self::InOneWeek => today + Duration::days(7),
+        }
+    }
+}
+
+/// 在已开启的事务里读取「稍后」的规则；没设置过或值不认识时用默认规则。
+///
+/// # Errors
+///
+/// 存储错误。
+pub(crate) async fn read_later_rule(tx: &mut dyn Transaction) -> Result<LaterRule, AppError> {
+    Ok(tx
+        .settings()
+        .get(keys::LATER_RULE)
+        .await?
+        .as_deref()
+        .and_then(LaterRule::parse)
+        .unwrap_or_default())
+}
+
+/// 在已开启的事务里读取一周的起始日；没设置过或值不认识时是周一。
+///
+/// # Errors
+///
+/// 存储错误。
+pub(crate) async fn read_week_start(tx: &mut dyn Transaction) -> Result<WeekStart, AppError> {
+    Ok(tx
+        .settings()
+        .get(keys::WEEK_START)
+        .await?
+        .as_deref()
+        .and_then(WeekStart::parse)
+        .unwrap_or_default())
+}
+
+/// 设置 key 允许的最大长度。
+const MAX_KEY_LEN: usize = 100;
+
+/// 设置值允许的最大字节数，防止误把大块数据塞进设置表。
+const MAX_VALUE_BYTES: usize = 4 * 1024 * 1024;
+
+/// 设置的 Use Case。
+#[derive(Clone)]
+pub struct SettingsService {
+    /// 事务工厂。
+    uow: Arc<dyn UnitOfWork>,
+    /// 时钟，用于记录更新时间。
+    clock: Arc<dyn Clock>,
+}
+
+/// 校验 key：非空、只含小写字母 / 数字 / 点 / 下划线，且不超长。
+fn validate_key(key: &str) -> Result<(), AppError> {
+    let valid = !key.is_empty()
+        && key.len() <= MAX_KEY_LEN
+        && key
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '.' || c == '_');
+    if valid {
+        Ok(())
+    } else {
+        Err(AppError::new(
+            ErrorCode::InvalidInput,
+            format!("无效的设置 key：{key:?}"),
+        ))
+    }
+}
+
+impl SettingsService {
+    /// 创建服务。
+    pub fn new(uow: Arc<dyn UnitOfWork>, clock: Arc<dyn Clock>) -> Self {
+        Self { uow, clock }
+    }
+
+    /// 读取一个设置；不存在时返回 `None`。
+    ///
+    /// # Errors
+    ///
+    /// * [`ErrorCode::InvalidInput`] - key 格式不合法。
+    /// * 存储错误。
+    pub async fn get(&self, key: &str) -> Result<Option<String>, AppError> {
+        validate_key(key)?;
+        let mut tx = self.uow.begin_read().await?;
+        Ok(tx.settings().get(key).await?)
+    }
+
+    /// 读取「稍后」的规则；没设置过或值不认识时是默认的下周一。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误。
+    pub async fn later_rule(&self) -> Result<LaterRule, AppError> {
+        let mut tx = self.uow.begin_read().await?;
+        read_later_rule(&mut *tx).await
+    }
+
+    /// 读取一周的起始日；没设置过或值不认识时是周一。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误。
+    pub async fn week_start(&self) -> Result<WeekStart, AppError> {
+        let mut tx = self.uow.begin_read().await?;
+        read_week_start(&mut *tx).await
+    }
+
+    /// 修改一周的起始日（Calendar 的 Week / Month 视图随之变化）。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误，事务已回滚。
+    pub async fn set_week_start(&self, week_start: WeekStart) -> Result<(), AppError> {
+        self.set(keys::WEEK_START, week_start.as_str()).await
+    }
+
+    /// 修改「稍后」的规则。
+    ///
+    /// # Errors
+    ///
+    /// 存储错误，事务已回滚。
+    pub async fn set_later_rule(&self, rule: LaterRule) -> Result<(), AppError> {
+        self.set(keys::LATER_RULE, rule.as_str()).await
+    }
+
+    /// 写入（覆盖）一个设置。
+    ///
+    /// # Errors
+    ///
+    /// * [`ErrorCode::InvalidInput`] - key 格式不合法，或值超过 64 KiB。
+    /// * 存储错误，事务已回滚。
+    pub async fn set(&self, key: &str, value: &str) -> Result<(), AppError> {
+        validate_key(key)?;
+        if value.len() > MAX_VALUE_BYTES {
+            return Err(AppError::new(
+                ErrorCode::InvalidInput,
+                format!("设置 {key} 的值过大：{} 字节", value.len()),
+            ));
+        }
+        let now = self.clock.now_utc();
+        let mut tx = self.uow.begin().await?;
+        tx.settings().set(key, value, now).await?;
+        tx.commit().await?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
+mod tests {
+    use chrono::{TimeZone, Utc};
+    use stardeskbox_common::clock::FakeClock;
+
+    use super::*;
+    use crate::testing::FakeUnitOfWork;
+
+    /// 构造服务与可观察的内存数据库。
+    fn service() -> (SettingsService, FakeUnitOfWork) {
+        let uow = FakeUnitOfWork::new();
+        let clock = FakeClock::at_utc(Utc.with_ymd_and_hms(2026, 10, 9, 8, 0, 0).unwrap());
+        (
+            SettingsService::new(Arc::new(uow.clone()), Arc::new(clock)),
+            uow,
+        )
+    }
+
+    #[tokio::test]
+    async fn missing_setting_is_none_and_written_setting_is_readable() {
+        let (service, uow) = service();
+        assert_eq!(service.get(keys::FLOATING_PLACEMENT).await.unwrap(), None);
+
+        service
+            .set(keys::FLOATING_PLACEMENT, "{\"a\":1}")
+            .await
+            .unwrap();
+        assert_eq!(
+            service
+                .get(keys::FLOATING_PLACEMENT)
+                .await
+                .unwrap()
+                .as_deref(),
+            Some("{\"a\":1}")
+        );
+        assert_eq!(
+            uow.committed_setting(keys::FLOATING_PLACEMENT).as_deref(),
+            Some("{\"a\":1}")
+        );
+    }
+
+    #[tokio::test]
+    async fn setting_is_overwritten() {
+        let (service, _) = service();
+        service
+            .set(keys::FLOATING_ALWAYS_ON_TOP, "true")
+            .await
+            .unwrap();
+        service
+            .set(keys::FLOATING_ALWAYS_ON_TOP, "false")
+            .await
+            .unwrap();
+        assert_eq!(
+            service
+                .get(keys::FLOATING_ALWAYS_ON_TOP)
+                .await
+                .unwrap()
+                .as_deref(),
+            Some("false")
+        );
+    }
+
+    #[tokio::test]
+    async fn invalid_keys_and_oversized_values_are_rejected() {
+        let (service, uow) = service();
+        for key in ["", "Has Upper", "with space", &"a".repeat(MAX_KEY_LEN + 1)] {
+            assert_eq!(
+                service.set(key, "v").await.unwrap_err().code,
+                ErrorCode::InvalidInput
+            );
+            assert_eq!(
+                service.get(key).await.unwrap_err().code,
+                ErrorCode::InvalidInput
+            );
+        }
+        let huge = "x".repeat(MAX_VALUE_BYTES + 1);
+        assert_eq!(
+            service.set("ok.key", &huge).await.unwrap_err().code,
+            ErrorCode::InvalidInput
+        );
+        assert_eq!(uow.committed_setting("ok.key"), None);
+    }
+
+    #[tokio::test]
+    async fn failed_commit_does_not_change_the_setting() {
+        let (service, uow) = service();
+        service.set("a.b", "old").await.unwrap();
+        uow.fail_next_commit();
+        assert_eq!(
+            service.set("a.b", "new").await.unwrap_err().code,
+            ErrorCode::StorageUnavailable
+        );
+        assert_eq!(service.get("a.b").await.unwrap().as_deref(), Some("old"));
+    }
+}

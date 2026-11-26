@@ -11,7 +11,7 @@ describe("主题 Store", () => {
   it("设置偏好后更新根元素 data-theme 并保存", () => {
     useThemeStore.getState().setPreference("dark");
     expect(document.documentElement.dataset["theme"]).toBe("dark");
-    expect(window.localStorage.getItem("nivlo.theme")).toBe("dark");
+    expect(window.localStorage.getItem("stardeskbox.theme")).toBe("dark");
 
     useThemeStore.getState().setPreference("light");
     expect(document.documentElement.dataset["theme"]).toBe("light");

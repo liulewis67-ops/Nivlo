@@ -91,7 +91,7 @@ export const commands = {
 	 */
 	previewItemAttachment: (id: string, index: number) => typedError<AttachmentPreviewDto, IpcError>(__TAURI_INVOKE("preview_item_attachment", { id, index })),
 	/**
-	 *  在文件管理器中定位指定关联附件（包括 Nivlo 保存的截图）。
+	 *  在文件管理器中定位指定关联附件（包括 StarDeskBox 保存的截图）。
 	 * 
 	 *  # Errors
 	 *  事项 / 附件不存在、文件已丢失或系统定位失败时返回错误。
@@ -134,7 +134,7 @@ export const commands = {
 	/**
 	 *  永久删除回收站里的这些 Item；不在回收站里的不会被删除。返回实际删除的数量。
 	 * 
-	 *  只删除数据库记录与 Nivlo 自己保存的文件，被引用的用户文件不受影响。
+	 *  只删除数据库记录与 StarDeskBox 自己保存的文件，被引用的用户文件不受影响。
 	 * 
 	 *  # Errors
 	 * 
@@ -446,7 +446,7 @@ export const commands = {
 	 */
 	getSkinStorageUsage: () => typedError<SkinStorageUsageDto, IpcError>(__TAURI_INVOKE("get_skin_storage_usage")),
 	/**
-	 *  将当前皮肤清单与引用的本地帧图导出为 `.nivlo-skin.zip`（写入 `exports/` 并在文件管理器中显示）。
+	 *  将当前皮肤清单与引用的本地帧图导出为 `.stardeskbox-skin.zip`（写入 `exports/` 并在文件管理器中显示）。
 	 * 
 	 *  # Errors
 	 * 
@@ -454,7 +454,7 @@ export const commands = {
 	 */
 	exportSkinPack: (manifestJson: string, assetFiles: string[]) => typedError<string, IpcError>(__TAURI_INVOKE("export_skin_pack", { manifestJson, assetFiles })),
 	/**
-	 *  弹出文件选择框导入 `.nivlo-skin.zip`，校验并落盘全部帧图后返回清单 JSON；用户取消返回 `null`。
+	 *  弹出文件选择框导入 `.stardeskbox-skin.zip`，校验并落盘全部帧图后返回清单 JSON；用户取消返回 `null`。
 	 * 
 	 *  # Errors
 	 * 
@@ -643,7 +643,7 @@ export const commands = {
 	undoCapture: (itemIds: string[]) => typedError<null, IpcError>(__TAURI_INVOKE("undo_capture", { itemIds })),
 	/**
 	 *  把剪贴板里的内容收进 Inbox（用户按了粘贴）：文件 → 文本 → 图片，优先级见
-	 *  [`nivlo_capture::normalize_clipboard`]。
+	 *  [`stardeskbox_capture::normalize_clipboard`]。
 	 * 
 	 *  读取剪贴板可能因为被其他程序占用而短暂重试，所以放在阻塞线程里，不占用异步运行时。
 	 * 
@@ -778,7 +778,7 @@ export const commands = {
 	 * 
 	 *  # Errors
 	 * 
-	 *  不是合法的快捷键返回 `SHORTCUT_INVALID`；已经绑定给 Nivlo 的另一个动作、或被其他程序占用返回
+	 *  不是合法的快捷键返回 `SHORTCUT_INVALID`；已经绑定给 StarDeskBox 的另一个动作、或被其他程序占用返回
 	 *  `SHORTCUT_CONFLICT`；平台不支持返回 `INVALID_INPUT`；保存失败时返回存储错误（快捷键本次运行仍然有效）。
 	 */
 	setShortcut: (action: ShortcutActionDto, accelerator: string) => typedError<ShortcutStatusDto, IpcError>(__TAURI_INVOKE("set_shortcut", { action, accelerator })),
@@ -949,7 +949,7 @@ export type AppSettingsDto = {
 
 /**  附件（IPC 表示）。 */
 export type AttachmentDto = {
-	/**  `reference`（引用用户的文件）或 `stored`（Nivlo 保存的图片）。 */
+	/**  `reference`（引用用户的文件）或 `stored`（StarDeskBox 保存的图片）。 */
 	kind: string,
 	/**  路径：引用时是原始路径；保存的图片是相对 `attachments/` 的文件名。 */
 	path: string,

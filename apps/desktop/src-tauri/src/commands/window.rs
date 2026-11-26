@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use nivlo_application::error::{AppError, ErrorAction, ErrorCode};
-use nivlo_platform::error::PlatformError;
+use stardeskbox_application::error::{AppError, ErrorAction, ErrorCode};
+use stardeskbox_platform::error::PlatformError;
 use tauri::{AppHandle, Manager, PhysicalPosition, Runtime, State, WebviewWindow};
 use tauri_specta::Event;
 

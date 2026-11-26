@@ -59,7 +59,7 @@
       }
     }
   ],
-  "profileIsolation": "Temporary NIVLO_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted",
+  "profileIsolation": "Temporary STARDESKBOX_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted",
   "sourceCommit": "fd334ef2b8f1813a7406cfd5a384ada482cf47d3",
   "sourceFiles": {
     "apps/desktop/ui/src/features/workflows/WorkflowsPage.tsx": "63f51ec21a1607016965afa59ac014b3da2762183b0a2a4e29d407f5e465466b",

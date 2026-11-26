@@ -58,7 +58,7 @@
       }
     }
   ],
-  "profileIsolation": "Temporary NIVLO_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted",
+  "profileIsolation": "Temporary STARDESKBOX_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted",
   "sourceCommit": "2b347550a7dfde141a4cd0b7d8be5db62f75da53",
   "sourceFiles": {
     "apps/desktop/src-tauri/src/commands/window.rs": "422eda3e20a09265154f33ecf103dae18402d2301f67746c21c08fffbd99a380",

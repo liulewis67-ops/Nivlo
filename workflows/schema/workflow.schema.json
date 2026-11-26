@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://nivlo.app/schemas/workflow-1.json",
-  "title": "Nivlo Workflow",
-  "description": "拾序 Workflow 定义格式（schemaVersion 1）：一个 Matcher + 一串线性 Step。",
+  "$id": "https://stardeskbox.app/schemas/workflow-1.json",
+  "title": "StarDeskBox Workflow",
+  "description": "StarDeskBox Workflow 定义格式（schemaVersion 1）：一个 Matcher + 一串线性 Step。",
   "type": "object",
   "required": ["schemaVersion", "id", "name", "matcher", "steps"],
   "additionalProperties": false,

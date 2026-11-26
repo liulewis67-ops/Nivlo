@@ -1,7 +1,7 @@
 //! 来源相关的 Command：打开 Item 的来源。
 
-use nivlo_application::error::{AppError, ErrorCode};
-use nivlo_platform::open::OpenPort;
+use stardeskbox_application::error::{AppError, ErrorCode};
+use stardeskbox_platform::open::OpenPort;
 use tauri::{AppHandle, Runtime, State};
 
 use crate::app::AppState;
@@ -58,7 +58,7 @@ pub async fn open_item_source<R: Runtime>(
     let Some(path) = path else {
         return Err(failed("这个条目没有可打开的来源".to_owned()));
     };
-    if !nivlo_capture::reference_exists(path) {
+    if !stardeskbox_capture::reference_exists(path) {
         return Err(IpcError::from(AppError::new(
             ErrorCode::SourceFileMissing,
             format!("文件不存在：{path}"),

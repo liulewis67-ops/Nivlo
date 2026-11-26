@@ -4,14 +4,14 @@
 
 use std::sync::Arc;
 
-use nivlo_platform::clipboard::ClipboardPort;
+use stardeskbox_platform::clipboard::ClipboardPort;
 
 /// 当前平台的剪贴板读取：Windows 用 Win32，其他平台暂不支持（返回 `Unsupported`）。
 #[must_use]
 pub fn platform_clipboard() -> Arc<dyn ClipboardPort> {
     #[cfg(target_os = "windows")]
     {
-        Arc::new(nivlo_platform_windows::clipboard::WindowsClipboard)
+        Arc::new(stardeskbox_platform_windows::clipboard::WindowsClipboard)
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -28,9 +28,11 @@ impl ClipboardPort for UnsupportedClipboard {
     /// 总是返回 `Unsupported`。
     fn read(
         &self,
-    ) -> Result<nivlo_platform::clipboard::ClipboardContent, nivlo_platform::error::PlatformError>
-    {
-        Err(nivlo_platform::error::PlatformError::Unsupported(
+    ) -> Result<
+        stardeskbox_platform::clipboard::ClipboardContent,
+        stardeskbox_platform::error::PlatformError,
+    > {
+        Err(stardeskbox_platform::error::PlatformError::Unsupported(
             "剪贴板读取".to_owned(),
         ))
     }

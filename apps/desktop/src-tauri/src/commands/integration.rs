@@ -2,9 +2,9 @@
 //!
 //! 秘密只会**写入**系统凭据库：没有任何 Command 返回凭据内容，参数里的秘密也不会被日志记录。
 
-use nivlo_application::error::{AppError, ErrorCode};
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use stardeskbox_application::error::{AppError, ErrorCode};
 use tauri::State;
 
 use crate::app::AppState;

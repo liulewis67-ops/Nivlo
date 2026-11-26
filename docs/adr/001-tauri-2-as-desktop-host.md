@@ -6,7 +6,7 @@
 
 ## 背景
 
-Nivlo 是长期常驻的桌面应用（悬浮窗 + 主窗口），要求低内存、低 CPU、快速唤起（架构文档 §2.1），并要覆盖 Windows / macOS / Linux。
+StarDeskBox 是长期常驻的桌面应用（悬浮窗 + 主窗口），要求低内存、低 CPU、快速唤起（架构文档 §2.1），并要覆盖 Windows / macOS / Linux。
 
 ## 决策
 

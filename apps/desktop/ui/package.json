@@ -1,8 +1,8 @@
 {
-  "name": "@nivlo/desktop-ui",
+  "name": "@stardeskbox/desktop-ui",
   "license": "Apache-2.0",
   "private": true,
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "scripts": {
     "dev": "vite",

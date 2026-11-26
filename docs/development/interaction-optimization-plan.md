@@ -21,7 +21,7 @@ Search now exposes Commands and Keyboard help controls alongside the existing `>
 | 默认绑定 | `Ctrl+Alt+Space`（与 Quick Create 的 `Ctrl+Shift+Space` 同一组按键，好记） |
 | 设置键 | `shortcut.search`（Quick Create 仍是 `shortcut.quick_create`，已有数据不受影响） |
 | 实现 | `ShortcutController` 按 `ShortcutAction` 区分设置键与默认值；每个动作一个独立的 `RegisterHotKey` 线程，一个被占用不影响另一个 |
-| 冲突 | 启动时被占用不致命，界面提示并引导重绑；重绑到 Nivlo 另一个动作已用的组合时直接给出明确原因（不再误报「被其他程序占用」） |
+| 冲突 | 启动时被占用不致命，界面提示并引导重绑；重绑到 StarDeskBox 另一个动作已用的组合时直接给出明确原因（不再误报「被其他程序占用」） |
 | IPC | `get_shortcut_status(action)`、`set_shortcut(action, accelerator)` 取代 `set_quick_create_shortcut` |
 | 设置入口 | 设置页「悬浮窗」分区新增「全局搜索快捷键」行；侧栏仍只放 Quick Create，保持紧凑 |
 
@@ -54,7 +54,7 @@ Search now exposes Commands and Keyboard help controls alongside the existing `>
 - [x] 冷启动第一次唤出耗时、之后唤出耗时（记录到 `perf-baseline.md`，目标：之后 < 150 ms）。2026-10-27 `--native` 实测：第一次中位数 319 ms（含创建窗口、加载页面与测试自身的 CDP 连接），之后中位数 53 ms，达标。
 - [ ] 全局搜索框里 `>` 命令：主窗口出现在前台并切到对应视图，搜索框消失、不抢回焦点。
 - [ ] 托盘「搜索…」：快捷键提示右对齐；点击后搜索框出现且可以直接打字。
-- [x] 某些欧洲键盘布局上 `Ctrl+Alt` 等同于 `AltGr`，确认默认绑定不会吞掉字符输入。2026-10-27：`nivlo-platform-windows/tests/altgr.rs` 在真实布局上检查（ToUnicodeEx，临时加载后卸载）：德、法、西、意、葡、瑞士德语、波兰（程序员）、捷克、匈牙利、瑞典、挪威、土耳其 12 种布局里 `Ctrl+Alt+Space` 不输入字符；**加拿大多语言标准布局会**。因此新增运行时检测：注册快捷键时用当前布局判断（`ShortcutPort::types_character`），会输入字符时设置页提示换一个组合（状态 `typesCharacter`）。
+- [x] 某些欧洲键盘布局上 `Ctrl+Alt` 等同于 `AltGr`，确认默认绑定不会吞掉字符输入。2026-10-27：`stardeskbox-platform-windows/tests/altgr.rs` 在真实布局上检查（ToUnicodeEx，临时加载后卸载）：德、法、西、意、葡、瑞士德语、波兰（程序员）、捷克、匈牙利、瑞典、挪威、土耳其 12 种布局里 `Ctrl+Alt+Space` 不输入字符；**加拿大多语言标准布局会**。因此新增运行时检测：注册快捷键时用当前布局判断（`ShortcutPort::types_character`），会输入字符时设置页提示换一个组合（状态 `typesCharacter`）。
 
 > 2026-10-27：`tests/e2e/e2e.mjs` 新增 5 步（拼音首字母搜索、最近使用、结果标签、快捷键停用 / 启用、前往设置），在本机 release 构建上 3/3 通过；迁移 0007 / 0008 在真实程序启动时执行成功。上面的原生窗口行为（焦点、位置、DPI、托盘）仍需人工确认。
 
@@ -97,7 +97,7 @@ Ctrl+K 与全局搜索框除了条目，还可以列出命令：「打开收集�
 开发机上默认的全局搜索快捷键 `Ctrl+Alt+Space` 一直被别的程序占用，用户只有打开设置页才会知道全局搜索用不了。
 
 1. ✅ 侧栏提示：全局搜索的快捷键被占用时，主窗口侧栏直接出现它的修改框（自动展开冲突说明）；没被占用时侧栏不变。
-2. ✅ 一键换用：冲突时修改框列出最多 3 个「现在可用」的组合——后端逐个 `RegisterHotKey` 试注册再立刻取消（`ShortcutPort::is_available`，新命令 `suggest_shortcuts`，只给主窗口），跳过 Nivlo 自己正在用的与 AltGr 组合；平台无法判断时不列出。
+2. ✅ 一键换用：冲突时修改框列出最多 3 个「现在可用」的组合——后端逐个 `RegisterHotKey` 试注册再立刻取消（`ShortcutPort::is_available`，新命令 `suggest_shortcuts`，只给主窗口），跳过 StarDeskBox 自己正在用的与 AltGr 组合；平台无法判断时不列出。
 3. ✅ 首次引导：快捷键被占用时说明按了没反应、去哪里换，不再介绍一个用不了的组合。
 4. **待定**：默认组合被占用时是否自动改用一个可用的候选（会改变用户没要求改的东西，需要产品决定）。
 
@@ -146,7 +146,7 @@ Ctrl+K 与全局搜索框除了条目，还可以列出命令：「打开收集�
 15. ✅ 「今天」添加框 ↓ 进入列表、第一条上 ↑ 回到添加框（列表到头不处理的 ↑ 冒泡到页面处理）。
 16. ✅ 收集箱 Ctrl+A 全选（焦点在收集箱里、不在文字输入框时），接着 T / M 整批整理。
 17. ✅ 「今天」添加框 Esc 清空（连同识别出的日期）；空时不拦截。
-18. ✅ 发布版拦下浏览器功能键（`lib/browser-keys.ts`）：F5 / Ctrl+R 刷新、Ctrl+P 打印、Ctrl+S 另存、Ctrl+U 源代码；缩放、查找、编辑键不拦，开发时保留 F5。**待真机确认**：WebView2 里 `preventDefault` 确实挡住了刷新与打印（Chromium 的行为如此，未在 Nivlo 里实测）。Tauri 2.12 没有暴露 `SetAreBrowserAcceleratorKeysEnabled`，而且整体关掉会连缩放一起关。
+18. ✅ 发布版拦下浏览器功能键（`lib/browser-keys.ts`）：F5 / Ctrl+R 刷新、Ctrl+P 打印、Ctrl+S 另存、Ctrl+U 源代码；缩放、查找、编辑键不拦，开发时保留 F5。**待真机确认**：WebView2 里 `preventDefault` 确实挡住了刷新与打印（Chromium 的行为如此，未在 StarDeskBox 里实测）。Tauri 2.12 没有暴露 `SetAreBrowserAcceleratorKeysEnabled`，而且整体关掉会连缩放一起关。
 19. 入口包体检查（2026-10-30）：`index` 约 497 KB，主要是 react-dom、@tauri-apps/api、TanStack Query、i18next 与 Radix 菜单，都是各窗口启动就要用的，不再拆分；生产构建已不带内存 Mock。
 20. ✅ 主窗口 Ctrl+Z：执行最新一条还在显示的「撤销」提示（`ToastAction.undo` 标记撤销类操作，`undoLatest`；安装更新等其他按钮不会被触发）；输入时、对话框打开时不响应。
 21. ✅ 收集箱勾选后按 Delete 删除（移进回收站，带撤销）；删除和整理一样把焦点留在下一条（`deleteItems`）。

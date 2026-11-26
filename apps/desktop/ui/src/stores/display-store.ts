@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { ipc } from "@/lib/ipc";
 
 /** 偏好在 localStorage 中的 key；悬浮窗与主窗口共用，靠 `storage` 事件同步。 */
-export const HIDE_COMPLETED_STORAGE_KEY = "nivlo.hideCompleted";
+export const HIDE_COMPLETED_STORAGE_KEY = "stardeskbox.hideCompleted";
 
 /** 读取已保存的「隐藏已完成」；默认显示。 */
 function load(): boolean {

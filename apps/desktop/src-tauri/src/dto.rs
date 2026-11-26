@@ -9,29 +9,31 @@
 
 use base64::Engine;
 use chrono::{DateTime, NaiveDate, NaiveTime, SecondsFormat, Utc};
-use nivlo_application::calendar::{
-    CalendarData, CalendarEntry, CalendarView, EntryKind, WeekStart,
-};
-use nivlo_application::capture::CaptureResult;
-use nivlo_application::error::{AppError, ErrorCode};
-use nivlo_application::inbox::{
-    InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
-};
-use nivlo_application::item::{ItemLink, Patch, RescheduleTarget, UpdateItemInput};
-use nivlo_application::organize::{ProjectSummary, TagSummary};
-use nivlo_application::ports::{ItemFilter, ItemOrder};
-use nivlo_application::settings::LaterRule;
-use nivlo_application::today::{TodayEntry, TodayView};
-use nivlo_application::trash::TrashEntry;
-use nivlo_domain::attachment::Attachment;
-use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
-use nivlo_domain::id::{ItemId, ProjectId, TagId};
-use nivlo_domain::item::{ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority};
-use nivlo_domain::project::Project;
-use nivlo_domain::source::Source;
-use nivlo_domain::tag::Tag;
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use stardeskbox_application::calendar::{
+    CalendarData, CalendarEntry, CalendarView, EntryKind, WeekStart,
+};
+use stardeskbox_application::capture::CaptureResult;
+use stardeskbox_application::error::{AppError, ErrorCode};
+use stardeskbox_application::inbox::{
+    InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
+};
+use stardeskbox_application::item::{ItemLink, Patch, RescheduleTarget, UpdateItemInput};
+use stardeskbox_application::organize::{ProjectSummary, TagSummary};
+use stardeskbox_application::ports::{ItemFilter, ItemOrder};
+use stardeskbox_application::settings::LaterRule;
+use stardeskbox_application::today::{TodayEntry, TodayView};
+use stardeskbox_application::trash::TrashEntry;
+use stardeskbox_domain::attachment::Attachment;
+use stardeskbox_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
+use stardeskbox_domain::id::{ItemId, ProjectId, TagId};
+use stardeskbox_domain::item::{
+    ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority,
+};
+use stardeskbox_domain::project::Project;
+use stardeskbox_domain::source::Source;
+use stardeskbox_domain::tag::Tag;
 
 use crate::shortcut::{ShortcutAction, ShortcutStatus};
 
@@ -377,7 +379,7 @@ pub enum CreateTextSourceDto {
     Selection,
 }
 
-impl From<CreateTextSourceDto> for nivlo_domain::source::SourceType {
+impl From<CreateTextSourceDto> for stardeskbox_domain::source::SourceType {
     fn from(value: CreateTextSourceDto) -> Self {
         Self::new(match value {
             CreateTextSourceDto::Clipboard => Self::CLIPBOARD,
@@ -413,7 +415,7 @@ impl From<ItemLinkDto> for ItemLink {
                 title: title.map(|t| t.trim().to_owned()).filter(|t| !t.is_empty()),
             },
             ItemLinkDto::File { path } => {
-                Self::File(nivlo_capture::file_ref(std::path::Path::new(&path)))
+                Self::File(stardeskbox_capture::file_ref(std::path::Path::new(&path)))
             }
         }
     }
@@ -657,10 +659,10 @@ pub struct ExpandedLayoutDto {
     pub vertical: VerticalAnchorDto,
 }
 
-impl From<nivlo_platform::placement::ExpandedLayout> for ExpandedLayoutDto {
+impl From<stardeskbox_platform::placement::ExpandedLayout> for ExpandedLayoutDto {
     /// Platform → DTO。
-    fn from(layout: nivlo_platform::placement::ExpandedLayout) -> Self {
-        use nivlo_platform::placement::{HorizontalAnchor, VerticalAnchor};
+    fn from(layout: stardeskbox_platform::placement::ExpandedLayout) -> Self {
+        use stardeskbox_platform::placement::{HorizontalAnchor, VerticalAnchor};
         Self {
             horizontal: match layout.horizontal {
                 HorizontalAnchor::Left => HorizontalAnchorDto::Left,
@@ -917,7 +919,7 @@ impl From<&Source> for SourceDto {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AttachmentDto {
-    /// `reference`（引用用户的文件）或 `stored`（Nivlo 保存的图片）。
+    /// `reference`（引用用户的文件）或 `stored`（StarDeskBox 保存的图片）。
     pub kind: String,
     /// 路径：引用时是原始路径；保存的图片是相对 `attachments/` 的文件名。
     pub path: String,
@@ -938,7 +940,7 @@ impl AttachmentDto {
         let exists = if value.owns_file() {
             true
         } else {
-            nivlo_capture::reference_exists(&value.path)
+            stardeskbox_capture::reference_exists(&value.path)
         };
         #[allow(clippy::cast_precision_loss)]
         let size_bytes = value.size_bytes.map(|size| size as f64);
@@ -1537,9 +1539,9 @@ mod tests {
 
     #[test]
     fn ipc_error_carries_code_and_action() {
-        let error: IpcError = AppError::from(nivlo_application::ports::StorageError::Unavailable(
-            "x".into(),
-        ))
+        let error: IpcError = AppError::from(
+            stardeskbox_application::ports::StorageError::Unavailable("x".into()),
+        )
         .into();
         assert_eq!(error.code, "STORAGE_UNAVAILABLE");
         assert_eq!(error.action.as_deref(), Some("OPEN_DIAGNOSTICS"));
@@ -1679,16 +1681,16 @@ impl TryFrom<CaptureRequestDto> for CaptureRequest {
         let empty = || invalid("没有可捕获的内容".to_owned());
         let input: CaptureInput = match value.input {
             CaptureInputDto::Text { text } => {
-                nivlo_capture::normalize_text(&text).ok_or_else(empty)?
+                stardeskbox_capture::normalize_text(&text).ok_or_else(empty)?
             }
             CaptureInputDto::Files { paths } => {
-                nivlo_capture::normalize_files(&paths).ok_or_else(empty)?
+                stardeskbox_capture::normalize_files(&paths).ok_or_else(empty)?
             }
             CaptureInputDto::Image { data_base64 } => {
                 let bytes = base64::engine::general_purpose::STANDARD
                     .decode(data_base64.as_bytes())
                     .map_err(|_| invalid("图片数据不是有效的 Base64".to_owned()))?;
-                nivlo_capture::image_input(bytes).map_err(|e| invalid(e.to_string()))?
+                stardeskbox_capture::image_input(bytes).map_err(|e| invalid(e.to_string()))?
             }
         };
         let mut request = Self::new(input, value.origin.into());
@@ -1732,9 +1734,9 @@ pub struct SkinAssetDto {
     pub size_bytes: u32,
 }
 
-impl From<nivlo_application::ports::StoredSkinAsset> for SkinAssetDto {
+impl From<stardeskbox_application::ports::StoredSkinAsset> for SkinAssetDto {
     /// Application → DTO。
-    fn from(value: nivlo_application::ports::StoredSkinAsset) -> Self {
+    fn from(value: stardeskbox_application::ports::StoredSkinAsset) -> Self {
         Self {
             id: value.id,
             ext: value.format.extension().to_owned(),
@@ -1755,9 +1757,9 @@ pub struct SkinStorageUsageDto {
     pub quota_bytes: u32,
 }
 
-impl From<nivlo_application::ports::SkinStorageUsage> for SkinStorageUsageDto {
+impl From<stardeskbox_application::ports::SkinStorageUsage> for SkinStorageUsageDto {
     /// Application → DTO。
-    fn from(value: nivlo_application::ports::SkinStorageUsage) -> Self {
+    fn from(value: stardeskbox_application::ports::SkinStorageUsage) -> Self {
         Self {
             file_count: u32::try_from(value.file_count).unwrap_or(u32::MAX),
             total_bytes: u32::try_from(value.total_bytes).unwrap_or(u32::MAX),

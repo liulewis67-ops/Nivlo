@@ -111,7 +111,7 @@ async function bootstrap(): Promise<void> {
     setIpcClient(previewWindows(memory, label));
   } else {
     throw new Error(
-      "Nivlo UI must run inside Tauri; use the Vite dev server for a browser preview.",
+      "StarDeskBox UI must run inside Tauri; use the Vite dev server for a browser preview.",
     );
   }
 

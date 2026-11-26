@@ -3,7 +3,7 @@
 //! 默认**关闭**。首次运行时用一个原生对话框问一次，无论回答什么都记录"已询问"，之后不再打扰；
 //! 以后的开关放在设置页（3.5）。自启本身由 `tauri-plugin-autostart` 写入系统启动项。
 
-use nivlo_application::settings::{SettingsService, keys};
+use stardeskbox_application::settings::{SettingsService, keys};
 
 use crate::native_i18n::Lang;
 use tauri::{AppHandle, Wry};
@@ -16,7 +16,7 @@ use tauri_plugin_dialog::{
 pub const AUTOSTART_ARG: &str = "--autostarted";
 
 /// 设置了这个环境变量就不弹首次运行询问（自动化脚本使用，不会记录「已询问」）。
-pub const SKIP_PROMPT_ENV: &str = "NIVLO_SKIP_FIRST_RUN_PROMPTS";
+pub const SKIP_PROMPT_ENV: &str = "STARDESKBOX_SKIP_FIRST_RUN_PROMPTS";
 
 /// 一种语言下的对话框文案。
 struct Text {
@@ -34,16 +34,16 @@ struct Text {
 fn text(lang: Lang) -> Text {
     match lang {
         Lang::ZhCn => Text {
-            title: "开机时自动启动拾序？",
-            message: "拾序常驻在屏幕边缘，开机自动启动后你随时可以把想法和待办收进来。
+            title: "开机时自动启动StarDeskBox？",
+            message: "StarDeskBox常驻在屏幕边缘，开机自动启动后你随时可以把想法和待办收进来。
 
                       你可以随时在设置里更改这个选项。",
             enable: "开机自动启动",
             decline: "暂不需要",
         },
         Lang::En => Text {
-            title: "Start Nivlo when you sign in?",
-            message: "Nivlo lives at the edge of your screen. Starting it at sign-in lets you capture ideas and to-dos anytime.
+            title: "Start StarDeskBox when you sign in?",
+            message: "StarDeskBox lives at the edge of your screen. Starting it at sign-in lets you capture ideas and to-dos anytime.
 
                       You can change this in Settings at any time.",
             enable: "Start at sign-in",

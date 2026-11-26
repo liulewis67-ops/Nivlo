@@ -52,7 +52,7 @@
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -84,7 +84,7 @@
     },
     {
       "role": "group",
-      "name": "拾序悬浮窗",
+      "name": "StarDeskBox悬浮窗",
       "properties": []
     },
     {

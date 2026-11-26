@@ -1,0 +1,12 @@
+[package]
+name = "stardeskbox-platform-linux"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "StarDeskBox platform-linux crate"
+
+[dependencies]
+
+[lints]
+workspace = true

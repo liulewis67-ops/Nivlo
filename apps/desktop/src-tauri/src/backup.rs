@@ -3,9 +3,9 @@
 //! 备份包是一个 zip：
 //!
 //! * `manifest.json`：格式、版本、创建时间、应用版本、Schema 版本；
-//! * `nivlo.db`：用 `VACUUM INTO` 做的**事务一致**快照（应用运行时也能备份）。Workflow 与设置都在库里；
+//! * `stardeskbox.db`：用 `VACUUM INTO` 做的**事务一致**快照（应用运行时也能备份）。Workflow 与设置都在库里；
 //!   备份里**没有任何 Secret**（Secret 本来就不在数据库里，见架构文档 §36）；
-//! * `attachments/…`：Nivlo 自己保存的附件（粘贴的图片）。被引用的用户文件不在其中——它们本来就不归 Nivlo 管。
+//! * `attachments/…`：StarDeskBox 自己保存的附件（粘贴的图片）。被引用的用户文件不在其中——它们本来就不归 StarDeskBox 管。
 //!
 //! 恢复分两步，因为运行中的应用不能替换自己正在使用的数据库文件：
 //!
@@ -22,12 +22,12 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 
-use nivlo_common::paths::AppPaths;
-use nivlo_storage::Database;
 use serde::{Deserialize, Serialize};
+use stardeskbox_common::paths::AppPaths;
+use stardeskbox_storage::Database;
 
 /// 备份包格式名。
-pub const BACKUP_FORMAT: &str = "nivlo-backup";
+pub const BACKUP_FORMAT: &str = "stardeskbox-backup";
 
 /// 备份包格式版本。
 pub const BACKUP_VERSION: u32 = 1;
@@ -67,8 +67,8 @@ impl From<zip::result::ZipError> for BackupError {
     }
 }
 
-impl From<nivlo_application::ports::StorageError> for BackupError {
-    fn from(error: nivlo_application::ports::StorageError) -> Self {
+impl From<stardeskbox_application::ports::StorageError> for BackupError {
+    fn from(error: stardeskbox_application::ports::StorageError) -> Self {
         Self::Database(error.to_string())
     }
 }
@@ -161,7 +161,7 @@ pub async fn create_backup(
         let json =
             serde_json::to_vec_pretty(&manifest).map_err(|e| BackupError::Io(e.to_string()))?;
         writer.write_all(&json)?;
-        writer.start_file("nivlo.db", options)?;
+        writer.start_file("stardeskbox.db", options)?;
         std::io::copy(&mut File::open(&snapshot_path)?, &mut writer)?;
         for (name, path) in walk(&attachments_dir) {
             writer.start_file(format!("attachments/{name}"), options)?;
@@ -214,7 +214,7 @@ pub async fn stage_restore(backup: &Path, paths: &AppPaths) -> Result<Manifest, 
             return Err(error);
         }
     };
-    let verified = Database::verify_file(&staging.join("nivlo.db")).await;
+    let verified = Database::verify_file(&staging.join("stardeskbox.db")).await;
     let fail = |message: String| {
         let _ = std::fs::remove_dir_all(&staging);
         Err(BackupError::Invalid(message))
@@ -223,7 +223,7 @@ pub async fn stage_restore(backup: &Path, paths: &AppPaths) -> Result<Manifest, 
         Ok(Some(version)) if version <= Database::latest_schema_version() => {}
         Ok(Some(version)) => {
             return fail(format!(
-                "备份来自更新版本的拾序（数据库版本 {version}），请先升级应用"
+                "备份来自更新版本的StarDeskBox（数据库版本 {version}），请先升级应用"
             ));
         }
         Ok(None) => return fail("备份里的数据库是空的".to_owned()),
@@ -246,9 +246,11 @@ fn extract(backup: &Path, staging: &Path) -> Result<Manifest, BackupError> {
         entry.by_ref().take(64 * 1024).read_to_string(&mut text)?;
         serde_json::from_str(&text).map_err(|e| BackupError::Invalid(e.to_string()))?
     };
-    if manifest.format != BACKUP_FORMAT || manifest.version > BACKUP_VERSION {
+    if (manifest.format != BACKUP_FORMAT && manifest.format != "nivlo-backup")
+        || manifest.version > BACKUP_VERSION
+    {
         return Err(BackupError::Invalid(
-            "不是拾序的备份包，或来自更新的版本".to_owned(),
+            "不是StarDeskBox的备份包，或来自更新的版本".to_owned(),
         ));
     }
     let mut has_database = false;
@@ -258,7 +260,12 @@ fn extract(backup: &Path, staging: &Path) -> Result<Manifest, BackupError> {
         if entry.is_dir() || name == "manifest.json" {
             continue;
         }
-        let allowed = name == "nivlo.db"
+        let name = if name == "nivlo.db" && manifest.format == "nivlo-backup" {
+            "stardeskbox.db".to_owned()
+        } else {
+            name
+        };
+        let allowed = name == "stardeskbox.db"
             || name.strip_prefix("attachments/").is_some()
             || name.strip_prefix("skins/").is_some();
         if !allowed || !safe_relative(&name) {
@@ -269,10 +276,10 @@ fn extract(backup: &Path, staging: &Path) -> Result<Manifest, BackupError> {
             std::fs::create_dir_all(parent)?;
         }
         std::io::copy(&mut entry, &mut File::create(&destination)?)?;
-        has_database |= name == "nivlo.db";
+        has_database |= name == "stardeskbox.db";
     }
     if !has_database {
-        return Err(BackupError::Invalid("缺少 nivlo.db".to_owned()));
+        return Err(BackupError::Invalid("缺少 stardeskbox.db".to_owned()));
     }
     Ok(manifest)
 }
@@ -342,7 +349,7 @@ pub fn apply_pending_restore(paths: &AppPaths, stamp: &str) -> Result<bool, Back
         // 1. 把当前数据挪走。
         move_current_aside(paths, &replaced, &mut moved)?;
         // 2. 换上暂存的数据。
-        std::fs::rename(staging.join("nivlo.db"), paths.database_file())?;
+        std::fs::rename(staging.join("stardeskbox.db"), paths.database_file())?;
         let staged_attachments = staging.join("attachments");
         if staged_attachments.is_dir() {
             std::fs::rename(staged_attachments, paths.attachments_dir())?;

@@ -1,5 +1,5 @@
 
- RUN  v5.0.3 E:/personal_projects/Nivlo/apps/desktop/ui
+ RUN  v5.0.3 E:/personal_projects/StarDeskBox/apps/desktop/ui
 
  ❯ src/components/tooltip-escape.test.tsx (1 test | 1 failed) 304ms
    × Escape 先关闭焦点提示，再次 Escape 才关闭父模态 303ms
@@ -35,5 +35,5 @@ Number of calls: 1
    Duration  4.33s (environment 43%, import 27%, setup 20%, tests 7%, worker 2%)
 
 undefined
-E:\personal_projects\Nivlo\apps\desktop\ui:
+E:\personal_projects\StarDeskBox\apps\desktop\ui:
 [ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL] Command failed with exit code 1: vitest run src/components/tooltip-escape.test.tsx

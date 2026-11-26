@@ -9,7 +9,7 @@ import path from "node:path";
 
 const check = process.argv.includes("--check");
 const dbDir = path.resolve("target", "sqlx-dev");
-const dbFile = path.join(dbDir, "nivlo-dev.db");
+const dbFile = path.join(dbDir, "stardeskbox-dev.db");
 fs.mkdirSync(dbDir, { recursive: true });
 for (const suffix of ["", "-shm", "-wal"]) fs.rmSync(dbFile + suffix, { force: true });
 

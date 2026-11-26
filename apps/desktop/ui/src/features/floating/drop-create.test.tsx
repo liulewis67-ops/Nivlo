@@ -7,7 +7,7 @@ import { FloatingRoot } from "./FloatingRoot";
 
 /** 悬浮窗根元素。 */
 function root(): HTMLElement {
-  return screen.getByRole("group", { name: "拾序悬浮窗" });
+  return screen.getByRole("group", { name: "StarDeskBox悬浮窗" });
 }
 
 /** 推进虚拟时间并让挂起的 Promise 完成。 */

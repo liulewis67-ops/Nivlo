@@ -1,8 +1,8 @@
-# Nivlo · 拾序
+# StarDeskBox
 
 把零散信息变成下一步。为 Windows 打造的个人收集与行动工作台，使用 Tauri 2、Rust 与 React。
 
-[产品介绍](https://liulewis67-ops.github.io/Nivlo/) · [下载](https://github.com/liulewis67-ops/Nivlo/releases/download/v0.1.1/Nivlo_0.1.1_x64-setup.exe) · [发布说明](docs/development/releases/v0.1.1.md)
+[产品介绍](https://liulewis67-ops.github.io/StarDeskBox/) · [下载](https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.3/StarDeskBox_0.1.3_x64-setup.exe) · [发布说明](docs/development/releases/v0.1.3.md)
 
 拖入链接、文字或文件，在收件箱整理为待办、笔记和提示，再用今日与日历安排处理。数据默认保存于本机；可配置捕获工作流和外部集成。
 
@@ -35,6 +35,6 @@ pnpm tauri dev
 
 ## 开源协议
 
-Nivlo · 拾序采用 [Apache License 2.0](LICENSE) 开源，许可声明同时适用于已发布的 **v0.1.0** 源码与 Nivlo 自身的二进制程序。可在遵守许可证条款的前提下使用、修改和分发。
+StarDeskBox采用 [Apache License 2.0](LICENSE) 开源，许可声明同时适用于已发布的 **v0.1.0** 源码与 StarDeskBox 自身的二进制程序。可在遵守许可证条款的前提下使用、修改和分发。
 
-Copyright 2026 liulewis67-ops and Nivlo contributors. 版权与归属声明见 [NOTICE](NOTICE)。第三方依赖遵循各自的许可证。
+Copyright 2026 liulewis67-ops and StarDeskBox contributors. 版权与归属声明见 [NOTICE](NOTICE)。第三方依赖遵循各自的许可证。

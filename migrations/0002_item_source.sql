@@ -7,7 +7,7 @@
 -- * attachments：文件默认只保存**引用**（原始路径），不复制；只有没有原始路径的内容
 --   （如粘贴的截图）才复制进应用的 attachments/ 目录（kind = 'stored'）。
 --
--- 两张表都随 Item 级联删除——但级联只删除**记录**：被引用的用户文件永远不会被 Nivlo 删除。
+-- 两张表都随 Item 级联删除——但级联只删除**记录**：被引用的用户文件永远不会被 StarDeskBox 删除。
 
 ALTER TABLE items ADD COLUMN in_inbox INTEGER NOT NULL DEFAULT 0 CHECK (in_inbox IN (0, 1));
 
@@ -32,7 +32,7 @@ CREATE INDEX idx_item_sources_item_id ON item_sources (item_id);
 CREATE TABLE attachments (
     id         TEXT PRIMARY KEY NOT NULL,
     item_id    TEXT NOT NULL REFERENCES items (id) ON DELETE CASCADE,
-    -- reference：引用用户磁盘上的文件；stored：已复制到 attachments/，由 Nivlo 负责清理。
+    -- reference：引用用户磁盘上的文件；stored：已复制到 attachments/，由 StarDeskBox 负责清理。
     kind       TEXT NOT NULL CHECK (kind IN ('reference', 'stored')),
     -- reference 为用户的原始路径；stored 为 attachments/ 下的相对路径。
     path       TEXT NOT NULL,

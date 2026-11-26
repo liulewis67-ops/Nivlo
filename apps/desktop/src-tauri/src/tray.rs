@@ -1,7 +1,7 @@
 //! 系统托盘（实施计划 1.9）。
 //!
 //! 托盘是应用常驻的"安全出口"：悬浮窗被隐藏、主窗口被关闭后，用户仍然可以从托盘
-//! 打开 Nivlo、快速添加、搜索、重新显示悬浮窗或退出。菜单项的行为由纯函数 [`action_for`]
+//! 打开 StarDeskBox、快速添加、搜索、重新显示悬浮窗或退出。菜单项的行为由纯函数 [`action_for`]
 //! 决定，因此可以脱离系统托盘做单元测试。
 
 use std::sync::{Mutex, PoisonError};
@@ -19,7 +19,7 @@ use crate::shortcut::ShortcutAction;
 use crate::windows::{self, FLOATING_WINDOW_LABEL};
 
 /// 托盘图标的 ID。
-const TRAY_ID: &str = "nivlo-tray";
+const TRAY_ID: &str = "stardeskbox-tray";
 
 /// 一种语言下的全部菜单文案。
 struct Labels {
@@ -45,8 +45,8 @@ struct Labels {
 fn labels(lang: Lang) -> Labels {
     match lang {
         Lang::ZhCn => Labels {
-            tooltip: "拾序 Nivlo",
-            open: "打开拾序",
+            tooltip: "StarDeskBox",
+            open: "打开StarDeskBox",
             quick_add: "快速添加待办",
             search: "搜索…",
             toggle_floating: "显示 / 隐藏悬浮窗",
@@ -55,8 +55,8 @@ fn labels(lang: Lang) -> Labels {
             quit: "退出",
         },
         Lang::En => Labels {
-            tooltip: "Nivlo",
-            open: "Open Nivlo",
+            tooltip: "StarDeskBox",
+            open: "Open StarDeskBox",
             quick_add: "Quick add to-do",
             search: "Search…",
             toggle_floating: "Show / hide floating window",

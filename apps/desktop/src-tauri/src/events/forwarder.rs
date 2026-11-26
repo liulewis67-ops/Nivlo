@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use nivlo_application::event::{EventBus, UiEvent, UiEventMapper};
-use nivlo_domain::event::DomainEvent;
+use stardeskbox_application::event::{EventBus, UiEvent, UiEventMapper};
+use stardeskbox_domain::event::DomainEvent;
 use tauri::async_runtime::JoinHandle;
 use tauri::{AppHandle, Wry};
 use tauri_specta::Event;
@@ -142,9 +142,9 @@ pub fn spawn_forwarder(
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
-    use nivlo_application::event::{EventBus, EventPublisher, UiEvent};
-    use nivlo_domain::event::DomainEvent;
-    use nivlo_domain::id::ItemId;
+    use stardeskbox_application::event::{EventBus, EventPublisher, UiEvent};
+    use stardeskbox_domain::event::DomainEvent;
+    use stardeskbox_domain::id::ItemId;
     use uuid::Uuid;
 
     use super::{DATA_EVENT_TARGETS, MAX_BATCH, drain_ready, map_batch};

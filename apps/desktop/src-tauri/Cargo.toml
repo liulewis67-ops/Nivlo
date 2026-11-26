@@ -1,13 +1,13 @@
 [package]
-name = "nivlo-desktop"
+name = "stardeskbox-desktop"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-description = "Nivlo desktop host (Composition Root)"
+description = "StarDeskBox desktop host (Composition Root)"
 
 [lib]
-name = "nivlo_desktop_lib"
+name = "stardeskbox_desktop_lib"
 
 [build-dependencies]
 tauri-build.workspace = true
@@ -33,27 +33,27 @@ serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
 zip.workspace = true
-nivlo-common.workspace = true
-nivlo-domain.workspace = true
-nivlo-application.workspace = true
-nivlo-storage.workspace = true
-nivlo-capture.workspace = true
-nivlo-workflow.workspace = true
-nivlo-script.workspace = true
+stardeskbox-common.workspace = true
+stardeskbox-domain.workspace = true
+stardeskbox-application.workspace = true
+stardeskbox-storage.workspace = true
+stardeskbox-capture.workspace = true
+stardeskbox-workflow.workspace = true
+stardeskbox-script.workspace = true
 async-trait.workspace = true
-nivlo-scheduler.workspace = true
-nivlo-integrations.workspace = true
-nivlo-platform.workspace = true
+stardeskbox-scheduler.workspace = true
+stardeskbox-integrations.workspace = true
+stardeskbox-platform.workspace = true
 sys-locale = "0.3.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-nivlo-platform-windows.workspace = true
+stardeskbox-platform-windows.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
-nivlo-platform-macos.workspace = true
+stardeskbox-platform-macos.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
-nivlo-platform-linux.workspace = true
+stardeskbox-platform-linux.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
@@ -62,7 +62,7 @@ sqlx.workspace = true
 tempfile.workspace = true
 uuid.workspace = true
 tracing-subscriber.workspace = true
-nivlo-application = { workspace = true, features = ["testing"] }
+stardeskbox-application = { workspace = true, features = ["testing"] }
 
 [lints]
 workspace = true

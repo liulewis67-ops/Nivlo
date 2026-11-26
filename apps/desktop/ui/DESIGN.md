@@ -1,4 +1,4 @@
-# Nivlo design context — implementation draft
+# StarDeskBox design context — implementation draft
 
 ## Overview
 

@@ -6,16 +6,18 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
-use nivlo_application::error::ErrorCode;
-use nivlo_application::ports::http::{HostPolicy, HttpError, HttpPort, HttpRequest, HttpResponse};
-use nivlo_application::ports::integration::{
+use stardeskbox_application::error::ErrorCode;
+use stardeskbox_application::ports::http::{
+    HostPolicy, HttpError, HttpPort, HttpRequest, HttpResponse,
+};
+use stardeskbox_application::ports::integration::{
     Integration, IntegrationCall, IntegrationContext, IntegrationError, IntegrationOutput,
     IntegrationRegistry,
 };
-use nivlo_application::settings::SettingsService;
-use nivlo_application::testing::FakeUnitOfWork;
-use nivlo_common::clock::FakeClock;
-use nivlo_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials};
+use stardeskbox_application::settings::SettingsService;
+use stardeskbox_application::testing::FakeUnitOfWork;
+use stardeskbox_common::clock::FakeClock;
+use stardeskbox_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials};
 
 use super::{IntegrationService, TestOutcome};
 

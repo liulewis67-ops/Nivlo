@@ -1,7 +1,7 @@
 //! UI Event Mapper：选择并转换需要通知前端的领域事件。
 
-use nivlo_application::event::{UiEvent, UiEventMapper};
-use nivlo_domain::event::DomainEvent;
+use stardeskbox_application::event::{UiEvent, UiEventMapper};
+use stardeskbox_domain::event::DomainEvent;
 
 /// 默认映射：Item 的创建映射为 `ItemCreated`，其余影响 Item 展示的变化映射为 `ItemUpdated`。
 ///
@@ -37,7 +37,7 @@ impl UiEventMapper for DefaultUiEventMapper {
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
-    use nivlo_domain::id::{ItemId, ProjectId};
+    use stardeskbox_domain::id::{ItemId, ProjectId};
     use uuid::Uuid;
 
     use super::*;

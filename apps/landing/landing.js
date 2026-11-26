@@ -1,7 +1,7 @@
 const copy = {
   zh: {
-    title: 'Nivlo 拾序 · 把零散信息变成下一步',
-    description: 'Nivlo 拾序是 Windows 桌面上的个人收集与行动工作台。随手拖入链接、文字和文件，再用今日与日历安排下一步。',
+    title: 'StarDeskBox · 把零散信息变成下一步',
+    description: 'StarDeskBox是 Windows 桌面上的个人收集与行动工作台。随手拖入链接、文字和文件，再用今日与日历安排下一步。',
     skip: '跳到正文', nav: '主导航', language: '切换到英语', home: '回到页首',
     theme: { light: '切换到浅色模式', dark: '切换到深色模式' },
     features: '产品能力', workflow: '使用方式', faq: '常见问题', cta: '下载 Windows 版',
@@ -40,18 +40,18 @@ const copy = {
       ['择时行动', '把要做的事排进日历，再从「今日」开始处理。'],
     ],
     questions: [
-      ['Nivlo 是什么？', 'Nivlo 拾序是一款 Windows 桌面工具，用同一个入口收集资料、整理事项并安排后续行动。'],
+      ['StarDeskBox 是什么？', 'StarDeskBox是一款 Windows 桌面工具，用同一个入口收集资料、整理事项并安排后续行动。'],
       ['能收集哪些内容？', '可以收集链接、文字、图片、文件和文件夹。部分来源无法直接拖入时，可试试复制后在悬浮窗粘贴。'],
       ['收下的东西会放在哪里？', '你可以在收件箱查找新收下的内容，并把它整理为待办、笔记或提示。'],
       ['一定要配置工作流吗？', '不需要。你可以直接收集和手动整理；需要自动识别和处理常见内容时，再使用工作流。'],
-      ['资料保存在哪里？', 'Nivlo 优先在本机保存资料。某些工作流需要访问网页或外部服务，使用时需要网络。'],
-      ['现在可以下载吗？', '0.1.2 提供 Windows x64 安装包，点击下载按钮即可直接下载安装包。安装包未配置 Windows 代码签名，系统可能显示发布者未知。'],
+      ['资料保存在哪里？', 'StarDeskBox 优先在本机保存资料。某些工作流需要访问网页或外部服务，使用时需要网络。'],
+      ['现在可以下载吗？', '0.1.3 提供 Windows x64 安装包，点击下载按钮即可直接下载安装包。安装包未配置 Windows 代码签名，系统可能显示发布者未知。'],
     ],
-    end: '先收下一条线索。', endLead: '下载 Nivlo 0.1.2，把零散的信息变成可安排的事项。', foot: '拾取散落的信息，让事情各归其序。',
+    end: '先收下一条线索。', endLead: '下载 StarDeskBox 0.1.3，把零散的信息变成可安排的事项。', foot: '拾取散落的信息，让事情各归其序。',
   },
   en: {
-    title: 'Nivlo · Turn scattered information into your next action',
-    description: 'Nivlo is a personal capture and planning workspace for Windows. Drop in links, text and files, then plan your next action in Today and Calendar.',
+    title: 'StarDeskBox · Turn scattered information into your next action',
+    description: 'StarDeskBox is a personal capture and planning workspace for Windows. Drop in links, text and files, then plan your next action in Today and Calendar.',
     skip: 'Skip to content', nav: 'Main navigation', language: 'Switch to Chinese', home: 'Back to top',
     theme: { light: 'Switch to light mode', dark: 'Switch to dark mode' },
     features: 'Features', workflow: 'How it works', faq: 'FAQ', cta: 'Download for Windows',
@@ -59,7 +59,7 @@ const copy = {
     hero: ['Catch the thought.', 'Find the next step.'],
     lead: 'Drop links, files and quick thoughts into a floating window. Keep them as tasks, notes or tips, then decide when to act.',
     platform: 'Made for Windows · Data stays local by default',
-    demo: 'Interactive demo', example: 'Sample data', demoTitle: 'Drag a link into Nivlo',
+    demo: 'Interactive demo', example: 'Sample data', demoTitle: 'Drag a link into StarDeskBox',
     tabs: ['Capture', 'Organize', 'Plan'],
     captured: 'Added to your inbox', dropIdle: 'Drop here to capture', dropReady: 'Release to capture',
     sourceLabel: 'Browser & desktop', replay: 'Replay',
@@ -90,14 +90,14 @@ const copy = {
       ['Make time for it', 'Put the task on your calendar and work through it from Today when it’s time.'],
     ],
     questions: [
-      ['What is Nivlo?', 'Nivlo is a Windows desktop tool for collecting information, organizing it and planning what comes next.'],
-      ['What can I capture?', 'Nivlo accepts links, text, images, files and folders. If an item cannot be dragged in directly, try copying it and pasting it into the floating window.'],
+      ['What is StarDeskBox?', 'StarDeskBox is a Windows desktop tool for collecting information, organizing it and planning what comes next.'],
+      ['What can I capture?', 'StarDeskBox accepts links, text, images, files and folders. If an item cannot be dragged in directly, try copying it and pasting it into the floating window.'],
       ['Where do captured items go?', 'Find new items in your inbox and organize them as tasks, notes or tips.'],
       ['Do I need to configure a workflow?', 'No. You can capture and organize items manually. Use workflows when you want to recognize and process familiar content automatically.'],
-      ['Where is my data stored?', 'Nivlo keeps your data on your computer by default. Workflows that look up webpages or use external services need a network connection.'],
-      ['Can I download it now?', 'Version 0.1.2 provides a Windows x64 installer that downloads directly from the download button. The installer has no Windows code-signing certificate, so Windows may show an unknown publisher.'],
+      ['Where is my data stored?', 'StarDeskBox keeps your data on your computer by default. Workflows that look up webpages or use external services need a network connection.'],
+      ['Can I download it now?', 'Version 0.1.3 provides a Windows x64 installer that downloads directly from the download button. The installer has no Windows code-signing certificate, so Windows may show an unknown publisher.'],
     ],
-    end: 'Start with one thing.', endLead: 'Download Nivlo 0.1.2 and turn loose pieces of information into your next action.', foot: 'Pick up what’s scattered. Give it a place.',
+    end: 'Start with one thing.', endLead: 'Download StarDeskBox 0.1.3 and turn loose pieces of information into your next action.', foot: 'Pick up what’s scattered. Give it a place.',
   },
 };
 
@@ -106,7 +106,7 @@ const icons = ['tray', 'stack', 'calendar'];
 const site = document.querySelector('#site');
 const urlLanguage = () => new URLSearchParams(location.search).get('lang');
 const preferred = () => {
-  try { return localStorage.getItem('nivlo-language'); } catch { return null; }
+  try { return localStorage.getItem('stardeskbox-language'); } catch { return null; }
 };
 let lang = [urlLanguage(), preferred(), navigator.language?.toLowerCase().startsWith('zh') ? 'zh' : 'en'].find((value) => value === 'zh' || value === 'en');
 let active = 0;
@@ -174,7 +174,7 @@ function renderDemo(focusTab = false, motion = '') {
     </div>`;
   panel.innerHTML = `
     <div class="window">
-      <div class="window-bar"><img src="assets/nivlo.png" alt="" width="18" height="18"> Nivlo <span class="window-controls" aria-hidden="true">− □ ×</span></div>
+      <div class="window-bar"><img src="assets/stardeskbox.png" alt="" width="18" height="18"> StarDeskBox <span class="window-controls" aria-hidden="true">− □ ×</span></div>
       <div class="window-body">
         <div class="rail" aria-hidden="true">${t.navDemo.map((label, index) => `<span class="${index === active ? 'current' : ''}">${icon(icons[index])}<span>${label}</span></span>`).join('')}</div>
         <div class="screen">
@@ -191,10 +191,10 @@ function renderDemo(focusTab = false, motion = '') {
       ${active === 0 ? tray : ''}
       ${active === 0
         ? `<div class="floating drop-zone${motion === 'capture' ? ' drop-pulse' : ''}" data-drop>
-            <div class="float-label"><span></span> Nivlo</div>
+            <div class="float-label"><span></span> StarDeskBox</div>
             <div class="drop-target">${icon(inbox.length ? 'check' : 'tray')}<span data-drop-text>${inbox.length ? t.captured : t.dropIdle}</span></div>
           </div>`
-        : `<div class="floating"><div class="float-label"><span></span> Nivlo</div><div class="capture-button status">${icon(icons[active])}<span>${active === 2 ? t.slot : t.file}</span></div></div>`}
+        : `<div class="floating"><div class="float-label"><span></span> StarDeskBox</div><div class="capture-button status">${icon(icons[active])}<span>${active === 2 ? t.slot : t.file}</span></div></div>`}
     </div>`;
   document.querySelector('#demo-description').textContent = hint();
   if (focusTab) document.querySelector(`#tab-${active}`).focus();
@@ -220,11 +220,11 @@ function render(introMotion = false) {
   for (const [property, content] of [['og:title', t.title], ['og:description', t.description]]) {
     document.querySelector(`meta[property="${property}"]`).content = content;
   }
-  const action = `<a class="button-md primary" href="https://github.com/liulewis67-ops/Nivlo/releases/download/v0.1.2/Nivlo_0.1.2_x64-setup.exe">${t.cta} ${icon('arrow')}</a>`;
+  const action = `<a class="button-md primary" href="https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.3/StarDeskBox_0.1.3_x64-setup.exe">${t.cta} ${icon('arrow')}</a>`;
   site.innerHTML = `
     <a class="skip" href="#main">${t.skip}</a>
     <header id="top" class="wrap header">
-      <a href="#top" class="brand" aria-label="Nivlo · ${t.home}"><img src="assets/nivlo.png" alt="" width="32" height="32">Nivlo <span>拾序</span></a>
+      <a href="#top" class="brand" aria-label="StarDeskBox · ${t.home}"><img src="assets/stardeskbox.png" alt="" width="32" height="32">StarDeskBox</a>
       <nav aria-label="${t.nav}" class="nav"><a href="#features">${t.features}</a><a href="#workflow">${t.workflow}</a><a href="#faq">${t.faq}</a></nav>
       <div class="header-actions">
         <button class="lang theme-toggle" type="button" data-theme-toggle></button>
@@ -259,7 +259,7 @@ function render(introMotion = false) {
           </article>`).join('')}</div>
       </section>
       <section class="motto">
-        <div class="wrap motto-content"><img src="assets/nivlo.png" alt="" width="64" height="64">
+        <div class="wrap motto-content"><img src="assets/stardeskbox.png" alt="" width="64" height="64">
         <h2 class="heading-2">${t.motto.map((line) => `<span class="motto-line">${(lang === 'zh' ? line.match(/.{1,2}/gu) : line.split(' ')).map((word) => `<span class="word">${word}</span>`).join(lang === 'zh' ? '' : ' ')}</span>`).join(' ')}</h2></div>
       </section>
       <section class="wrap section workflow" id="workflow">
@@ -272,7 +272,7 @@ function render(introMotion = false) {
       </section>
       <section class="wrap end"><div><h2 class="heading-2">${t.end}</h2><p>${t.endLead}</p></div>${action}</section>
     </main>
-    <footer class="wrap footer"><a class="brand" href="#top"><img src="assets/nivlo.png" alt="" width="24" height="24">Nivlo</a><p class="caption">${t.foot}</p><a class="to-top" href="#top" aria-label="${t.home}">${icon('up')}</a></footer>`;
+    <footer class="wrap footer"><a class="brand" href="#top"><img src="assets/stardeskbox.png" alt="" width="24" height="24">StarDeskBox</a><p class="caption">${t.foot}</p><a class="to-top" href="#top" aria-label="${t.home}">${icon('up')}</a></footer>`;
   renderDemo();
   updateTheme();
   demoObserver?.disconnect();
@@ -588,13 +588,13 @@ document.addEventListener('visibilitychange', () => {
 site.addEventListener('click', (event) => {
   if (event.target.closest('[data-theme-toggle]')) {
     root.dataset.theme = theme() === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem('nivlo-theme', root.dataset.theme); } catch { /* Keep the choice for this page. */ }
+    try { localStorage.setItem('stardeskbox-theme', root.dataset.theme); } catch { /* Keep the choice for this page. */ }
     updateTheme();
     return;
   }
   if (event.target.closest('[data-language]')) {
     lang = lang === 'zh' ? 'en' : 'zh';
-    try { localStorage.setItem('nivlo-language', lang); } catch { /* URL still records the choice. */ }
+    try { localStorage.setItem('stardeskbox-language', lang); } catch { /* URL still records the choice. */ }
     const url = new URL(location.href);
     url.searchParams.set('lang', lang);
     history.replaceState(null, '', url);

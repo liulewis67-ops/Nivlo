@@ -6,23 +6,23 @@ import { execFileSync } from "node:child_process";
 /** 外部技术依赖：只有 Adapter / 宿主可以依赖。 */
 const TECH = ["tauri", "sqlx", "reqwest", "rquickjs", "windows"];
 const ADAPTERS = [
-  "nivlo-storage",
-  "nivlo-capture",
-  "nivlo-workflow",
-  "nivlo-script",
-  "nivlo-scheduler",
-  "nivlo-integrations",
-  "nivlo-platform-windows",
-  "nivlo-platform-macos",
-  "nivlo-platform-linux",
+  "stardeskbox-storage",
+  "stardeskbox-capture",
+  "stardeskbox-workflow",
+  "stardeskbox-script",
+  "stardeskbox-scheduler",
+  "stardeskbox-integrations",
+  "stardeskbox-platform-windows",
+  "stardeskbox-platform-macos",
+  "stardeskbox-platform-linux",
 ];
 
 /** 规则表：crate -> 禁止（直接或间接）依赖的 crate 名。 */
 const RULES = {
-  "nivlo-common": [...TECH, "nivlo-domain", "nivlo-application", "nivlo-platform", ...ADAPTERS],
-  "nivlo-domain": [...TECH, "tokio", "nivlo-application", "nivlo-platform", ...ADAPTERS],
-  "nivlo-application": [...TECH, "nivlo-platform", ...ADAPTERS],
-  "nivlo-platform": [...TECH, "nivlo-application", ...ADAPTERS],
+  "stardeskbox-common": [...TECH, "stardeskbox-domain", "stardeskbox-application", "stardeskbox-platform", ...ADAPTERS],
+  "stardeskbox-domain": [...TECH, "tokio", "stardeskbox-application", "stardeskbox-platform", ...ADAPTERS],
+  "stardeskbox-application": [...TECH, "stardeskbox-platform", ...ADAPTERS],
+  "stardeskbox-platform": [...TECH, "stardeskbox-application", ...ADAPTERS],
 };
 
 const metadata = JSON.parse(

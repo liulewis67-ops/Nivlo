@@ -495,7 +495,7 @@
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -1670,7 +1670,7 @@
     },
     {
       "role": "StaticText",
-      "name": "Nivlo stays at the edge of your screen after startup, ready to catch ideas and to-dos.",
+      "name": "StarDeskBox stays at the edge of your screen after startup, ready to catch ideas and to-dos.",
       "properties": []
     },
     {
@@ -2376,7 +2376,7 @@
     },
     {
       "role": "StaticText",
-      "name": "See the basics of Nivlo again.",
+      "name": "See the basics of StarDeskBox again.",
       "properties": []
     },
     {
@@ -2828,7 +2828,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "Nivlo stays at the edge of your screen after ",
+      "name": "StarDeskBox stays at the edge of your screen after ",
       "properties": []
     },
     {
@@ -3797,7 +3797,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "See the basics of Nivlo again.",
+      "name": "See the basics of StarDeskBox again.",
       "properties": []
     },
     {

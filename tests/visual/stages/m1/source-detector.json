@@ -5,7 +5,7 @@
     "description": "Bounce and elastic easing feel dated and tacky. Real objects decelerate smoothly — use exponential easing (ease-out-quart/quint/expo) instead.",
     "severity": "advisory",
     "category": "slop",
-    "file": "E:\\personal_projects\\Nivlo\\apps\\desktop\\ui\\src\\styles\\global.css",
+    "file": "E:\\personal_projects\\StarDeskBox\\apps\\desktop\\ui\\src\\styles\\global.css",
     "line": 402,
     "snippet": "animation: nv-skin-bounce",
     "advisory": true

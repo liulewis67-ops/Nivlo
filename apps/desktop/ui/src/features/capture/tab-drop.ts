@@ -2,7 +2,7 @@ import { listen } from "@tauri-apps/api/event";
 import type { DropSnapshot } from "./model/extract-drop";
 
 /** 宿主发来的事件名（与后端 `tab_drop::EVENT` 一致）。 */
-const EVENT = "nivlo-tab-drop";
+const EVENT = "stardeskbox-tab-drop";
 
 /** 宿主发来的事件内容。 */
 export type TabDropPayload = {

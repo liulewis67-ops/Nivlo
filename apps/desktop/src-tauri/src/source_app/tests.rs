@@ -1,7 +1,7 @@
 //! 捕获时补充来源应用的规则测试。
 
-use nivlo_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
-use nivlo_platform::source_app::SourceApplicationPort;
+use stardeskbox_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
+use stardeskbox_platform::source_app::SourceApplicationPort;
 
 use super::fill_source_application;
 

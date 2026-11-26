@@ -1,9 +1,9 @@
 $ cargo fmt --all --check && cargo clippy --workspace --all-targets -j 2 -- -D warnings && cargo test --workspace -j 2 && node scripts/check-clock-usage.mjs && node scripts/check-deps/check-deps.mjs && node scripts/check-doc-links/check-doc-links.mjs
-    Checking nivlo-desktop v0.1.0 (E:\personal_projects\Nivlo\apps\desktop\src-tauri)
+    Checking stardeskbox-desktop v0.1.0 (E:\personal_projects\StarDeskBox\apps\desktop\src-tauri)
     Finished `dev` profile [unoptimized + debuginfo] target(s) in 19.68s
-   Compiling nivlo-desktop v0.1.0 (E:\personal_projects\Nivlo\apps\desktop\src-tauri)
+   Compiling stardeskbox-desktop v0.1.0 (E:\personal_projects\StarDeskBox\apps\desktop\src-tauri)
     Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 25s
-     Running unittests src\lib.rs (target\debug\deps\nivlo_application-b162bf7fc058e239.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_application-b162bf7fc058e239.exe)
 
 running 145 tests
 test calendar::tests::next_monday_matches_the_shared_vectors ... ok
@@ -27,7 +27,7 @@ test capture::tests::origin_never_changes_what_is_created ... ok
 test capture::tests::text_becomes_a_todo_in_the_inbox_with_a_text_source ... ok
 test capture::tests::several_files_become_one_note_each_in_a_single_transaction ... ok
 test day_change::tests::a_clock_jump_over_several_days_publishes_a_single_event_with_the_latest_date ... ok
-test capture::tests::undo_restores_the_database_and_removes_only_nivlos_own_files ... ok
+test capture::tests::undo_restores_the_database_and_removes_only_stardeskboxs_own_files ... ok
 test error::tests::domain_errors_map_to_codes ... ok
 test error::tests::error_codes_are_unique_uppercase_identifiers ... ok
 test error::tests::display_includes_the_code ... ok
@@ -142,7 +142,7 @@ test workflow::tests::builtin_sync_adds_missing_ones_and_keeps_user_choices_on_u
 test trash::tests::items_are_purged_automatically_after_the_retention_period ... ok
 test workflow::tests::deleting_removes_user_workflows ... ok
 test workflow::tests::dry_run_returns_the_result_and_writes_nothing ... ok
-test trash::tests::purge_only_touches_deleted_items_and_removes_nivlos_own_files ... ok
+test trash::tests::purge_only_touches_deleted_items_and_removes_stardeskboxs_own_files ... ok
 test workflow::tests::input_summaries_never_contain_the_full_text_query_strings_or_directories ... ok
 test trash::tests::the_trash_lists_newest_first_with_the_expiry_date ... ok
 test workflow::tests::duplicating_creates_a_user_copy_that_outranks_the_original ... ok
@@ -154,7 +154,7 @@ test workflow::tests::run_history_is_bounded_by_count_and_by_age ... ok
 
 test result: ok. 145 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_capture-3fa27709bd1f7872.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_capture-3fa27709bd1f7872.exe)
 
 running 20 tests
 test tests::a_utf8_character_cut_at_the_sniff_limit_still_counts_as_text ... ok
@@ -180,7 +180,7 @@ test tests::files_without_an_extension_are_sniffed_by_magic_bytes ... ok
 
 test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_common-c4a62e3cef58f9a1.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_common-c4a62e3cef58f9a1.exe)
 
 running 28 tests
 test clock::tests::advancing_across_midnight_changes_today ... ok
@@ -214,7 +214,7 @@ test clock::tests::system_clock_reports_a_timezone ... ok
 
 test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_desktop_lib-b0594787c5165366.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_desktop_lib-b0594787c5165366.exe)
 
 running 99 tests
 test autostart::tests::prompts_only_when_never_asked ... ok
@@ -319,7 +319,7 @@ test backup::tests::backup_then_wipe_then_restore_gives_back_identical_data ... 
 
 test result: ok. 99 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.17s
 
-     Running unittests src\main.rs (target\debug\deps\nivlo_desktop-5ba551fe0bd66f3b.exe)
+     Running unittests src\main.rs (target\debug\deps\stardeskbox_desktop-5ba551fe0bd66f3b.exe)
 
 running 0 tests
 
@@ -384,7 +384,7 @@ test main_window_is_created_on_demand_and_reused ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_domain-3d98f64be637b1d0.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_domain-3d98f64be637b1d0.exe)
 
 running 64 tests
 test attachment::tests::only_stored_attachments_own_their_file ... ok
@@ -454,7 +454,7 @@ test workflow::tests::serde_round_trip_preserves_everything ... ok
 
 test result: ok. 64 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_integrations-4b19bcb7ae4bd1c8.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_integrations-4b19bcb7ae4bd1c8.exe)
 
 running 25 tests
 test github::tests::issue_fields_are_mapped_and_the_token_is_sent_as_a_bearer ... ok
@@ -511,7 +511,7 @@ test logs_never_contain_query_strings_or_credential_headers ... ok
 
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_platform-479df62e46d95995.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_platform-479df62e46d95995.exe)
 
 running 49 tests
 test clipboard::tests::empty_means_no_files_image_or_text ... ok
@@ -566,19 +566,19 @@ test source_app::tests::well_known_applications_get_their_conventional_names ...
 
 test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_platform_linux-c7f5e1e39419c56f.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_platform_linux-c7f5e1e39419c56f.exe)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_platform_macos-ea98fe87dbc63d45.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_platform_macos-ea98fe87dbc63d45.exe)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_platform_windows-2afd149bd2565510.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_platform_windows-2afd149bd2565510.exe)
 
 running 6 tests
 test clipboard::tests::a_dib_gets_a_bmp_file_header_pointing_at_the_pixels ... ok
@@ -644,7 +644,7 @@ test the_image_name_of_this_process_is_found ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_scheduler-ec3aafdc3a9144c6.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_scheduler-ec3aafdc3a9144c6.exe)
 
 running 24 tests
 test plan::tests::a_few_missed_triggers_are_individual_with_their_original_time ... ok
@@ -674,7 +674,7 @@ test service::tests::the_loop_rechecks_on_its_own_even_without_a_wake ... ok
 
 test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_script-e418b9096b5791e1.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_script-e418b9096b5791e1.exe)
 
 running 17 tests
 test tests::line_numbers_are_read_from_stack_frames ... ok
@@ -697,7 +697,7 @@ test tests::an_infinite_loop_times_out_and_the_worker_keeps_serving ... ok
 
 test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_storage-8169d505a285e543.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_storage-8169d505a285e543.exe)
 
 running 9 tests
 test attachment_files::tests::plain_file_names_are_recognized ... ok
@@ -811,7 +811,7 @@ test fired_records_survive_a_restart_and_are_idempotent ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
 
-     Running unittests src\lib.rs (target\debug\deps\nivlo_workflow-34e789f9f8bab958.exe)
+     Running unittests src\lib.rs (target\debug\deps\stardeskbox_workflow-34e789f9f8bab958.exe)
 
 running 64 tests
 test doc_meta::tests::markdown_ignores_hashtags_and_code_blocks ... ok
@@ -975,87 +975,87 @@ test rerun_overwrites_on_request_and_refuses_sources_it_cannot_replay ... ok
 
 test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
 
-   Doc-tests nivlo_application
+   Doc-tests stardeskbox_application
 
 running 1 test
-test crates\nivlo-application\src\ports\storage.rs - ports::storage (line 5) ... ignored
+test crates\stardeskbox-application\src\ports\storage.rs - ports::storage (line 5) ... ignored
 
 test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 all doctests ran in 0.39s; merged doctests compilation took 0.39s
-   Doc-tests nivlo_capture
+   Doc-tests stardeskbox_capture
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_common
+   Doc-tests stardeskbox_common
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_desktop_lib
+   Doc-tests stardeskbox_desktop_lib
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_domain
+   Doc-tests stardeskbox_domain
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_integrations
+   Doc-tests stardeskbox_integrations
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_platform
+   Doc-tests stardeskbox_platform
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_platform_linux
+   Doc-tests stardeskbox_platform_linux
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_platform_macos
+   Doc-tests stardeskbox_platform_macos
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_platform_windows
+   Doc-tests stardeskbox_platform_windows
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_scheduler
+   Doc-tests stardeskbox_scheduler
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_script
+   Doc-tests stardeskbox_script
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_storage
+   Doc-tests stardeskbox_storage
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Doc-tests nivlo_workflow
+   Doc-tests stardeskbox_workflow
 
 running 0 tests
 

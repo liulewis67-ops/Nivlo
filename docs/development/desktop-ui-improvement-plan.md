@@ -1,4 +1,4 @@
-# Nivlo 桌面客户端改进方案
+# StarDeskBox 桌面客户端改进方案
 
 审阅基线为 `7cdc100`，验证环境为 Windows / WebView2。先恢复快速捕获的原生回归覆盖，再处理输入法和桌面伙伴持久化，最后收口徽标可读性与阴影。
 
@@ -53,4 +53,4 @@
 
 ### 重跑原生徽标验收
 
-在对应 Windows 显示缩放下运行 `node tests/e2e/e2e.mjs --native --badge-only --badge-scale 100`，125% 时将最后一个参数改为 `125`。缩放不符会让用例失败。可用 `NIVLO_EXE` 指定本次构建的可执行文件，用 `NIVLO_E2E_EVIDENCE_DIR` 为各次运行分别保存截图与 `measurements.json`。
+在对应 Windows 显示缩放下运行 `node tests/e2e/e2e.mjs --native --badge-only --badge-scale 100`，125% 时将最后一个参数改为 `125`。缩放不符会让用例失败。可用 `STARDESKBOX_EXE` 指定本次构建的可执行文件，用 `STARDESKBOX_E2E_EVIDENCE_DIR` 为各次运行分别保存截图与 `measurements.json`。

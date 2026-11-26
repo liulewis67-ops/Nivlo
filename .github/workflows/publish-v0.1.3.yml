@@ -1,0 +1,18 @@
+name: Publish StarDeskBox 0.1.3
+
+# Create the release tag before building and retain the installer before publishing.
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/publish-v0.1.3.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: v0.1.3
+    secrets: inherit

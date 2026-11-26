@@ -3,9 +3,9 @@
 //! Tauri 能满足悬浮窗当前的全部需求（位置、尺寸、置顶、可聚焦）；
 //! 只有 No-Activate、特殊 HitTest 等能力不足时才需要平台 Adapter（实施计划 10.2）。
 
-use nivlo_platform::error::PlatformError;
-use nivlo_platform::floating_window::{FloatingBounds, FloatingWindowPort};
-use nivlo_platform::placement::{MonitorInfo, Point, Rect};
+use stardeskbox_platform::error::PlatformError;
+use stardeskbox_platform::floating_window::{FloatingBounds, FloatingWindowPort};
+use stardeskbox_platform::placement::{MonitorInfo, Point, Rect};
 use tauri::{PhysicalPosition, PhysicalSize, Runtime, WebviewWindow};
 
 /// 把任意 Tauri 错误转换为 [`PlatformError::Failed`]，不向上泄漏 Tauri 的错误类型。

@@ -7,14 +7,14 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 function fixture(run) {
-  const dir = mkdtempSync(join(tmpdir(), "nivlo-manifest-"));
-  const installer = "Nivlo_0.1.1_x64-setup.exe";
+  const dir = mkdtempSync(join(tmpdir(), "stardeskbox-manifest-"));
+  const installer = "StarDeskBox_0.1.1_x64-setup.exe";
   const signature = Buffer.from("untrusted comment: signature\nfixture\ntrusted comment: version:0.1.1\nfixture\n").toString("base64");
   writeFileSync(join(dir, installer), "installer");
   writeFileSync(join(dir, installer + ".sig"), signature);
   const generate = (extra = []) => spawnSync(process.execPath, [
     fileURLToPath(new URL("./make-latest-json.mjs", import.meta.url)),
-    "--version", "0.1.1", ...(extra.includes("--base-url") ? [] : ["--base-url", "https://github.com/liulewis67-ops/Nivlo/releases/download/v0.1.1"]),
+    "--version", "0.1.1", ...(extra.includes("--base-url") ? [] : ["--base-url", "https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.1"]),
     "--bundle-dir", dir, "--out", join(dir, "latest.json"), ...extra,
   ], { encoding: "utf8" });
   try { run({ dir, installer, signature, generate }); }
@@ -28,7 +28,7 @@ test("publishes the exact installer URL, signature and release notes", () => fix
   assert.equal(manifest.version, "0.1.1");
   assert.equal(manifest.notes, "修复更新");
   assert.deepEqual(manifest.platforms["windows-x86_64"], {
-    signature, url: "https://github.com/liulewis67-ops/Nivlo/releases/download/v0.1.1/Nivlo_0.1.1_x64-setup.exe",
+    signature, url: "https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.1/StarDeskBox_0.1.1_x64-setup.exe",
   });
 }));
 

@@ -1,7 +1,7 @@
 {
   "samples": [
     {
-      "text": "拾序",
+      "text": "StarDeskBox",
       "tag": "SPAN",
       "placeholder": false,
       "fontSize": "18px",
@@ -668,7 +668,7 @@
       "pass": true
     },
     {
-      "text": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。",
+      "text": "开机后StarDeskBox常驻在屏幕边缘，随时可以收进想法和待办。",
       "tag": "P",
       "placeholder": false,
       "fontSize": "12px",
@@ -1070,7 +1070,7 @@
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -1125,7 +1125,7 @@
     },
     {
       "role": "StaticText",
-      "name": "拾序",
+      "name": "StarDeskBox",
       "properties": []
     },
     {
@@ -1288,7 +1288,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "拾序",
+      "name": "StarDeskBox",
       "properties": []
     },
     {
@@ -2672,7 +2672,7 @@
     },
     {
       "role": "StaticText",
-      "name": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。",
+      "name": "开机后StarDeskBox常驻在屏幕边缘，随时可以收进想法和待办。",
       "properties": []
     },
     {
@@ -3378,7 +3378,7 @@
     },
     {
       "role": "StaticText",
-      "name": "再看一遍拾序的基本用法。",
+      "name": "再看一遍StarDeskBox的基本用法。",
       "properties": []
     },
     {
@@ -3830,7 +3830,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "开机后拾序常驻在屏幕边缘，随时可以收进想法和待办。",
+      "name": "开机后StarDeskBox常驻在屏幕边缘，随时可以收进想法和待办。",
       "properties": []
     },
     {
@@ -4759,7 +4759,7 @@
     },
     {
       "role": "InlineTextBox",
-      "name": "再看一遍拾序的基本用法。",
+      "name": "再看一遍StarDeskBox的基本用法。",
       "properties": []
     },
     {

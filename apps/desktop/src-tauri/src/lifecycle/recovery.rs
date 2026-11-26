@@ -7,7 +7,7 @@
 use std::io;
 use std::path::Path;
 
-use nivlo_common::paths::AppPaths;
+use stardeskbox_common::paths::AppPaths;
 
 use crate::native_i18n::Lang;
 use tauri::{AppHandle, Wry};
@@ -35,13 +35,13 @@ fn text(lang: Lang) -> Text {
             open_logs: "打开日志目录",
             export: "导出数据库副本",
             quit: "退出",
-            title: "Nivlo 无法启动",
+            title: "StarDeskBox 无法启动",
         },
         Lang::En => Text {
             open_logs: "Open log folder",
             export: "Export database copy",
             quit: "Quit",
-            title: "Nivlo can't start",
+            title: "StarDeskBox can't start",
         },
     }
 }
@@ -50,14 +50,14 @@ fn text(lang: Lang) -> Text {
 fn message(lang: Lang, error: &dyn std::fmt::Display) -> String {
     match lang {
         Lang::ZhCn => format!(
-            "Nivlo 无法升级本地数据库，已停止启动以保护你的数据。
+            "StarDeskBox 无法升级本地数据库，已停止启动以保护你的数据。
 
 原因：{error}
 
              你可以打开日志目录查看详情，或导出一份数据库副本发给开发者。"
         ),
         Lang::En => format!(
-            "Nivlo couldn't upgrade the local database and stopped to protect your data.
+            "StarDeskBox couldn't upgrade the local database and stopped to protect your data.
 
 Reason: {error}
 
@@ -137,7 +137,7 @@ fn export_with_save_dialog(app: &AppHandle<Wry>, paths: &AppPaths) {
     let Some(target) = app
         .dialog()
         .file()
-        .set_file_name("nivlo-database-copy.db")
+        .set_file_name("stardeskbox-database-copy.db")
         .blocking_save_file()
     else {
         return;
@@ -198,7 +198,7 @@ mod tests {
     #[test]
     fn export_copies_the_database_file() {
         let dir = tempfile::tempdir().unwrap();
-        let source = dir.path().join("nivlo.db");
+        let source = dir.path().join("stardeskbox.db");
         std::fs::write(&source, b"sqlite bytes").unwrap();
         let destination = dir.path().join("copy.db");
         assert_eq!(export_database_copy(&source, &destination).unwrap(), 12);

@@ -3,17 +3,17 @@
 
 use std::sync::Arc;
 
-use nivlo_platform::credential::CredentialPort;
+use stardeskbox_platform::credential::CredentialPort;
 
 /// 当前平台的凭据库。
 #[must_use]
 pub fn system_credentials() -> Arc<dyn CredentialPort> {
     #[cfg(target_os = "windows")]
     {
-        Arc::new(nivlo_platform_windows::credential::WindowsCredentials::new())
+        Arc::new(stardeskbox_platform_windows::credential::WindowsCredentials::new())
     }
     #[cfg(not(target_os = "windows"))]
     {
-        Arc::new(nivlo_platform::credential::MemoryCredentials::new())
+        Arc::new(stardeskbox_platform::credential::MemoryCredentials::new())
     }
 }

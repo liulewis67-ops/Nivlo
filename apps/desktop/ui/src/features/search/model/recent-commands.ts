@@ -1,5 +1,5 @@
 /** 最近用过的命令在 localStorage 中的 key（主窗口 Ctrl+K 与全局搜索框共用）。 */
-export const RECENT_COMMANDS_KEY = "nivlo.palette.recentCommands";
+export const RECENT_COMMANDS_KEY = "stardeskbox.palette.recentCommands";
 
 /** 最多记住几条。 */
 export const RECENT_COMMANDS_LIMIT = 5;

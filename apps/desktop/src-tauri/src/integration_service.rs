@@ -3,21 +3,21 @@
 //! * **秘密只在系统凭据库里**：Token / 密码经 [`CredentialPort`] 保存与删除；`settings` 表里的
 //!   `integrations.connections` 只存非秘密的元数据（集成、账号、协议、连接时间、最近一次测试结果）。
 //! * 前端只能「写入」凭据，没有任何接口读回它。
-//! * 测试连接由对应的 [`Integration::test_connection`](nivlo_application::ports::integration::Integration::test_connection) 完成，并把结果区分成：成功 / 没连接 /
+//! * 测试连接由对应的 [`Integration::test_connection`](stardeskbox_application::ports::integration::Integration::test_connection) 完成，并把结果区分成：成功 / 没连接 /
 //!   认证失败 / 权限不足 / 网络问题 / 其他。
 
 use std::sync::Arc;
 
 use chrono::SecondsFormat;
-use nivlo_application::error::{AppError, ErrorCode};
-use nivlo_application::ports::http::{HostPolicy, HttpPort};
-use nivlo_application::ports::integration::{
+use serde::{Deserialize, Serialize};
+use stardeskbox_application::error::{AppError, ErrorCode};
+use stardeskbox_application::ports::http::{HostPolicy, HttpPort};
+use stardeskbox_application::ports::integration::{
     IntegrationContext, IntegrationError, IntegrationRegistry,
 };
-use nivlo_application::settings::{SettingsService, keys};
-use nivlo_common::clock::Clock;
-use nivlo_platform::credential::{CredentialKey, CredentialPort, Secret};
-use serde::{Deserialize, Serialize};
+use stardeskbox_application::settings::{SettingsService, keys};
+use stardeskbox_common::clock::Clock;
+use stardeskbox_platform::credential::{CredentialKey, CredentialPort, Secret};
 
 /// 秘密允许的最大长度（PAT / API Token 都远小于此）。
 const MAX_SECRET_CHARS: usize = 2000;
@@ -107,14 +107,14 @@ fn store_failed(what: &str, error: &dyn std::fmt::Display) -> AppError {
     AppError::new(ErrorCode::SystemSettingFailed, format!("{what}失败"))
 }
 
-/// 凭据库里的账号标识：Jira 把连接协议编进去（见 `nivlo_integrations::jira_credential_account`），其他集成就是账号本身。
+/// 凭据库里的账号标识：Jira 把连接协议编进去（见 `stardeskbox_integrations::jira_credential_account`），其他集成就是账号本身。
 fn credential_key(
     integration: &str,
     scheme: &str,
     account: &str,
 ) -> Result<CredentialKey, AppError> {
     let stored = if integration == "jira" {
-        nivlo_integrations::jira_credential_account(scheme, account)
+        stardeskbox_integrations::jira_credential_account(scheme, account)
     } else {
         account.to_owned()
     };

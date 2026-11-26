@@ -13,11 +13,11 @@ try {
     git diff --cached --quiet
     if ($LASTEXITCODE -ne 0) { throw 'Commit or unstage existing staged changes first.' }
 
-    $repository = 'https://github.com/liulewis67-ops/Nivlo.git'
+    $repository = 'https://github.com/liulewis67-ops/StarDeskBox.git'
     $remote = git config --get remote.origin.url
     if ($LASTEXITCODE -ne 0) {
         Invoke-ReleaseGit remote add origin $repository
-    } elseif ($remote -notin @($repository, 'git@github.com:liulewis67-ops/Nivlo.git')) {
+    } elseif ($remote -notin @($repository, 'git@github.com:liulewis67-ops/StarDeskBox.git')) {
         throw "Unexpected origin: $remote"
     }
 
@@ -47,7 +47,7 @@ try {
     }
 
     Invoke-ReleaseGit push -u origin main
-    if (-not $tagExists) { Invoke-ReleaseGit tag -a v0.1.0 -m 'Nivlo 0.1.0' }
+    if (-not $tagExists) { Invoke-ReleaseGit tag -a v0.1.0 -m 'StarDeskBox 0.1.0' }
     Invoke-ReleaseGit push origin v0.1.0
     Write-Host 'Pushed main and v0.1.0. Check Release and Deploy landing page in GitHub Actions.'
     Write-Host 'First deployment: set Settings > Pages > Source to GitHub Actions, then rerun Deploy landing page if needed.'

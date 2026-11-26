@@ -1,28 +1,28 @@
 $ npm --prefix apps/desktop/ui run check
 
-> @nivlo/desktop-ui@0.1.0 check
+> @stardeskbox/desktop-ui@0.1.0 check
 > npm run format:check && npm run typecheck && npm run lint && npm run test
 
 
-> @nivlo/desktop-ui@0.1.0 format:check
+> @stardeskbox/desktop-ui@0.1.0 format:check
 > prettier --check .
 
 Checking formatting...
 All matched files use Prettier code style!
 
-> @nivlo/desktop-ui@0.1.0 typecheck
+> @stardeskbox/desktop-ui@0.1.0 typecheck
 > tsc --noEmit
 
 
-> @nivlo/desktop-ui@0.1.0 lint
+> @stardeskbox/desktop-ui@0.1.0 lint
 > eslint . --max-warnings 0
 
 
-> @nivlo/desktop-ui@0.1.0 test
+> @stardeskbox/desktop-ui@0.1.0 test
 > vitest run
 
 
- RUN  v5.0.3 E:/personal_projects/Nivlo/apps/desktop/ui
+ RUN  v5.0.3 E:/personal_projects/StarDeskBox/apps/desktop/ui
 
 
  Test Files  67 passed (67)

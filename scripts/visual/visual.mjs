@@ -434,7 +434,7 @@ async function main() {
     server = spawn("pnpm", ["dev:ui"], { cwd: ROOT, shell: true, stdio: "ignore" });
     await waitFor(APP);
   }
-  const profile = mkdtempSync(join(tmpdir(), "nivlo-visual-"));
+  const profile = mkdtempSync(join(tmpdir(), "stardeskbox-visual-"));
   const chrome = spawn(chromePath(), [
     "--headless=new",
     "--remote-debugging-port=9333",
@@ -462,8 +462,8 @@ async function main() {
         await page.send("Emulation.setTimezoneOverride", { timezoneId: "Asia/Shanghai" });
         await page.send("Page.addScriptToEvaluateOnNewDocument", { source: `
           localStorage.clear();
-          localStorage.setItem('nivlo.language', 'zh-CN');
-          localStorage.setItem('nivlo.theme', 'light');
+          localStorage.setItem('stardeskbox.language', 'zh-CN');
+          localStorage.setItem('stardeskbox.theme', 'light');
           const OriginalDate = Date;
           window.Date = class extends OriginalDate {
             constructor(...args) { super(...(args.length ? args : [${JSON.stringify(CLOCK)}])); }
@@ -474,7 +474,7 @@ async function main() {
         ` });
       }
       // 把引导对话框标记成已看过，避免它盖住页面。
-      await page.send("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('nivlo.onboarding','done')" });
+      await page.send("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('stardeskbox.onboarding','done')" });
       await page.send("Page.navigate", { url: scenario.url });
       await page.send("Page.bringToFront");
       await sleep(1200);

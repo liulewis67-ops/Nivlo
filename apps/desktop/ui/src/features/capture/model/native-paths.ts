@@ -1,7 +1,7 @@
 import { listen } from "@tauri-apps/api/event";
 
 /** 宿主把路径发回来的事件名（与后端 `native_drop::EVENT` 一致）。 */
-const EVENT = "nivlo-drop-paths";
+const EVENT = "stardeskbox-drop-paths";
 
 /** 等宿主回路径的最长时间（毫秒）。 */
 const TIMEOUT_MS = 1500;
@@ -52,7 +52,7 @@ export async function requestFilePaths(
       }).then((stop) => {
         unlisten = stop;
         // 先登记监听再发消息，避免回复先于监听到达。
-        post.postMessageWithAdditionalObjects?.(`nivlo:drop-files:${id}`, [...files]);
+        post.postMessageWithAdditionalObjects?.(`stardeskbox:drop-files:${id}`, [...files]);
       });
     });
     return await reply;

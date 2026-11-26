@@ -146,11 +146,11 @@
     "height": 600,
     "dpr": 1
   },
-  "modal": "Welcome to Nivlo",
+  "modal": "Welcome to StarDeskBox",
   "accessibilityTree": [
     {
       "role": "RootWebArea",
-      "name": "Nivlo",
+      "name": "StarDeskBox",
       "properties": [
         {
           "name": "focusable",
@@ -192,7 +192,7 @@
     },
     {
       "role": "dialog",
-      "name": "Welcome to Nivlo",
+      "name": "Welcome to StarDeskBox",
       "properties": [
         {
           "name": "modal",

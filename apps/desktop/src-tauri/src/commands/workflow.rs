@@ -3,14 +3,14 @@
 //! 定义本体以 JSON 文本（`definitionJson`）往返：表单编辑器在前端组装，后端用与导入相同的
 //! 深度校验（JSON Schema + 正则 + 模板变量）把关，前后端不需要各维护一份 Step 的类型镜像。
 
-use nivlo_application::error::{AppError, ErrorCode};
-use nivlo_application::workflow::{
-    PlannedItem, RunRecord, StepReport, StoredWorkflow, WorkflowRunResult,
-};
-use nivlo_domain::capture::CaptureInput;
-use nivlo_domain::workflow::{Workflow, WorkflowId, WorkflowSource};
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use stardeskbox_application::error::{AppError, ErrorCode};
+use stardeskbox_application::workflow::{
+    PlannedItem, RunRecord, StepReport, StoredWorkflow, WorkflowRunResult,
+};
+use stardeskbox_domain::capture::CaptureInput;
+use stardeskbox_domain::workflow::{Workflow, WorkflowId, WorkflowSource};
 use tauri::{AppHandle, Runtime, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -79,7 +79,7 @@ fn script_hosts(workflow: &Workflow) -> Vec<String> {
         .steps
         .iter()
         .filter_map(|step| match step {
-            nivlo_domain::workflow::Step::Script { hosts, .. } => Some(hosts.clone()),
+            stardeskbox_domain::workflow::Step::Script { hosts, .. } => Some(hosts.clone()),
             _ => None,
         })
         .flatten()
@@ -227,7 +227,7 @@ impl From<&WorkflowRunResult> for DryRunResultDto {
                 failure
                     .action
                     .as_ref()
-                    .map(nivlo_application::workflow::FailureAction::code),
+                    .map(stardeskbox_application::workflow::FailureAction::code),
             ),
         };
         Self {
@@ -399,8 +399,8 @@ pub async fn delete_workflow(state: State<'_, AppState>, id: String) -> Result<(
 /// 样例输入 → 捕获输入（与真实捕获用同一套规范化）。
 fn sample_input(input: &DryRunInputDto) -> Result<CaptureInput, AppError> {
     let parsed = match input.kind.as_str() {
-        "file" => nivlo_capture::normalize_files(&[input.value.trim()]),
-        _ => nivlo_capture::normalize_text(&input.value),
+        "file" => stardeskbox_capture::normalize_files(&[input.value.trim()]),
+        _ => stardeskbox_capture::normalize_text(&input.value),
     };
     parsed.ok_or_else(|| AppError::new(ErrorCode::InvalidInput, "请先输入一个样例"))
 }
@@ -510,7 +510,7 @@ pub struct WorkflowImportPreviewDto {
 
 /// 预览（不写数据）。
 fn import_preview_dto(
-    preview: &nivlo_application::workflow::ImportPreview,
+    preview: &stardeskbox_application::workflow::ImportPreview,
 ) -> Result<WorkflowImportPreviewDto, AppError> {
     let workflow = &preview.workflow;
     let definition_json = serde_json::to_string_pretty(workflow).map_err(|e| {
@@ -521,7 +521,7 @@ fn import_preview_dto(
     })?;
     let mut step_kinds: Vec<String> = Vec::new();
     for step in &workflow.steps {
-        let kind = nivlo_workflow::executor::step_kind(step).to_owned();
+        let kind = stardeskbox_workflow::executor::step_kind(step).to_owned();
         if !step_kinds.contains(&kind) {
             step_kinds.push(kind);
         }
@@ -537,7 +537,7 @@ fn import_preview_dto(
         has_script: workflow
             .steps
             .iter()
-            .any(|step| matches!(step, nivlo_domain::workflow::Step::Script { .. })),
+            .any(|step| matches!(step, stardeskbox_domain::workflow::Step::Script { .. })),
         script_hosts: script_hosts(workflow),
         step_kinds,
         definition_json,
@@ -597,7 +597,7 @@ pub async fn pick_workflow_import<R: Runtime>(
     let picked = tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()
-            .add_filter("拾序 Workflow", &["json"])
+            .add_filter("StarDeskBox Workflow", &["json"])
             .blocking_pick_file()
     })
     .await

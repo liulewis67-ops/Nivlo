@@ -5,9 +5,9 @@ max_score: 40
 na_heuristics:
 p0_count: 0
 p1_count: 2
-target_identity: "file:E:\\personal_projects\\Nivlo\\apps\\desktop\\ui\\src\\features\\shell\\MainShell.tsx"
+target_identity: "file:E:\\personal_projects\\StarDeskBox\\apps\\desktop\\ui\\src\\features\\shell\\MainShell.tsx"
 target_fingerprint: "sha256:34baf993d594b20d1d650f37c9b33e25d35bcee00f38097a5d8b760f4d78b116"
-target_path: "E:\\personal_projects\\Nivlo\\apps\\desktop\\ui\\src\\features\\shell\\MainShell.tsx"
+target_path: "E:\\personal_projects\\StarDeskBox\\apps\\desktop\\ui\\src\\features\\shell\\MainShell.tsx"
 timestamp: 2026-11-01T14-35-24Z
 slug: src-features-shell-mainshell-tsx
 ---
@@ -17,7 +17,7 @@ Date: 2026-11-01. Scope: `apps/desktop/ui`, including main, floating and global-
 
 ## Direction and evidence
 
-Nivlo is an **Operate** interface: success means capturing information, organizing it, scheduling it and completing work with little interruption. Preserve its restrained system typography, neutral surfaces, blue accents and familiar desktop controls. Evaluate coordination across the whole journey before polishing individual screens.
+StarDeskBox is an **Operate** interface: success means capturing information, organizing it, scheduling it and completing work with little interruption. Preserve its restrained system typography, neutral surfaces, blue accents and familiar desktop controls. Evaluate coordination across the whole journey before polishing individual screens.
 
 Assessment A reviewed current browser fixtures on Today, Inbox, item details, Calendar, Settings, Workflows and Search at 1280×720, and Inbox/details and Calendar at the shipping default 960×640. Source and existing product/interaction plans were also inspected. The preview uses fixture dates; those dates are not evidence of a product defect. Native WebView2 focus/DPI, NVDA, injected errors and real compact floating-window rendering were not validated in this review.
 
@@ -121,7 +121,7 @@ Final package: current screenshot/state matrix, task scorecard, accessibility/na
 
 ## Evidence references
 
-- Product: `docs/architecture/Nivlo_Product_Design.md`.
+- Product: `docs/architecture/StarDeskBox_Product_Design.md`.
 - Interaction history: `docs/development/interaction-optimization-plan.md`.
 - Native capture coverage: `docs/development/drop-matrix.md`.
 - Historical timings: `docs/development/perf-baseline.md`.

@@ -6,7 +6,7 @@ use crate::app::AppState;
 use crate::dto::{IpcError, TrashEntryDto, parse_item_id, parse_utc};
 
 /// 解析一批 Item ID；任何一个格式不合法都整批拒绝。
-fn parse_ids(ids: &[String]) -> Result<Vec<nivlo_domain::id::ItemId>, IpcError> {
+fn parse_ids(ids: &[String]) -> Result<Vec<stardeskbox_domain::id::ItemId>, IpcError> {
     ids.iter()
         .map(|id| parse_item_id(id).map_err(IpcError::from))
         .collect()
@@ -75,7 +75,7 @@ pub async fn list_trash(state: State<'_, AppState>) -> Result<Vec<TrashEntryDto>
 
 /// 永久删除回收站里的这些 Item；不在回收站里的不会被删除。返回实际删除的数量。
 ///
-/// 只删除数据库记录与 Nivlo 自己保存的文件，被引用的用户文件不受影响。
+/// 只删除数据库记录与 StarDeskBox 自己保存的文件，被引用的用户文件不受影响。
 ///
 /// # Errors
 ///

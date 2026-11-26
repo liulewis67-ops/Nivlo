@@ -25,7 +25,7 @@ describe("FloatingApp", () => {
       ],
     });
     renderWithProviders(<FloatingApp />, ipc);
-    fireEvent.pointerEnter(screen.getByRole("group", { name: "拾序悬浮窗" }));
+    fireEvent.pointerEnter(screen.getByRole("group", { name: "StarDeskBox悬浮窗" }));
     const title = await screen.findByRole("button", { name: "密钥.txt" });
     fireEvent.click(title);
     expect(ipc.openedItems).toEqual(["file-todo"]);
@@ -39,7 +39,7 @@ describe("FloatingApp", () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<FloatingApp />, ipc);
 
-    await user.click(screen.getByRole("button", { name: /打开拾序主窗口/ }));
+    await user.click(screen.getByRole("button", { name: /打开StarDeskBox主窗口/ }));
 
     expect(ipc.openMainCalls).toBe(1);
   });

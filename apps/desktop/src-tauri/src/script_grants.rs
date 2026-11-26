@@ -4,10 +4,10 @@
 //! Workflow 的网络权限共同决定，所以脚本或权限任何一处变化都需要重新确认。
 
 use async_trait::async_trait;
-use nivlo_application::error::AppError;
-use nivlo_application::settings::SettingsService;
-use nivlo_domain::workflow::{Step, Workflow};
-use nivlo_workflow::script_step::{ScriptGrants, script_fingerprint};
+use stardeskbox_application::error::AppError;
+use stardeskbox_application::settings::SettingsService;
+use stardeskbox_domain::workflow::{Step, Workflow};
+use stardeskbox_workflow::script_step::{ScriptGrants, script_fingerprint};
 
 /// 授权记录的 key 前缀。
 const PREFIX: &str = "script.grant.";

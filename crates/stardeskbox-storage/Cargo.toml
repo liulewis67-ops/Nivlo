@@ -1,0 +1,30 @@
+[package]
+name = "stardeskbox-storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "StarDeskBox SQLite storage adapter"
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+stardeskbox-application.workspace = true
+stardeskbox-domain.workspace = true
+pinyin.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+sqlx.workspace = true
+tracing.workspace = true
+tokio = { workspace = true, features = ["rt"] }
+
+[dev-dependencies]
+stardeskbox-application = { workspace = true, features = ["testing"] }
+stardeskbox-common.workspace = true
+chrono-tz.workspace = true
+tempfile.workspace = true
+uuid.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[lints]
+workspace = true
