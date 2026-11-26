@@ -20,21 +20,21 @@ GitHub Actions 必须配置与已发布客户端公钥对应的私钥 `TAURI_SIG
 
 宣传页位于 `apps/landing`，无需 npm 构建。仓库 Settings → Pages → Build and deployment → Source 选择 **GitHub Actions**。之后推送 `main` 上的宣传页改动会触发 `.github/workflows/pages.yml`，也可以手动运行。
 
-部署目标：<https://liulewis67-ops.github.io/StarDeskBox/>。下载按钮直接指向 0.1.2 的 GitHub Release 安装包文件，发布后检查中英文页面、深浅主题、交互演示与安装包下载。
+部署目标：<https://liulewis67-ops.github.io/StarDeskBox/>。下载按钮直接指向 0.1.3 的 GitHub Release 安装包文件，发布后检查中英文页面、深浅主题、交互演示与安装包下载。
 
 * **更新签名私钥**：`pnpm tauri signer generate -w <路径>` 生成，**丢失后无法再给已安装的用户推送更新**。
   不要提交到仓库；CI 里放进 Secret `TAURI_SIGNING_PRIVATE_KEY`（密码放 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`，没有则留空）。
-  现有签名密钥在 `%USERPROFILE%\.stardeskbox-keys\`，与已发布客户端的公钥一致。**不要重新生成或直接更换公钥**，否则现有用户将无法验证更新包。私钥只存放于安全的本机目录和加密的 Actions Secrets。
+  继续使用现有签名密钥，其存储位置不随项目改名而自动迁移；该密钥与已发布客户端的公钥一致。**不要重新生成或直接更换公钥**，否则现有用户将无法验证更新包。私钥只存放于安全的本机目录和加密的 Actions Secrets。
 * **代码签名证书（Authenticode）**：用来让 Windows SmartScreen 信任安装包，与更新签名是两回事。
   需要购买证书（OV / EV 或 Azure Trusted Signing），在 `bundle.windows.signCommand` 或 CI 里配置；**当前没有配置，安装包是未签名的**。
 
 ## 本地发布流程
 
 ```powershell
-$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content -Raw "$env:USERPROFILE\.stardeskbox-keys\updater.key"  # 当前 CLI 不认 *_PATH
+$env:TAURI_SIGNING_PRIVATE_KEY = Get-Content -Raw "<现有签名私钥的绝对路径>"  # 当前 CLI 不认 *_PATH
 $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
 pnpm tauri build
-node scripts/release/make-latest-json.mjs --version 0.1.1 --base-url https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.1 --notes-file docs/development/releases/v0.1.1.md
+node scripts/release/make-latest-json.mjs --version 0.1.3 --base-url https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.3 --notes-file docs/development/releases/v0.1.3.md
 # 把 *-setup.exe、*-setup.exe.sig、latest.json、SHA256SUMS.txt 上传到该版本的 Release
 ```
 
