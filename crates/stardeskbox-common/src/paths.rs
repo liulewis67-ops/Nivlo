@@ -146,6 +146,7 @@ impl AppPaths {
         Ok(Self::from_root(root))
     }
 
+    /// Reuse the previous installation's data without invalidating absolute attachment paths.
     fn with_legacy_root(self, platform: Platform) -> Self {
         let legacy_name = if platform == Platform::Linux {
             "nivlo"

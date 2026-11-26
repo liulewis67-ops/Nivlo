@@ -47,6 +47,7 @@ fn failed(action: &str, error: &windows::core::Error) -> PlatformError {
 }
 
 impl WindowsCredentials {
+    /// Read a credential by its current or legacy target name.
     fn read_target(&self, name: &str) -> Result<Option<Secret>, PlatformError> {
         let target = wide(name);
         let mut credential: *mut CREDENTIALW = std::ptr::null_mut();

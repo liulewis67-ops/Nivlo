@@ -58,7 +58,7 @@ jobs:
               core.info(`Pages deployment: ${data.status}`);
               if (data.status === 'succeed') return;
               if (['deployment_failed', 'deployment_perms_error', 'deployment_content_failed', 'deployment_cancelled', 'deployment_lost'].includes(data.status)) {
-                throw new Error(`Pages deployment failed: ${data.status}`);
+                throw new Error(`Pages deployment failed: ${JSON.stringify(data)}`);
               }
             }
             throw new Error('Pages deployment timed out');
