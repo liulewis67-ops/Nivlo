@@ -1,13 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice">
   <defs>
-    <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="#b6c4ff" opacity=".3"/></pattern>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b122b"/>
+      <stop offset=".52" stop-color="#132054"/>
+      <stop offset="1" stop-color="#0d1738"/>
+    </linearGradient>
+    <radialGradient id="cobaltGlow" cx="76%" cy="22%" r="58%">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity=".55"/>
+      <stop offset=".45" stop-color="#2563eb" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#0b122b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="amberGlow" cx="84%" cy="84%" r="42%">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity=".34"/>
+      <stop offset=".5" stop-color="#f59e0b" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#0b122b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="indigoGlow" cx="18%" cy="78%" r="44%">
+      <stop offset="0" stop-color="#6366f1" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#0b122b" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0v24" fill="none" stroke="#93b4ff" stroke-opacity=".07" stroke-width="1"/>
+      <circle cx="0" cy="0" r="1" fill="#c7d8ff" fill-opacity=".22"/>
+    </pattern>
+    <linearGradient id="trace" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa" stop-opacity=".08"/>
+      <stop offset=".5" stop-color="#93c5fd" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#fbbf24" stop-opacity=".48"/>
+    </linearGradient>
   </defs>
-  <path fill="#202d80" d="M0 0h640v400H0z"/>
-  <path fill="url(#dots)" d="M0 0h640v400H0z"/>
-  <g fill="none" stroke="#93a7ff" opacity=".48">
-    <circle cx="532" cy="116" r="104"/><circle cx="532" cy="116" r="148"/><circle cx="532" cy="116" r="192"/>
-    <path d="M0 308h88l44-44h308l92-92V0M0 344h138l48-48h300l66-66h88"/>
-    <path d="M24 34h20m-10-10v20M580 330h20m-10-10v20M90 370h20m-10-10v20"/>
+
+  <rect width="800" height="500" fill="url(#sky)"/>
+  <rect width="800" height="500" fill="url(#cobaltGlow)"/>
+  <rect width="800" height="500" fill="url(#indigoGlow)"/>
+  <rect width="800" height="500" fill="url(#amberGlow)"/>
+  <rect width="800" height="500" fill="url(#grid)"/>
+
+  <!-- Orbital rings & architectural traces -->
+  <g fill="none" stroke="#93b4ff" stroke-opacity=".22" stroke-width="1">
+    <circle cx="635" cy="120" r="96"/>
+    <circle cx="635" cy="120" r="156" stroke-dasharray="3 6"/>
+    <circle cx="635" cy="120" r="224" stroke-opacity=".14"/>
   </g>
-  <g fill="#cdd6ff"><circle cx="88" cy="308" r="3"/><circle cx="552" cy="230" r="3"/><circle cx="532" cy="172" r="3"/></g>
+  <g fill="none" stroke="url(#trace)" stroke-width="1.2">
+    <path d="M0 378h118l54-54h340l123-123V0"/>
+    <path d="M0 416h168l60-60h318l88-88h166" stroke-opacity=".55"/>
+  </g>
+
+  <!-- Subtle floating geometric fragments echoing the StarDeskBox mark -->
+  <g opacity=".32">
+    <rect x="668" y="64" width="20" height="20" rx="6" fill="#e0ecff" transform="rotate(24 678 74)"/>
+    <rect x="614" y="102" width="26" height="26" rx="7" fill="#93c5fd" fill-opacity=".65" transform="rotate(-14 627 115)"/>
+    <rect x="572" y="152" width="16" height="16" rx="5" fill="#fbbf24" fill-opacity=".85" transform="rotate(12 580 160)"/>
+  </g>
+
+  <!-- Precision starlight nodes -->
+  <g fill="#dbeafe">
+    <circle cx="118" cy="378" r="2.5" opacity=".75"/>
+    <circle cx="512" cy="324" r="2.5" opacity=".75"/>
+    <circle cx="635" cy="201" r="3" fill="#fbbf24" opacity=".9"/>
+    <circle cx="94" cy="72" r="1.5" opacity=".55"/>
+    <circle cx="242" cy="54" r="1.2" opacity=".4"/>
+    <circle cx="728" cy="312" r="1.8" opacity=".6"/>
+  </g>
+  <g stroke="#bfdbfe" stroke-opacity=".34" stroke-width="1">
+    <path d="M40 46h16M48 38v16M736 420h16M744 412v16M148 456h12M154 450v12"/>
+  </g>
 </svg>
