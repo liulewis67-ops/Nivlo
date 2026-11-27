@@ -1,18 +1,21 @@
+const SITE_URL = 'https://liulewis67-ops.github.io/StarDeskBox/';
 const DOWNLOAD_URL = 'https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.4/StarDeskBox_0.1.4_x64-setup.exe';
 const REPO_URL = 'https://github.com/liulewis67-ops/StarDeskBox';
 const RELEASES_URL = 'https://github.com/liulewis67-ops/StarDeskBox/releases/tag/v0.1.4';
 
 const copy = {
   zh: {
-    title: 'StarDeskBox · 把零散信息变成下一步',
-    description: 'StarDeskBox 是 Windows 桌面上的个人收集与行动工作台。随手拖入链接、文字和文件，再用今日与日历安排下一步。',
+    title: 'StarDeskBox · Windows 桌面悬浮窗收集与行动工作台 | 待办、笔记与日历',
+    description: 'StarDeskBox 是一款为 Windows 打造的开源本地优先桌面收集与行动工作台。通过桌面悬浮窗随手拖放捕获链接、文件、图片与灵感文字，在收件箱整理为待办、笔记与提示，再用今日视图与日历排期推进下一步。',
+    keywords: 'StarDeskBox,Windows桌面收集工具,悬浮窗捕获,灵感收集,拖放收件箱,待办事项管理,本地优先笔记,日历排期,个人效率工作台,开源桌面工具,Tauri,SQLite',
+    ogLocale: 'zh_CN',
     skip: '跳到正文', nav: '主导航', language: '切换到英语', home: '回到页首',
     theme: { light: '切换到浅色模式', dark: '切换到深色模式' },
     features: '产品能力', workflow: '使用方式', faq: '常见问题',
     cta: '下载 Windows 版', ctaShort: '下载 v0.1.4', repoCta: 'GitHub 开源',
-    eyebrow: 'Windows 桌面工作台', version: 'v0.1.4',
+    eyebrow: 'Windows 桌面收集与行动工作台', version: 'v0.1.4',
     hero: ['收下转瞬的灵感，', '安排清晰的下一步。'],
-    lead: '把链接、文件和随手记拖进桌面悬浮窗。用待办、笔记与提示收好它们，再决定什么时候处理。',
+    lead: '把网页链接、本地文件和随手记拖进 Windows 桌面悬浮窗。在收件箱整理为待办、笔记与提示，再用今日与日历安排何时处理。',
     meta: ['Windows x64 安装包', '本机 SQLite 优先存储', 'Apache-2.0 开源'],
     demo: '交互演示', example: '实时可拖放', demoTitle: '把链接拖进悬浮窗',
     windowStatus: '本地已就绪',
@@ -40,11 +43,11 @@ const copy = {
     ],
     details: ['', '让待办、笔记与提示各有位置，保留原始来源与上下文。', '把关键评审放进日历时间块，在「今日」聚焦眼前的事。'],
     featureTitle: '让每条信息都有去处。',
-    featureSub: '从零散捕获到有节奏的推进，每一环都保持轻盈与克制。',
+    featureSub: '从零散灵感捕获到有节奏的日程推进，每一环都保持轻盈、克制且本地优先。',
     cards: [
-      ['悬浮捕获', '一个不打断思路的入口', '从当前窗口拖入链接、文件或文字，也可以用粘贴和快捷键记下灵感。'],
-      ['来源与规则', '回头找得到原始资料', '保留信息来源。常见内容可由捕获工作流识别，再转成待办、笔记或提示。'],
-      ['今日与日历', '知道今天该先做什么', '用「今日」集中处理眼前的事，在日历里给之后的任务留出时间。'],
+      ['悬浮捕获', '一个不打断思路的入口', '从任意窗口随手拖入链接、文件、图片或文字，也支持剪贴板粘贴与全局快捷键记下灵感。'],
+      ['来源与规则', '回头找得到原始资料', '完整保留信息来源。常见内容可由捕获工作流自动识别，再转成待办、笔记或提示。'],
+      ['今日与日历', '知道今天该先做什么', '用「今日」视图集中处理眼前的事，在日历时间块里给之后的任务留出空间。'],
     ],
     motto: ['拾取散落的信息。', '让事情各归其序。'],
     howTitle: '从收下到行动，只需三步。',
@@ -54,32 +57,48 @@ const copy = {
       ['回头整理', '打开收件箱，决定它是要做的事、留存的笔记，还是一条提示。', ['待办', '笔记', '提示', '保留来源']],
       ['择时行动', '把要做的事排进日历，再从「今日」开始处理。', ['今日聚焦', '日历排期', '本机存储']],
     ],
-    faqSub: '关于适用平台、内容类型、隐私存储与当前版本的常见说明。',
+    faqSub: '关于适用平台、支持收集的内容类型、本地隐私存储与当前版本的常见说明。',
     questions: [
-      ['StarDeskBox 是什么？', 'StarDeskBox 是一款 Windows 桌面工具，用同一个入口收集资料、整理事项并安排后续行动。'],
-      ['能收集哪些内容？', '可以收集链接、文字、图片、文件和文件夹。部分来源无法直接拖入时，可试试复制后在悬浮窗粘贴。'],
-      ['收下的东西会放在哪里？', '你可以在收件箱查找新收下的内容，并把它整理为待办、笔记或提示。'],
-      ['一定要配置工作流吗？', '不需要。你可以直接收集和手动整理；需要自动识别和处理常见内容时，再使用工作流。'],
-      ['资料保存在哪里？', 'StarDeskBox 优先在本机保存资料。某些工作流需要访问网页或外部服务，使用时需要网络。'],
-      ['现在可以下载吗？', '0.1.4 提供 Windows x64 安装包，点击下载按钮即可直接下载安装包。安装包未配置 Windows 代码签名，系统可能显示发布者未知。'],
+      ['StarDeskBox 是什么？', 'StarDeskBox 是一款开源的 Windows 桌面收集与行动工作台，用同一个悬浮窗入口收集资料、在收件箱整理待办与笔记，并通过今日与日历安排后续行动。'],
+      ['StarDeskBox 能收集哪些内容？', '可以收集网页链接、灵感文字、图片、本地文件和文件夹。部分应用来源无法直接拖入时，可复制后在悬浮窗粘贴或使用快捷键捕获。'],
+      ['收下的东西会放在哪里？', '新捕获的内容会进入收件箱并保留来源信息，你可以随时把它整理为待办事项、笔记或提示。'],
+      ['一定要配置捕获工作流吗？', '不需要。你可以直接手动收集和整理；当需要自动识别和处理常见链接或内容时，再按需启用捕获工作流。'],
+      ['我的资料保存在哪里？', 'StarDeskBox 采用本地优先架构，默认将资料保存在本机 SQLite 数据库中。仅在使用需要访问网页或外部服务的捕获工作流时才需要联网。'],
+      ['现在可以下载 StarDeskBox 吗？', '当前 v0.1.4 提供免费开源的 Windows x64 安装包，点击下载按钮即可直接下载安装。安装包暂未配置 Windows 代码签名，首次安装时系统可能提示发布者未知。'],
     ],
     endKicker: 'READY FOR WINDOWS · V0.1.4',
     end: '先收下一条线索。',
-    endLead: '下载 StarDeskBox 0.1.4，把零散的信息变成可安排的事项。',
+    endLead: '免费下载开源的 StarDeskBox 0.1.4，把零散的信息变成可安排的下一步行动。',
     foot: '拾取散落的信息，让事情各归其序。',
     footRelease: '发布说明 v0.1.4',
     footLicense: 'Apache-2.0 协议',
+    schema: {
+      websiteDesc: 'StarDeskBox 是为 Windows 打造的开源本地优先个人收集与行动工作台。',
+      altName: 'StarDeskBox 桌面工作台',
+      howToName: '如何使用 StarDeskBox 从收集信息到安排行动',
+      howToDesc: '从随手拖放收集到收件箱整理，再到日历与今日执行，只需三步。',
+      currency: 'CNY',
+      features: [
+        '桌面悬浮窗拖放捕获链接、文件、图片与文字，支持剪贴板粘贴与全局快捷键',
+        '保留原始信息来源，支持捕获工作流自动识别并归类为待办、笔记或提示',
+        '今日视图聚焦当下行动，日历时间块合理规划后续任务',
+        '数据默认保存在本机 SQLite 数据库，保护隐私且响应迅捷',
+        'Apache-2.0 协议开源，基于 Tauri 2、Rust 与 React 构建',
+      ],
+    },
   },
   en: {
-    title: 'StarDeskBox · Turn scattered information into your next action',
-    description: 'StarDeskBox is a personal capture and planning workspace for Windows. Drop in links, text and files, then plan your next action in Today and Calendar.',
+    title: 'StarDeskBox · Local-First Windows Capture & Planning Workspace | Tasks, Notes & Calendar',
+    description: 'StarDeskBox is a free, open-source, local-first Windows desktop capture and planning workspace. Drop links, files, images and quick thoughts into a floating window, triage them into tasks, notes or tips, and plan in Today and Calendar.',
+    keywords: 'StarDeskBox,Windows desktop capture tool,floating capture window,drag and drop inbox,local-first task manager,SQLite notes app,Today and Calendar planner,open source productivity workspace,Tauri desktop app',
+    ogLocale: 'en_US',
     skip: 'Skip to content', nav: 'Main navigation', language: 'Switch to Chinese', home: 'Back to top',
     theme: { light: 'Switch to light mode', dark: 'Switch to dark mode' },
     features: 'Features', workflow: 'How it works', faq: 'FAQ',
     cta: 'Download for Windows', ctaShort: 'Download v0.1.4', repoCta: 'GitHub',
-    eyebrow: 'Desktop workspace for Windows', version: 'v0.1.4',
+    eyebrow: 'Local-first workspace for Windows', version: 'v0.1.4',
     hero: ['Catch the thought.', 'Find the next step.'],
-    lead: 'Drop links, files and quick thoughts into a floating window. Keep them as tasks, notes or tips, then decide when to act.',
+    lead: 'Drop links, local files and quick thoughts into a Windows floating window. Organize them as tasks, notes or tips, then schedule your next move in Today and Calendar.',
     meta: ['Windows x64 installer', 'Local-first SQLite storage', 'Apache-2.0 open source'],
     demo: 'Interactive demo', example: 'Live drag & drop', demoTitle: 'Drag a link into StarDeskBox',
     windowStatus: 'Local ready',
@@ -107,11 +126,11 @@ const copy = {
     ],
     details: ['', 'Give tasks, notes and tips a clear place while preserving original context.', 'Block time on your calendar and focus on what matters next in Today.'],
     featureTitle: 'A place for everything you pick up.',
-    featureSub: 'Designed to stay out of your way while you work, and bring clarity when you plan.',
+    featureSub: 'Designed to stay out of your way while you work, keeping your data local-first and ready for action.',
     cards: [
-      ['Floating capture', 'Stay with what you’re doing', 'Drop links, files or text from the window you’re in. Paste or use a shortcut to capture a thought.'],
-      ['Sources and rules', 'Find the original when it matters', 'Keep the source with the item. Capture workflows can recognize familiar inputs and turn them into tasks, notes or tips.'],
-      ['Today and Calendar', 'See what to work on first', 'Bring today’s work into focus and give later tasks a spot on your calendar.'],
+      ['Floating capture', 'Stay with what you’re doing', 'Drop links, files, images or text from any window. Paste from clipboard or use a global shortcut to capture a thought.'],
+      ['Sources and rules', 'Find the original when it matters', 'Keep the original source with every item. Capture workflows can recognize familiar inputs and turn them into tasks, notes or tips.'],
+      ['Today and Calendar', 'See what to work on first', 'Bring today’s work into focus and reserve dedicated calendar blocks for upcoming tasks.'],
     ],
     motto: ['Pick up what’s scattered.', 'Give it a place.'],
     howTitle: 'Three steps from capture to action.',
@@ -121,21 +140,35 @@ const copy = {
       ['Sort it later', 'Open your inbox and decide whether it’s a task to do, a note to keep or a tip to remember.', ['Task', 'Note', 'Tip', 'Source kept']],
       ['Make time for it', 'Put the task on your calendar and work through it from Today when it’s time.', ['Today focus', 'Calendar blocks', 'Local-first']],
     ],
-    faqSub: 'Quick answers about supported content, local storage, workflows and the current release.',
+    faqSub: 'Quick answers about supported content, local SQLite storage, workflows and the current Windows release.',
     questions: [
-      ['What is StarDeskBox?', 'StarDeskBox is a Windows desktop tool for collecting information, organizing it and planning what comes next.'],
-      ['What can I capture?', 'StarDeskBox accepts links, text, images, files and folders. If an item cannot be dragged in directly, try copying it and pasting it into the floating window.'],
-      ['Where do captured items go?', 'Find new items in your inbox and organize them as tasks, notes or tips.'],
-      ['Do I need to configure a workflow?', 'No. You can capture and organize items manually. Use workflows when you want to recognize and process familiar content automatically.'],
-      ['Where is my data stored?', 'StarDeskBox keeps your data on your computer by default. Workflows that look up webpages or use external services need a network connection.'],
-      ['Can I download it now?', 'Version 0.1.4 provides a Windows x64 installer that downloads directly from the download button. The installer has no Windows code-signing certificate, so Windows may show an unknown publisher.'],
+      ['What is StarDeskBox?', 'StarDeskBox is an open-source, local-first Windows desktop workspace for collecting information via a floating window, organizing tasks and notes, and planning what comes next.'],
+      ['What can I capture?', 'StarDeskBox accepts links, text, images, files and folders. If an item cannot be dragged in directly, copy and paste it into the floating window or use a shortcut.'],
+      ['Where do captured items go?', 'Find new items in your inbox with their original source preserved, and organize them as tasks, notes or tips.'],
+      ['Do I need to configure a workflow?', 'No. You can capture and organize items manually. Enable capture workflows only when you want to recognize and process familiar content automatically.'],
+      ['Where is my data stored?', 'StarDeskBox is local-first and stores your data in a local SQLite database by default. A network connection is only needed for workflows that query webpages or external services.'],
+      ['Can I download it now?', 'Version 0.1.4 provides a free, open-source Windows x64 installer directly from the download button. The installer is not yet code-signed, so Windows may display an unknown publisher prompt.'],
     ],
     endKicker: 'READY FOR WINDOWS · V0.1.4',
     end: 'Start with one thing.',
-    endLead: 'Download StarDeskBox 0.1.4 and turn loose pieces of information into your next action.',
+    endLead: 'Download free, open-source StarDeskBox 0.1.4 and turn loose pieces of information into your next action.',
     foot: 'Pick up what’s scattered. Give it a place.',
     footRelease: 'Release v0.1.4',
     footLicense: 'Apache-2.0',
+    schema: {
+      websiteDesc: 'StarDeskBox is a free, open-source, local-first personal capture and planning workspace for Windows.',
+      altName: 'StarDeskBox Desktop Workspace',
+      howToName: 'How to turn scattered captures into planned actions with StarDeskBox',
+      howToDesc: 'Three simple steps from floating drag-and-drop capture to Today and Calendar execution.',
+      currency: 'USD',
+      features: [
+        'Floating desktop window for drag-and-drop capture of links, files, images and text, plus clipboard paste and shortcuts',
+        'Preserves original sources with optional capture workflows to classify items as tasks, notes or tips',
+        'Today view for immediate focus paired with Calendar time-blocking',
+        'Local-first SQLite storage for speed and privacy by default',
+        'Open-source under Apache-2.0, built with Tauri 2, Rust and React',
+      ],
+    },
   },
 };
 
@@ -318,16 +351,110 @@ function renderDemo(focusTab = false, motion = '') {
   }
 }
 
+function syncSeo(t) {
+  const htmlLang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.documentElement.lang = htmlLang;
+  document.title = t.title;
+  const setMeta = (selector, content) => {
+    const el = document.querySelector(selector);
+    if (el) el.content = content;
+  };
+  setMeta('meta[name="description"]', t.description);
+  setMeta('meta[name="keywords"]', t.keywords);
+  setMeta('meta[property="og:title"]', t.title);
+  setMeta('meta[property="og:description"]', t.description);
+  setMeta('meta[property="og:locale"]', t.ogLocale);
+  setMeta('meta[name="twitter:title"]', t.title);
+  setMeta('meta[name="twitter:description"]', t.description);
+  const ld = document.querySelector('#structured-data');
+  if (ld) {
+    const pageUrl = urlLanguage() ? `${SITE_URL}?lang=${lang}` : SITE_URL;
+    ld.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'WebSite',
+          '@id': `${SITE_URL}#website`,
+          name: 'StarDeskBox',
+          url: SITE_URL,
+          description: t.schema.websiteDesc,
+          inLanguage: ['zh-CN', 'en'],
+        },
+        {
+          '@type': 'WebPage',
+          '@id': `${SITE_URL}#webpage`,
+          url: pageUrl,
+          name: t.title,
+          description: t.description,
+          isPartOf: { '@id': `${SITE_URL}#website` },
+          about: { '@id': `${SITE_URL}#software` },
+          inLanguage: htmlLang,
+        },
+        {
+          '@type': 'SoftwareApplication',
+          '@id': `${SITE_URL}#software`,
+          name: 'StarDeskBox',
+          alternateName: t.schema.altName,
+          applicationCategory: 'ProductivityApplication',
+          operatingSystem: 'Windows 10, Windows 11',
+          softwareVersion: '0.1.4',
+          description: t.description,
+          url: SITE_URL,
+          downloadUrl: DOWNLOAD_URL,
+          installUrl: DOWNLOAD_URL,
+          releaseNotes: RELEASES_URL,
+          codeRepository: REPO_URL,
+          license: 'https://www.apache.org/licenses/LICENSE-2.0',
+          image: `${SITE_URL}assets/stardeskbox.png`,
+          isAccessibleForFree: true,
+          inLanguage: ['zh-CN', 'en'],
+          keywords: t.keywords,
+          featureList: t.schema.features,
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: t.schema.currency,
+            availability: 'https://schema.org/InStock',
+          },
+          author: {
+            '@type': 'Person',
+            name: 'liulewis67-ops',
+            url: 'https://github.com/liulewis67-ops',
+          },
+        },
+        {
+          '@type': 'HowTo',
+          '@id': `${SITE_URL}#howto`,
+          name: t.schema.howToName,
+          description: t.schema.howToDesc,
+          inLanguage: htmlLang,
+          step: t.steps.map(([name, text], index) => ({
+            '@type': 'HowToStep',
+            position: index + 1,
+            name,
+            text,
+          })),
+        },
+        {
+          '@type': 'FAQPage',
+          '@id': `${SITE_URL}#faq`,
+          inLanguage: htmlLang,
+          mainEntity: t.questions.map(([name, text]) => ({
+            '@type': 'Question',
+            name,
+            acceptedAnswer: { '@type': 'Answer', text },
+          })),
+        },
+      ],
+    });
+  }
+}
+
 function render(introMotion = false) {
   const t = copy[lang];
   stopAutoplay();
   cancelDrag();
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  document.title = t.title;
-  document.querySelector('meta[name="description"]').content = t.description;
-  for (const [property, content] of [['og:title', t.title], ['og:description', t.description]]) {
-    document.querySelector(`meta[property="${property}"]`).content = content;
-  }
+  syncSeo(t);
   const primaryAction = `<a class="button-md primary" href="${DOWNLOAD_URL}">${icon('download')}<span>${t.cta}</span>${icon('arrow')}</a>`;
   const repoAction = `<a class="button-md secondary" href="${REPO_URL}" target="_blank" rel="noopener noreferrer">${icon('github')}<span>${t.repoCta}</span></a>`;
 

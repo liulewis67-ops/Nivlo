@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://liulewis67-ops.github.io/StarDeskBox/sitemap.xml

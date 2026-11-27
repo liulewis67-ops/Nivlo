@@ -3,15 +3,178 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>StarDeskBox · 把零散信息变成下一步</title>
-  <meta name="description" content="StarDeskBox 是 Windows 桌面上的个人收集与行动工作台。随手拖入链接、文字和文件，再用今日与日历安排下一步。">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="StarDeskBox · 把零散信息变成下一步">
-  <meta property="og:description" content="一个贴在桌面上的收集入口，让待办、笔记和日程各归其序。">
-  <meta property="og:image" content="https://liulewis67-ops.github.io/StarDeskBox/assets/stardeskbox.png">
-  <meta property="og:url" content="https://liulewis67-ops.github.io/StarDeskBox/">
+  <title>StarDeskBox · Windows 桌面悬浮窗收集与行动工作台 | 待办、笔记与日历</title>
+  <meta name="description" content="StarDeskBox 是一款为 Windows 打造的开源本地优先桌面收集与行动工作台。通过桌面悬浮窗随手拖放捕获链接、文件、图片与灵感文字，在收件箱整理为待办、笔记与提示，再用今日视图与日历排期推进下一步。">
+  <meta name="keywords" content="StarDeskBox,Windows桌面收集工具,悬浮窗捕获,灵感收集,拖放收件箱,待办事项管理,本地优先笔记,日历排期,个人效率工作台,开源桌面工具,Tauri,SQLite,Windows productivity app,floating capture window,local-first task manager">
+  <meta name="author" content="liulewis67-ops">
+  <meta name="application-name" content="StarDeskBox">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://liulewis67-ops.github.io/StarDeskBox/">
+  <link rel="alternate" hreflang="zh-CN" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=zh">
+  <link rel="alternate" hreflang="en" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://liulewis67-ops.github.io/StarDeskBox/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="StarDeskBox">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:title" content="StarDeskBox · Windows 桌面悬浮窗收集与行动工作台">
+  <meta property="og:description" content="贴在 Windows 桌面上的悬浮收集入口：拖入链接、文件与灵感，整理为待办、笔记和提示，并用今日与日历安排下一步。">
+  <meta property="og:image" content="https://liulewis67-ops.github.io/StarDeskBox/assets/stardeskbox.png">
+  <meta property="og:image:width" content="64">
+  <meta property="og:image:height" content="64">
+  <meta property="og:image:alt" content="StarDeskBox 应用图标：散落的信息碎片归于秩序">
+  <meta property="og:url" content="https://liulewis67-ops.github.io/StarDeskBox/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="StarDeskBox · Windows 桌面悬浮窗收集与行动工作台">
+  <meta name="twitter:description" content="随手拖入链接、文件与灵感文字，整理为待办、笔记与提示，再用今日与日历安排清晰的下一步。">
+  <meta name="twitter:image" content="https://liulewis67-ops.github.io/StarDeskBox/assets/stardeskbox.png">
+  <meta name="twitter:image:alt" content="StarDeskBox 应用图标">
   <meta name="theme-color" content="#0b0e17">
+  <script id="structured-data" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://liulewis67-ops.github.io/StarDeskBox/#website",
+        "name": "StarDeskBox",
+        "url": "https://liulewis67-ops.github.io/StarDeskBox/",
+        "description": "StarDeskBox 是为 Windows 打造的开源本地优先个人收集与行动工作台。",
+        "inLanguage": ["zh-CN", "en"]
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://liulewis67-ops.github.io/StarDeskBox/#webpage",
+        "url": "https://liulewis67-ops.github.io/StarDeskBox/",
+        "name": "StarDeskBox · Windows 桌面悬浮窗收集与行动工作台",
+        "description": "通过 Windows 桌面悬浮窗随手拖放捕获链接、文件、图片与灵感文字，在收件箱整理为待办、笔记与提示，并用今日与日历安排下一步。",
+        "isPartOf": { "@id": "https://liulewis67-ops.github.io/StarDeskBox/#website" },
+        "about": { "@id": "https://liulewis67-ops.github.io/StarDeskBox/#software" },
+        "inLanguage": "zh-CN"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://liulewis67-ops.github.io/StarDeskBox/#software",
+        "name": "StarDeskBox",
+        "alternateName": "StarDeskBox 桌面工作台",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Windows 10, Windows 11",
+        "softwareVersion": "0.1.4",
+        "description": "StarDeskBox 是一款为 Windows 打造的开源本地优先桌面收集与行动工作台。支持桌面悬浮窗拖放捕获链接、文字、图片与文件，在收件箱整理为待办、笔记与提示，并通过今日视图、日历排期和捕获工作流把零散信息变成下一步行动。",
+        "url": "https://liulewis67-ops.github.io/StarDeskBox/",
+        "downloadUrl": "https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.4/StarDeskBox_0.1.4_x64-setup.exe",
+        "installUrl": "https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.4/StarDeskBox_0.1.4_x64-setup.exe",
+        "releaseNotes": "https://github.com/liulewis67-ops/StarDeskBox/releases/tag/v0.1.4",
+        "codeRepository": "https://github.com/liulewis67-ops/StarDeskBox",
+        "license": "https://www.apache.org/licenses/LICENSE-2.0",
+        "image": "https://liulewis67-ops.github.io/StarDeskBox/assets/stardeskbox.png",
+        "isAccessibleForFree": true,
+        "inLanguage": ["zh-CN", "en"],
+        "keywords": "Windows桌面收集工具, 悬浮窗捕获, 待办管理, 笔记整理, 日历排期, 本地优先, SQLite, Tauri, 开源效率工具",
+        "featureList": [
+          "桌面悬浮窗拖放捕获链接、文件、图片与文字，支持剪贴板粘贴与全局快捷键",
+          "保留原始信息来源，支持捕获工作流自动识别并归类为待办、笔记或提示",
+          "今日视图聚焦当下行动，日历时间块合理规划后续任务",
+          "数据默认保存在本机 SQLite 数据库，保护隐私且响应迅捷",
+          "Apache-2.0 协议开源，基于 Tauri 2、Rust 与 React 构建"
+        ],
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "CNY",
+          "availability": "https://schema.org/InStock"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "liulewis67-ops",
+          "url": "https://github.com/liulewis67-ops"
+        }
+      },
+      {
+        "@type": "HowTo",
+        "@id": "https://liulewis67-ops.github.io/StarDeskBox/#howto",
+        "name": "如何使用 StarDeskBox 从收集信息到安排行动",
+        "description": "从随手拖放收集到收件箱整理，再到日历与今日执行，只需三步。",
+        "inLanguage": "zh-CN",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "position": 1,
+            "name": "随手收下",
+            "text": "看到有用的链接、文件或灵感文字就拖进 Windows 桌面悬浮窗，或使用粘贴与全局快捷键收下，继续手头的事。"
+          },
+          {
+            "@type": "HowToStep",
+            "position": 2,
+            "name": "回头整理",
+            "text": "打开收件箱查看新收集的信息与原始来源，决定它是待办事项、留存笔记，还是一条提示。"
+          },
+          {
+            "@type": "HowToStep",
+            "position": 3,
+            "name": "择时行动",
+            "text": "把要做的事排进日历时间块，再从「今日」视图开始集中推进。"
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://liulewis67-ops.github.io/StarDeskBox/#faq",
+        "inLanguage": "zh-CN",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "StarDeskBox 是什么？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "StarDeskBox 是一款开源的 Windows 桌面收集与行动工作台，用同一个悬浮窗入口收集资料、在收件箱整理待办与笔记，并通过今日与日历安排后续行动。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "StarDeskBox 能收集哪些内容？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "可以收集网页链接、灵感文字、图片、本地文件和文件夹。部分应用来源无法直接拖入时，可复制后在悬浮窗粘贴或使用快捷键捕获。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "收下的东西会放在哪里？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "新捕获的内容会进入收件箱并保留来源信息，你可以随时把它整理为待办事项、笔记或提示。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "一定要配置捕获工作流吗？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "不需要。你可以直接手动收集和整理；当需要自动识别和处理常见链接或内容时，再按需启用捕获工作流。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "我的资料保存在哪里？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "StarDeskBox 采用本地优先架构，默认将资料保存在本机 SQLite 数据库中。仅在使用需要访问网页或外部服务的捕获工作流时才需要联网。"
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "现在可以下载 StarDeskBox 吗？",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "当前 v0.1.4 提供免费开源的 Windows x64 安装包，点击下载按钮即可直接下载安装。安装包暂未配置 Windows 代码签名，首次安装时系统可能提示发布者未知。"
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <script>
     try {
       const theme = localStorage.getItem('stardeskbox-theme');
@@ -19,8 +182,8 @@
     } catch { /* Use the system theme. */ }
   </script>
   <link rel="icon" href="assets/stardeskbox.png">
-  <link rel="stylesheet" href="style.css?v=0.1.4">
-  <script src="landing.js?v=0.1.4" defer></script>
+  <link rel="stylesheet" href="style.css?v=0.1.4-seo">
+  <script src="landing.js?v=0.1.4-seo" defer></script>
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" class="symbols" aria-hidden="true">
@@ -50,7 +213,28 @@
     <div class="ambient-orb orb-amber"></div>
   </div>
   <div id="site">
-    <noscript><main><h1>StarDeskBox</h1><p>把零散信息变成下一步。StarDeskBox 是 Windows 上的个人收集与行动工作台。</p><p lang="en">Turn scattered information into your next action. StarDeskBox is a personal capture and planning workspace for Windows.</p></main></noscript>
+    <main class="wrap section">
+      <h1>StarDeskBox · Windows 桌面悬浮窗收集与行动工作台</h1>
+      <p>把零散信息变成下一步。StarDeskBox 是一款开源、本地优先的 Windows 桌面收集与行动工作台，支持悬浮窗拖放捕获链接、文件与灵感文字，在收件箱整理为待办、笔记与提示，再用今日与日历安排下一步。</p>
+      <p><a href="https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.4/StarDeskBox_0.1.4_x64-setup.exe">下载 StarDeskBox Windows x64 安装包 (v0.1.4)</a> · <a href="https://github.com/liulewis67-ops/StarDeskBox">GitHub 开源仓库</a></p>
+      <section>
+        <h2>核心能力</h2>
+        <ul>
+          <li><strong>悬浮捕获</strong>：从当前窗口随手拖入链接、文件、图片或文字，也支持剪贴板粘贴与全局快捷键捕获。</li>
+          <li><strong>来源与规则</strong>：完整保留原始来源，常见内容可由捕获工作流自动识别并转为待办、笔记或提示。</li>
+          <li><strong>今日与日历</strong>：用「今日」聚焦眼前的事，在日历时间块里为后续任务留出空间，数据默认保存在本机 SQLite。</li>
+        </ul>
+      </section>
+      <section>
+        <h2>从收下到行动，只需三步</h2>
+        <ol>
+          <li><strong>随手收下</strong>：看到有用的内容就拖进桌面悬浮窗，不打断当前思路。</li>
+          <li><strong>回头整理</strong>：打开收件箱，把新内容归类为待办、笔记或提示。</li>
+          <li><strong>择时行动</strong>：把要做的事排进日历，再从「今日」开始稳步推进。</li>
+        </ol>
+      </section>
+      <p lang="en">Turn scattered information into your next action. StarDeskBox is a free, open-source, local-first personal capture and planning desktop workspace for Windows (Tauri 2 + Rust + SQLite).</p>
+    </main>
   </div>
 </body>
 </html>
