@@ -10,7 +10,7 @@
     clippy::missing_docs_in_private_items
 )]
 
-use stardeskbox_desktop_lib::windows::{
+use starat_desktop_lib::windows::{
     FLOATING_WINDOW_LABEL, MAIN_WINDOW_LABEL, create_floating_window, on_window_event,
     show_main_window,
 };

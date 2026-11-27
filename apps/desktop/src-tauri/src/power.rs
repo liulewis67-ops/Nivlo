@@ -3,7 +3,7 @@
 //! Windows 上由原生监听窗口在系统休眠恢复、时间被改动时通知这里，立即唤醒 Scheduler 做 Reconcile，
 //! 不必等偏差检测；其他平台没有原生监听，仍靠 Scheduler 自己的偏差检测兜底。
 
-use stardeskbox_scheduler::Control;
+use starat_scheduler::Control;
 
 use crate::app::AppState;
 
@@ -24,7 +24,7 @@ pub fn on_system_event(control: &Control, kind: &str) {
 pub fn start(app: &tauri::AppHandle<tauri::Wry>) {
     #[cfg(target_os = "windows")]
     {
-        use stardeskbox_platform_windows::power::{PowerEvent, PowerEventListener};
+        use starat_platform_windows::power::{PowerEvent, PowerEventListener};
         use tauri::Manager;
 
         let handle = app.clone();

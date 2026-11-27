@@ -2,30 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://liulewis67-ops.github.io/StarDeskBox/</loc>
+    <loc>https://liulewis67-ops.github.io/StarAt/</loc>
     <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=zh" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://liulewis67-ops.github.io/StarDeskBox/" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://liulewis67-ops.github.io/StarAt/?lang=zh" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://liulewis67-ops.github.io/StarAt/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://liulewis67-ops.github.io/StarAt/" />
   </url>
   <url>
-    <loc>https://liulewis67-ops.github.io/StarDeskBox/?lang=zh</loc>
+    <loc>https://liulewis67-ops.github.io/StarAt/?lang=zh</loc>
     <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=zh" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://liulewis67-ops.github.io/StarDeskBox/" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://liulewis67-ops.github.io/StarAt/?lang=zh" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://liulewis67-ops.github.io/StarAt/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://liulewis67-ops.github.io/StarAt/" />
   </url>
   <url>
-    <loc>https://liulewis67-ops.github.io/StarDeskBox/?lang=en</loc>
+    <loc>https://liulewis67-ops.github.io/StarAt/?lang=en</loc>
     <lastmod>2026-11-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=zh" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://liulewis67-ops.github.io/StarDeskBox/?lang=en" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://liulewis67-ops.github.io/StarDeskBox/" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://liulewis67-ops.github.io/StarAt/?lang=zh" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://liulewis67-ops.github.io/StarAt/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://liulewis67-ops.github.io/StarAt/" />
   </url>
 </urlset>

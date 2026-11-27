@@ -71,7 +71,7 @@ describe("独立详情窗口", () => {
     const { item, ipc, unmount } = await openDetail();
     expect(screen.getByLabelText("条目详情")).toHaveClass("nv-detail-window", "w-full");
     expect(screen.getByLabelText("条目详情")).not.toHaveClass("nv-detail-panel");
-    expect(native.setTitle).toHaveBeenCalledWith("独立事项 · StarDeskBox");
+    expect(native.setTitle).toHaveBeenCalledWith("独立事项 · StarAt");
     expect(ipc.calls).toContain("markItemOpened");
     expect(screen.getByLabelText("标题")).toHaveValue(item.title);
     unmount();
@@ -81,7 +81,7 @@ describe("独立详情窗口", () => {
 
   it("自绘标题栏区分拖动区与按钮，可最小化、最大化并同步还原状态", async () => {
     await openDetail();
-    const title = screen.getByText("独立事项 · StarDeskBox");
+    const title = screen.getByText("独立事项 · StarAt");
     expect(title.closest("[data-tauri-drag-region]")).toHaveAttribute(
       "data-tauri-drag-region",
       "deep",

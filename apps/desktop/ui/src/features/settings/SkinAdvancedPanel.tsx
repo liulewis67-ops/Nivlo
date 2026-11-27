@@ -134,7 +134,7 @@ export function SkinTracksEditor() {
 }
 
 /**
- * 本地皮肤资源占用统计、孤儿文件清理与 `.stardeskbox-skin.zip` 皮肤包导入/导出控件。
+ * 本地皮肤资源占用统计、孤儿文件清理与 `.starat-skin.zip` 皮肤包导入/导出控件。
  */
 export function SkinStorageControls() {
   const { t } = useTranslation();
@@ -172,7 +172,7 @@ export function SkinStorageControls() {
     }
   }
 
-  /** 将当前皮肤清单与帧图导出为 `.stardeskbox-skin.zip`。 */
+  /** 将当前皮肤清单与帧图导出为 `.starat-skin.zip`。 */
   async function handleExport(): Promise<void> {
     setBusy(true);
     try {
@@ -187,7 +187,7 @@ export function SkinStorageControls() {
     }
   }
 
-  /** 导入 `.stardeskbox-skin.zip` 皮肤包。 */
+  /** 导入 `.starat-skin.zip` 皮肤包。 */
   async function handleImport(): Promise<void> {
     setBusy(true);
     try {

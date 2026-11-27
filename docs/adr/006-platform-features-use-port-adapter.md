@@ -10,7 +10,7 @@
 
 ## 决策
 
-`stardeskbox-platform` 为每个能力定义独立的小 trait（`WindowPort`、`DropPort`、`ClipboardPort`、`CredentialPort`、`NotificationPort`、`ShortcutPort`、`AutostartPort`、`OpenPort`），不做拥有几十个方法的 God Trait；平台 crate 用 `cfg(target_os)` 隔离；能力不足时返回明确的 `Unsupported` 或降级，而不是 panic。
+`starat-platform` 为每个能力定义独立的小 trait（`WindowPort`、`DropPort`、`ClipboardPort`、`CredentialPort`、`NotificationPort`、`ShortcutPort`、`AutostartPort`、`OpenPort`），不做拥有几十个方法的 God Trait；平台 crate 用 `cfg(target_os)` 隔离；能力不足时返回明确的 `Unsupported` 或降级，而不是 panic。
 
 ## 后果
 

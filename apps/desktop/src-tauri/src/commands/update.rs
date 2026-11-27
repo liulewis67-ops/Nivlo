@@ -1,6 +1,6 @@
 //! 自动更新相关的 Command（仅主窗口，实施计划 7.6）。
 
-use stardeskbox_application::error::{AppError, ErrorCode};
+use starat_application::error::{AppError, ErrorCode};
 use tauri::{AppHandle, Runtime, State};
 
 use crate::app::AppState;
@@ -49,10 +49,7 @@ pub async fn install_update<R: Runtime>(
         .cloned()
         .ok_or_else(|| failed("更新失败", "应用目录尚未就绪"))?;
     let now = state.runtime.clock.now_utc();
-    let name = format!(
-        "stardeskbox-before-update-{}.zip",
-        now.format("%Y%m%d-%H%M%S")
-    );
+    let name = format!("starat-before-update-{}.zip", now.format("%Y%m%d-%H%M%S"));
     // 升级之前先留一份可恢复的备份；备份不成功就不升级。
     backup::create_backup(
         &state.runtime.database(),

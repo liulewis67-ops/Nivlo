@@ -4,11 +4,11 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use stardeskbox_application::settings::keys;
-use stardeskbox_domain::event::DomainEvent;
-use stardeskbox_platform::error::PlatformError;
-use stardeskbox_platform::notification::{Notification, NotificationPort};
-use stardeskbox_scheduler::{Scheduler, service::MAX_REMINDER_COUNT};
+use starat_application::settings::keys;
+use starat_domain::event::DomainEvent;
+use starat_platform::error::PlatformError;
+use starat_platform::notification::{Notification, NotificationPort};
+use starat_scheduler::{Scheduler, service::MAX_REMINDER_COUNT};
 use tauri::menu::CheckMenuItem;
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_notification::NotificationExt;
@@ -105,7 +105,7 @@ impl NotificationPort for TauriNotifier {
 
         #[cfg(target_os = "windows")]
         {
-            let toast = stardeskbox_platform_windows::toast::WindowsToast::new(
+            let toast = starat_platform_windows::toast::WindowsToast::new(
                 self.app.config().identifier.clone(),
             );
             match toast.notify(notification) {
@@ -219,7 +219,7 @@ pub async fn set_paused<R: tauri::Runtime>(
     app: &AppHandle<R>,
     state: &AppState,
     paused: bool,
-) -> Result<(), stardeskbox_application::error::AppError> {
+) -> Result<(), starat_application::error::AppError> {
     state
         .services
         .settings

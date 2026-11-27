@@ -1,6 +1,8 @@
 {
   "app": {
-    "name": "StarDeskBox"
+    "name": "StarAt",
+    "tagline": "Everything starts here.",
+    "value": "Turn scattered information into action."
   },
   "common": {
     "loading": "Loading…",
@@ -19,7 +21,7 @@
   },
   "dev": {
     "title": "Developer console",
-    "quit": "Quit StarDeskBox",
+    "quit": "Quit StarAt",
     "subtitle": "Phase 0 IPC demo: create and list items to verify the UI → IPC → SQLite path.",
     "form": {
       "titleLabel": "Title",
@@ -307,9 +309,9 @@
     }
   },
   "floating": {
-    "label": "StarDeskBox floating badge",
+    "label": "StarAt floating badge",
     "reminderAttention": "An item reminder is due",
-    "open": "Open the StarDeskBox main window",
+    "open": "Open the StarAt main window",
     "allDone": "all done for today",
     "quickAddHint": "right-click to add a to-do"
   },
@@ -587,7 +589,7 @@
     },
     "autostart": {
       "label": "Launch at startup",
-      "hint": "StarDeskBox stays at the edge of your screen after startup, ready to catch ideas and to-dos."
+      "hint": "StarAt stays at the edge of your screen after startup, ready to catch ideas and to-dos."
     },
     "language": {
       "label": "Language",
@@ -641,7 +643,7 @@
     },
     "onboarding": {
       "label": "Getting started",
-      "hint": "See the basics of StarDeskBox again.",
+      "hint": "See the basics of StarAt again.",
       "replay": "Replay"
     },
     "diagnostics": {
@@ -671,12 +673,12 @@
       "hint": "Choose a backup archive. Your current data is backed up automatically first; the restore takes effect after a restart, and the replaced data stays in the data folder.",
       "action": "Choose backup…",
       "readyTitle": "Backup is ready",
-      "readyBody": "Backup created {{created}} (StarDeskBox {{version}}). After restarting, this data replaces the current data; your current data was backed up to: {{safety}}",
+      "readyBody": "Backup created {{created}} (StarAt {{version}}). After restarting, this data replaces the current data; your current data was backed up to: {{safety}}",
       "restart": "Restart now"
     },
     "reset": {
       "label": "Delete all data",
-      "hint": "Starts StarDeskBox over with no items, settings or attachments. Your current data is backed up automatically first, and uninstalling StarDeskBox never deletes it.",
+      "hint": "Starts StarAt over with no items, settings or attachments. Your current data is backed up automatically first, and uninstalling StarAt never deletes it.",
       "action": "Delete all data…",
       "confirm": "Click again to delete",
       "readyTitle": "Data will be deleted on restart",
@@ -736,8 +738,16 @@
       "robot": "Robot model",
       "color": "Shell color",
       "face": "Expression",
-      "modes": { "robot": "Robot", "image": "Custom images", "badge": "Classic badge" },
-      "robots": { "scout": "Scout", "relay": "Mechanic", "memo": "Memo" },
+      "modes": {
+        "robot": "Robot",
+        "image": "Custom images",
+        "badge": "Classic badge"
+      },
+      "robots": {
+        "scout": "Scout",
+        "relay": "Mechanic",
+        "memo": "Memo"
+      },
       "colors": {
         "original": "Original",
         "steel": "Steel blue",
@@ -746,7 +756,11 @@
         "lilac": "Lilac",
         "pearl": "Pearl"
       },
-      "faces": { "friendly": "Friendly", "focused": "Focused", "playful": "Playful" },
+      "faces": {
+        "friendly": "Friendly",
+        "focused": "Focused",
+        "playful": "Playful"
+      },
       "saveFailed": "Could not save the appearance. Try again.",
       "retry": "Retry",
       "animation": {
@@ -935,7 +949,7 @@
       "latest": "You’re up to date.",
       "available": "Version {{version}} is available.",
       "install": "Update now",
-      "installing": "Updating in the background — StarDeskBox will restart by itself…",
+      "installing": "Updating in the background — StarAt will restart by itself…",
       "error": "Couldn’t update. Your current version is unchanged."
     },
     "searchShortcut": {
@@ -985,7 +999,7 @@
       "input": "Review the plan tomorrow 3pm",
       "parsed": "Plan detected: Tomorrow · Thu 15:00"
     },
-    "label": "Welcome to StarDeskBox",
+    "label": "Welcome to StarAt",
     "steps": "Getting-started steps",
     "goTo": "Step {{step}}",
     "next": "Next",
@@ -993,8 +1007,8 @@
     "skip": "Skip",
     "start": "Get started",
     "step0": {
-      "title": "Welcome to StarDeskBox",
-      "body": "StarDeskBox lives at the edge of your screen: catch what comes to mind now, organize it later. Look for the small badge at the screen edge."
+      "title": "Welcome to StarAt",
+      "body": "StarAt lives at the edge of your screen: catch what comes to mind now, organize it later. Look for the small badge at the screen edge."
     },
     "step1": {
       "title": "Hover to see today, click to add",

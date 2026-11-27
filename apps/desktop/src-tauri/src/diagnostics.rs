@@ -126,7 +126,7 @@ pub fn collect_logs(dir: &std::path::Path) -> Vec<(String, String)> {
         .filter_map(Result::ok)
         .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
         .filter_map(|e| e.file_name().into_string().ok())
-        .filter(|name| name.starts_with("stardeskbox") && name.ends_with(".log"))
+        .filter(|name| name.starts_with("starat") && name.ends_with(".log"))
         .collect();
     names.sort_unstable_by(|a, b| b.cmp(a));
     names
@@ -174,7 +174,7 @@ pub fn build_zip(
             .map_err(|e| zip_error(&e))?;
         writer
             .write_all(
-                "StarDeskBox诊断包\n\n包含：运行环境、Workflow 元数据（不含定义）、最近日志（已脱敏）。\n不包含：笔记与待办的标题和内容、剪贴板、你的文件、任何令牌。\n".as_bytes(),
+                "StarAt诊断包\n\n包含：运行环境、Workflow 元数据（不含定义）、最近日志（已脱敏）。\n不包含：笔记与待办的标题和内容、剪贴板、你的文件、任何令牌。\n".as_bytes(),
             )
             .map_err(|e| zip_error(&e))?;
         for (name, content) in logs.iter().take(MAX_LOG_FILES) {
@@ -298,7 +298,7 @@ mod tests {
         .join("\n");
         let bytes = build_zip(
             &environment(),
-            &[("stardeskbox.2026-10-11.log".into(), leaky_log)],
+            &[("starat.2026-10-11.log".into(), leaky_log)],
         )
         .unwrap();
         let files = read_all(&bytes);
@@ -316,7 +316,7 @@ mod tests {
         assert!(everything.contains("builtin.generic-url"));
         let names: Vec<_> = files.iter().map(|(n, _)| n.as_str()).collect();
         assert!(names.contains(&"environment.json"));
-        assert!(names.contains(&"logs/stardeskbox.2026-10-11.log"));
+        assert!(names.contains(&"logs/starat.2026-10-11.log"));
     }
 
     #[test]
@@ -346,11 +346,7 @@ mod tests {
     fn only_the_newest_log_files_are_collected_and_other_files_are_ignored() {
         let dir = tempfile::tempdir().unwrap();
         for day in ["09", "10", "11", "12"] {
-            std::fs::write(
-                dir.path().join(format!("stardeskbox.2026-10-{day}.log")),
-                day,
-            )
-            .unwrap();
+            std::fs::write(dir.path().join(format!("starat.2026-10-{day}.log")), day).unwrap();
         }
         std::fs::write(dir.path().join("other.txt"), "x").unwrap();
         let logs = collect_logs(dir.path());
@@ -358,9 +354,9 @@ mod tests {
         assert_eq!(
             names,
             [
-                "stardeskbox.2026-10-12.log",
-                "stardeskbox.2026-10-11.log",
-                "stardeskbox.2026-10-10.log"
+                "starat.2026-10-12.log",
+                "starat.2026-10-11.log",
+                "starat.2026-10-10.log"
             ]
         );
         assert!(collect_logs(&dir.path().join("missing")).is_empty());

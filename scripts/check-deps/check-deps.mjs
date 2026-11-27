@@ -6,23 +6,23 @@ import { execFileSync } from "node:child_process";
 /** 外部技术依赖：只有 Adapter / 宿主可以依赖。 */
 const TECH = ["tauri", "sqlx", "reqwest", "rquickjs", "windows"];
 const ADAPTERS = [
-  "stardeskbox-storage",
-  "stardeskbox-capture",
-  "stardeskbox-workflow",
-  "stardeskbox-script",
-  "stardeskbox-scheduler",
-  "stardeskbox-integrations",
-  "stardeskbox-platform-windows",
-  "stardeskbox-platform-macos",
-  "stardeskbox-platform-linux",
+  "starat-storage",
+  "starat-capture",
+  "starat-workflow",
+  "starat-script",
+  "starat-scheduler",
+  "starat-integrations",
+  "starat-platform-windows",
+  "starat-platform-macos",
+  "starat-platform-linux",
 ];
 
 /** 规则表：crate -> 禁止（直接或间接）依赖的 crate 名。 */
 const RULES = {
-  "stardeskbox-common": [...TECH, "stardeskbox-domain", "stardeskbox-application", "stardeskbox-platform", ...ADAPTERS],
-  "stardeskbox-domain": [...TECH, "tokio", "stardeskbox-application", "stardeskbox-platform", ...ADAPTERS],
-  "stardeskbox-application": [...TECH, "stardeskbox-platform", ...ADAPTERS],
-  "stardeskbox-platform": [...TECH, "stardeskbox-application", ...ADAPTERS],
+  "starat-common": [...TECH, "starat-domain", "starat-application", "starat-platform", ...ADAPTERS],
+  "starat-domain": [...TECH, "tokio", "starat-application", "starat-platform", ...ADAPTERS],
+  "starat-application": [...TECH, "starat-platform", ...ADAPTERS],
+  "starat-platform": [...TECH, "starat-application", ...ADAPTERS],
 };
 
 const metadata = JSON.parse(

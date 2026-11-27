@@ -2,8 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use stardeskbox_application::error::{AppError, ErrorCode};
-use stardeskbox_application::export::{ExportFormat, ExportedFile};
+use starat_application::error::{AppError, ErrorCode};
+use starat_application::export::{ExportFormat, ExportedFile};
 use tauri::{AppHandle, Runtime, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -48,7 +48,7 @@ pub async fn create_backup_file(state: State<'_, AppState>) -> Result<String, Ip
         .cloned()
         .ok_or_else(|| failed(&"应用目录尚未就绪"))?;
     let now = state.runtime.clock.now_utc();
-    let name = format!("stardeskbox-backup-{}.zip", now.format("%Y%m%d-%H%M%S"));
+    let name = format!("starat-backup-{}.zip", now.format("%Y%m%d-%H%M%S"));
     let path = backup::create_backup(
         &state.runtime.database(),
         &paths,
@@ -127,12 +127,12 @@ fn write_bundle(
             } else {
                 "md"
             };
-            let target = exports.join(format!("stardeskbox-export-{stamp}.{extension}"));
+            let target = exports.join(format!("starat-export-{stamp}.{extension}"));
             std::fs::write(&target, file.bytes).map_err(|e| e.to_string())?;
             Ok(target)
         }
         ExportFormat::MarkdownFiles => {
-            let target = exports.join(format!("stardeskbox-export-{stamp}.zip"));
+            let target = exports.join(format!("starat-export-{stamp}.zip"));
             let mut writer =
                 zip::ZipWriter::new(std::fs::File::create(&target).map_err(|e| e.to_string())?);
             let options = zip::write::SimpleFileOptions::default()
@@ -181,7 +181,7 @@ pub async fn restore_backup<R: Runtime>(
     let picked = tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()
-            .add_filter("StarDeskBox备份", &["zip"])
+            .add_filter("StarAt备份", &["zip"])
             .blocking_pick_file()
     })
     .await
@@ -192,10 +192,7 @@ pub async fn restore_backup<R: Runtime>(
     let picked = picked.into_path().map_err(|e| failed(&e))?;
     // 先验证再动手：无效的备份不应该触发任何备份 / 暂存。
     let now = state.runtime.clock.now_utc();
-    let safety_name = format!(
-        "stardeskbox-before-restore-{}.zip",
-        now.format("%Y%m%d-%H%M%S")
-    );
+    let safety_name = format!("starat-before-restore-{}.zip", now.format("%Y%m%d-%H%M%S"));
     let manifest = backup::stage_restore(&picked, &paths)
         .await
         .map_err(|e| failed(&e))?;
@@ -239,10 +236,7 @@ pub async fn reset_all_data(state: State<'_, AppState>) -> Result<String, IpcErr
         .cloned()
         .ok_or_else(|| failed(&"应用目录尚未就绪"))?;
     let now = state.runtime.clock.now_utc();
-    let safety_name = format!(
-        "stardeskbox-before-reset-{}.zip",
-        now.format("%Y%m%d-%H%M%S")
-    );
+    let safety_name = format!("starat-before-reset-{}.zip", now.format("%Y%m%d-%H%M%S"));
     // 没能保住当前数据的备份就不清空。
     let safety = backup::create_backup(
         &state.runtime.database(),

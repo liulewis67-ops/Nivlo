@@ -9,10 +9,10 @@
 )]
 
 use serde_json::{Value, json};
-use stardeskbox_common::paths::AppPaths;
-use stardeskbox_desktop_lib::app::AppState;
-use stardeskbox_desktop_lib::lifecycle::startup::{build_app_state, open_database};
-use stardeskbox_desktop_lib::windows::MAIN_WINDOW_LABEL;
+use starat_common::paths::AppPaths;
+use starat_desktop_lib::app::AppState;
+use starat_desktop_lib::lifecycle::startup::{build_app_state, open_database};
+use starat_desktop_lib::windows::MAIN_WINDOW_LABEL;
 use tauri::ipc::{CallbackFn, InvokeBody};
 use tauri::test::{
     INVOKE_KEY, MockRuntime, get_ipc_response, mock_builder, mock_context, noop_assets,
@@ -25,7 +25,7 @@ async fn app_on(paths: &AppPaths) -> App<MockRuntime> {
     let database = open_database(paths).await.unwrap();
     let state: AppState = build_app_state(database, paths.attachments_dir(), None);
     mock_builder()
-        .invoke_handler(stardeskbox_desktop_lib::bindings_builder!(MockRuntime).invoke_handler())
+        .invoke_handler(starat_desktop_lib::bindings_builder!(MockRuntime).invoke_handler())
         .manage(state)
         .build(mock_context(noop_assets()))
         .unwrap()
@@ -67,7 +67,7 @@ fn todo_request(title: &str) -> Value {
 #[tokio::test(flavor = "multi_thread")]
 async fn created_item_survives_a_restart() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
 
     // 第一次"运行"：创建 Item。
@@ -105,7 +105,7 @@ async fn created_item_survives_a_restart() {
 #[tokio::test(flavor = "multi_thread")]
 async fn errors_are_returned_as_code_message_action() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -140,7 +140,7 @@ async fn errors_are_returned_as_code_message_action() {
 #[tokio::test(flavor = "multi_thread")]
 async fn domain_rules_are_enforced_through_ipc() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -161,7 +161,7 @@ async fn domain_rules_are_enforced_through_ipc() {
 #[tokio::test(flavor = "multi_thread")]
 async fn get_today_returns_todos_scheduled_today_with_the_remaining_count() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -206,7 +206,7 @@ async fn get_today_returns_todos_scheduled_today_with_the_remaining_count() {
 #[tokio::test(flavor = "multi_thread")]
 async fn quick_create_adds_a_todo_to_today_and_rejects_blank_titles() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -248,7 +248,7 @@ async fn quick_create_adds_a_todo_to_today_and_rejects_blank_titles() {
 #[tokio::test(flavor = "multi_thread")]
 async fn floating_input_commands_report_an_unavailable_window_before_startup_completes() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -263,7 +263,7 @@ async fn floating_input_commands_report_an_unavailable_window_before_startup_com
 #[tokio::test(flavor = "multi_thread")]
 async fn complete_and_reopen_move_a_todo_through_today_and_keep_its_position() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -295,7 +295,7 @@ async fn complete_and_reopen_move_a_todo_through_today_and_keep_its_position() {
 #[tokio::test(flavor = "multi_thread")]
 async fn reorder_today_persists_the_order_and_never_drops_unknown_todos() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let quick = |title: &str| json!({ "request": { "itemType": "todo", "title": title } });
     let ids = {
@@ -342,7 +342,7 @@ async fn reorder_today_persists_the_order_and_never_drops_unknown_todos() {
 #[tokio::test(flavor = "multi_thread")]
 async fn reschedule_removes_a_todo_from_today_and_exact_restores_it() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -394,7 +394,7 @@ fn capture_text(text: &str) -> Value {
 #[tokio::test(flavor = "multi_thread")]
 async fn capture_is_fast_lands_in_the_inbox_and_undo_restores_the_database() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -448,7 +448,7 @@ async fn capture_is_fast_lands_in_the_inbox_and_undo_restores_the_database() {
 #[tokio::test(flavor = "multi_thread")]
 async fn inbox_lists_captures_with_sources_organizes_in_batch_and_undoes() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -524,7 +524,7 @@ async fn inbox_lists_captures_with_sources_organizes_in_batch_and_undoes() {
 #[tokio::test(flavor = "multi_thread")]
 async fn main_view_handoff_validates_the_view_and_is_taken_only_once() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -562,7 +562,7 @@ async fn main_view_handoff_validates_the_view_and_is_taken_only_once() {
 #[tokio::test(flavor = "multi_thread")]
 async fn update_item_patches_only_what_is_sent_enforces_domain_rules_and_persists() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -659,7 +659,7 @@ async fn update_item_patches_only_what_is_sent_enforces_domain_rules_and_persist
 #[tokio::test(flavor = "multi_thread")]
 async fn open_item_source_reports_missing_files_and_items_without_a_source() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -694,7 +694,7 @@ async fn open_item_source_reports_missing_files_and_items_without_a_source() {
 #[tokio::test(flavor = "multi_thread")]
 async fn projects_and_tags_organize_items_and_survive_a_restart() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
 
     let app = app_on(&paths).await;
@@ -816,7 +816,7 @@ async fn projects_and_tags_organize_items_and_survive_a_restart() {
 #[tokio::test(flavor = "multi_thread")]
 async fn deleting_moves_items_to_the_trash_and_survives_a_restart() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
 
     let app = app_on(&paths).await;
@@ -925,7 +925,7 @@ async fn deleting_moves_items_to_the_trash_and_survives_a_restart() {
 #[tokio::test(flavor = "multi_thread")]
 async fn get_calendar_returns_scheduled_and_due_entries_and_unscheduled_todos() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);
@@ -1042,7 +1042,7 @@ async fn get_calendar_returns_scheduled_and_due_entries_and_unscheduled_todos() 
 #[tokio::test(flavor = "multi_thread")]
 async fn quick_create_accepts_a_plan_parsed_from_the_title() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let app = app_on(&paths).await;
     let webview = main_webview(&app);

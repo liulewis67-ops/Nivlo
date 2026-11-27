@@ -4,7 +4,7 @@
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use stardeskbox_application::error::{AppError, ErrorCode};
+use starat_application::error::{AppError, ErrorCode};
 use tauri::State;
 
 use crate::app::AppState;

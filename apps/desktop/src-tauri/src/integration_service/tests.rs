@@ -6,18 +6,16 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use chrono::{TimeZone, Utc};
-use stardeskbox_application::error::ErrorCode;
-use stardeskbox_application::ports::http::{
-    HostPolicy, HttpError, HttpPort, HttpRequest, HttpResponse,
-};
-use stardeskbox_application::ports::integration::{
+use starat_application::error::ErrorCode;
+use starat_application::ports::http::{HostPolicy, HttpError, HttpPort, HttpRequest, HttpResponse};
+use starat_application::ports::integration::{
     Integration, IntegrationCall, IntegrationContext, IntegrationError, IntegrationOutput,
     IntegrationRegistry,
 };
-use stardeskbox_application::settings::SettingsService;
-use stardeskbox_application::testing::FakeUnitOfWork;
-use stardeskbox_common::clock::FakeClock;
-use stardeskbox_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials};
+use starat_application::settings::SettingsService;
+use starat_application::testing::FakeUnitOfWork;
+use starat_common::clock::FakeClock;
+use starat_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials};
 
 use super::{IntegrationService, TestOutcome};
 

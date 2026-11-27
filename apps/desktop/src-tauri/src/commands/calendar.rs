@@ -1,7 +1,7 @@
 //! Calendar 相关的 Command（仅主窗口，实施计划 4.2）。
 
 use chrono::NaiveDate;
-use stardeskbox_application::error::{AppError, ErrorCode};
+use starat_application::error::{AppError, ErrorCode};
 use tauri::State;
 
 use crate::app::AppState;

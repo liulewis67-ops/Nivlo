@@ -3,9 +3,9 @@
 //! 备份包是一个 zip：
 //!
 //! * `manifest.json`：格式、版本、创建时间、应用版本、Schema 版本；
-//! * `stardeskbox.db`：用 `VACUUM INTO` 做的**事务一致**快照（应用运行时也能备份）。Workflow 与设置都在库里；
+//! * `starat.db`：用 `VACUUM INTO` 做的**事务一致**快照（应用运行时也能备份）。Workflow 与设置都在库里；
 //!   备份里**没有任何 Secret**（Secret 本来就不在数据库里，见架构文档 §36）；
-//! * `attachments/…`：StarDeskBox 自己保存的附件（粘贴的图片）。被引用的用户文件不在其中——它们本来就不归 StarDeskBox 管。
+//! * `attachments/…`：StarAt 自己保存的附件（粘贴的图片）。被引用的用户文件不在其中——它们本来就不归 StarAt 管。
 //!
 //! 恢复分两步，因为运行中的应用不能替换自己正在使用的数据库文件：
 //!
@@ -23,11 +23,11 @@ use std::io::{Read, Write};
 use std::path::{Component, Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use stardeskbox_common::paths::AppPaths;
-use stardeskbox_storage::Database;
+use starat_common::paths::AppPaths;
+use starat_storage::Database;
 
 /// 备份包格式名。
-pub const BACKUP_FORMAT: &str = "stardeskbox-backup";
+pub const BACKUP_FORMAT: &str = "starat-backup";
 
 /// 备份包格式版本。
 pub const BACKUP_VERSION: u32 = 1;
@@ -67,8 +67,8 @@ impl From<zip::result::ZipError> for BackupError {
     }
 }
 
-impl From<stardeskbox_application::ports::StorageError> for BackupError {
-    fn from(error: stardeskbox_application::ports::StorageError) -> Self {
+impl From<starat_application::ports::StorageError> for BackupError {
+    fn from(error: starat_application::ports::StorageError) -> Self {
         Self::Database(error.to_string())
     }
 }
@@ -161,7 +161,7 @@ pub async fn create_backup(
         let json =
             serde_json::to_vec_pretty(&manifest).map_err(|e| BackupError::Io(e.to_string()))?;
         writer.write_all(&json)?;
-        writer.start_file("stardeskbox.db", options)?;
+        writer.start_file("starat.db", options)?;
         std::io::copy(&mut File::open(&snapshot_path)?, &mut writer)?;
         for (name, path) in walk(&attachments_dir) {
             writer.start_file(format!("attachments/{name}"), options)?;
@@ -214,7 +214,7 @@ pub async fn stage_restore(backup: &Path, paths: &AppPaths) -> Result<Manifest, 
             return Err(error);
         }
     };
-    let verified = Database::verify_file(&staging.join("stardeskbox.db")).await;
+    let verified = Database::verify_file(&staging.join("starat.db")).await;
     let fail = |message: String| {
         let _ = std::fs::remove_dir_all(&staging);
         Err(BackupError::Invalid(message))
@@ -223,7 +223,7 @@ pub async fn stage_restore(backup: &Path, paths: &AppPaths) -> Result<Manifest, 
         Ok(Some(version)) if version <= Database::latest_schema_version() => {}
         Ok(Some(version)) => {
             return fail(format!(
-                "备份来自更新版本的StarDeskBox（数据库版本 {version}），请先升级应用"
+                "备份来自更新版本的StarAt（数据库版本 {version}），请先升级应用"
             ));
         }
         Ok(None) => return fail("备份里的数据库是空的".to_owned()),
@@ -246,11 +246,11 @@ fn extract(backup: &Path, staging: &Path) -> Result<Manifest, BackupError> {
         entry.by_ref().take(64 * 1024).read_to_string(&mut text)?;
         serde_json::from_str(&text).map_err(|e| BackupError::Invalid(e.to_string()))?
     };
-    if (manifest.format != BACKUP_FORMAT && manifest.format != "nivlo-backup")
+    if ![BACKUP_FORMAT, "stardeskbox-backup", "nivlo-backup"].contains(&manifest.format.as_str())
         || manifest.version > BACKUP_VERSION
     {
         return Err(BackupError::Invalid(
-            "不是StarDeskBox的备份包，或来自更新的版本".to_owned(),
+            "不是StarAt的备份包，或来自更新的版本".to_owned(),
         ));
     }
     let mut has_database = false;
@@ -260,26 +260,31 @@ fn extract(backup: &Path, staging: &Path) -> Result<Manifest, BackupError> {
         if entry.is_dir() || name == "manifest.json" {
             continue;
         }
-        let name = if name == "nivlo.db" && manifest.format == "nivlo-backup" {
-            "stardeskbox.db".to_owned()
+        let name = if (name == "nivlo.db" && manifest.format == "nivlo-backup")
+            || (name == "stardeskbox.db" && manifest.format == "stardeskbox-backup")
+        {
+            "starat.db".to_owned()
         } else {
             name
         };
-        let allowed = name == "stardeskbox.db"
+        let allowed = name == "starat.db"
             || name.strip_prefix("attachments/").is_some()
             || name.strip_prefix("skins/").is_some();
         if !allowed || !safe_relative(&name) {
             return Err(BackupError::Invalid(format!("包含不允许的文件：{name}")));
+        }
+        if name == "starat.db" && has_database {
+            return Err(BackupError::Invalid("备份包含重复数据库".to_owned()));
         }
         let destination = staging.join(&name);
         if let Some(parent) = destination.parent() {
             std::fs::create_dir_all(parent)?;
         }
         std::io::copy(&mut entry, &mut File::create(&destination)?)?;
-        has_database |= name == "stardeskbox.db";
+        has_database |= name == "starat.db";
     }
     if !has_database {
-        return Err(BackupError::Invalid("缺少 stardeskbox.db".to_owned()));
+        return Err(BackupError::Invalid("缺少 starat.db".to_owned()));
     }
     Ok(manifest)
 }
@@ -343,13 +348,18 @@ pub fn apply_pending_restore(paths: &AppPaths, stamp: &str) -> Result<bool, Back
         return Ok(false);
     }
     let staging = paths.root().join(STAGING_DIR);
+    let staged_database = ["starat.db", "stardeskbox.db", "nivlo.db"]
+        .iter()
+        .map(|name| staging.join(name))
+        .find(|path| path.is_file())
+        .ok_or_else(|| BackupError::Invalid("缺少待恢复的数据库".to_owned()))?;
     let replaced = paths.root().join(format!("replaced-{stamp}"));
     let mut moved = Moved::new();
     let outcome = (|| -> Result<(), BackupError> {
         // 1. 把当前数据挪走。
         move_current_aside(paths, &replaced, &mut moved)?;
         // 2. 换上暂存的数据。
-        std::fs::rename(staging.join("stardeskbox.db"), paths.database_file())?;
+        std::fs::rename(&staged_database, paths.database_file())?;
         let staged_attachments = staging.join("attachments");
         if staged_attachments.is_dir() {
             std::fs::rename(staged_attachments, paths.attachments_dir())?;

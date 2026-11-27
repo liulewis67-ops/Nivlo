@@ -1,0 +1,20 @@
+[package]
+name = "starat-platform-windows"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "StarAt platform-windows crate"
+
+[dependencies]
+starat-platform.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows.workspace = true
+webview2-com = "0.39"
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

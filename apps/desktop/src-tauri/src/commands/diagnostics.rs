@@ -1,6 +1,6 @@
 //! 诊断包导出 Command（实施计划 7.3）。
 
-use stardeskbox_application::error::{AppError, ErrorCode};
+use starat_application::error::{AppError, ErrorCode};
 use tauri::State;
 
 use crate::app::AppState;
@@ -64,10 +64,7 @@ pub async fn export_diagnostics(state: State<'_, AppState>) -> Result<String, Ip
     };
     let logs_dir = paths.logs_dir();
     let exports_dir = paths.exports_dir();
-    let file_name = format!(
-        "stardeskbox-diagnostics-{}.zip",
-        now.format("%Y%m%d-%H%M%S")
-    );
+    let file_name = format!("starat-diagnostics-{}.zip", now.format("%Y%m%d-%H%M%S"));
     let written = tokio::task::spawn_blocking(move || {
         let logs = diagnostics::collect_logs(&logs_dir);
         let bytes = diagnostics::build_zip(&environment, &logs).map_err(|e| e.to_string())?;

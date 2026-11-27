@@ -26,7 +26,7 @@ import { createHash } from "node:crypto";
 import { PNG } from "pngjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const EXE = process.env.STARDESKBOX_EXE ?? join(ROOT, "target", "release", process.platform === "win32" ? "stardeskbox-desktop.exe" : "stardeskbox-desktop");
+const EXE = process.env.STARAT_EXE ?? join(ROOT, "target", "release", process.platform === "win32" ? "starat-desktop.exe" : "starat-desktop");
 const PORT = 9244;
 const RUNS = Number(process.argv[process.argv.indexOf("--runs") + 1]) || 1;
 const NATIVE = process.argv.includes("--native");
@@ -60,7 +60,7 @@ const badgeRecords = [];
 const runtimeEnvironments = [];
 const EVIDENCE_STAGE = process.argv.includes('--evidence-stage') ? process.argv[process.argv.indexOf('--evidence-stage')+1] : 'm4';
 if(!['m4','m5'].includes(EVIDENCE_STAGE))throw Error('Evidence stage must be m4 or m5');
-const EVIDENCE = process.env.STARDESKBOX_E2E_EVIDENCE_DIR ?? join(ROOT,'tests','visual','stages',EVIDENCE_STAGE,'native');
+const EVIDENCE = process.env.STARAT_E2E_EVIDENCE_DIR ?? join(ROOT,'tests','visual','stages',EVIDENCE_STAGE,'native');
 if (CHECK_ZOOM || WARM_RUNS || BADGE_MATRIX || SEARCH_ZOOM_ONLY) mkdirSync(EVIDENCE,{recursive:true});
 /** --native 测得的唤出耗时（毫秒）：从按键发出到输入框拿到焦点。 */
 const hotkeyTimings = { first: [], again: [] };
@@ -248,30 +248,30 @@ function testInstanceRunning() {
   // PowerShell 的单引号字符串里反斜杠不是转义符（JSON.stringify 的 \\ 会原样留下，永远匹配不上）。
   // 正在退出的进程可能读不到路径：读不到的也算在运行，宁可多等一会儿。
   const quoted = `'${EXE.replaceAll("'", "''")}'`;
-  const script = `@(Get-Process -Name stardeskbox-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${quoted} -or -not $_.Path }).Count`;
+  const script = `@(Get-Process -Name starat-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq ${quoted} -or -not $_.Path }).Count`;
   return Number(execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim()) > 0;
 }
 
 /**
- * 别处的 StarDeskBox（用户自己装的、正在用的那个）有没有在运行：路径能读到、但不是被测程序。
+ * 别处的 StarAt（用户自己装的、正在用的那个）有没有在运行：路径能读到、但不是被测程序。
  *
- * StarDeskBox 只允许一个实例，测试启动的程序会被转交给已经在运行的那个——测试就会在**用户真实的数据**里
+ * StarAt 只允许一个实例，测试启动的程序会被转交给已经在运行的那个——测试就会在**用户真实的数据**里
  * 建条目、改快捷键。发现时直接停下，而不是继续。
  *
  * @returns 那个进程的路径；没有时为 `null`。
  */
 function foreignInstance() {
   const quoted = `'${EXE.replaceAll("'", "''")}'`;
-  const script = `(Get-Process -Name stardeskbox-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path -ne ${quoted} } | Select-Object -First 1).Path`;
+  const script = `(Get-Process -Name starat-desktop -ErrorAction SilentlyContinue | Where-Object { $_.Path -and $_.Path -ne ${quoted} } | Select-Object -First 1).Path`;
   const path = execFileSync("powershell", ["-NoProfile", "-NonInteractive", "-Command", script], { encoding: "utf8", timeout: 30000, windowsHide: true }).trim();
   return path === "" ? null : path;
 }
 
-/** 有别处的 StarDeskBox 在运行时拒绝启动被测程序（见 [`foreignInstance`]）。 */
+/** 有别处的 StarAt 在运行时拒绝启动被测程序（见 [`foreignInstance`]）。 */
 function ensureNoForeignInstance() {
   const other = foreignInstance();
   if (other !== null) {
-    throw new Error(`另一个 StarDeskBox 正在运行（${other}）：测试启动的程序会被转交给它、写进它的数据。请先退出它再运行 E2E。`);
+    throw new Error(`另一个 StarAt 正在运行（${other}）：测试启动的程序会被转交给它、写进它的数据。请先退出它再运行 E2E。`);
   }
 }
 
@@ -370,7 +370,7 @@ async function checkNativeBadgeDrag({main,floating,child,index}) {
           });
           await until(() => main.evaluate("document.hasFocus()"), "主窗口拿到焦点", 5000);
 
-          // 在StarDeskBox自己的主窗口里按 Quick Create 快捷键：记下的「原来的窗口」是主窗口，Enter 之后焦点回到主窗口
+          // 在StarAt自己的主窗口里按 Quick Create 快捷键：记下的「原来的窗口」是主窗口，Enter 之后焦点回到主窗口
           // （此前只测过别的应用在前台的情况）。
           const mainHandle = foregroundWindow();
           pressHotkey([0x11, 0x12, 0x10, 0x77]);
@@ -695,7 +695,7 @@ async function checkNativeExplorerDrop({ main, floating, data, index }) {
   const title = `e2e-explorer 中文文件 ${index}`;
   const filename = `${title}.txt`;
   const file = join(folder, filename);
-  writeFileSync(file, "StarDeskBox synthetic Explorer drag fixture");
+  writeFileSync(file, "StarAt synthetic Explorer drag fixture");
   const original = cursorPosition();
   const existing = new Set(win32(`
     $shell = New-Object -ComObject Shell.Application
@@ -890,7 +890,7 @@ async function checkNativeContextCreate({ main, floating }) {
     "-NoProfile", "-NonInteractive", "-STA", "-Command", `
     Add-Type -AssemblyName PresentationFramework
     $window = New-Object Windows.Window
-    $window.Title = 'StarDeskBox context selection fixture'
+    $window.Title = 'StarAt context selection fixture'
     $window.Width = 440
     $window.Height = 160
     $input = New-Object Windows.Controls.TextBox
@@ -923,7 +923,7 @@ async function checkNativeContextCreate({ main, floating }) {
       [E2E.Clipboard]::GetClipboardSequenceNumber()
     `);
     const clipboardBefore = clipboardSequence();
-    const speechLog = process.env.STARDESKBOX_NVDA_LOG;
+    const speechLog = process.env.STARAT_NVDA_LOG;
     const speechOffset = speechLog ? readFileSync(speechLog).length : 0;
     pressHotkey(hotkey);
     await until(() => floating.evaluate(`
@@ -993,16 +993,16 @@ async function checkNativeContextCreate({ main, floating }) {
 async function runOnce(index) {
   ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
-  const data = mkdtempSync(join(tmpdir(), "stardeskbox-e2e-"));
+  const data = mkdtempSync(join(tmpdir(), "starat-e2e-"));
   const dropFile = join(data, "dropped.txt");
   writeFileSync(dropFile, "e2e");
   const env = {
       ...process.env,
-      STARDESKBOX_DATA_DIR: join(data, "data"),
+      STARAT_DATA_DIR: join(data, "data"),
       WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
-      STARDESKBOX_SKIP_FIRST_RUN_PROMPTS: "1",
+      STARAT_SKIP_FIRST_RUN_PROMPTS: "1",
       // 前台记忆 / 还原的调试日志：焦点相关的失败可以从日志里看出记住了谁、还给了谁。
-      STARDESKBOX_LOG: "info,stardeskbox_platform::foreground=debug,stardeskbox_desktop_lib::windows=debug",
+      STARAT_LOG: "info,starat_platform::foreground=debug,starat_desktop_lib::windows=debug",
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
   const child = spawn(EXE, [], { env, stdio: "ignore" });
@@ -1213,7 +1213,7 @@ async function runOnce(index) {
       if (tags.find((t) => t.itemId === todo.id)?.tags.length !== 0) throw new Error("没有标签的条目返回了标签");
     });
 
-    // 10. 快捷键停用后再启用（用一个少见的组合启用，避免和本机正在运行的 StarDeskBox 撞车）。
+    // 10. 快捷键停用后再启用（用一个少见的组合启用，避免和本机正在运行的 StarAt 撞车）。
     await step("快捷键停用 / 启用", async () => {
       const off = await main.invoke("disable_shortcut", { action: "search" });
       if (!off.disabled || off.registered) throw new Error(`停用后的状态不对：${JSON.stringify(off)}`);
@@ -1311,7 +1311,7 @@ async function runOnce(index) {
     }
 
     // 11.6（--native）Quick Create 的全局快捷键：其他应用在前台时按下，输入后点击创建，
-    // 创建后焦点回到之前的应用。改绑到测试专用组合，避免和本机正在用的 StarDeskBox 冲突。
+    // 创建后焦点回到之前的应用。改绑到测试专用组合，避免和本机正在用的 StarAt 冲突。
     if (NATIVE) {
       await step("Quick Create 快捷键（原生）", async () => {
         await main.invoke("set_shortcut", { action: "quickCreate", accelerator: "Ctrl+Alt+Shift+F8" });
@@ -1732,12 +1732,12 @@ async function stopInstance(child) {
 async function coldMainScenario() {
   ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
-  const data = mkdtempSync(join(tmpdir(), "stardeskbox-e2e-cold-"));
+  const data = mkdtempSync(join(tmpdir(), "starat-e2e-cold-"));
   const env = {
     ...process.env,
-    STARDESKBOX_DATA_DIR: join(data, "data"),
+    STARAT_DATA_DIR: join(data, "data"),
       WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
-    STARDESKBOX_SKIP_FIRST_RUN_PROMPTS: "1",
+    STARAT_SKIP_FIRST_RUN_PROMPTS: "1",
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
   const title = "e2e-cold-main";
@@ -1819,12 +1819,12 @@ function treeWorkingSetMb(pid) {
 async function badgeColdMainScenario() {
   ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
-  const data = mkdtempSync(join(tmpdir(), "stardeskbox-e2e-badge-"));
+  const data = mkdtempSync(join(tmpdir(), "starat-e2e-badge-"));
   const env = {
     ...process.env,
-    STARDESKBOX_DATA_DIR: join(data, "data"),
+    STARAT_DATA_DIR: join(data, "data"),
       WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
-    STARDESKBOX_SKIP_FIRST_RUN_PROMPTS: "1",
+    STARAT_SKIP_FIRST_RUN_PROMPTS: "1",
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
   const original = cursorPosition();
@@ -1864,12 +1864,12 @@ async function badgeColdMainScenario() {
 async function prewarmScenario() {
   ensureNoForeignInstance();
   await until(() => !testInstanceRunning(), "上一轮的被测进程退出", 15000);
-  const data = mkdtempSync(join(tmpdir(), "stardeskbox-e2e-prewarm-"));
+  const data = mkdtempSync(join(tmpdir(), "starat-e2e-prewarm-"));
   const env = {
     ...process.env,
-    STARDESKBOX_DATA_DIR: join(data, "data"),
+    STARAT_DATA_DIR: join(data, "data"),
       WEBVIEW2_USER_DATA_FOLDER: join(data, "webview-profile"),
-    STARDESKBOX_SKIP_FIRST_RUN_PROMPTS: "1",
+    STARAT_SKIP_FIRST_RUN_PROMPTS: "1",
     WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${PORT}`,
   };
   try {
@@ -1986,7 +1986,7 @@ const median = (xs) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
 if (WARM_RUNS || CHECK_ZOOM || BADGE_MATRIX || SEARCH_ZOOM_ONLY) {
   const sorted=[...warmActivations].sort((a,b)=>a-b);
   const sourceFiles=Object.fromEntries(execFileSync('git',['diff','--name-only','--','apps/desktop','crates'],{cwd:ROOT,encoding:'utf8'}).trim().split(/\r?\n/).filter(file=>/\.(rs|tsx?|json|css)$/.test(file)).map(file=>[file,createHash('sha256').update(readFileSync(join(ROOT,file))).digest('hex')]));
-  const metrics={harnessSha256:createHash('sha256').update(readFileSync(join(ROOT,'tests/e2e/e2e.mjs'))).digest('hex'),runtimeEnvironments,profileIsolation:'Temporary STARDESKBOX_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),sourceFiles,executableSha256:createHash('sha256').update(readFileSync(EXE)).digest('hex'),timestamp:new Date().toISOString(),cold:hotkeyTimings.first,warm:warmActivations,warmMedian:sorted.length?median(sorted):null,warmP95:sorted.length?sorted[Math.ceil(sorted.length*.95)-1]:null,budgetMs:150,quickCreate:quickCreateTimings,zoom:zoomRecords,badges:badgeRecords,failedScenarios:failed};
+  const metrics={harnessSha256:createHash('sha256').update(readFileSync(join(ROOT,'tests/e2e/e2e.mjs'))).digest('hex'),runtimeEnvironments,profileIsolation:'Temporary STARAT_DATA_DIR and WEBVIEW2_USER_DATA_FOLDER; profile folder and fresh skin cache asserted',sourceCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim(),sourceFiles,executableSha256:createHash('sha256').update(readFileSync(EXE)).digest('hex'),timestamp:new Date().toISOString(),cold:hotkeyTimings.first,warm:warmActivations,warmMedian:sorted.length?median(sorted):null,warmP95:sorted.length?sorted[Math.ceil(sorted.length*.95)-1]:null,budgetMs:150,quickCreate:quickCreateTimings,zoom:zoomRecords,badges:badgeRecords,failedScenarios:failed};
   metrics.warmBudgetPassed=sorted.length>=20&&metrics.warmP95<metrics.budgetMs;
   writeFileSync(join(EVIDENCE,'measurements.json'),JSON.stringify(metrics,null,2)+'\n');
   console.log(`Warm search focus: ${sorted.length} runs, median ${metrics.warmMedian}ms, p95 ${metrics.warmP95}ms`);

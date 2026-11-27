@@ -1,13 +1,13 @@
 # 悬浮窗动画设置、机器人动作与本地文件帧动画设计方案
 
 > 状态：已完成全部三阶段实施
-> 适用范围：`apps/desktop/ui`、`apps/desktop/src-tauri`、`crates/stardeskbox-common`、`crates/stardeskbox-storage`
+> 适用范围：`apps/desktop/ui`、`apps/desktop/src-tauri`、`crates/starat-common`、`crates/starat-storage`
 
 ---
 
 ## 1. 背景与目标
 
-当前 StarDeskBox 悬浮窗在收起态支持三种显示模式（`robot` / `image` / `badge`），但动画与定制能力存在以下不足：
+当前 StarAt 悬浮窗在收起态支持三种显示模式（`robot` / `image` / `badge`），但动画与定制能力存在以下不足：
 
 1. **缺少全局动画开关与机器人动作配置**：内置机器人（`RobotAvatar`）仅有悬停上移 `1px` 与提醒闪烁，设置页中“皮肤动画”仅在 `mode === "image"` 时可见，用户无法配置机器人动作，也无法一键关闭悬浮窗动画。
 2. **自定义帧动画能力与存储受限**：
@@ -135,11 +135,11 @@ export type RobotPoseFrame = {
 
 ### 5.1 磁盘目录布局
 
-在 `crates/stardeskbox-common/src/paths.rs` 的 `AppPaths` 中新增 `skins/` 目录（由 `ensure_dirs()` 自动创建）：
+在 `crates/starat-common/src/paths.rs` 的 `AppPaths` 中新增 `skins/` 目录（由 `ensure_dirs()` 自动创建）：
 
 ```text
-StarDeskBox/
-├── database/stardeskbox.db           # settings 表中的 ui.skin 仅存轻量 JSON 清单（几 KB）
+StarAt/
+├── database/starat.db           # settings 表中的 ui.skin 仅存轻量 JSON 清单（几 KB）
 ├── attachments/                # 既有：粘贴的图片附件
 └── skins/
     └── assets/                 # 新增：内容寻址帧图文件（只放纯文件名，禁止子目录）
@@ -148,7 +148,7 @@ StarDeskBox/
 ```
 
 - **内容寻址（SHA-256）**：文件名固定为 `<64位小写hex>.<ext>`（`ext` 仅允许 `webp` | `png`）。相同图片在多状态复用或重复导入时自动去重，仅存一份。
-- **原子写入**：沿用 `crates/stardeskbox-storage/src/attachment_files.rs` 的 `.part` 临时文件 + `rename` 模式，避免断电或磁盘满留下损坏图片。
+- **原子写入**：沿用 `crates/starat-storage/src/attachment_files.rs` 的 `.part` 临时文件 + `rename` 模式，避免断电或磁盘满留下损坏图片。
 - **路径安全校验**：所有读写与删除接口严格校验文件名符合 `^[0-9a-f]{64}\.(webp|png)$`，拒绝任何 `/`, `\`, `..`。
 
 ### 5.2 资源上限与规格提升
@@ -164,11 +164,11 @@ StarDeskBox/
 | 皮肤资源总配额 | ~3–4 MB | **`50 MB`**（可配置，远超日常动画需求） |
 | `ui.skin` 清单大小 | 数百 KB ~ 数 MB | **`< 10 KB`**（仅存引用 ID、时长与配置，跨窗口同步极快） |
 
-### 5.3 WebView 资源加载：只读自定义协议 `stardeskbox-skin://`
+### 5.3 WebView 资源加载：只读自定义协议 `starat-skin://`
 
-在 `apps/desktop/src-tauri/src/lib.rs` 中注册 Tauri v2 自定义 URI 协议 `stardeskbox-skin`（`Builder::register_uri_scheme_protocol("stardeskbox-skin", ...)`）：
+在 `apps/desktop/src-tauri/src/lib.rs` 中注册 Tauri v2 自定义 URI 协议 `starat-skin`（`Builder::register_uri_scheme_protocol("starat-skin", ...)`）：
 
-- **URL 格式**：`stardeskbox-skin://localhost/<sha256>.webp`（Windows WebView2 下按 Tauri 惯例自动映射到 `http://stardeskbox-skin.localhost/<sha256>.webp`，前端提供统一 helper `skinAssetUrl(assetId, ext)` 屏蔽平台差异）。
+- **URL 格式**：`starat-skin://localhost/<sha256>.webp`（Windows WebView2 下按 Tauri 惯例自动映射到 `http://starat-skin.localhost/<sha256>.webp`，前端提供统一 helper `skinAssetUrl(assetId, ext)` 屏蔽平台差异）。
 - **安全性**：
   - 协议处理器只读 `AppPaths::skins_assets_dir()`，严格用正则校验文件名格式；非法路径直接返回 `400/404`。
   - 不开放宽泛的 `asset://` 文件系统范围权限，满足 `floating` 窗口最小权限要求。
@@ -178,11 +178,11 @@ StarDeskBox/
 
 ### 5.4 新增 Rust 后端与 IPC 命令设计
 
-遵循项目分层（`stardeskbox-common` → `stardeskbox-storage` → `stardeskbox-application` → `apps/desktop/src-tauri`）：
+遵循项目分层（`starat-common` → `starat-storage` → `starat-application` → `apps/desktop/src-tauri`）：
 
 1. **Port 与适配器**：
-   - 在 `stardeskbox-application/src/ports/files.rs` 定义 `SkinAssetStore` trait（`store_bytes` / `read_bytes` / `list_assets` / `remove_assets` / `total_bytes`）。
-   - 在 `stardeskbox-storage/src/skin_files.rs` 实现 `FsSkinAssetStore`（复用原子写入与文件名校验模式）。
+   - 在 `starat-application/src/ports/files.rs` 定义 `SkinAssetStore` trait（`store_bytes` / `read_bytes` / `list_assets` / `remove_assets` / `total_bytes`）。
+   - 在 `starat-storage/src/skin_files.rs` 实现 `FsSkinAssetStore`（复用原子写入与文件名校验模式）。
 2. **Tauri Commands（仅主窗口 `main` 权限开放，`floating` 不可调用写命令）**：
    - `save_skin_asset(bytes: Vec<u8>, format: "webp" | "png") -> SkinAssetDto { id, ext, sizeBytes, width, height }`
      - 校验魔数（WebP/PNG header）与大小上限（≤ 512 KB），计算 SHA-256，若文件已存在则直接返回元数据（天然去重）。
@@ -191,7 +191,7 @@ StarDeskBox/
    - `get_skin_storage_usage() -> SkinStorageUsageDto { fileCount, totalBytes, quotaBytes }`
      - 供设置页展示皮肤磁盘占用与一键清理。
    - `export_skin_pack(manifest_json: String, dest_path: String)` / `import_skin_pack(src_path: String) -> ImportedSkinPackDto`
-     - 将清单与引用的本地帧图打包为 `.stardeskbox-skin.zip`，或从 zip 校验解压导入 `skins/assets/`。
+     - 将清单与引用的本地帧图打包为 `.starat-skin.zip`，或从 zip 校验解压导入 `skins/assets/`。
 
 ### 5.5 备份、恢复与重置联动
 
@@ -202,7 +202,7 @@ StarDeskBox/
 
 ### 5.6 跨窗口同步与旧版数据迁移
 
-- **跨窗口同步**：`ui.skin` 仅保留轻量 JSON（含 `assetId` 与 `ext`，不含图片二进制）。主窗口写入 `skins/assets/` 成功后更新 `ui.skin` 与 `localStorage`，悬浮窗监听 `storage` 事件收到新清单后直接通过 `stardeskbox-skin://` 加载新帧，延迟极低。
+- **跨窗口同步**：`ui.skin` 仅保留轻量 JSON（含 `assetId` 与 `ext`，不含图片二进制）。主窗口写入 `skins/assets/` 成功后更新 `ui.skin` 与 `localStorage`，悬浮窗监听 `storage` 事件收到新清单后直接通过 `starat-skin://` 加载新帧，延迟极低。
 - **旧版 Base64 自动迁移**：
   - 升级后首次启动主窗口时，若检测到 `ui.skin` 中存在旧版 `frames: ["data:image/png;base64,..."]`：
     1. 将每帧解码后调用 `save_skin_asset` 落盘到 `skins/assets/`；
@@ -233,7 +233,7 @@ StarDeskBox/
 - **基础模式（默认）**：用户只需编辑一套帧序列（即 `tracks.idle`），配置播放方式（循环 / 往返 / 悬停 / 静止）、FPS 与附加动效。
 - **高级模式（折叠展开）**：切换状态标签页（`待机` / `悬停` / `拖拽` / `拖放` / `完成` / `提醒`），为每个状态独立配置帧序列、FPS 与播放方式；未配置的状态明确标注“沿用待机动作”。
 
-### 6.3 皮肤包导入 / 导出（`.stardeskbox-skin.zip`）
+### 6.3 皮肤包导入 / 导出（`.starat-skin.zip`）
 
 - 导出时自动打包 `manifest.json` + 引用到的 `assets/<hash>.<ext>`，方便社区分享或跨设备迁移。
 - 导入时严格校验 manifest schema、文件魔数、尺寸与总配额，防止恶意或损坏包。
@@ -317,10 +317,10 @@ export type Skin = {
 
 | 层级 | 文件 | 职责 |
 | :--- | :--- | :--- |
-| Rust Common | `crates/stardeskbox-common/src/paths.rs` | `AppPaths` 新增 `skins_dir()` / `skins_assets_dir()` |
-| Rust Application | `crates/stardeskbox-application/src/ports/files.rs` | 新增 `SkinAssetStore` trait |
-| Rust Storage | `crates/stardeskbox-storage/src/skin_files.rs`（新增） | 内容寻址落盘、魔数/配额校验、原子写入、孤儿 GC |
-| Tauri Host | `apps/desktop/src-tauri/src/lib.rs` | 注册 `stardeskbox-skin://` 只读自定义协议 |
+| Rust Common | `crates/starat-common/src/paths.rs` | `AppPaths` 新增 `skins_dir()` / `skins_assets_dir()` |
+| Rust Application | `crates/starat-application/src/ports/files.rs` | 新增 `SkinAssetStore` trait |
+| Rust Storage | `crates/starat-storage/src/skin_files.rs`（新增） | 内容寻址落盘、魔数/配额校验、原子写入、孤儿 GC |
+| Tauri Host | `apps/desktop/src-tauri/src/lib.rs` | 注册 `starat-skin://` 只读自定义协议 |
 | Tauri Host | `apps/desktop/src-tauri/src/commands/skin.rs`（新增） | `save_skin_asset` / `prune_skin_assets` / `get_skin_storage_usage` / 导入导出 |
 | Tauri Host | `apps/desktop/src-tauri/src/backup.rs` | 备份/恢复/重置纳入 `skins/assets/` |
 | Tauri Capabilities | `apps/desktop/src-tauri/capabilities/main.json` | 仅向主窗口开放皮肤文件写命令 |
@@ -328,7 +328,7 @@ export type Skin = {
 | UI Floating | `apps/desktop/ui/src/features/floating/model/frame-timeline.ts`（新增） | 统一状态优先级与可变时长帧调度器 |
 | UI Floating | `apps/desktop/ui/src/features/floating/model/robot-actions.ts`（新增） | 机器人 5 种待机 + 5 种交互离散帧表 |
 | UI Floating | `apps/desktop/ui/src/features/floating/RobotAvatar.tsx` | 接入 `RobotPoseFrame` 渲染与安全边距 |
-| UI Floating | `apps/desktop/ui/src/features/floating/SkinSprite.tsx` | 接入 `stardeskbox-skin://` URL、预加载与多状态轨道 |
+| UI Floating | `apps/desktop/ui/src/features/floating/SkinSprite.tsx` | 接入 `starat-skin://` URL、预加载与多状态轨道 |
 | UI Settings | `apps/desktop/ui/src/features/settings/SettingsPage.tsx` | 全局动画开关、机器人动作配置与预览舞台 |
 | UI Settings | `apps/desktop/ui/src/features/settings/SkinSetting.tsx` | GIF 拆帧、雪碧图切帧、帧排序/时长、多状态轨道、存储占用与导入导出 |
 | UI i18n & CSS | `apps/desktop/ui/src/i18n/{zh-CN,en}.json`, `styles/global.css` | 文案、安全动效关键帧、关闭动画全局覆写 |
@@ -336,12 +336,12 @@ export type Skin = {
 ### 8.2 推荐分期落地
 
 1. **阶段 1：本地文件存储底座 + 全局开关 + 机器人动作**
-   - 落地 `skins/assets/`、`FsSkinAssetStore`、`stardeskbox-skin://` 协议、备份恢复联动与旧版 Base64 迁移。
+   - 落地 `skins/assets/`、`FsSkinAssetStore`、`starat-skin://` 协议、备份恢复联动与旧版 Base64 迁移。
    - 落地统一帧调度器（`useFrameTimeline`）、动画总开关、触发策略、内置机器人全套动作（含关闭）与设置页实时预览舞台。
 2. **阶段 2：自定义帧动画增强**
    - 升级帧规格至 256px / 60 帧，接入 GIF/WebP `ImageDecoder` 自动拆帧、精灵图网格切帧、帧拖拽排序与单帧时长编辑。
 3. **阶段 3：多状态分轨与皮肤包分享**
-   - 开放高级模式（按 `idle/hover/grabbed/ready/done/reminder` 分轨配置）、磁盘占用展示与 `.stardeskbox-skin.zip` 导入/导出。
+   - 开放高级模式（按 `idle/hover/grabbed/ready/done/reminder` 分轨配置）、磁盘占用展示与 `.starat-skin.zip` 导入/导出。
 
 ---
 

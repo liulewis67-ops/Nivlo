@@ -3,17 +3,17 @@
 
 use std::sync::Arc;
 
-use stardeskbox_platform::credential::CredentialPort;
+use starat_platform::credential::CredentialPort;
 
 /// 当前平台的凭据库。
 #[must_use]
 pub fn system_credentials() -> Arc<dyn CredentialPort> {
     #[cfg(target_os = "windows")]
     {
-        Arc::new(stardeskbox_platform_windows::credential::WindowsCredentials::new())
+        Arc::new(starat_platform_windows::credential::WindowsCredentials::new())
     }
     #[cfg(not(target_os = "windows"))]
     {
-        Arc::new(stardeskbox_platform::credential::MemoryCredentials::new())
+        Arc::new(starat_platform::credential::MemoryCredentials::new())
     }
 }

@@ -111,7 +111,7 @@ async function bootstrap(): Promise<void> {
     setIpcClient(previewWindows(memory, label));
   } else {
     throw new Error(
-      "StarDeskBox UI must run inside Tauri; use the Vite dev server for a browser preview.",
+      "StarAt UI must run inside Tauri; use the Vite dev server for a browser preview.",
     );
   }
 

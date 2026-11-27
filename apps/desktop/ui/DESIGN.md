@@ -1,4 +1,4 @@
-# StarDeskBox design context — implementation draft
+# StarAt design context — implementation draft
 
 ## Overview
 

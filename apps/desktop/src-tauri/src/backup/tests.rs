@@ -5,15 +5,15 @@
 use std::io::Write;
 
 use chrono::{TimeZone, Utc};
-use stardeskbox_application::ports::{ItemFilter, UnitOfWork};
-use stardeskbox_common::paths::AppPaths;
-use stardeskbox_domain::id::ItemId;
-use stardeskbox_domain::item::{Item, ItemType, NewItem};
-use stardeskbox_storage::Database;
+use starat_application::ports::{ItemFilter, UnitOfWork};
+use starat_common::paths::AppPaths;
+use starat_domain::id::ItemId;
+use starat_domain::item::{Item, ItemType, NewItem};
+use starat_storage::Database;
 use uuid::Uuid;
 
 use super::{
-    BACKUP_FORMAT, BACKUP_VERSION, BackupError, Manifest, apply_pending_reset,
+    BACKUP_FORMAT, BACKUP_VERSION, BackupError, Manifest, STAGING_DIR, apply_pending_reset,
     apply_pending_restore, create_backup, has_pending_reset, has_pending_restore, stage_reset,
     stage_restore,
 };
@@ -92,7 +92,7 @@ async fn backup_then_wipe_then_restore_gives_back_identical_data() {
     let backup = create_backup(
         &database,
         &paths,
-        "stardeskbox-backup-test.zip",
+        "starat-backup-test.zip",
         "2026-10-11T08:00:00Z",
         "0.1.0",
     )
@@ -103,7 +103,7 @@ async fn backup_then_wipe_then_restore_gives_back_identical_data() {
     assert!(
         !paths
             .exports_dir()
-            .join(".stardeskbox-backup-test.zip.snapshot.db")
+            .join(".starat-backup-test.zip.snapshot.db")
             .exists()
     );
 
@@ -158,7 +158,7 @@ async fn backup_then_wipe_then_restore_gives_back_identical_data() {
         paths
             .root()
             .join("replaced-20261011-080000")
-            .join("stardeskbox.db")
+            .join("starat.db")
             .is_file()
     );
     restored.close().await;
@@ -207,7 +207,7 @@ async fn reset_starts_empty_and_keeps_old_data_aside() {
         std::fs::read(aside.join("attachments").join("shot.png")).unwrap(),
         b"PNG"
     );
-    let old = Database::open(&aside.join("stardeskbox.db")).await.unwrap();
+    let old = Database::open(&aside.join("starat.db")).await.unwrap();
     assert_eq!(titles(&old).await.len(), 1);
     old.close().await;
 }
@@ -265,12 +265,12 @@ async fn bad_backups_are_rejected_and_leave_no_staging_data_behind() {
 
     #[allow(clippy::type_complexity)]
     let cases: Vec<(&str, Vec<(&str, Vec<u8>)>)> = vec![
-        ("缺少 manifest", vec![("stardeskbox.db", good_db.clone())]),
+        ("缺少 manifest", vec![("starat.db", good_db.clone())]),
         (
             "路径穿越",
             vec![
                 ("manifest.json", manifest_json(6)),
-                ("stardeskbox.db", good_db.clone()),
+                ("starat.db", good_db.clone()),
                 ("../evil.txt", b"x".to_vec()),
             ],
         ),
@@ -278,7 +278,7 @@ async fn bad_backups_are_rejected_and_leave_no_staging_data_behind() {
             "不允许的文件",
             vec![
                 ("manifest.json", manifest_json(6)),
-                ("stardeskbox.db", good_db.clone()),
+                ("starat.db", good_db.clone()),
                 ("settings/secrets.json", b"{}".to_vec()),
             ],
         ),
@@ -287,14 +287,14 @@ async fn bad_backups_are_rejected_and_leave_no_staging_data_behind() {
             "数据库损坏",
             vec![
                 ("manifest.json", manifest_json(6)),
-                ("stardeskbox.db", b"definitely not a sqlite database file.....".to_vec()),
+                ("starat.db", b"definitely not a sqlite database file.....".to_vec()),
             ],
         ),
         (
             "格式不对",
             vec![
                 ("manifest.json", b"{\"format\":\"other\",\"version\":1,\"createdAt\":\"\",\"appVersion\":\"\",\"schemaVersion\":1}".to_vec()),
-                ("stardeskbox.db", good_db.clone()),
+                ("starat.db", good_db.clone()),
             ],
         ),
     ];
@@ -338,7 +338,7 @@ async fn backups_from_a_newer_app_are_refused() {
         &backup,
         &[
             ("manifest.json", &manifest_json(9999)),
-            ("stardeskbox.db", &db_bytes),
+            ("starat.db", &db_bytes),
         ],
     );
     let result = stage_restore(&backup, &paths).await;
@@ -352,39 +352,50 @@ async fn backups_from_a_newer_app_are_refused() {
 
 #[tokio::test]
 async fn legacy_backup_restores_items_and_attachments() {
-    let (dir, paths, database) = fixture().await;
-    let mut tx = database.begin().await.unwrap();
-    tx.items().insert(&item(91, "legacy item")).await.unwrap();
-    tx.commit().await.unwrap();
-    let snapshot = dir.path().join("legacy-snapshot.db");
-    database.snapshot_to(&snapshot).await.unwrap();
-    let bytes = std::fs::read(snapshot).unwrap();
-    let manifest = String::from_utf8(manifest_json(Database::latest_schema_version()))
-        .unwrap()
-        .replace(BACKUP_FORMAT, "nivlo-backup");
-    let backup = dir.path().join("legacy.zip");
-    write_zip(
-        &backup,
-        &[
-            ("manifest.json", manifest.as_bytes()),
-            ("nivlo.db", &bytes),
-            ("attachments/old.png", b"legacy image"),
-        ],
-    );
-    stage_restore(&backup, &paths).await.unwrap();
-    database.close().await;
-    apply_pending_restore(&paths, "legacy-rename").unwrap();
-    let restored = Database::open(&paths.database_file()).await.unwrap();
-    assert_eq!(
-        titles(&restored).await,
-        vec![(
-            ItemId::from_uuid(Uuid::from_u128(91)).to_string(),
-            "legacy item".to_owned()
-        )]
-    );
-    assert_eq!(
-        std::fs::read(paths.attachments_dir().join("old.png")).unwrap(),
-        b"legacy image"
-    );
-    restored.close().await;
+    for (format, database_name) in [
+        ("nivlo-backup", "nivlo.db"),
+        ("stardeskbox-backup", "stardeskbox.db"),
+    ] {
+        let (dir, paths, database) = fixture().await;
+        let mut tx = database.begin().await.unwrap();
+        tx.items().insert(&item(91, "legacy item")).await.unwrap();
+        tx.commit().await.unwrap();
+        let snapshot = dir.path().join("legacy-snapshot.db");
+        database.snapshot_to(&snapshot).await.unwrap();
+        let bytes = std::fs::read(snapshot).unwrap();
+        let manifest = String::from_utf8(manifest_json(Database::latest_schema_version()))
+            .unwrap()
+            .replace(BACKUP_FORMAT, format);
+        let backup = dir.path().join("legacy.zip");
+        write_zip(
+            &backup,
+            &[
+                ("manifest.json", manifest.as_bytes()),
+                (database_name, &bytes),
+                ("attachments/old.png", b"legacy image"),
+            ],
+        );
+        stage_restore(&backup, &paths).await.unwrap();
+        // 升级前已经暂存的恢复也可能使用旧数据库文件名。
+        std::fs::rename(
+            paths.root().join(STAGING_DIR).join("starat.db"),
+            paths.root().join(STAGING_DIR).join(database_name),
+        )
+        .unwrap();
+        database.close().await;
+        apply_pending_restore(&paths, "legacy-rename").unwrap();
+        let restored = Database::open(&paths.database_file()).await.unwrap();
+        assert_eq!(
+            titles(&restored).await,
+            vec![(
+                ItemId::from_uuid(Uuid::from_u128(91)).to_string(),
+                "legacy item".to_owned()
+            )]
+        );
+        assert_eq!(
+            std::fs::read(paths.attachments_dir().join("old.png")).unwrap(),
+            b"legacy image"
+        );
+        restored.close().await;
+    }
 }

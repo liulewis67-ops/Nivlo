@@ -1,6 +1,6 @@
 # 开发指南（Development）
 
-本文档说明如何在本机搭建环境、运行、测试，以及新增 Migration / IPC Command 的步骤。规范性要求见 [前端开发规范](StarDeskBox_Frontend_Development_Guide.md) 与 [后端开发规范](StarDeskBox_Backend_Development_Guide.md)，执行计划见 [实施计划](../architecture/StarDeskBox_Implementation_Plan.md)。
+本文档说明如何在本机搭建环境、运行、测试，以及新增 Migration / IPC Command 的步骤。规范性要求见 [前端开发规范](StarAt_Frontend_Development_Guide.md) 与 [后端开发规范](StarAt_Backend_Development_Guide.md)，执行计划见 [实施计划](../architecture/StarAt_Implementation_Plan.md)。
 
 桌面界面与交互的后续优化见 [UI/UX 实施指南](ui-ux-implementation-guide.md)，评估依据与验收方法见 [UI/UX 评估计划](ui-ux-evaluation-plan.md)。
 
@@ -17,11 +17,11 @@
 ## 2. 首次启动
 
 ```bash
-git clone <repo-url> stardeskbox
+git clone <repo-url> starat
 ```
 
 ```bash
-cd stardeskbox
+cd starat
 ```
 
 ```bash
@@ -58,14 +58,14 @@ pnpm tauri dev
 
 ### 本地数据目录
 
-应用数据（数据库、日志、附件）默认位于系统应用数据目录（Windows：`%APPDATA%StarDeskBox`）。
-开发与测试时可通过环境变量 `STARDESKBOX_DATA_DIR` 指向一个临时目录，避免污染真实数据：
+应用数据（数据库、日志、附件）默认位于系统应用数据目录（Windows：`%APPDATA%StarAt`）。
+开发与测试时可通过环境变量 `STARAT_DATA_DIR` 指向一个临时目录，避免污染真实数据：
 
 ```bash
-STARDESKBOX_DATA_DIR=/tmp/stardeskbox-dev pnpm tauri dev
+STARAT_DATA_DIR=/tmp/starat-dev pnpm tauri dev
 ```
 
-日志位于数据目录的 `logs/`，可用环境变量 `STARDESKBOX_LOG`（语法同 `RUST_LOG`）覆盖过滤级别。
+日志位于数据目录的 `logs/`，可用环境变量 `STARAT_LOG`（语法同 `RUST_LOG`）覆盖过滤级别。
 
 ## 4. 新增 Migration
 
@@ -76,7 +76,7 @@ STARDESKBOX_DATA_DIR=/tmp/stardeskbox-dev pnpm tauri dev
 
 ## 5. 新增 IPC Command
 
-1. 在 `stardeskbox-application` 实现 Use Case，并补充 Application 测试。
+1. 在 `starat-application` 实现 Use Case，并补充 Application 测试。
 2. 在 `src-tauri/src/commands/` 添加薄层 Command（参数解析 → 调用 Use Case → 错误映射 → 返回 DTO），并在 `src/lib.rs` 的 `bindings_builder` 中登记。
 3. 把命令名加入 `src-tauri/build.rs` 的 `COMMANDS`（生成 `allow-<command>` 权限），再写入对应窗口的 Capability 文件（`capabilities/main.json` 或 `floating.json`），遵循最小权限。
 4. 运行 `pnpm gen:bindings` 重新生成并提交 TS Binding（`apps/desktop/ui/src/bindings/index.ts`，CI 会检查是否最新）。

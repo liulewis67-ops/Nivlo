@@ -1,7 +1,7 @@
 //! 捕获相关的 Command。
 
-use stardeskbox_application::error::{AppError, ErrorCode};
-use stardeskbox_domain::capture::{CaptureOrigin, CaptureRequest};
+use starat_application::error::{AppError, ErrorCode};
+use starat_domain::capture::{CaptureOrigin, CaptureRequest};
 use tauri::State;
 
 use crate::app::AppState;
@@ -89,7 +89,7 @@ pub async fn undo_capture(
 }
 
 /// 把剪贴板里的内容收进 Inbox（用户按了粘贴）：文件 → 文本 → 图片，优先级见
-/// [`stardeskbox_capture::normalize_clipboard`]。
+/// [`starat_capture::normalize_clipboard`]。
 ///
 /// 读取剪贴板可能因为被其他程序占用而短暂重试，所以放在阻塞线程里，不占用异步运行时。
 ///
@@ -109,7 +109,7 @@ pub async fn capture_from_clipboard(
         crate::clipboard::platform_clipboard()
             .read()
             .map(|content| {
-                stardeskbox_capture::normalize_clipboard(
+                starat_capture::normalize_clipboard(
                     &content.files,
                     content.text.as_deref(),
                     content.image,

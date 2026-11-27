@@ -1,6 +1,6 @@
 # 性能基线（实测）
 
-测量脚本：`scripts/perf/measure.ps1`（实施计划 1.11 / 7.2）。测的是**已安装的 Release 构建**（NSIS 安装包安装后的 `stardeskbox-desktop.exe`），
+测量脚本：`scripts/perf/measure.ps1`（实施计划 1.11 / 7.2）。测的是**已安装的 Release 构建**（NSIS 安装包安装后的 `starat-desktop.exe`），
 全新的临时数据目录，进程树 = 主进程 + WebView2 子进程。
 
 ## 2026-10-12 · v0.1.1 · Windows 11（16 逻辑核）· 默认配置（无自定义皮肤）
@@ -14,7 +14,7 @@
 内存曲线（逐分钟）：390 → 414 → 414 → **518（第 4 分钟一次性 +100 MB）** → 516 → 513 → 512 → 512 → 511 → 511。
 10 分钟里只有一次台阶，之后持平略降，没有持续爬升；但 10 分钟不足以判断 8 小时的增长，
 
-**台阶来源（逐进程复测，8 分钟，每分钟一次）**：StarDeskBox 主进程一直是 **38 MB（平的）**；WebView2 的浏览器 / GPU / utility 进程基本持平；台阶出现在第 7–8 分钟，是**多了一个渲染进程（renderer ×1 → ×2，+约 90 MB）并带动 GPU 进程 +20 MB**。多出来的渲染进程在两次测量里出现的时间不同（第 4 分钟 / 第 8 分钟），符合 Chromium「备用渲染进程」（spare renderer）的预热行为，但没有用 `--type` 之外的信息进一步确认它不是应用自己创建的第二个窗口。结论：**Rust 进程没有增长迹象，增长来自 WebView2 进程；8 小时长稳测试（`-Minutes 480`）仍然没做。**
+**台阶来源（逐进程复测，8 分钟，每分钟一次）**：StarAt 主进程一直是 **38 MB（平的）**；WebView2 的浏览器 / GPU / utility 进程基本持平；台阶出现在第 7–8 分钟，是**多了一个渲染进程（renderer ×1 → ×2，+约 90 MB）并带动 GPU 进程 +20 MB**。多出来的渲染进程在两次测量里出现的时间不同（第 4 分钟 / 第 8 分钟），符合 Chromium「备用渲染进程」（spare renderer）的预热行为，但没有用 `--type` 之外的信息进一步确认它不是应用自己创建的第二个窗口。结论：**Rust 进程没有增长迹象，增长来自 WebView2 进程；8 小时长稳测试（`-Minutes 480`）仍然没做。**
 
 ## 2026-10-13 · 8 小时长稳（v0.1.1 发布构建，默认配置，全新数据目录）
 
@@ -31,16 +31,16 @@
 
 ## 2026-10-13 · 批量捕获压力（v0.1.1 发布构建，全新数据目录）
 
-页面里循环调用 `capture`（文本、来路 paste）3000 次：**约 42.5–42.9 秒（≈ 14 ms / 次）**，StarDeskBox 主进程工作集 38 → 50 MB，进程树 380 → 430 MB，没有错误。
+页面里循环调用 `capture`（文本、来路 paste）3000 次：**约 42.5–42.9 秒（≈ 14 ms / 次）**，StarAt 主进程工作集 38 → 50 MB，进程树 380 → 430 MB，没有错误。
 
-**发现并修复一个问题：SQLite 的 WAL 文件无界增长。** 3000 次捕获后数据库主文件才 1.4–1.9 MB，`stardeskbox.db-wal` 却有 **148–205 MB**，空闲 20 秒后也不回落——界面持续在读（每次捕获都会刷新计数），自动检查点没有机会重置 WAL，文件只增不减。修复：连接选项加 `journal_size_limit`（32 MiB），并新增 `Database::checkpoint()`（`PRAGMA wal_checkpoint(TRUNCATE)`）由宿主每 20 分钟调用一次；有回归测试（`a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_way`：开着读事务写 4000 条后 WAL 明显变大，检查点之后被截断）。
+**发现并修复一个问题：SQLite 的 WAL 文件无界增长。** 3000 次捕获后数据库主文件才 1.4–1.9 MB，`starat.db-wal` 却有 **148–205 MB**，空闲 20 秒后也不回落——界面持续在读（每次捕获都会刷新计数），自动检查点没有机会重置 WAL，文件只增不减。修复：连接选项加 `journal_size_limit`（32 MiB），并新增 `Database::checkpoint()`（`PRAGMA wal_checkpoint(TRUNCATE)`）由宿主每 20 分钟调用一次；有回归测试（`a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_way`：开着读事务写 4000 条后 WAL 明显变大，检查点之后被截断）。
 修复后的真机复测：突发期间 WAL 峰值**仍然**达到 195 MB（读事务一直在，这点没变），但约 20 分钟后的定时检查点把它**截断到 0 字节**，主文件增长到 3.9 MB。所以这一步只做到「峰值有界且会回收」。
 
 **压低峰值（已做）**：宿主订阅领域事件总线，每 100 个事件看一眼 WAL 大小，超过 16 MiB 就立刻 `checkpoint()`（`Database::checkpoint_if_wal_exceeds`，事件驱动，没有新增定时器；有回归测试 `the_wal_is_truncated_only_once_it_passes_the_limit`）。真机复测同样的 3000 次捕获（45.6 秒，无错误）：WAL 峰值 **25 MB**（之前 195 MB），结束后 5 秒内回到 **0 字节**，主文件 5.5 MB。
 
 ## 2026-10-27 · 搜索（含拼音首字母，release 构建，1 万条）
 
-`crates/stardeskbox-storage/tests/search.rs` 的 `searching_ten_thousand_items_is_fast`，`cargo test --release -- --nocapture`：
+`crates/starat-storage/tests/search.rs` 的 `searching_ten_thousand_items_is_fast`，`cargo test --release -- --nocapture`：
 
 | 查询 | 路径 | 耗时 | 命中 |
 |---|---|---|---|

@@ -1,6 +1,6 @@
 //! Inbox 相关的 Command。
 
-use stardeskbox_application::inbox::{OrganizeAction, PreviousState};
+use starat_application::inbox::{OrganizeAction, PreviousState};
 use tauri::State;
 
 use crate::app::AppState;

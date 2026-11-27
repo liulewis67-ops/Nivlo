@@ -3,17 +3,17 @@
   常驻性能基线测量（实施计划 1.11）。
 
 .DESCRIPTION
-  用一个全新的临时数据目录启动 StarDeskBox，测量：
+  用一个全新的临时数据目录启动 StarAt，测量：
     1. 冷启动：从进程创建到悬浮窗可见（毫秒）；
     2. 空闲 CPU：整个进程树（主进程 + WebView2 子进程）按采样间隔统计的平均 / 峰值 CPU 占用；
     3. 内存：进程树的工作集（MB），起点、终点与增长百分比。
   结果打印为 Markdown 表格，并把每次采样写入 CSV，方便贴进 docs/development/perf-baseline.md。
 
-  测量的是**已安装 / Release** 构建（`pnpm tauri build --no-bundle` 产出的 stardeskbox-desktop.exe），
+  测量的是**已安装 / Release** 构建（`pnpm tauri build --no-bundle` 产出的 starat-desktop.exe），
   Debug 构建的数字没有参考价值。
 
 .PARAMETER Exe
-  stardeskbox-desktop.exe 的路径，默认是 target\release\stardeskbox-desktop.exe。
+  starat-desktop.exe 的路径，默认是 target\release\starat-desktop.exe。
 
 .PARAMETER Minutes
   空闲采样时长（分钟），默认 10。8 小时长稳测试传 480。
@@ -28,10 +28,10 @@
   powershell -File scripts\perf\measure.ps1 -Minutes 10
 #>
 param(
-  [string]$Exe = (Join-Path $PSScriptRoot "..\..\target\release\stardeskbox-desktop.exe"),
+  [string]$Exe = (Join-Path $PSScriptRoot "..\..\target\release\starat-desktop.exe"),
   [double]$Minutes = 10,
   [int]$IntervalSeconds = 10,
-  [string]$OutCsv = (Join-Path $env:TEMP "stardeskbox-perf.csv")
+  [string]$OutCsv = (Join-Path $env:TEMP "starat-perf.csv")
 )
 
 $ErrorActionPreference = "Stop"
@@ -39,7 +39,7 @@ $Exe = (Resolve-Path $Exe).Path
 
 Add-Type @"
 using System; using System.Text; using System.Collections.Generic; using System.Runtime.InteropServices;
-public class StarDeskBoxWin {
+public class StarAtWin {
   delegate bool EP(IntPtr h, IntPtr l);
   [DllImport("user32.dll")] static extern bool EnumWindows(EP p, IntPtr l);
   [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
@@ -83,17 +83,17 @@ function Get-Usage([int]$rootPid) {
   return [pscustomobject]@{ Cpu = $cpu; MemMb = $mem }
 }
 
-$dataDir = Join-Path $env:TEMP ("stardeskbox-perf-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
+$dataDir = Join-Path $env:TEMP ("starat-perf-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
 New-Item -ItemType Directory $dataDir | Out-Null
-$env:STARDESKBOX_DATA_DIR = $dataDir
+$env:STARAT_DATA_DIR = $dataDir
 # 首次运行的「开机自启」询问是模态对话框，会打断自动化测量；用环境变量跳过（不会记录「已询问」）。
-$env:STARDESKBOX_SKIP_FIRST_RUN_PROMPTS = "1"
+$env:STARAT_SKIP_FIRST_RUN_PROMPTS = "1"
 
 $startedAt = Get-Date
 $proc = Start-Process $Exe -PassThru -WindowStyle Hidden
 $visibleMs = $null
 for ($i = 0; $i -lt 600; $i++) {
-  if ([StarDeskBoxWin]::HasVisibleWindow([uint32]$proc.Id)) { $visibleMs = [int]((Get-Date) - $startedAt).TotalMilliseconds; break }
+  if ([StarAtWin]::HasVisibleWindow([uint32]$proc.Id)) { $visibleMs = [int]((Get-Date) - $startedAt).TotalMilliseconds; break }
   Start-Sleep -Milliseconds 20
 }
 Write-Host "cold start -> floating window visible: $visibleMs ms"

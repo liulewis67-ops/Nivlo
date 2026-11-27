@@ -966,6 +966,9 @@ export function SettingsPage() {
           <IntegrationsSetting />
         </Section>
         <Section id="settings-about" title={t("settings.section.about")}>
+          <Row label={t("app.name")} hint={t("app.value")}>
+            <span className="text-sm text-muted">{t("app.tagline")}</span>
+          </Row>
           <Row label={t("settings.update.label")} hint={t("settings.update.hint")}>
             <UpdateSetting />
           </Row>

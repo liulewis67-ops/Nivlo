@@ -10,7 +10,7 @@
 
 ## 决策
 
-Script Step 使用嵌入式 QuickJS（`rquickjs`），仅暴露 Capability API（受 Workflow Permission 约束），并设置执行时间 / 内存 / 调用次数限制。脚本运行时封装在 `stardeskbox-script` 内，未来可替换为独立进程的 Script Worker 而不影响 Workflow Engine。该能力属于 V2，不在 MVP 内。
+Script Step 使用嵌入式 QuickJS（`rquickjs`），仅暴露 Capability API（受 Workflow Permission 约束），并设置执行时间 / 内存 / 调用次数限制。脚本运行时封装在 `starat-script` 内，未来可替换为独立进程的 Script Worker 而不影响 Workflow Engine。该能力属于 V2，不在 MVP 内。
 
 ## 后果
 

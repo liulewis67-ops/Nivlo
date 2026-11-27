@@ -5,10 +5,10 @@
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use chrono::{TimeZone, Utc};
-use stardeskbox_application::testing::FakeUnitOfWork;
-use stardeskbox_common::clock::FakeClock;
-use stardeskbox_platform::foreground::ForegroundPort;
-use stardeskbox_platform::placement::{Edge, MonitorInfo, Rect};
+use starat_application::testing::FakeUnitOfWork;
+use starat_common::clock::FakeClock;
+use starat_platform::foreground::ForegroundPort;
+use starat_platform::placement::{Edge, MonitorInfo, Rect};
 
 use super::*;
 
@@ -499,11 +499,11 @@ async fn expand_places_the_panel_inside_the_work_area_and_reports_the_direction(
     // 徽标在右上角：面板向左、向下展开，右缘与徽标右缘对齐。
     assert_eq!(
         layout.horizontal,
-        stardeskbox_platform::placement::HorizontalAnchor::Right
+        starat_platform::placement::HorizontalAnchor::Right
     );
     assert_eq!(
         layout.vertical,
-        stardeskbox_platform::placement::VerticalAnchor::Top
+        starat_platform::placement::VerticalAnchor::Top
     );
     assert_eq!(bounds.x + 300, 1920);
 }

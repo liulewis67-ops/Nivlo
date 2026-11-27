@@ -44,7 +44,7 @@ describe("dayLabel", () => {
 });
 
 describe("itemMeta", () => {
-  const names = (id: string) => (id === "p1" ? "StarDeskBox 发布" : undefined);
+  const names = (id: string) => (id === "p1" ? "StarAt 发布" : undefined);
 
   it("依次给出项目、收集箱、计划与截止日期", () => {
     expect(
@@ -57,7 +57,7 @@ describe("itemMeta", () => {
         TODAY,
         names,
       ),
-    ).toEqual(["StarDeskBox 发布", "明天", "截止 10月30日"]);
+    ).toEqual(["StarAt 发布", "明天", "截止 10月30日"]);
     expect(itemMeta(item({ inInbox: true }), TODAY, names)).toEqual(["收集箱"]);
   });
 

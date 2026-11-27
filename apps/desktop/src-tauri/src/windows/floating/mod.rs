@@ -4,17 +4,17 @@
 //! 因此这里对 `Moved` 做防抖：最后一次移动之后安静一小段时间（`SETTLE_DELAY`），就认为拖动结束，
 //! 然后一次性完成"吸附 → 保存"，既不会在拖动过程中和系统抢位置（卡顿 / 闪烁），
 //! 也不会每个像素都写一次数据库。具体的吸附与跨显示器 / DPI 计算在
-//! [`stardeskbox_platform::placement`] 中，这里只负责时序与持久化。
+//! [`starat_platform::placement`] 中，这里只负责时序与持久化。
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, PoisonError, Weak};
 use std::time::Duration;
 
-use stardeskbox_application::settings::{SettingsService, keys};
-use stardeskbox_platform::error::PlatformError;
-use stardeskbox_platform::floating_window::FloatingWindowPort;
-use stardeskbox_platform::foreground::ForegroundPort;
-use stardeskbox_platform::placement::{
+use starat_application::settings::{SettingsService, keys};
+use starat_platform::error::PlatformError;
+use starat_platform::floating_window::FloatingWindowPort;
+use starat_platform::foreground::ForegroundPort;
+use starat_platform::placement::{
     COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, ExpandedLayout, Placement, Point,
     Rect, default_placement, expand_bounds, pick_monitor, placement_for_bounds, resolve_position,
 };
@@ -100,7 +100,7 @@ pub trait FloatingHandle: Send + Sync {
     /// 把悬浮窗拉到前台。这里立即把前台还给用户之前的应用，悬停与点击都不会抢走焦点。
     fn on_focused(&self);
 
-    /// 用户要切到StarDeskBox（点徽标、面板里的按钮打开主窗口）：取消尚未执行的「把焦点还回去」。
+    /// 用户要切到StarAt（点徽标、面板里的按钮打开主窗口）：取消尚未执行的「把焦点还回去」。
     ///
     /// 主窗口第一次打开要先创建窗口（几百毫秒），比还焦点的延迟长；不取消的话，焦点会先被还给
     /// 之前的应用，主窗口随后出现在它后面。

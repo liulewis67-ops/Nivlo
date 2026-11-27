@@ -132,8 +132,8 @@ export function registerPreviewAssetUrl(fileName: string, dataUrl: string): void
 /**
  * 解析本地皮肤帧图在 WebView 中可加载的 URL。
  *
- * Windows WebView2 下 Tauri 自定义协议映射到 `http://stardeskbox-skin.localhost/<file>`，
- * macOS / Linux 下为 `stardeskbox-skin://localhost/<file>`；非 Tauri 开发预览优先返回内存缓存。
+ * Windows WebView2 下 Tauri 自定义协议映射到 `http://starat-skin.localhost/<file>`，
+ * macOS / Linux 下为 `starat-skin://localhost/<file>`；非 Tauri 开发预览优先返回内存缓存。
  */
 export function skinAssetUrl(asset: Pick<SkinAssetMeta, "id" | "ext">): string {
   const fileName = `${asset.id}.${asset.ext}`;
@@ -143,8 +143,8 @@ export function skinAssetUrl(asset: Pick<SkinAssetMeta, "id" | "ext">): string {
   }
   const isWindows = typeof navigator !== "undefined" && navigator.userAgent.includes("Windows");
   return isWindows
-    ? `http://stardeskbox-skin.localhost/${fileName}`
-    : `stardeskbox-skin://localhost/${fileName}`;
+    ? `http://starat-skin.localhost/${fileName}`
+    : `starat-skin://localhost/${fileName}`;
 }
 
 /** 收集清单中所有轨道正在引用的本地资源文件名（用于孤儿文件 GC）。 */

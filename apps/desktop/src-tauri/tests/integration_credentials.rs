@@ -1,6 +1,6 @@
 //! 断开集成之后，凭据真的从操作系统凭据库里消失（实施计划 9.5 的验证项）。
 //!
-//! 在 Windows 上使用真实的 Credential Manager，目标名是 `StarDeskBox/stardeskbox-test/github.com`，不会碰到用户真正的集成凭据。
+//! 在 Windows 上使用真实的 Credential Manager，目标名是 `StarAt/starat-test/github.com`，不会碰到用户真正的集成凭据。
 
 #![cfg(target_os = "windows")]
 #![allow(
@@ -13,15 +13,15 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use stardeskbox_application::ports::integration::{
+use starat_application::ports::integration::{
     Integration, IntegrationCall, IntegrationContext, IntegrationError, IntegrationOutput,
     IntegrationRegistry,
 };
-use stardeskbox_common::paths::AppPaths;
-use stardeskbox_desktop_lib::integration_service::IntegrationService;
-use stardeskbox_desktop_lib::lifecycle::startup::{build_app_state, open_database};
-use stardeskbox_platform::credential::{CredentialKey, CredentialPort};
-use stardeskbox_platform_windows::credential::WindowsCredentials;
+use starat_common::paths::AppPaths;
+use starat_desktop_lib::integration_service::IntegrationService;
+use starat_desktop_lib::lifecycle::startup::{build_app_state, open_database};
+use starat_platform::credential::{CredentialKey, CredentialPort};
+use starat_platform_windows::credential::WindowsCredentials;
 
 /// 只用来占位的集成。
 struct TestIntegration;
@@ -29,7 +29,7 @@ struct TestIntegration;
 #[async_trait]
 impl Integration for TestIntegration {
     fn id(&self) -> &'static str {
-        "stardeskbox-test"
+        "starat-test"
     }
 
     fn display_name(&self) -> &'static str {
@@ -48,7 +48,7 @@ impl Integration for TestIntegration {
 #[tokio::test]
 async fn disconnecting_removes_the_credential_from_the_windows_credential_manager() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
     paths.ensure_dirs().unwrap();
     let database = open_database(&paths).await.unwrap();
     let state = build_app_state(database, paths.attachments_dir(), None);
@@ -63,7 +63,7 @@ async fn disconnecting_removes_the_credential_from_the_windows_credential_manage
         None,
         state.runtime.clock.clone(),
     );
-    let key = CredentialKey::new("stardeskbox-test", "github.com").unwrap();
+    let key = CredentialKey::new("starat-test", "github.com").unwrap();
     // 无论测试成败，都把测试凭据清掉。
     struct Cleanup(Arc<WindowsCredentials>, CredentialKey);
     impl Drop for Cleanup {
@@ -74,7 +74,7 @@ async fn disconnecting_removes_the_credential_from_the_windows_credential_manage
     let _cleanup = Cleanup(store.clone(), key.clone());
 
     service
-        .connect("stardeskbox-test", "", "windows-vault-secret")
+        .connect("starat-test", "", "windows-vault-secret")
         .await
         .unwrap();
     assert_eq!(
@@ -83,7 +83,7 @@ async fn disconnecting_removes_the_credential_from_the_windows_credential_manage
     );
 
     service
-        .disconnect("stardeskbox-test", "github.com")
+        .disconnect("starat-test", "github.com")
         .await
         .unwrap();
     assert!(

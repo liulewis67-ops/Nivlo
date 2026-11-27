@@ -1,13 +1,13 @@
 [package]
-name = "stardeskbox-desktop"
+name = "starat-desktop"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-description = "StarDeskBox desktop host (Composition Root)"
+description = "StarAt desktop host (Composition Root)"
 
 [lib]
-name = "stardeskbox_desktop_lib"
+name = "starat_desktop_lib"
 
 [build-dependencies]
 tauri-build.workspace = true
@@ -33,27 +33,27 @@ serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
 zip.workspace = true
-stardeskbox-common.workspace = true
-stardeskbox-domain.workspace = true
-stardeskbox-application.workspace = true
-stardeskbox-storage.workspace = true
-stardeskbox-capture.workspace = true
-stardeskbox-workflow.workspace = true
-stardeskbox-script.workspace = true
+starat-common.workspace = true
+starat-domain.workspace = true
+starat-application.workspace = true
+starat-storage.workspace = true
+starat-capture.workspace = true
+starat-workflow.workspace = true
+starat-script.workspace = true
 async-trait.workspace = true
-stardeskbox-scheduler.workspace = true
-stardeskbox-integrations.workspace = true
-stardeskbox-platform.workspace = true
+starat-scheduler.workspace = true
+starat-integrations.workspace = true
+starat-platform.workspace = true
 sys-locale = "0.3.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-stardeskbox-platform-windows.workspace = true
+starat-platform-windows.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
-stardeskbox-platform-macos.workspace = true
+starat-platform-macos.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
-stardeskbox-platform-linux.workspace = true
+starat-platform-linux.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
@@ -62,7 +62,7 @@ sqlx.workspace = true
 tempfile.workspace = true
 uuid.workspace = true
 tracing-subscriber.workspace = true
-stardeskbox-application = { workspace = true, features = ["testing"] }
+starat-application = { workspace = true, features = ["testing"] }
 
 [lints]
 workspace = true

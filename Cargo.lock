@@ -4670,17 +4670,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
-name = "stardeskbox-application"
-version = "0.1.4"
+name = "starat-application"
+version = "0.1.5"
 dependencies = [
  "async-trait",
  "chrono",
  "chrono-tz",
  "encoding_rs",
  "serde_json",
- "stardeskbox-capture",
- "stardeskbox-common",
- "stardeskbox-domain",
+ "starat-capture",
+ "starat-common",
+ "starat-domain",
  "thiserror 2.0.21",
  "tokio",
  "tracing",
@@ -4689,16 +4689,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-capture"
-version = "0.1.4"
+name = "starat-capture"
+version = "0.1.5"
 dependencies = [
  "async-trait",
  "mime_guess",
  "serde",
  "serde_json",
- "stardeskbox-application",
- "stardeskbox-common",
- "stardeskbox-domain",
+ "starat-application",
+ "starat-common",
+ "starat-domain",
  "tempfile",
  "thiserror 2.0.21",
  "tokio",
@@ -4706,8 +4706,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-common"
-version = "0.1.4"
+name = "starat-common"
+version = "0.1.5"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -4724,8 +4724,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-desktop"
-version = "0.1.4"
+name = "starat-desktop"
+version = "0.1.5"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -4736,19 +4736,19 @@ dependencies = [
  "specta",
  "specta-typescript",
  "sqlx",
- "stardeskbox-application",
- "stardeskbox-capture",
- "stardeskbox-common",
- "stardeskbox-domain",
- "stardeskbox-integrations",
- "stardeskbox-platform",
- "stardeskbox-platform-linux",
- "stardeskbox-platform-macos",
- "stardeskbox-platform-windows",
- "stardeskbox-scheduler",
- "stardeskbox-script",
- "stardeskbox-storage",
- "stardeskbox-workflow",
+ "starat-application",
+ "starat-capture",
+ "starat-common",
+ "starat-domain",
+ "starat-integrations",
+ "starat-platform",
+ "starat-platform-linux",
+ "starat-platform-macos",
+ "starat-platform-windows",
+ "starat-scheduler",
+ "starat-script",
+ "starat-storage",
+ "starat-workflow",
  "sys-locale",
  "tauri",
  "tauri-build",
@@ -4770,8 +4770,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-domain"
-version = "0.1.4"
+name = "starat-domain"
+version = "0.1.5"
 dependencies = [
  "chrono",
  "serde",
@@ -4782,8 +4782,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-integrations"
-version = "0.1.4"
+name = "starat-integrations"
+version = "0.1.5"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -4791,10 +4791,10 @@ dependencies = [
  "reqwest",
  "rustls",
  "serde_json",
- "stardeskbox-application",
- "stardeskbox-capture",
- "stardeskbox-platform",
- "stardeskbox-workflow",
+ "starat-application",
+ "starat-capture",
+ "starat-platform",
+ "starat-workflow",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -4802,52 +4802,52 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-platform"
-version = "0.1.4"
+name = "starat-platform"
+version = "0.1.5"
 dependencies = [
  "serde",
  "serde_json",
- "stardeskbox-common",
+ "starat-common",
  "thiserror 2.0.21",
  "tracing",
 ]
 
 [[package]]
-name = "stardeskbox-platform-linux"
-version = "0.1.4"
+name = "starat-platform-linux"
+version = "0.1.5"
 
 [[package]]
-name = "stardeskbox-platform-macos"
-version = "0.1.4"
+name = "starat-platform-macos"
+version = "0.1.5"
 
 [[package]]
-name = "stardeskbox-platform-windows"
-version = "0.1.4"
+name = "starat-platform-windows"
+version = "0.1.5"
 dependencies = [
- "stardeskbox-platform",
+ "starat-platform",
  "tempfile",
  "webview2-com",
  "windows",
 ]
 
 [[package]]
-name = "stardeskbox-scheduler"
-version = "0.1.4"
+name = "starat-scheduler"
+version = "0.1.5"
 dependencies = [
  "chrono",
  "chrono-tz",
- "stardeskbox-application",
- "stardeskbox-common",
- "stardeskbox-domain",
- "stardeskbox-platform",
+ "starat-application",
+ "starat-common",
+ "starat-domain",
+ "starat-platform",
  "tokio",
  "tracing",
  "uuid",
 ]
 
 [[package]]
-name = "stardeskbox-script"
-version = "0.1.4"
+name = "starat-script"
+version = "0.1.5"
 dependencies = [
  "rquickjs",
  "serde_json",
@@ -4857,8 +4857,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-storage"
-version = "0.1.4"
+name = "starat-storage"
+version = "0.1.5"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4867,9 +4867,9 @@ dependencies = [
  "serde_json",
  "sha2",
  "sqlx",
- "stardeskbox-application",
- "stardeskbox-common",
- "stardeskbox-domain",
+ "starat-application",
+ "starat-common",
+ "starat-domain",
  "tempfile",
  "tokio",
  "tracing",
@@ -4877,8 +4877,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "stardeskbox-workflow"
-version = "0.1.4"
+name = "starat-workflow"
+version = "0.1.5"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4888,11 +4888,11 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "stardeskbox-application",
- "stardeskbox-capture",
- "stardeskbox-common",
- "stardeskbox-domain",
- "stardeskbox-script",
+ "starat-application",
+ "starat-capture",
+ "starat-common",
+ "starat-domain",
+ "starat-script",
  "thiserror 2.0.21",
  "tokio",
  "tokio-util",

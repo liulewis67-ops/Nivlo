@@ -1,0 +1,1143 @@
+//! `starat-storage` 集成测试：使用临时数据库文件，验证 Migration、事务与 Item CRUD。
+
+#![allow(
+    missing_docs,
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::missing_docs_in_private_items
+)]
+
+use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
+use sqlx::sqlite::SqliteConnectOptions;
+use sqlx::{ConnectOptions, Connection};
+use starat_application::ports::{ItemFilter, ItemOrder, StorageError, UnitOfWork};
+use starat_common::paths::AppPaths;
+use starat_domain::id::{ItemId, ProjectId};
+use starat_domain::item::{ContentFormat, DatePoint, Item, ItemType, NewItem, Priority};
+use starat_storage::Database;
+use uuid::Uuid;
+
+/// 在临时目录中创建并迁移好的数据库。
+async fn new_db() -> (tempfile::TempDir, std::path::PathBuf, Database) {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("starat.db");
+    let db = Database::open(&path).await.unwrap();
+    db.migrate().await.unwrap();
+    (dir, path, db)
+}
+
+/// 固定的"现在"。
+fn t(hour: u32, minute: u32) -> DateTime<Utc> {
+    Utc.with_ymd_and_hms(2026, 10, 9, hour, minute, 0).unwrap()
+}
+
+/// 以序号生成确定性的 Item ID。
+fn id(n: u128) -> ItemId {
+    ItemId::from_uuid(Uuid::from_u128(n))
+}
+
+/// 创建一个最简 Item。
+fn simple(n: u128, item_type: ItemType, title: &str, created: DateTime<Utc>) -> Item {
+    Item::create(id(n), NewItem::new(item_type, title), created)
+        .unwrap()
+        .0
+}
+
+#[tokio::test]
+async fn migrates_from_empty_and_is_idempotent() {
+    let dir = tempfile::tempdir().unwrap();
+    let db = Database::open(&dir.path().join("starat.db")).await.unwrap();
+    assert_eq!(db.schema_version().await.unwrap(), None);
+
+    db.migrate().await.unwrap();
+    assert_eq!(db.schema_version().await.unwrap(), Some(9));
+
+    // 再次运行不报错，版本不变。
+    db.migrate().await.unwrap();
+    assert_eq!(db.schema_version().await.unwrap(), Some(9));
+}
+
+#[tokio::test]
+async fn pre_rename_databases_upgrade_without_losing_data_or_history() {
+    for last_version in [4, 9] {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("nivlo.db");
+        let mut conn = SqliteConnectOptions::new()
+            .filename(&path)
+            .create_if_missing(true)
+            .connect()
+            .await
+            .unwrap();
+        let current = sqlx::migrate!("../../migrations");
+        let migrations = current
+            .iter()
+            .filter(|m| m.version <= last_version)
+            .map(|m| {
+                let sql = match m.version {
+                    2 => include_str!("../src/legacy_migrations/0002_item_source.sql"),
+                    4 => include_str!("../src/legacy_migrations/0004_trash.sql"),
+                    _ => &m.sql,
+                };
+                assert_eq!(sql.replace("Nivlo", "StarDeskBox"), m.sql);
+                sqlx::migrate::Migration::new(
+                    m.version,
+                    m.description.clone(),
+                    m.migration_type,
+                    sql.to_owned().into(),
+                    m.no_tx,
+                )
+            })
+            .collect::<Vec<_>>();
+        let old = sqlx::migrate::Migrator {
+            migrations: migrations.into(),
+            ..sqlx::migrate::Migrator::DEFAULT
+        };
+        old.run(&mut conn).await.unwrap();
+        sqlx::query("INSERT INTO items (id, type, title, created_at, updated_at) VALUES (?, 'note', '旧版笔记', '2026-11-01T00:00:00.000Z', '2026-11-01T00:00:00.000Z')")
+            .bind(id(1).to_string()).execute(&mut conn).await.unwrap();
+        let history: Vec<(i64, Vec<u8>)> =
+            sqlx::query_as("SELECT version, checksum FROM _sqlx_migrations ORDER BY version")
+                .fetch_all(&mut conn)
+                .await
+                .unwrap();
+        conn.close().await.unwrap();
+
+        let db = Database::open(&path).await.unwrap();
+        db.migrate().await.unwrap();
+        db.migrate().await.unwrap();
+        assert_eq!(
+            db.schema_version().await.unwrap(),
+            Some(Database::latest_schema_version())
+        );
+        let mut tx = db.begin_read().await.unwrap();
+        assert_eq!(
+            tx.items()
+                .get(id(1))
+                .await
+                .unwrap()
+                .unwrap()
+                .title()
+                .as_str(),
+            "旧版笔记"
+        );
+        tx.commit().await.unwrap();
+        db.close().await;
+        let mut conn = SqliteConnectOptions::new()
+            .filename(&path)
+            .connect()
+            .await
+            .unwrap();
+        let preserved: Vec<(i64, Vec<u8>)> = sqlx::query_as(
+            "SELECT version, checksum FROM _sqlx_migrations WHERE version <= ? ORDER BY version",
+        )
+        .bind(last_version)
+        .fetch_all(&mut conn)
+        .await
+        .unwrap();
+        assert_eq!(preserved, history);
+        conn.close().await.unwrap();
+    }
+}
+
+#[tokio::test]
+async fn database_lives_at_app_paths_location() {
+    let dir = tempfile::tempdir().unwrap();
+    let paths = AppPaths::from_root(dir.path().join("StarAt"));
+    paths.ensure_dirs().unwrap();
+    let db = Database::open(&paths.database_file()).await.unwrap();
+    db.migrate().await.unwrap();
+    assert!(
+        paths.database_file().ends_with("database/starat.db")
+            || paths.database_file().ends_with("database\\starat.db")
+    );
+    assert!(paths.database_file().is_file());
+}
+
+#[tokio::test]
+async fn tampered_migration_is_reported_as_migration_error() {
+    for version in [1_i64, 2, 4] {
+        let (_dir, path, db) = new_db().await;
+        db.close().await;
+
+        // 模拟"已合入的 Migration 被改动"：篡改已记录的 checksum。
+        let mut conn = SqliteConnectOptions::new()
+            .filename(&path)
+            .connect()
+            .await
+            .unwrap();
+        sqlx::query("UPDATE _sqlx_migrations SET checksum = X'00' WHERE version = ?")
+            .bind(version)
+            .execute(&mut conn)
+            .await
+            .unwrap();
+        conn.close().await.unwrap();
+
+        let db = Database::open(&path).await.unwrap();
+        let err = db.migrate().await.unwrap_err();
+        assert!(matches!(err, StorageError::Migration(_)), "{err:?}");
+        db.close().await;
+    }
+}
+
+#[tokio::test]
+async fn item_round_trips_with_all_fields() {
+    let (_dir, _path, db) = new_db().await;
+
+    let mut new = NewItem::new(ItemType::Todo, "修复登录超时");
+    new.content = Some("复现步骤……".to_owned());
+    new.brief = Some("登录 30 秒后掉线".to_owned());
+    new.content_format = ContentFormat::Markdown;
+    new.priority = Priority::High;
+    new.scheduled = Some(DatePoint::at(
+        NaiveDate::from_ymd_opt(2026, 10, 12).unwrap(),
+        NaiveTime::from_hms_opt(9, 30, 0).unwrap(),
+    ));
+    new.due = Some(DatePoint::all_day(
+        NaiveDate::from_ymd_opt(2026, 10, 15).unwrap(),
+    ));
+    new.reminder_at = Some(t(7, 0));
+    let (mut item, _) = Item::create(id(1), new, t(8, 0)).unwrap();
+    item.complete(t(9, 0)).unwrap();
+    item.archive(t(10, 0)).unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&item).await.unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let loaded = tx.items().get(id(1)).await.unwrap().unwrap();
+    assert_eq!(loaded, item);
+    assert!(tx.items().get(id(404)).await.unwrap().is_none());
+}
+
+#[tokio::test]
+async fn update_overwrites_and_missing_item_is_not_found() {
+    let (_dir, _path, db) = new_db().await;
+    let mut item = simple(1, ItemType::Todo, "写周报", t(8, 0));
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&item).await.unwrap();
+    item.rename("写月报", t(9, 0)).unwrap();
+    item.complete(t(9, 30)).unwrap();
+    tx.items().update(&item).await.unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(tx.items().get(id(1)).await.unwrap().unwrap(), item);
+
+    let ghost = simple(2, ItemType::Note, "不存在", t(8, 0));
+    let err = tx.items().update(&ghost).await.unwrap_err();
+    assert!(
+        matches!(err, StorageError::NotFound { entity: "item", .. }),
+        "{err:?}"
+    );
+}
+
+#[tokio::test]
+async fn list_orders_filters_and_limits() {
+    let (_dir, _path, db) = new_db().await;
+    let old = simple(1, ItemType::Todo, "旧待办", t(8, 0));
+    let note = simple(2, ItemType::Note, "笔记", t(9, 0));
+    let mut archived = simple(3, ItemType::Note, "已归档", t(10, 0));
+    archived.archive(t(11, 0)).unwrap();
+    let new = simple(4, ItemType::Todo, "新待办", t(12, 0));
+
+    let mut tx = db.begin().await.unwrap();
+    for item in [&old, &note, &archived, &new] {
+        tx.items().insert(item).await.unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let titles = |items: Vec<Item>| {
+        items
+            .iter()
+            .map(|i| i.title().to_string())
+            .collect::<Vec<_>>()
+    };
+
+    let all = tx.items().list(&ItemFilter::default()).await.unwrap();
+    assert_eq!(titles(all), ["新待办", "笔记", "旧待办"]);
+
+    let with_archived = tx
+        .items()
+        .list(&ItemFilter {
+            include_archived: true,
+            ..ItemFilter::default()
+        })
+        .await
+        .unwrap();
+    assert_eq!(
+        titles(with_archived),
+        ["新待办", "已归档", "笔记", "旧待办"]
+    );
+
+    let todos = tx
+        .items()
+        .list(&ItemFilter {
+            item_type: Some(ItemType::Todo),
+            ..ItemFilter::default()
+        })
+        .await
+        .unwrap();
+    assert_eq!(titles(todos), ["新待办", "旧待办"]);
+
+    let limited = tx
+        .items()
+        .list(&ItemFilter {
+            limit: Some(1),
+            ..ItemFilter::default()
+        })
+        .await
+        .unwrap();
+    assert_eq!(titles(limited), ["新待办"]);
+}
+
+#[tokio::test]
+async fn uncommitted_transaction_is_rolled_back() {
+    let (_dir, _path, db) = new_db().await;
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&simple(1, ItemType::Todo, "不会保留", t(8, 0)))
+        .await
+        .unwrap();
+    drop(tx);
+
+    let mut tx = db.begin().await.unwrap();
+    assert!(tx.items().get(id(1)).await.unwrap().is_none());
+}
+
+#[tokio::test]
+async fn failure_midway_rolls_back_the_whole_transaction() {
+    let (_dir, _path, db) = new_db().await;
+    let first = simple(1, ItemType::Todo, "第一条", t(8, 0));
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&first).await.unwrap();
+    tx.items()
+        .insert(&simple(2, ItemType::Todo, "第二条", t(8, 1)))
+        .await
+        .unwrap();
+    // 主键重复：第三步失败。
+    let err = tx.items().insert(&first).await.unwrap_err();
+    assert!(matches!(err, StorageError::Constraint(_)), "{err:?}");
+    tx.rollback().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert!(
+        tx.items()
+            .list(&ItemFilter::default())
+            .await
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[tokio::test]
+async fn foreign_key_is_enforced() {
+    let (_dir, _path, db) = new_db().await;
+    let mut new = NewItem::new(ItemType::Todo, "属于不存在的项目");
+    new.project_id = Some(ProjectId::from_uuid(Uuid::from_u128(99)));
+    let (item, _) = Item::create(id(1), new, t(8, 0)).unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let err = tx.items().insert(&item).await.unwrap_err();
+    assert!(matches!(err, StorageError::Constraint(_)), "{err:?}");
+}
+
+#[tokio::test]
+async fn corrupt_rows_are_reported_not_hidden() {
+    let (_dir, path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&simple(1, ItemType::Note, "笔记", t(8, 0)))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    // 绕过 Domain 直接写入一个"已完成的 Note"，模拟被外部工具改坏的数据。
+    let mut conn = SqliteConnectOptions::new()
+        .filename(&path)
+        .connect()
+        .await
+        .unwrap();
+    sqlx::query("UPDATE items SET status = 'done', completed_at = '2026-10-09T09:00:00.000Z'")
+        .execute(&mut conn)
+        .await
+        .unwrap();
+    conn.close().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let err = tx.items().get(id(1)).await.unwrap_err();
+    assert!(matches!(err, StorageError::Corrupt(_)), "{err:?}");
+}
+
+#[tokio::test]
+async fn settings_round_trip_overwrite_and_roll_back() {
+    let (_dir, _path, db) = new_db().await;
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(tx.settings().get("floating.placement").await.unwrap(), None);
+    tx.settings()
+        .set("floating.placement", "{\"edge\":\"right\"}", t(8, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.settings()
+            .get("floating.placement")
+            .await
+            .unwrap()
+            .as_deref(),
+        Some("{\"edge\":\"right\"}")
+    );
+    // 覆盖写入后只有一行。
+    tx.settings()
+        .set("floating.placement", "v2", t(9, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    // 未提交的修改被丢弃。
+    let mut tx = db.begin().await.unwrap();
+    tx.settings()
+        .set("floating.placement", "uncommitted", t(10, 0))
+        .await
+        .unwrap();
+    drop(tx);
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.settings()
+            .get("floating.placement")
+            .await
+            .unwrap()
+            .as_deref(),
+        Some("v2")
+    );
+}
+
+/// 给 Item 设置本地计划日期。
+fn scheduled(mut item: Item, month: u32, day: u32) -> Item {
+    item.set_scheduled(
+        Some(DatePoint::all_day(
+            NaiveDate::from_ymd_opt(2026, month, day).unwrap(),
+        )),
+        t(8, 0),
+    );
+    item
+}
+
+#[tokio::test]
+async fn today_queries_filter_on_the_real_database() {
+    let (_dir, _path, db) = new_db().await;
+    let today = NaiveDate::from_ymd_opt(2026, 10, 9).unwrap();
+
+    let open_today = scheduled(simple(1, ItemType::Todo, "今天", t(8, 0)), 10, 9);
+    let open_overdue = scheduled(simple(2, ItemType::Todo, "逾期", t(8, 1)), 10, 1);
+    let open_future = scheduled(simple(3, ItemType::Todo, "明天", t(8, 2)), 10, 10);
+    let unscheduled = simple(4, ItemType::Todo, "没有日期", t(8, 3));
+    let mut done = scheduled(simple(5, ItemType::Todo, "已完成", t(8, 4)), 10, 9);
+    done.complete(t(10, 0)).unwrap();
+    let mut archived = scheduled(simple(6, ItemType::Todo, "已归档", t(8, 5)), 10, 9);
+    archived.archive(t(9, 0)).unwrap();
+    let note = scheduled(simple(7, ItemType::Note, "笔记", t(8, 6)), 10, 9);
+    let tip_today = scheduled(simple(8, ItemType::Tip, "今天的提示", t(8, 7)), 10, 9);
+    let tip_other = scheduled(simple(9, ItemType::Tip, "别天的提示", t(8, 8)), 10, 8);
+
+    let mut tx = db.begin().await.unwrap();
+    for item in [
+        &open_today,
+        &open_overdue,
+        &open_future,
+        &unscheduled,
+        &done,
+        &archived,
+        &note,
+        &tip_today,
+        &tip_other,
+    ] {
+        tx.items().insert(item).await.unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let ids = |items: Vec<Item>| items.iter().map(Item::id).collect::<Vec<_>>();
+
+    // 逾期的在前（计划日期更早），今天的在后。
+    let todos = tx
+        .items()
+        .list_open_todos_scheduled_on_or_before(today)
+        .await
+        .unwrap();
+    assert_eq!(ids(todos), [id(2), id(1)]);
+
+    let tips = tx.items().list_tips_scheduled_on(today).await.unwrap();
+    assert_eq!(ids(tips), [id(8)]);
+
+    let completed = tx
+        .items()
+        .list_todos_completed_between(t(0, 0), t(23, 59))
+        .await
+        .unwrap();
+    assert_eq!(ids(completed), [id(5)]);
+    // 区间右端不包含：恰好等于完成时间的上界排除该条。
+    let none = tx
+        .items()
+        .list_todos_completed_between(t(0, 0), t(10, 0))
+        .await
+        .unwrap();
+    assert!(none.is_empty());
+}
+
+#[tokio::test]
+async fn today_order_is_read_back_by_position() {
+    let (_dir, path, db) = new_db().await;
+    let today = NaiveDate::from_ymd_opt(2026, 10, 9).unwrap();
+    let mut tx = db.begin().await.unwrap();
+    for n in 1..=3 {
+        tx.items()
+            .insert(&scheduled(simple(n, ItemType::Todo, "x", t(8, 0)), 10, 9))
+            .await
+            .unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    // 目前还没有写入顺序的 Use Case（实施计划 1.7），直接用 SQL 播种。
+    let mut conn = SqliteConnectOptions::new()
+        .filename(&path)
+        .connect()
+        .await
+        .unwrap();
+    for (position, n) in [(0_i64, 3_u128), (1, 1), (2, 2)] {
+        sqlx::query("INSERT INTO daily_item_order (date, item_id, position) VALUES (?, ?, ?)")
+            .bind("2026-10-09")
+            .bind(id(n).to_string())
+            .bind(position)
+            .execute(&mut conn)
+            .await
+            .unwrap();
+    }
+    conn.close().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.today_order().get(today).await.unwrap(),
+        [id(3), id(1), id(2)]
+    );
+    let other = NaiveDate::from_ymd_opt(2026, 10, 10).unwrap();
+    assert!(tx.today_order().get(other).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn today_service_works_end_to_end_on_sqlite() {
+    use std::sync::Arc;
+
+    use chrono_tz::Tz;
+    use starat_application::today::TodayService;
+    use starat_common::clock::FakeClock;
+
+    let (_dir, _path, db) = new_db().await;
+    // 上海时间 2026-10-09 20:00（UTC 12:00）。
+    let clock = FakeClock::new(t(12, 0), Tz::Asia__Shanghai);
+    let service = TodayService::new(
+        Arc::new(db.clone()),
+        Arc::new(clock),
+        Arc::new(starat_application::testing::RecordingPublisher::new()),
+    );
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&scheduled(
+            simple(1, ItemType::Todo, "今天", t(8, 0)),
+            10,
+            9,
+        ))
+        .await
+        .unwrap();
+    tx.items()
+        .insert(&scheduled(
+            simple(2, ItemType::Todo, "逾期", t(8, 1)),
+            10,
+            7,
+        ))
+        .await
+        .unwrap();
+    let mut done = scheduled(simple(3, ItemType::Todo, "刚完成", t(8, 2)), 10, 9);
+    // UTC 10:00 = 上海 18:00，仍在今天。
+    done.complete(t(10, 0)).unwrap();
+    tx.items().insert(&done).await.unwrap();
+    tx.items()
+        .insert(&scheduled(simple(4, ItemType::Tip, "提示", t(8, 3)), 10, 9))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let view = service.get_today().await.unwrap();
+
+    assert_eq!(view.date, NaiveDate::from_ymd_opt(2026, 10, 9).unwrap());
+    // 两个未完成的待办 + 一个未勾掉的提示。
+    assert_eq!(view.remaining_count(), 3);
+    assert_eq!(view.todos[0].item.id(), id(2));
+    assert!(view.todos[0].is_overdue);
+    assert_eq!(view.completed.len(), 1);
+    assert_eq!(view.tips.len(), 1);
+}
+
+#[tokio::test]
+async fn reorder_today_replaces_the_stored_order_atomically_and_survives_reopen() {
+    use std::sync::Arc;
+
+    use chrono_tz::Tz;
+    use starat_application::testing::RecordingPublisher;
+    use starat_application::today::TodayService;
+    use starat_common::clock::FakeClock;
+
+    let (dir, path, db) = new_db().await;
+    let clock = FakeClock::new(t(12, 0), Tz::Asia__Shanghai);
+    let events = Arc::new(RecordingPublisher::new());
+    let service = TodayService::new(Arc::new(db.clone()), Arc::new(clock), events.clone());
+    let mut tx = db.begin().await.unwrap();
+    for n in 1..=3 {
+        tx.items()
+            .insert(&scheduled(
+                simple(n, ItemType::Todo, "x", t(8, n as u32)),
+                10,
+                9,
+            ))
+            .await
+            .unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    service.reorder_today(&[id(3), id(1), id(2)]).await.unwrap();
+    // 再排一次（含一个界面不知道的 id(2)）：旧记录被整体替换，没有残留或重复。
+    service.reorder_today(&[id(2), id(3)]).await.unwrap();
+
+    let today = NaiveDate::from_ymd_opt(2026, 10, 9).unwrap();
+    let mut tx = db.begin().await.unwrap();
+    assert_eq!(
+        tx.today_order().get(today).await.unwrap(),
+        [id(2), id(3), id(1)]
+    );
+    drop(tx);
+    assert_eq!(events.events().len(), 2);
+
+    // 重启（关闭后重新打开同一个文件）顺序不变。
+    db.close().await;
+    let reopened = Database::open(&path).await.unwrap();
+    let mut tx = reopened.begin().await.unwrap();
+    assert_eq!(
+        tx.today_order().get(today).await.unwrap(),
+        [id(2), id(3), id(1)]
+    );
+    drop(dir);
+}
+
+/// 一个在 Inbox 里的 Note。
+fn inbox_note(n: u128) -> Item {
+    let mut new = NewItem::new(ItemType::Note, "网页");
+    new.in_inbox = true;
+    Item::create(id(n), new, t(8, 0)).unwrap().0
+}
+
+/// 一条来源记录。
+fn source_for(item: ItemId, n: u128) -> starat_domain::source::Source {
+    starat_domain::source::Source {
+        id: starat_domain::id::SourceId::from_uuid(Uuid::from_u128(1000 + n)),
+        item_id: item,
+        source_type: starat_domain::source::SourceType::new("web"),
+        source_app: Some("Chrome".into()),
+        source_url: Some("https://example.com/a".into()),
+        source_path: None,
+        original_title: Some("示例页面".into()),
+        metadata_json: Some(r#"{"k":"v"}"#.into()),
+        captured_at: t(9, n as u32),
+    }
+}
+
+/// 一条附件记录。
+fn attachment_for(
+    item: ItemId,
+    n: u128,
+    kind: starat_domain::attachment::AttachmentKind,
+    path: &str,
+) -> starat_domain::attachment::Attachment {
+    starat_domain::attachment::Attachment {
+        id: starat_domain::id::AttachmentId::from_uuid(Uuid::from_u128(2000 + n)),
+        item_id: item,
+        kind,
+        path: path.into(),
+        name: "报告.pdf".into(),
+        mime: Some("application/pdf".into()),
+        size_bytes: Some(4096),
+        added_at: t(10, n as u32),
+    }
+}
+
+#[tokio::test]
+async fn in_inbox_is_stored_and_cleared_by_organizing() {
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&inbox_note(1)).await.unwrap();
+    tx.items()
+        .insert(&simple(2, ItemType::Todo, "普通待办", t(8, 1)))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert!(tx.items().get(id(1)).await.unwrap().unwrap().in_inbox());
+    assert!(!tx.items().get(id(2)).await.unwrap().unwrap().in_inbox());
+
+    // 安排日期后离开 Inbox，并且持久化。
+    let mut note = tx.items().get(id(1)).await.unwrap().unwrap();
+    note.set_scheduled(
+        Some(DatePoint::all_day(
+            NaiveDate::from_ymd_opt(2026, 10, 10).unwrap(),
+        )),
+        t(11, 0),
+    );
+    tx.items().update(&note).await.unwrap();
+    tx.commit().await.unwrap();
+    let mut tx = db.begin().await.unwrap();
+    assert!(!tx.items().get(id(1)).await.unwrap().unwrap().in_inbox());
+}
+
+#[tokio::test]
+async fn source_and_attachment_records_round_trip_in_order() {
+    use starat_domain::attachment::AttachmentKind;
+
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&inbox_note(1)).await.unwrap();
+    // 故意乱序插入，读取必须按时间升序。
+    tx.sources().insert(&source_for(id(1), 2)).await.unwrap();
+    tx.sources().insert(&source_for(id(1), 1)).await.unwrap();
+    tx.attachments()
+        .insert(&attachment_for(id(1), 2, AttachmentKind::Stored, "a/b.png"))
+        .await
+        .unwrap();
+    tx.attachments()
+        .insert(&attachment_for(
+            id(1),
+            1,
+            AttachmentKind::Reference,
+            r"C:\用户\文档\报告.pdf",
+        ))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let sources = tx.sources().list_for_item(id(1)).await.unwrap();
+    assert_eq!(sources, vec![source_for(id(1), 1), source_for(id(1), 2)]);
+    let attachments = tx.attachments().list_for_item(id(1)).await.unwrap();
+    assert_eq!(attachments.len(), 2);
+    assert_eq!(attachments[0].kind, AttachmentKind::Reference);
+    assert_eq!(attachments[0].path, r"C:\用户\文档\报告.pdf");
+    assert_eq!(attachments[1].kind, AttachmentKind::Stored);
+    assert_eq!(attachments[0].size_bytes, Some(4096));
+    assert!(tx.sources().list_for_item(id(99)).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn sources_and_attachments_require_an_existing_item() {
+    use starat_domain::attachment::AttachmentKind;
+
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    let source = tx.sources().insert(&source_for(id(404), 1)).await;
+    assert!(matches!(source, Err(StorageError::Constraint(_))));
+    let attachment = tx
+        .attachments()
+        .insert(&attachment_for(id(404), 1, AttachmentKind::Reference, "x"))
+        .await;
+    assert!(matches!(attachment, Err(StorageError::Constraint(_))));
+}
+
+#[tokio::test]
+async fn deleting_an_item_cascades_records_but_never_touches_the_referenced_file() {
+    use starat_domain::attachment::AttachmentKind;
+
+    let (dir, path, db) = new_db().await;
+    // 用户自己的文件：被引用，不是 StarAt 的。
+    let user_file = dir.path().join("用户的 报告.pdf");
+    std::fs::write(&user_file, b"%PDF-1.7 precious").unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&inbox_note(1)).await.unwrap();
+    let reference = attachment_for(
+        id(1),
+        1,
+        AttachmentKind::Reference,
+        &user_file.to_string_lossy(),
+    );
+    tx.attachments().insert(&reference).await.unwrap();
+    tx.sources().insert(&source_for(id(1), 1)).await.unwrap();
+    tx.commit().await.unwrap();
+
+    // 目前没有「删除 Item」的 Use Case（3.5），直接用 SQL 触发数据库的级联。
+    let mut conn = SqliteConnectOptions::new()
+        .filename(&path)
+        .foreign_keys(true)
+        .connect()
+        .await
+        .unwrap();
+    sqlx::query("DELETE FROM items WHERE id = ?")
+        .bind(id(1).to_string())
+        .execute(&mut conn)
+        .await
+        .unwrap();
+    conn.close().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    assert!(tx.sources().list_for_item(id(1)).await.unwrap().is_empty());
+    assert!(
+        tx.attachments()
+            .list_for_item(id(1))
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    // 记录没了，但用户的文件原封不动。
+    assert_eq!(std::fs::read(&user_file).unwrap(), b"%PDF-1.7 precious");
+    // 领域规则：引用类附件不归 StarAt 所有，只有复制进 attachments/ 的才会被清理。
+    assert!(!reference.owns_file());
+}
+
+#[tokio::test]
+async fn in_inbox_only_filter_returns_pending_items_and_ignores_archived() {
+    let (_dir, _path, db) = new_db().await;
+    let inbox_item = |n: u128, title: &str, in_inbox: bool, minute: u32| {
+        let mut new = NewItem::new(ItemType::Note, title);
+        new.in_inbox = in_inbox;
+        Item::create(id(n), new, t(8, minute)).unwrap().0
+    };
+    let pending = inbox_item(1, "待整理", true, 0);
+    let organized = inbox_item(2, "已整理", false, 1);
+    let mut archived = inbox_item(3, "已归档", true, 2);
+    archived.archive(t(9, 0)).unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    for item in [&pending, &organized, &archived] {
+        tx.items().insert(item).await.unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let listed = tx
+        .items()
+        .list(&ItemFilter {
+            in_inbox_only: true,
+            ..ItemFilter::default()
+        })
+        .await
+        .unwrap();
+    let titles: Vec<String> = listed.iter().map(|i| i.title().to_string()).collect();
+    assert_eq!(titles, ["待整理"]);
+}
+
+#[tokio::test]
+async fn list_can_order_by_last_update_for_notes() {
+    let (_dir, _path, db) = new_db().await;
+    let first = simple(1, ItemType::Note, "先写的", t(8, 0));
+    let second = simple(2, ItemType::Note, "后写的", t(9, 0));
+    let mut tx = db.begin().await.unwrap();
+    tx.items().insert(&first).await.unwrap();
+    tx.items().insert(&second).await.unwrap();
+    // 先写的那条之后被修改过：按更新时间排序时它排在最前，按创建时间排序时仍在后面。
+    let mut edited = first.clone();
+    edited.rename("先写的（改过）", t(12, 0)).unwrap();
+    tx.items().update(&edited).await.unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let titles = |items: Vec<Item>| {
+        items
+            .iter()
+            .map(|i| i.title().to_string())
+            .collect::<Vec<_>>()
+    };
+    let by_created = tx.items().list(&ItemFilter::default()).await.unwrap();
+    assert_eq!(titles(by_created), ["后写的", "先写的（改过）"]);
+    let by_updated = tx
+        .items()
+        .list(&ItemFilter {
+            order: ItemOrder::UpdatedDesc,
+            ..ItemFilter::default()
+        })
+        .await
+        .unwrap();
+    assert_eq!(titles(by_updated), ["先写的（改过）", "后写的"]);
+}
+
+// ---- Workflow 仓库（5.5 / 5.6） ----
+
+fn sample_workflow(slug: &str, priority: i32) -> starat_domain::workflow::Workflow {
+    serde_json::from_str(&format!(
+        r#"{{"schemaVersion":1,"id":"{slug}","name":"测试 {slug}","priority":{priority},
+        "matcher":{{"field":"input.type","op":"equals","value":"text"}},
+        "steps":[{{"type":"createItem","itemType":"todo","title":"{{{{ input.title }}}}"}}]}}"#
+    ))
+    .unwrap()
+}
+
+fn sample_run(n: u32, started: DateTime<Utc>) -> starat_application::workflow::RunRecord {
+    use starat_application::workflow::{RunRecord, RunStatus, StepOutcome, StepReport};
+    RunRecord {
+        id: format!("00000000-0000-7000-8000-{n:012}"),
+        workflow_id: "user.a".into(),
+        workflow_name: "测试".into(),
+        input_kind: "text".into(),
+        input_summary: "文字 · 3 字".into(),
+        status: RunStatus::Succeeded,
+        error_kind: None,
+        error_message: None,
+        items_created: 1,
+        duration_ms: 3,
+        started_at: started,
+        steps: vec![StepReport {
+            index: 0,
+            kind: "createItem".into(),
+            outcome: StepOutcome::Ok,
+            duration_ms: 1,
+            message: None,
+            logs: Vec::new(),
+        }],
+    }
+}
+
+#[tokio::test]
+async fn workflows_round_trip_and_upsert_keeps_creation_time() {
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.workflows()
+        .upsert(&sample_workflow("user.a", 5), t(8, 0))
+        .await
+        .unwrap();
+    tx.workflows()
+        .upsert(&sample_workflow("user.b", 9), t(8, 1))
+        .await
+        .unwrap();
+    // 覆盖：内容变、创建时间不变。
+    tx.workflows()
+        .upsert(&sample_workflow("user.a", 7), t(9, 0))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let all = tx.workflows().list().await.unwrap();
+    assert_eq!(all.len(), 2);
+    let a = tx
+        .workflows()
+        .get(&starat_domain::workflow::WorkflowId::new("user.a").unwrap())
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(a.workflow.priority, 7);
+    assert_eq!(a.created_at, t(8, 0));
+    assert_eq!(a.updated_at, t(9, 0));
+
+    tx.workflows()
+        .delete(&starat_domain::workflow::WorkflowId::new("user.b").unwrap())
+        .await
+        .unwrap();
+    assert_eq!(tx.workflows().list().await.unwrap().len(), 1);
+    // 删除不存在的是空操作。
+    tx.workflows()
+        .delete(&starat_domain::workflow::WorkflowId::new("user.zzz").unwrap())
+        .await
+        .unwrap();
+}
+
+#[tokio::test]
+async fn workflow_runs_are_listed_newest_first_with_steps_and_pruned_by_count_and_age() {
+    let (_dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    for n in 0..5 {
+        tx.workflows()
+            .insert_run(&sample_run(n, t(8, n)))
+            .await
+            .unwrap();
+    }
+    tx.commit().await.unwrap();
+
+    let mut tx = db.begin().await.unwrap();
+    let runs = tx.workflows().list_runs(3).await.unwrap();
+    assert_eq!(runs.len(), 3);
+    assert_eq!(runs[0].started_at, t(8, 4));
+    assert_eq!(runs[0].steps.len(), 1);
+    assert_eq!(runs[0].input_summary, "文字 · 3 字");
+
+    // 只保留最近 3 条：删掉 2 条旧的。
+    let removed = tx.workflows().prune_runs(3, t(0, 0)).await.unwrap();
+    assert_eq!(removed, 2);
+    // 过了截止时间的也删（8:02 之前的已经没了，8:02 本身早于 8:03）。
+    let removed = tx.workflows().prune_runs(100, t(8, 3)).await.unwrap();
+    assert_eq!(removed, 1);
+    assert_eq!(tx.workflows().list_runs(10).await.unwrap().len(), 2);
+}
+
+// ---- 备份快照（7.4） ----
+
+#[tokio::test]
+async fn a_snapshot_is_a_consistent_independent_copy_that_verifies() {
+    let (dir, _path, db) = new_db().await;
+    let mut tx = db.begin().await.unwrap();
+    tx.items()
+        .insert(&simple(1, ItemType::Todo, "买牛奶", t(8, 0)))
+        .await
+        .unwrap();
+    tx.items()
+        .insert(&simple(2, ItemType::Note, "读书笔记", t(8, 1)))
+        .await
+        .unwrap();
+    tx.workflows()
+        .upsert(&sample_workflow("user.a", 5), t(8, 2))
+        .await
+        .unwrap();
+    tx.commit().await.unwrap();
+
+    let snapshot = dir.path().join("snapshot.db");
+    db.snapshot_to(&snapshot).await.unwrap();
+    assert_eq!(Database::verify_file(&snapshot).await.unwrap(), Some(9));
+
+    // 快照之后原库继续变化，不影响快照。
+    let mut tx = db.begin().await.unwrap();
+    tx.items().delete(id(1)).await.unwrap();
+    tx.commit().await.unwrap();
+
+    let copy = Database::open(&snapshot).await.unwrap();
+    let mut tx = copy.begin().await.unwrap();
+    let items = tx.items().list(&ItemFilter::default()).await.unwrap();
+    assert_eq!(items.len(), 2, "快照保留了快照时刻的数据");
+    assert_eq!(tx.workflows().list().await.unwrap().len(), 1);
+    drop(tx);
+    copy.close().await;
+
+    // 目标已存在时拒绝覆盖。
+    assert!(db.snapshot_to(&snapshot).await.is_err());
+}
+
+#[tokio::test]
+async fn verification_rejects_files_that_are_not_healthy_databases() {
+    let dir = tempfile::tempdir().unwrap();
+    let garbage = dir.path().join("garbage.db");
+    std::fs::write(
+        &garbage,
+        b"this is definitely not sqlite, just some text padding....",
+    )
+    .unwrap();
+    assert!(Database::verify_file(&garbage).await.is_err());
+    assert!(
+        Database::verify_file(&dir.path().join("missing.db"))
+            .await
+            .is_err()
+    );
+}
+
+#[tokio::test]
+async fn a_checkpoint_shrinks_the_wal_after_heavy_writes_with_a_reader_in_the_way() {
+    let (_dir, path, db) = new_db().await;
+    let wal = path.with_extension("db-wal");
+    // 一个一直开着的读事务：自动检查点没法重置 WAL，文件只增不减（实测问题）。
+    let mut reader = db.begin_read().await.unwrap();
+    let _ = reader.items().list(&ItemFilter::default()).await.unwrap();
+    for batch in 0..40_u128 {
+        let mut tx = db.begin().await.unwrap();
+        for n in 0..100_u128 {
+            let item = simple(
+                batch * 100 + n + 1,
+                ItemType::Note,
+                "x".repeat(200).as_str(),
+                t(8, 0),
+            );
+            tx.items().insert(&item).await.unwrap();
+        }
+        tx.commit().await.unwrap();
+    }
+    let before = std::fs::metadata(&wal).map_or(0, |m| m.len());
+    assert!(before > 256 * 1024, "写入后 WAL 应当明显变大：{before}");
+    drop(reader);
+    db.checkpoint().await.unwrap();
+    let after = std::fs::metadata(&wal).map_or(0, |m| m.len());
+    assert!(after < 64 * 1024, "检查点之后 WAL 应当被截断：{after}");
+}
+
+#[tokio::test]
+async fn the_wal_is_truncated_only_once_it_passes_the_limit() {
+    let (_dir, _path, db) = new_db().await;
+    let mut reader = db.begin_read().await.unwrap();
+    let _ = reader.items().list(&ItemFilter::default()).await.unwrap();
+    for n in 0..300_u128 {
+        let mut tx = db.begin().await.unwrap();
+        let item = simple(n + 1, ItemType::Note, "x".repeat(200).as_str(), t(8, 0));
+        tx.items().insert(&item).await.unwrap();
+        tx.commit().await.unwrap();
+    }
+    let size = db.wal_size();
+    assert!(size > 64 * 1024, "写入后 WAL 应当变大：{size}");
+    // 没超过阈值：不动。
+    assert!(
+        !db.checkpoint_if_wal_exceeds(size + 1024 * 1024)
+            .await
+            .unwrap()
+    );
+    drop(reader);
+    // 超过阈值：截断。
+    assert!(db.checkpoint_if_wal_exceeds(1024).await.unwrap());
+    assert!(db.wal_size() < 64 * 1024);
+}
+
+/// 两个事务交错：A 先读，B 在 A 读之后写入并提交，A 再写入。
+///
+/// 延迟事务（`BEGIN`）下 A 在 WAL 里拿着一个旧快照，升级为写事务时 SQLite 直接返回
+/// `SQLITE_BUSY`（不等 `busy_timeout`），表现为偶发的 `STORAGE_UNAVAILABLE`——比如启动时后台任务
+/// 正在写，用户的第一次操作就失败了。写事务以 `BEGIN IMMEDIATE` 开始后，B 会等 A 提交再写，两边都成功。
+#[tokio::test]
+async fn interleaved_read_then_write_transactions_both_succeed() {
+    let (_dir, _path, db) = new_db().await;
+    let db = std::sync::Arc::new(db);
+
+    let mut a = db.begin().await.unwrap();
+    assert_eq!(a.settings().get("race").await.unwrap(), None);
+
+    // B 在另一个任务里写入；A 还没提交时它只能等待（立即事务），不能抢先提交。
+    let other = std::sync::Arc::clone(&db);
+    let b = tokio::spawn(async move {
+        let mut b = other.begin().await?;
+        b.settings().set("race", "b", t(9, 1)).await?;
+        b.commit().await
+    });
+    tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+    a.settings().set("race", "a", t(9, 0)).await.unwrap();
+    a.commit().await.unwrap();
+    b.await.unwrap().unwrap();
+
+    let mut check = db.begin().await.unwrap();
+    assert_eq!(
+        check.settings().get("race").await.unwrap().as_deref(),
+        Some("b")
+    );
+}
+
+/// 只读事务不占写锁：导出这类长时间的读取开着时，写入照常完成。
+#[tokio::test]
+async fn an_open_read_transaction_does_not_block_writes() {
+    let (_dir, _path, db) = new_db().await;
+    let mut reader = db.begin_read().await.unwrap();
+    assert_eq!(reader.settings().get("k").await.unwrap(), None);
+
+    let mut writer = db.begin().await.unwrap();
+    writer.settings().set("k", "v", t(9, 0)).await.unwrap();
+    writer.commit().await.unwrap();
+
+    // 读事务看到的仍是开始时的快照。
+    assert_eq!(reader.settings().get("k").await.unwrap(), None);
+}

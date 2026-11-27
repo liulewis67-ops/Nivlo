@@ -1,0 +1,25 @@
+[package]
+name = "starat-scheduler"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "StarAt scheduler crate"
+
+[dependencies]
+chrono.workspace = true
+chrono-tz.workspace = true
+starat-application.workspace = true
+starat-common.workspace = true
+starat-domain.workspace = true
+starat-platform.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "macros", "rt"] }
+tracing.workspace = true
+
+[dev-dependencies]
+starat-application = { workspace = true, features = ["testing"] }
+tokio = { workspace = true, features = ["macros", "rt", "test-util", "sync", "time"] }
+uuid.workspace = true
+
+[lints]
+workspace = true

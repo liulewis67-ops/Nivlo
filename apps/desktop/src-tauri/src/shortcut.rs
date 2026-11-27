@@ -10,17 +10,17 @@
 
 use std::sync::{Arc, Mutex, PoisonError};
 
-use stardeskbox_application::error::{AppError, ErrorCode};
-use stardeskbox_application::settings::SettingsService;
-use stardeskbox_platform::error::PlatformError;
-use stardeskbox_platform::shortcut::{Accelerator, ShortcutCallback, ShortcutPort};
+use starat_application::error::{AppError, ErrorCode};
+use starat_application::settings::SettingsService;
+use starat_platform::error::PlatformError;
+use starat_platform::shortcut::{Accelerator, ShortcutCallback, ShortcutPort};
 
 /// 当前平台的快捷键注册：Windows 用 `RegisterHotKey`，其他平台暂不支持（返回 `Unsupported`）。
 #[must_use]
 pub fn platform_port() -> Arc<dyn ShortcutPort> {
     #[cfg(target_os = "windows")]
     {
-        Arc::new(stardeskbox_platform_windows::shortcut::WindowsShortcut::new())
+        Arc::new(starat_platform_windows::shortcut::WindowsShortcut::new())
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -161,7 +161,7 @@ impl ShortcutController {
 
     /// 几个现在可用的组合（最多 `limit` 个），供冲突时一键换用。
     ///
-    /// 从这个动作的候选里挑：跳过 `taken`（StarDeskBox 各动作当前的绑定）、在当前键盘布局里会输入字符的
+    /// 从这个动作的候选里挑：跳过 `taken`（StarAt 各动作当前的绑定）、在当前键盘布局里会输入字符的
     /// （AltGr），以及现在注册不了的。平台无法判断是否可用时返回空列表。
     pub fn suggestions(&self, taken: &[String], limit: usize) -> Vec<String> {
         self.action
@@ -316,8 +316,8 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     use chrono::{TimeZone, Utc};
-    use stardeskbox_application::testing::FakeUnitOfWork;
-    use stardeskbox_common::clock::FakeClock;
+    use starat_application::testing::FakeUnitOfWork;
+    use starat_common::clock::FakeClock;
 
     use super::*;
 
@@ -563,7 +563,7 @@ mod tests {
     async fn suggestions_skip_taken_bindings_altgr_combinations_and_ones_already_in_use() {
         let port = Arc::new(FakePort::default());
         let (controller, _, _) = controller(&port);
-        // 第一个候选被别的程序占用，第二个在当前布局里会打出字符，第三个是 StarDeskBox 另一个动作正在用的。
+        // 第一个候选被别的程序占用，第二个在当前布局里会打出字符，第三个是 StarAt 另一个动作正在用的。
         port.take("Ctrl+Alt+N");
         port.typing.lock().unwrap().insert("Alt+Shift+N".to_owned());
         let taken = ["Ctrl+Alt+Shift+N".to_owned()];

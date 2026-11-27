@@ -1,8 +1,8 @@
 {
-  "name": "@stardeskbox/desktop-ui",
+  "name": "@starat/desktop-ui",
   "license": "Apache-2.0",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "scripts": {
     "dev": "vite",

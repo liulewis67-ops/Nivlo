@@ -434,7 +434,7 @@ async function main() {
     server = spawn("pnpm", ["dev:ui"], { cwd: ROOT, shell: true, stdio: "ignore" });
     await waitFor(APP);
   }
-  const profile = mkdtempSync(join(tmpdir(), "stardeskbox-visual-"));
+  const profile = mkdtempSync(join(tmpdir(), "starat-visual-"));
   const chrome = spawn(chromePath(), [
     "--headless=new",
     "--remote-debugging-port=9333",
@@ -474,7 +474,7 @@ async function main() {
         ` });
       }
       // 把引导对话框标记成已看过，避免它盖住页面。
-      await page.send("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('stardeskbox.onboarding','done')" });
+      await page.send("Page.addScriptToEvaluateOnNewDocument", { source: "localStorage.setItem('starat.onboarding','done')" });
       await page.send("Page.navigate", { url: scenario.url });
       await page.send("Page.bringToFront");
       await sleep(1200);

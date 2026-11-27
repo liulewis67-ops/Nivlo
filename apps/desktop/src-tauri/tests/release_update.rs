@@ -44,7 +44,7 @@ async fn public_release_download_passes_the_shipped_public_key() {
         update
             .download_url
             .as_str()
-            .starts_with("https://github.com/liulewis67-ops/StarDeskBox/releases/download/")
+            .starts_with("https://github.com/liulewis67-ops/StarAt/releases/download/")
     );
     let bytes = update
         .download(|_, _| {}, || {})

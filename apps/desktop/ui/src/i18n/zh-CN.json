@@ -1,6 +1,8 @@
 {
   "app": {
-    "name": "StarDeskBox"
+    "name": "StarAt",
+    "tagline": "Everything starts here.",
+    "value": "Turn scattered information into action."
   },
   "common": {
     "loading": "加载中…",
@@ -19,7 +21,7 @@
   },
   "dev": {
     "title": "开发控制台",
-    "quit": "退出 StarDeskBox",
+    "quit": "退出 StarAt",
     "subtitle": "Phase 0 的 IPC 演示页：创建并列出 Item，验证 UI → IPC → SQLite 链路。",
     "form": {
       "titleLabel": "标题",
@@ -306,9 +308,9 @@
     }
   },
   "floating": {
-    "label": "StarDeskBox悬浮窗",
+    "label": "StarAt悬浮窗",
     "reminderAttention": "有事项到点提醒",
-    "open": "打开StarDeskBox主窗口",
+    "open": "打开StarAt主窗口",
     "allDone": "今天的事都做完了",
     "quickAddHint": "右键快速添加待办"
   },
@@ -584,7 +586,7 @@
     },
     "autostart": {
       "label": "开机自动启动",
-      "hint": "开机后StarDeskBox常驻在屏幕边缘，随时可以收进想法和待办。"
+      "hint": "开机后StarAt常驻在屏幕边缘，随时可以收进想法和待办。"
     },
     "language": {
       "label": "语言",
@@ -638,7 +640,7 @@
     },
     "onboarding": {
       "label": "新手引导",
-      "hint": "再看一遍StarDeskBox的基本用法。",
+      "hint": "再看一遍StarAt的基本用法。",
       "replay": "重新查看"
     },
     "diagnostics": {
@@ -668,12 +670,12 @@
       "hint": "选择一个备份包。恢复前会先自动备份当前数据，重启后生效；被替换的数据也会保留在数据目录里。",
       "action": "选择备份…",
       "readyTitle": "备份已准备好",
-      "readyBody": "备份创建于 {{created}}（StarDeskBox {{version}}）。重启后会换上这份数据；当前数据已先备份到：{{safety}}",
+      "readyBody": "备份创建于 {{created}}（StarAt {{version}}）。重启后会换上这份数据；当前数据已先备份到：{{safety}}",
       "restart": "立即重启"
     },
     "reset": {
       "label": "删除所有数据",
-      "hint": "清空所有条目、设置与附件，StarDeskBox 将从头开始。会先自动备份当前数据；卸载 StarDeskBox 永远不会删除数据。",
+      "hint": "清空所有条目、设置与附件，StarAt 将从头开始。会先自动备份当前数据；卸载 StarAt 永远不会删除数据。",
       "action": "删除所有数据…",
       "confirm": "再点一次确认删除",
       "readyTitle": "重启后将删除数据",
@@ -733,8 +735,16 @@
       "robot": "机器人款式",
       "color": "外壳配色",
       "face": "表情",
-      "modes": { "robot": "机器人", "image": "自定义图片", "badge": "经典徽标" },
-      "robots": { "scout": "巡航", "relay": "机修", "memo": "便签" },
+      "modes": {
+        "robot": "机器人",
+        "image": "自定义图片",
+        "badge": "经典徽标"
+      },
+      "robots": {
+        "scout": "巡航",
+        "relay": "机修",
+        "memo": "便签"
+      },
       "colors": {
         "original": "原装",
         "steel": "灰蓝",
@@ -743,7 +753,11 @@
         "lilac": "浅紫",
         "pearl": "珍珠白"
       },
-      "faces": { "friendly": "友好", "focused": "专注", "playful": "俏皮" },
+      "faces": {
+        "friendly": "友好",
+        "focused": "专注",
+        "playful": "俏皮"
+      },
       "saveFailed": "外观保存失败，请重试。",
       "retry": "重试",
       "animation": {
@@ -931,7 +945,7 @@
       "latest": "已经是最新版本。",
       "available": "有新版本 {{version}}。",
       "install": "立即更新",
-      "installing": "正在后台下载并安装，完成后 StarDeskBox 会自动重启…",
+      "installing": "正在后台下载并安装，完成后 StarAt 会自动重启…",
       "error": "更新失败，当前版本没有变化。"
     },
     "searchShortcut": {
@@ -980,7 +994,7 @@
       "input": "明天下午3点 评审方案",
       "parsed": "识别到计划：明天 · 周四 15:00"
     },
-    "label": "欢迎使用StarDeskBox",
+    "label": "欢迎使用StarAt",
     "steps": "引导步骤",
     "goTo": "第 {{step}} 步",
     "next": "下一步",
@@ -988,8 +1002,8 @@
     "skip": "跳过",
     "start": "开始使用",
     "step0": {
-      "title": "欢迎使用StarDeskBox",
-      "body": "StarDeskBox住在屏幕边缘：先收下想到的事，再慢慢整理。在屏幕边缘找到小徽标就能开始。"
+      "title": "欢迎使用StarAt",
+      "body": "StarAt住在屏幕边缘：先收下想到的事，再慢慢整理。在屏幕边缘找到小徽标就能开始。"
     },
     "step1": {
       "title": "悬停看今天，点一下就添加",

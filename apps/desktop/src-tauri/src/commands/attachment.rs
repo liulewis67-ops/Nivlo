@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 use base64::Engine as _;
 use serde::Serialize;
 use specta::Type;
-use stardeskbox_application::error::{AppError, ErrorCode};
-use stardeskbox_platform::open::OpenPort;
+use starat_application::error::{AppError, ErrorCode};
+use starat_platform::open::OpenPort;
 use tauri::{AppHandle, Runtime, State};
 
 use crate::app::AppState;
@@ -168,7 +168,7 @@ pub async fn preview_item_attachment(
         .map_err(failed)?
 }
 
-/// 在文件管理器中定位指定关联附件（包括 StarDeskBox 保存的截图）。
+/// 在文件管理器中定位指定关联附件（包括 StarAt 保存的截图）。
 ///
 /// # Errors
 /// 事项 / 附件不存在、文件已丢失或系统定位失败时返回错误。

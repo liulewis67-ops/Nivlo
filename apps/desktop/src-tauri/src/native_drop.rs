@@ -1,13 +1,13 @@
 //! 拖入文件的磁盘路径接入悬浮窗（实施计划 10.1，D-15）。
 //!
 //! 悬浮窗用 HTML5 Drop，页面里的 `File` 对象没有磁盘路径；这里在悬浮窗的 WebView 上监听页面发来的
-//! `chrome.webview.postMessageWithAdditionalObjects("stardeskbox:drop-files:<id>", files)`（原理见
-//! `stardeskbox_platform_windows::webview_files`），拿到路径后用 Tauri 事件 [`EVENT`] 发回页面。仅 Windows。
+//! `chrome.webview.postMessageWithAdditionalObjects("starat:drop-files:<id>", files)`（原理见
+//! `starat_platform_windows::webview_files`），拿到路径后用 Tauri 事件 [`EVENT`] 发回页面。仅 Windows。
 
 use serde::Serialize;
 
 /// 把路径发回页面的事件名。
-pub const EVENT: &str = "stardeskbox-drop-paths";
+pub const EVENT: &str = "starat-drop-paths";
 
 /// 发回页面的事件内容。
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -26,7 +26,7 @@ pub fn install<R: tauri::Runtime>(app: &tauri::AppHandle<R>, window: &tauri::Web
 
     let app = app.clone();
     let result = window.with_webview(move |webview| {
-        let callback: stardeskbox_platform_windows::webview_files::DropCallback =
+        let callback: starat_platform_windows::webview_files::DropCallback =
             std::sync::Arc::new(move |id, paths| {
                 tracing::info!(
                     event = "native_drop_paths",
@@ -38,7 +38,7 @@ pub fn install<R: tauri::Runtime>(app: &tauri::AppHandle<R>, window: &tauri::Web
                 }
             });
         if let Err(error) =
-            stardeskbox_platform_windows::webview_files::watch_file_drops(&webview.controller(), callback)
+            starat_platform_windows::webview_files::watch_file_drops(&webview.controller(), callback)
         {
             tracing::warn!(event = "native_drop_install_failed", %error, "无法安装拖入文件路径处理器");
         }
