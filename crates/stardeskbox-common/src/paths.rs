@@ -88,14 +88,11 @@ impl AppPaths {
     /// 缺少定位用户目录所需的环境变量时返回 [`PathsError::DataRootUnavailable`]。
     pub fn resolve_default() -> Result<Self, PathsError> {
         let paths = Self::resolve(Platform::current(), |name| std::env::var(name).ok())?;
-        if std::env::var(DATA_DIR_ENV).is_ok_and(|value| !value.is_empty()) {
-            return Ok(paths);
-        }
-        // Reuse the previous data location so stored absolute attachment paths remain valid.
-        if let Ok(custom) = std::env::var("NIVLO_DATA_DIR")
-            && !custom.is_empty()
+        if [DATA_DIR_ENV, "NIVLO_DATA_DIR"]
+            .iter()
+            .any(|name| std::env::var(name).is_ok_and(|value| !value.is_empty()))
         {
-            return Ok(Self::from_root(custom));
+            return Ok(paths);
         }
         Ok(paths.with_legacy_root(Platform::current()))
     }
@@ -115,6 +112,9 @@ impl AppPaths {
         let get = |name: &str| env(name).filter(|value| !value.is_empty());
 
         if let Some(custom) = get(DATA_DIR_ENV) {
+            return Ok(Self::from_root(custom));
+        }
+        if let Some(custom) = get("NIVLO_DATA_DIR") {
             return Ok(Self::from_root(custom));
         }
         let root = match platform {
@@ -154,7 +154,7 @@ impl AppPaths {
             "Nivlo"
         };
         let legacy = self.root.with_file_name(legacy_name);
-        if !self.root.exists() && legacy.join("database/nivlo.db").is_file() {
+        if !self.database_file().is_file() && Self::from_root(&legacy).database_file().is_file() {
             Self::from_root(legacy)
         } else {
             self
@@ -382,7 +382,7 @@ mod tests {
     }
 
     #[test]
-    fn legacy_root_is_reused_only_when_new_root_is_absent() {
+    fn legacy_root_is_reused_until_new_root_has_a_database() {
         let tmp = tempfile::tempdir().unwrap();
         let legacy = AppPaths::from_root(tmp.path().join("Nivlo"));
         legacy.ensure_dirs().unwrap();
@@ -390,7 +390,25 @@ mod tests {
         let current = AppPaths::from_root(tmp.path().join("StarDeskBox"));
         assert_eq!(current.clone().with_legacy_root(Platform::Windows), legacy);
         current.ensure_dirs().unwrap();
+        assert_eq!(current.clone().with_legacy_root(Platform::Windows), legacy);
+        std::fs::write(current.database_file(), b"current").unwrap();
         assert_eq!(current.clone().with_legacy_root(Platform::Windows), current);
+    }
+
+    #[test]
+    fn legacy_custom_root_does_not_require_platform_environment() {
+        let paths = AppPaths::resolve(Platform::Windows, |name| {
+            (name == "NIVLO_DATA_DIR").then(|| "/legacy".to_owned())
+        })
+        .unwrap();
+        assert_eq!(paths.root(), Path::new("/legacy"));
+        let paths = AppPaths::resolve(Platform::Windows, |name| match name {
+            DATA_DIR_ENV => Some("/current".to_owned()),
+            "NIVLO_DATA_DIR" => Some("/legacy".to_owned()),
+            _ => None,
+        })
+        .unwrap();
+        assert_eq!(paths.root(), Path::new("/current"));
     }
 
     #[test]

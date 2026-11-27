@@ -10,7 +10,11 @@
 | 更新端点 | `tauri.conf.json` → `plugins.updater.endpoints` | `https://github.com/liulewis67-ops/StarDeskBox/releases/latest/download/latest.json` |
 | 自动发布 | `.github/workflows/release.yml` | 打 `v*` Tag 触发，也可手动从 `main` 指定版本发布并创建 Tag；必须配置更新签名密钥 |
 
-## 密钥
+## 数据库升级兼容
+
+历史 `migrations/*.sql` 一经发布不得修改，注释也参与 SQLx 的 SHA-384 校验。0.1.3 更名曾改动 0002 / 0004 的注释，0.1.4 通过 `crates/stardeskbox-storage/src/legacy_migrations/` 中从 v0.1.2 提取的原文精确兼容旧校验和，保留用户库中的迁移记录；其他校验和不匹配仍阻止启动。兼容快照同样不得修改。新旧版本及部分升级数据库均由存储集成测试覆盖。
+
+## 更新签名密钥
 
 GitHub Actions 必须配置与已发布客户端公钥对应的私钥 `TAURI_SIGNING_PRIVATE_KEY`，密码可通过 `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` 配置。缺少密钥会直接阻止发布，不能只上传安装包而遗漏更新清单。流水线先将安装包、`.exe.sig`、`latest.json` 和 `SHA256SUMS.txt` 上传到草稿 Release，全部成功后再公开，已公开的同版本产物不会被重跑覆盖。公开后使用真实 Tauri 更新器检查 GitHub 更新清单、下载 Windows 安装包并验证签名，不执行安装。
 

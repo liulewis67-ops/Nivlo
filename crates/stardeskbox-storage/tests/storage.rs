@@ -60,6 +60,88 @@ async fn migrates_from_empty_and_is_idempotent() {
 }
 
 #[tokio::test]
+async fn pre_rename_databases_upgrade_without_losing_data_or_history() {
+    for last_version in [4, 9] {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("nivlo.db");
+        let mut conn = SqliteConnectOptions::new()
+            .filename(&path)
+            .create_if_missing(true)
+            .connect()
+            .await
+            .unwrap();
+        let current = sqlx::migrate!("../../migrations");
+        let migrations = current
+            .iter()
+            .filter(|m| m.version <= last_version)
+            .map(|m| {
+                let sql = match m.version {
+                    2 => include_str!("../src/legacy_migrations/0002_item_source.sql"),
+                    4 => include_str!("../src/legacy_migrations/0004_trash.sql"),
+                    _ => &m.sql,
+                };
+                assert_eq!(sql.replace("Nivlo", "StarDeskBox"), m.sql);
+                sqlx::migrate::Migration::new(
+                    m.version,
+                    m.description.clone(),
+                    m.migration_type,
+                    sql.to_owned().into(),
+                    m.no_tx,
+                )
+            })
+            .collect::<Vec<_>>();
+        let old = sqlx::migrate::Migrator {
+            migrations: migrations.into(),
+            ..sqlx::migrate::Migrator::DEFAULT
+        };
+        old.run(&mut conn).await.unwrap();
+        sqlx::query("INSERT INTO items (id, type, title, created_at, updated_at) VALUES (?, 'note', '旧版笔记', '2026-11-01T00:00:00.000Z', '2026-11-01T00:00:00.000Z')")
+            .bind(id(1).to_string()).execute(&mut conn).await.unwrap();
+        let history: Vec<(i64, Vec<u8>)> =
+            sqlx::query_as("SELECT version, checksum FROM _sqlx_migrations ORDER BY version")
+                .fetch_all(&mut conn)
+                .await
+                .unwrap();
+        conn.close().await.unwrap();
+
+        let db = Database::open(&path).await.unwrap();
+        db.migrate().await.unwrap();
+        db.migrate().await.unwrap();
+        assert_eq!(
+            db.schema_version().await.unwrap(),
+            Some(Database::latest_schema_version())
+        );
+        let mut tx = db.begin_read().await.unwrap();
+        assert_eq!(
+            tx.items()
+                .get(id(1))
+                .await
+                .unwrap()
+                .unwrap()
+                .title()
+                .as_str(),
+            "旧版笔记"
+        );
+        tx.commit().await.unwrap();
+        db.close().await;
+        let mut conn = SqliteConnectOptions::new()
+            .filename(&path)
+            .connect()
+            .await
+            .unwrap();
+        let preserved: Vec<(i64, Vec<u8>)> = sqlx::query_as(
+            "SELECT version, checksum FROM _sqlx_migrations WHERE version <= ? ORDER BY version",
+        )
+        .bind(last_version)
+        .fetch_all(&mut conn)
+        .await
+        .unwrap();
+        assert_eq!(preserved, history);
+        conn.close().await.unwrap();
+    }
+}
+
+#[tokio::test]
 async fn database_lives_at_app_paths_location() {
     let dir = tempfile::tempdir().unwrap();
     let paths = AppPaths::from_root(dir.path().join("StarDeskBox"));
@@ -75,24 +157,28 @@ async fn database_lives_at_app_paths_location() {
 
 #[tokio::test]
 async fn tampered_migration_is_reported_as_migration_error() {
-    let (_dir, path, db) = new_db().await;
-    db.close().await;
+    for version in [1_i64, 2, 4] {
+        let (_dir, path, db) = new_db().await;
+        db.close().await;
 
-    // 模拟"已合入的 Migration 被改动"：篡改已记录的 checksum。
-    let mut conn = SqliteConnectOptions::new()
-        .filename(&path)
-        .connect()
-        .await
-        .unwrap();
-    sqlx::query("UPDATE _sqlx_migrations SET checksum = X'00'")
-        .execute(&mut conn)
-        .await
-        .unwrap();
-    conn.close().await.unwrap();
+        // 模拟"已合入的 Migration 被改动"：篡改已记录的 checksum。
+        let mut conn = SqliteConnectOptions::new()
+            .filename(&path)
+            .connect()
+            .await
+            .unwrap();
+        sqlx::query("UPDATE _sqlx_migrations SET checksum = X'00' WHERE version = ?")
+            .bind(version)
+            .execute(&mut conn)
+            .await
+            .unwrap();
+        conn.close().await.unwrap();
 
-    let db = Database::open(&path).await.unwrap();
-    let err = db.migrate().await.unwrap_err();
-    assert!(matches!(err, StorageError::Migration(_)), "{err:?}");
+        let db = Database::open(&path).await.unwrap();
+        let err = db.migrate().await.unwrap_err();
+        assert!(matches!(err, StorageError::Migration(_)), "{err:?}");
+        db.close().await;
+    }
 }
 
 #[tokio::test]

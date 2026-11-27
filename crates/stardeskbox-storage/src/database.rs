@@ -4,8 +4,9 @@ use std::path::Path;
 use std::time::Duration;
 
 use async_trait::async_trait;
+use sha2::{Digest, Sha384};
 use sqlx::SqlitePool;
-use sqlx::migrate::Migrator;
+use sqlx::migrate::{Migrate, Migrator};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions, SqliteSynchronous};
 use stardeskbox_application::ports::{StorageError, Transaction, UnitOfWork};
 
@@ -15,6 +16,13 @@ use crate::pinyin_initials::title_initials;
 
 /// 编译期嵌入的 Migration。已合入的 Migration 不得修改（sqlx 会校验 checksum）。
 static MIGRATOR: Migrator = sqlx::migrate!("../../migrations");
+
+/// v0.1.2 的原始脚本；v0.1.3 更名时只改动了注释，却改变了 SQLx 的校验和。
+/// 保留精确原文，仅接受这两个已发布版本，不放宽其他迁移的完整性检查。
+const LEGACY_MIGRATIONS: &[(i64, &[u8])] = &[
+    (2, include_bytes!("legacy_migrations/0002_item_source.sql")),
+    (4, include_bytes!("legacy_migrations/0004_trash.sql")),
+];
 
 /// 连接池大小。
 ///
@@ -92,10 +100,37 @@ impl Database {
     /// [`StorageError::Migration`]。此时宿主**不得**启动业务 Runtime。
     /// 回填拼音首字母失败时返回存储错误。
     pub async fn migrate(&self) -> Result<(), StorageError> {
-        MIGRATOR
-            .run(&self.pool)
+        let mut conn = self.pool.acquire().await.map_err(map_sqlx)?;
+        conn.ensure_migrations_table()
             .await
             .map_err(|e| StorageError::Migration(e.to_string()))?;
+        let applied = conn
+            .list_applied_migrations()
+            .await
+            .map_err(|e| StorageError::Migration(e.to_string()))?;
+        let mut migrations = MIGRATOR.migrations.to_vec();
+        for migration in &mut migrations {
+            if let Some((_, original)) = LEGACY_MIGRATIONS
+                .iter()
+                .find(|(version, _)| *version == migration.version)
+                && let Some(record) = applied
+                    .iter()
+                    .find(|record| record.version == migration.version)
+                && record.checksum.as_ref() == Sha384::digest(original).as_slice()
+            {
+                // 只调整本次校验所期待的值，不重写用户库的历史，也不重新执行已应用 SQL。
+                migration.checksum = record.checksum.clone();
+            }
+        }
+        let migrator = Migrator {
+            migrations: migrations.into(),
+            ..Migrator::DEFAULT
+        };
+        migrator
+            .run(&mut *conn)
+            .await
+            .map_err(|e| StorageError::Migration(e.to_string()))?;
+        drop(conn);
         tracing::info!(event = "migrations_applied", "数据库迁移完成");
         self.backfill_title_initials().await
     }

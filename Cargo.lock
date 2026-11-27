@@ -4671,7 +4671,7 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "stardeskbox-application"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4690,7 +4690,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-capture"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "mime_guess",
@@ -4707,7 +4707,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-common"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -4725,7 +4725,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-desktop"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -4771,7 +4771,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-domain"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "chrono",
  "serde",
@@ -4783,7 +4783,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-integrations"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -4803,7 +4803,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-platform"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "serde",
  "serde_json",
@@ -4814,15 +4814,15 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-platform-linux"
-version = "0.1.3"
+version = "0.1.4"
 
 [[package]]
 name = "stardeskbox-platform-macos"
-version = "0.1.3"
+version = "0.1.4"
 
 [[package]]
 name = "stardeskbox-platform-windows"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "stardeskbox-platform",
  "tempfile",
@@ -4832,7 +4832,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-scheduler"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -4847,7 +4847,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-script"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "rquickjs",
  "serde_json",
@@ -4858,7 +4858,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-storage"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "chrono",
@@ -4878,7 +4878,7 @@ dependencies = [
 
 [[package]]
 name = "stardeskbox-workflow"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "async-trait",
  "chrono",

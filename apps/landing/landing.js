@@ -1,6 +1,6 @@
-const DOWNLOAD_URL = 'https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.3/StarDeskBox_0.1.3_x64-setup.exe';
+const DOWNLOAD_URL = 'https://github.com/liulewis67-ops/StarDeskBox/releases/download/v0.1.4/StarDeskBox_0.1.4_x64-setup.exe';
 const REPO_URL = 'https://github.com/liulewis67-ops/StarDeskBox';
-const RELEASES_URL = 'https://github.com/liulewis67-ops/StarDeskBox/releases/tag/v0.1.3';
+const RELEASES_URL = 'https://github.com/liulewis67-ops/StarDeskBox/releases/tag/v0.1.4';
 
 const copy = {
   zh: {
@@ -9,8 +9,8 @@ const copy = {
     skip: '跳到正文', nav: '主导航', language: '切换到英语', home: '回到页首',
     theme: { light: '切换到浅色模式', dark: '切换到深色模式' },
     features: '产品能力', workflow: '使用方式', faq: '常见问题',
-    cta: '下载 Windows 版', ctaShort: '下载 v0.1.3', repoCta: 'GitHub 开源',
-    eyebrow: 'Windows 桌面工作台', version: 'v0.1.3',
+    cta: '下载 Windows 版', ctaShort: '下载 v0.1.4', repoCta: 'GitHub 开源',
+    eyebrow: 'Windows 桌面工作台', version: 'v0.1.4',
     hero: ['收下转瞬的灵感，', '安排清晰的下一步。'],
     lead: '把链接、文件和随手记拖进桌面悬浮窗。用待办、笔记与提示收好它们，再决定什么时候处理。',
     meta: ['Windows x64 安装包', '本机 SQLite 优先存储', 'Apache-2.0 开源'],
@@ -61,13 +61,13 @@ const copy = {
       ['收下的东西会放在哪里？', '你可以在收件箱查找新收下的内容，并把它整理为待办、笔记或提示。'],
       ['一定要配置工作流吗？', '不需要。你可以直接收集和手动整理；需要自动识别和处理常见内容时，再使用工作流。'],
       ['资料保存在哪里？', 'StarDeskBox 优先在本机保存资料。某些工作流需要访问网页或外部服务，使用时需要网络。'],
-      ['现在可以下载吗？', '0.1.3 提供 Windows x64 安装包，点击下载按钮即可直接下载安装包。安装包未配置 Windows 代码签名，系统可能显示发布者未知。'],
+      ['现在可以下载吗？', '0.1.4 提供 Windows x64 安装包，点击下载按钮即可直接下载安装包。安装包未配置 Windows 代码签名，系统可能显示发布者未知。'],
     ],
-    endKicker: 'READY FOR WINDOWS · V0.1.3',
+    endKicker: 'READY FOR WINDOWS · V0.1.4',
     end: '先收下一条线索。',
-    endLead: '下载 StarDeskBox 0.1.3，把零散的信息变成可安排的事项。',
+    endLead: '下载 StarDeskBox 0.1.4，把零散的信息变成可安排的事项。',
     foot: '拾取散落的信息，让事情各归其序。',
-    footRelease: '发布说明 v0.1.3',
+    footRelease: '发布说明 v0.1.4',
     footLicense: 'Apache-2.0 协议',
   },
   en: {
@@ -76,8 +76,8 @@ const copy = {
     skip: 'Skip to content', nav: 'Main navigation', language: 'Switch to Chinese', home: 'Back to top',
     theme: { light: 'Switch to light mode', dark: 'Switch to dark mode' },
     features: 'Features', workflow: 'How it works', faq: 'FAQ',
-    cta: 'Download for Windows', ctaShort: 'Download v0.1.3', repoCta: 'GitHub',
-    eyebrow: 'Desktop workspace for Windows', version: 'v0.1.3',
+    cta: 'Download for Windows', ctaShort: 'Download v0.1.4', repoCta: 'GitHub',
+    eyebrow: 'Desktop workspace for Windows', version: 'v0.1.4',
     hero: ['Catch the thought.', 'Find the next step.'],
     lead: 'Drop links, files and quick thoughts into a floating window. Keep them as tasks, notes or tips, then decide when to act.',
     meta: ['Windows x64 installer', 'Local-first SQLite storage', 'Apache-2.0 open source'],
@@ -128,13 +128,13 @@ const copy = {
       ['Where do captured items go?', 'Find new items in your inbox and organize them as tasks, notes or tips.'],
       ['Do I need to configure a workflow?', 'No. You can capture and organize items manually. Use workflows when you want to recognize and process familiar content automatically.'],
       ['Where is my data stored?', 'StarDeskBox keeps your data on your computer by default. Workflows that look up webpages or use external services need a network connection.'],
-      ['Can I download it now?', 'Version 0.1.3 provides a Windows x64 installer that downloads directly from the download button. The installer has no Windows code-signing certificate, so Windows may show an unknown publisher.'],
+      ['Can I download it now?', 'Version 0.1.4 provides a Windows x64 installer that downloads directly from the download button. The installer has no Windows code-signing certificate, so Windows may show an unknown publisher.'],
     ],
-    endKicker: 'READY FOR WINDOWS · V0.1.3',
+    endKicker: 'READY FOR WINDOWS · V0.1.4',
     end: 'Start with one thing.',
-    endLead: 'Download StarDeskBox 0.1.3 and turn loose pieces of information into your next action.',
+    endLead: 'Download StarDeskBox 0.1.4 and turn loose pieces of information into your next action.',
     foot: 'Pick up what’s scattered. Give it a place.',
-    footRelease: 'Release v0.1.3',
+    footRelease: 'Release v0.1.4',
     footLicense: 'Apache-2.0',
   },
 };
