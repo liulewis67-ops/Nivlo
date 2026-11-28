@@ -26,10 +26,10 @@ pub(crate) fn request(app: &AppHandle<Wry>) {
     let generation = GENERATION.fetch_add(1, Ordering::SeqCst).wrapping_add(1);
     let app = app.clone();
     #[cfg(target_os = "windows")]
-    let focus = starat_platform_windows::selection::foreground_focus();
+    let focus = asterjot_platform_windows::selection::foreground_focus();
     let selection = tauri::async_runtime::spawn_blocking(move || {
         #[cfg(target_os = "windows")]
-        return starat_platform_windows::selection::read_selection(focus);
+        return asterjot_platform_windows::selection::read_selection(focus);
         #[cfg(not(target_os = "windows"))]
         Option::<String>::None
     });

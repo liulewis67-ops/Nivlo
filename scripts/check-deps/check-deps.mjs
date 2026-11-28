@@ -6,23 +6,23 @@ import { execFileSync } from "node:child_process";
 /** 外部技术依赖：只有 Adapter / 宿主可以依赖。 */
 const TECH = ["tauri", "sqlx", "reqwest", "rquickjs", "windows"];
 const ADAPTERS = [
-  "starat-storage",
-  "starat-capture",
-  "starat-workflow",
-  "starat-script",
-  "starat-scheduler",
-  "starat-integrations",
-  "starat-platform-windows",
-  "starat-platform-macos",
-  "starat-platform-linux",
+  "asterjot-storage",
+  "asterjot-capture",
+  "asterjot-workflow",
+  "asterjot-script",
+  "asterjot-scheduler",
+  "asterjot-integrations",
+  "asterjot-platform-windows",
+  "asterjot-platform-macos",
+  "asterjot-platform-linux",
 ];
 
 /** 规则表：crate -> 禁止（直接或间接）依赖的 crate 名。 */
 const RULES = {
-  "starat-common": [...TECH, "starat-domain", "starat-application", "starat-platform", ...ADAPTERS],
-  "starat-domain": [...TECH, "tokio", "starat-application", "starat-platform", ...ADAPTERS],
-  "starat-application": [...TECH, "starat-platform", ...ADAPTERS],
-  "starat-platform": [...TECH, "starat-application", ...ADAPTERS],
+  "asterjot-common": [...TECH, "asterjot-domain", "asterjot-application", "asterjot-platform", ...ADAPTERS],
+  "asterjot-domain": [...TECH, "tokio", "asterjot-application", "asterjot-platform", ...ADAPTERS],
+  "asterjot-application": [...TECH, "asterjot-platform", ...ADAPTERS],
+  "asterjot-platform": [...TECH, "asterjot-application", ...ADAPTERS],
 };
 
 const metadata = JSON.parse(

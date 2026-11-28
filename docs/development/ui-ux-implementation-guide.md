@@ -1,4 +1,4 @@
-# StarAt desktop UI and interaction implementation guide
+# AsterJot desktop UI and interaction implementation guide
 
 Date: 2026-11-01  
 Status: development specification; implementation and acceptance are pending.  
@@ -8,11 +8,11 @@ Audience: design, frontend, desktop integration, QA and release maintainers.
 
 ## 1. Purpose and authority
 
-Make capture → organize → schedule → execute feel like one coordinated workflow. Preserve StarAt's existing neutral surfaces, system typography, semantic accents and familiar desktop controls. Improve hierarchy, available space and predictable operation across the main, floating and search windows.
+Make capture → organize → schedule → execute feel like one coordinated workflow. Preserve AsterJot's existing neutral surfaces, system typography, semantic accents and familiar desktop controls. Improve hierarchy, available space and predictable operation across the main, floating and search windows.
 
 This document defines the target implementation. Statements marked **observed** describe the preliminary review; **required** describes future acceptance; **verify** identifies unresolved behavior. A requirement is not a claim that the current code already satisfies it.
 
-Use this guide for the work described here, the [product design](../architecture/StarAt_Product_Design.md) for product semantics, and the [frontend guide](StarAt_Frontend_Development_Guide.md) and [backend guide](StarAt_Backend_Development_Guide.md) for architectural boundaries. Reconcile an actual conflict in a written decision before changing domain behavior. The [older interaction plan](interaction-optimization-plan.md) remains historical evidence; its fixed-height search description is superseded by current content-fitting behavior.
+Use this guide for the work described here, the [product design](../architecture/AsterJot_Product_Design.md) for product semantics, and the [frontend guide](AsterJot_Frontend_Development_Guide.md) and [backend guide](AsterJot_Backend_Development_Guide.md) for architectural boundaries. Reconcile an actual conflict in a written decision before changing domain behavior. The [older interaction plan](interaction-optimization-plan.md) remains historical evidence; its fixed-height search description is superseded by current content-fitting behavior.
 
 No new product category, synchronization service, item type, data schema or general command framework is needed for this work. Keep domain rules and persisted items behind typed IPC. A draft awaiting save is temporary UI state, never a second business-data store. Do not add a component library or move native window geometry/focus into React.
 
@@ -270,7 +270,7 @@ Run from repository root. Use the current lockfile and installed toolchain; do n
 
 ```powershell
 # Targeted behavior tests during a work package
-pnpm --filter @starat/desktop-ui exec vitest run src/features/detail/item-detail-panel.test.tsx src/features/calendar/calendar-page.test.tsx src/features/calendar/calendar-drop.test.tsx
+pnpm --filter @asterjot/desktop-ui exec vitest run src/features/detail/item-detail-panel.test.tsx src/features/calendar/calendar-page.test.tsx src/features/calendar/calendar-drop.test.tsx
 
 # Completed frontend changes
 pnpm run check:ui

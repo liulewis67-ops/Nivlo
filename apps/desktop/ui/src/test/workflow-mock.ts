@@ -102,7 +102,7 @@ const BUILTINS: Record<string, unknown>[] = [
     schemaVersion: 1,
     id: "builtin.generic-image",
     name: "图片",
-    description: "粘贴的图片变成一条笔记，图片作为附件保存在 StarAt 自己的目录里。",
+    description: "粘贴的图片变成一条笔记，图片作为附件保存在 AsterJot 自己的目录里。",
     version: 1,
     priority: 0,
     enabled: true,
@@ -318,7 +318,7 @@ export function createWorkflowMock(): WorkflowMock {
     if (typeof version === "number" && version > 1) {
       throw new AppError(
         "WORKFLOW_INVALID",
-        `这份定义使用了更新的格式（版本 ${version}），当前StarAt只支持到 1，请升级StarAt后再导入`,
+        `这份定义使用了更新的格式（版本 ${version}），当前AsterJot只支持到 1，请升级AsterJot后再导入`,
       );
     }
     const definition: Record<string, unknown> = {

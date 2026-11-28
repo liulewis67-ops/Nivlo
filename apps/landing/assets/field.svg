@@ -47,7 +47,7 @@
     <path d="M0 416h168l60-60h318l88-88h166" stroke-opacity=".55"/>
   </g>
 
-  <!-- Subtle floating geometric fragments echoing the StarAt mark -->
+  <!-- Subtle floating geometric fragments echoing the AsterJot mark -->
   <g opacity=".32">
     <rect x="668" y="64" width="20" height="20" rx="6" fill="#e0ecff" transform="rotate(24 678 74)"/>
     <rect x="614" y="102" width="26" height="26" rx="7" fill="#93c5fd" fill-opacity=".65" transform="rotate(-14 627 115)"/>

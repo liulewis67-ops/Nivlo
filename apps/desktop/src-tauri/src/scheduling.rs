@@ -4,11 +4,11 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
-use starat_application::settings::keys;
-use starat_domain::event::DomainEvent;
-use starat_platform::error::PlatformError;
-use starat_platform::notification::{Notification, NotificationPort};
-use starat_scheduler::{Scheduler, service::MAX_REMINDER_COUNT};
+use asterjot_application::settings::keys;
+use asterjot_domain::event::DomainEvent;
+use asterjot_platform::error::PlatformError;
+use asterjot_platform::notification::{Notification, NotificationPort};
+use asterjot_scheduler::{Scheduler, service::MAX_REMINDER_COUNT};
 use tauri::menu::CheckMenuItem;
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_notification::NotificationExt;
@@ -105,7 +105,7 @@ impl NotificationPort for TauriNotifier {
 
         #[cfg(target_os = "windows")]
         {
-            let toast = starat_platform_windows::toast::WindowsToast::new(
+            let toast = asterjot_platform_windows::toast::WindowsToast::new(
                 self.app.config().identifier.clone(),
             );
             match toast.notify(notification) {
@@ -219,7 +219,7 @@ pub async fn set_paused<R: tauri::Runtime>(
     app: &AppHandle<R>,
     state: &AppState,
     paused: bool,
-) -> Result<(), starat_application::error::AppError> {
+) -> Result<(), asterjot_application::error::AppError> {
     state
         .services
         .settings

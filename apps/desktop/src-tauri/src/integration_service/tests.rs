@@ -4,18 +4,20 @@
 
 use std::sync::{Arc, Mutex};
 
-use async_trait::async_trait;
-use chrono::{TimeZone, Utc};
-use starat_application::error::ErrorCode;
-use starat_application::ports::http::{HostPolicy, HttpError, HttpPort, HttpRequest, HttpResponse};
-use starat_application::ports::integration::{
+use asterjot_application::error::ErrorCode;
+use asterjot_application::ports::http::{
+    HostPolicy, HttpError, HttpPort, HttpRequest, HttpResponse,
+};
+use asterjot_application::ports::integration::{
     Integration, IntegrationCall, IntegrationContext, IntegrationError, IntegrationOutput,
     IntegrationRegistry,
 };
-use starat_application::settings::SettingsService;
-use starat_application::testing::FakeUnitOfWork;
-use starat_common::clock::FakeClock;
-use starat_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials};
+use asterjot_application::settings::SettingsService;
+use asterjot_application::testing::FakeUnitOfWork;
+use asterjot_common::clock::FakeClock;
+use asterjot_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials};
+use async_trait::async_trait;
+use chrono::{TimeZone, Utc};
 
 use super::{IntegrationService, TestOutcome};
 

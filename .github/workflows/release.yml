@@ -77,7 +77,7 @@ jobs:
       - name: Preserve Windows build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: starat-windows-${{ env.RELEASE_TAG }}
+          name: asterjot-windows-${{ env.RELEASE_TAG }}
           path: |
             target/release/bundle/nsis/*-setup.exe
             target/release/bundle/nsis/*-setup.exe.sig
@@ -100,7 +100,7 @@ jobs:
           $assets = @($files.FullName) + @('SHA256SUMS.txt', $signature, 'latest.json')
           gh release view $env:RELEASE_TAG --json isDraft --jq .isDraft > release-state.txt 2>$null
           if ($LASTEXITCODE -ne 0) {
-            gh release create $env:RELEASE_TAG --verify-tag --draft --title "StarAt $($env:RELEASE_TAG.Substring(1))" --notes-file "docs/development/releases/$env:RELEASE_TAG.md"
+            gh release create $env:RELEASE_TAG --verify-tag --draft --title "AsterJot $($env:RELEASE_TAG.Substring(1))" --notes-file "docs/development/releases/$env:RELEASE_TAG.md"
             if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }
           } elseif ((Get-Content release-state.txt -Raw).Trim() -ne 'true') {
             throw 'This release is already published. Refusing to replace public artifacts.'
@@ -110,4 +110,4 @@ jobs:
           gh release edit $env:RELEASE_TAG --draft=false --latest
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
       - name: Verify public updater feed and signed download
-        run: cargo test -p starat-desktop --test release_update -- --ignored --nocapture
+        run: cargo test -p asterjot-desktop --test release_update -- --ignored --nocapture

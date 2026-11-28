@@ -3,11 +3,11 @@
 //! 授权按脚本「指纹」保存在 `settings` 表（`script.grant.<指纹>`）。指纹由脚本源码、声明的主机和
 //! Workflow 的网络权限共同决定，所以脚本或权限任何一处变化都需要重新确认。
 
+use asterjot_application::error::AppError;
+use asterjot_application::settings::SettingsService;
+use asterjot_domain::workflow::{Step, Workflow};
+use asterjot_workflow::script_step::{ScriptGrants, script_fingerprint};
 use async_trait::async_trait;
-use starat_application::error::AppError;
-use starat_application::settings::SettingsService;
-use starat_domain::workflow::{Step, Workflow};
-use starat_workflow::script_step::{ScriptGrants, script_fingerprint};
 
 /// 授权记录的 key 前缀。
 const PREFIX: &str = "script.grant.";

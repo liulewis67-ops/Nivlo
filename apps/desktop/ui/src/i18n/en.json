@@ -1,8 +1,8 @@
 {
   "app": {
-    "name": "StarAt",
-    "tagline": "Everything starts here.",
-    "value": "Turn scattered information into action."
+    "name": "AsterJot",
+    "tagline": "Capture anything. Make it actionable.",
+    "value": "Capture · Organize · Act"
   },
   "common": {
     "loading": "Loading…",
@@ -21,7 +21,7 @@
   },
   "dev": {
     "title": "Developer console",
-    "quit": "Quit StarAt",
+    "quit": "Quit AsterJot",
     "subtitle": "Phase 0 IPC demo: create and list items to verify the UI → IPC → SQLite path.",
     "form": {
       "titleLabel": "Title",
@@ -309,9 +309,9 @@
     }
   },
   "floating": {
-    "label": "StarAt floating badge",
+    "label": "AsterJot floating badge",
     "reminderAttention": "An item reminder is due",
-    "open": "Open the StarAt main window",
+    "open": "Open the AsterJot main window",
     "allDone": "all done for today",
     "quickAddHint": "right-click to add a to-do"
   },
@@ -589,7 +589,7 @@
     },
     "autostart": {
       "label": "Launch at startup",
-      "hint": "StarAt stays at the edge of your screen after startup, ready to catch ideas and to-dos."
+      "hint": "AsterJot stays at the edge of your screen after startup, ready to catch ideas and to-dos."
     },
     "language": {
       "label": "Language",
@@ -643,7 +643,7 @@
     },
     "onboarding": {
       "label": "Getting started",
-      "hint": "See the basics of StarAt again.",
+      "hint": "See the basics of AsterJot again.",
       "replay": "Replay"
     },
     "diagnostics": {
@@ -673,12 +673,12 @@
       "hint": "Choose a backup archive. Your current data is backed up automatically first; the restore takes effect after a restart, and the replaced data stays in the data folder.",
       "action": "Choose backup…",
       "readyTitle": "Backup is ready",
-      "readyBody": "Backup created {{created}} (StarAt {{version}}). After restarting, this data replaces the current data; your current data was backed up to: {{safety}}",
+      "readyBody": "Backup created {{created}} (AsterJot {{version}}). After restarting, this data replaces the current data; your current data was backed up to: {{safety}}",
       "restart": "Restart now"
     },
     "reset": {
       "label": "Delete all data",
-      "hint": "Starts StarAt over with no items, settings or attachments. Your current data is backed up automatically first, and uninstalling StarAt never deletes it.",
+      "hint": "Starts AsterJot over with no items, settings or attachments. Your current data is backed up automatically first, and uninstalling AsterJot never deletes it.",
       "action": "Delete all data…",
       "confirm": "Click again to delete",
       "readyTitle": "Data will be deleted on restart",
@@ -949,7 +949,7 @@
       "latest": "You’re up to date.",
       "available": "Version {{version}} is available.",
       "install": "Update now",
-      "installing": "Updating in the background — StarAt will restart by itself…",
+      "installing": "Updating in the background — AsterJot will restart by itself…",
       "error": "Couldn’t update. Your current version is unchanged."
     },
     "searchShortcut": {
@@ -999,7 +999,7 @@
       "input": "Review the plan tomorrow 3pm",
       "parsed": "Plan detected: Tomorrow · Thu 15:00"
     },
-    "label": "Welcome to StarAt",
+    "label": "Welcome to AsterJot",
     "steps": "Getting-started steps",
     "goTo": "Step {{step}}",
     "next": "Next",
@@ -1007,8 +1007,8 @@
     "skip": "Skip",
     "start": "Get started",
     "step0": {
-      "title": "Welcome to StarAt",
-      "body": "StarAt lives at the edge of your screen: catch what comes to mind now, organize it later. Look for the small badge at the screen edge."
+      "title": "Welcome to AsterJot",
+      "body": "AsterJot lives at the edge of your screen: catch what comes to mind now, organize it later. Look for the small badge at the screen edge."
     },
     "step1": {
       "title": "Hover to see today, click to add",

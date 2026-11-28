@@ -4,10 +4,10 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 
+use asterjot_application::error::{AppError, ErrorCode};
+use asterjot_application::ports::SkinAssetFormat;
+use asterjot_storage::{MAX_SKIN_ASSET_BYTES, is_valid_skin_asset_file_name};
 use base64::Engine as _;
-use starat_application::error::{AppError, ErrorCode};
-use starat_application::ports::SkinAssetFormat;
-use starat_storage::{MAX_SKIN_ASSET_BYTES, is_valid_skin_asset_file_name};
 use tauri::{AppHandle, Runtime, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -194,7 +194,7 @@ fn read_skin_pack_zip(source: &Path) -> Result<SkinPackContents, IpcError> {
     Ok((manifest_json, assets))
 }
 
-/// 将当前皮肤清单与引用的本地帧图导出为 `.starat-skin.zip`（写入 `exports/` 并在文件管理器中显示）。
+/// 将当前皮肤清单与引用的本地帧图导出为 `.asterjot-skin.zip`（写入 `exports/` 并在文件管理器中显示）。
 ///
 /// # Errors
 ///
@@ -239,7 +239,7 @@ pub async fn export_skin_pack(
         .now_utc()
         .format("%Y%m%d-%H%M%S")
         .to_string();
-    let target = exports_dir.join(format!("starat-skin-{stamp}.starat-skin.zip"));
+    let target = exports_dir.join(format!("asterjot-skin-{stamp}.asterjot-skin.zip"));
     let target_clone = target.clone();
     tokio::task::spawn_blocking(move || -> Result<(), IpcError> {
         std::fs::create_dir_all(&exports_dir).map_err(|e| pack_failed(&e))?;
@@ -254,7 +254,7 @@ pub async fn export_skin_pack(
     Ok(target.to_string_lossy().into_owned())
 }
 
-/// 弹出文件选择框导入 `.starat-skin.zip`，校验并落盘全部帧图后返回清单 JSON；用户取消返回 `null`。
+/// 弹出文件选择框导入 `.asterjot-skin.zip`，校验并落盘全部帧图后返回清单 JSON；用户取消返回 `null`。
 ///
 /// # Errors
 ///
@@ -268,7 +268,7 @@ pub async fn import_skin_pack<R: Runtime>(
     let picked = tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()
-            .add_filter("StarAt Skin Pack", &["zip"])
+            .add_filter("AsterJot Skin Pack", &["zip"])
             .blocking_pick_file()
     })
     .await
@@ -307,7 +307,7 @@ mod tests {
     #[test]
     fn skin_pack_zip_round_trips_and_rejects_traversal() {
         let dir = tempfile::tempdir().unwrap();
-        let good_zip = dir.path().join("good.starat-skin.zip");
+        let good_zip = dir.path().join("good.asterjot-skin.zip");
         let file_name = format!("{}.webp", "a".repeat(64));
         let manifest = r#"{"version":2,"mode":"image"}"#;
         write_skin_pack_zip(&good_zip, manifest, &[(file_name, sample_webp(b"ok"))]).unwrap();

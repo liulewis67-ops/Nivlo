@@ -1,7 +1,7 @@
 //! 打开外部资源的 Tauri 适配（`OpenPort`）：基于官方 opener 插件，只暴露受限的两个动作。
 
-use starat_platform::error::PlatformError;
-use starat_platform::open::{OpenPort, check_openable_url};
+use asterjot_platform::error::PlatformError;
+use asterjot_platform::open::{OpenPort, check_openable_url};
 use tauri::{AppHandle, Runtime};
 use tauri_plugin_opener::OpenerExt;
 

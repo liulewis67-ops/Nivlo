@@ -1,7 +1,7 @@
 //! 来源相关的 Command：打开 Item 的来源。
 
-use starat_application::error::{AppError, ErrorCode};
-use starat_platform::open::OpenPort;
+use asterjot_application::error::{AppError, ErrorCode};
+use asterjot_platform::open::OpenPort;
 use tauri::{AppHandle, Runtime, State};
 
 use crate::app::AppState;
@@ -58,7 +58,7 @@ pub async fn open_item_source<R: Runtime>(
     let Some(path) = path else {
         return Err(failed("这个条目没有可打开的来源".to_owned()));
     };
-    if !starat_capture::reference_exists(path) {
+    if !asterjot_capture::reference_exists(path) {
         return Err(IpcError::from(AppError::new(
             ErrorCode::SourceFileMissing,
             format!("文件不存在：{path}"),

@@ -6,7 +6,7 @@ const out = execFileSync(
   ["grep", "-nE", "Local::now|Utc::now|SystemTime::now", "--", "crates/**/*.rs", "apps/**/*.rs"],
   { encoding: "utf8" },
 ).split("\n").filter(Boolean);
-const offenders = out.filter((line) => !line.startsWith("crates/starat-common/src/clock.rs"));
+const offenders = out.filter((line) => !line.startsWith("crates/asterjot-common/src/clock.rs"));
 if (offenders.length > 0) {
   console.error("✗ 以下位置直接读取了系统时间，请改用 Clock：\n" + offenders.join("\n"));
   process.exit(1);

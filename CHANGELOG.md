@@ -6,8 +6,8 @@
 
 ## [0.1.5] - 2026-11-27
 
-- 产品、GitHub 仓库、本地工程及宣传页统一更名为 StarAt。
-- 品牌理念：Everything starts here. 产品价值：Turn scattered information into action.
+- 产品、GitHub 仓库、本地工程及宣传页统一更名为 AsterJot。
+- 品牌理念：Capture anything. Make it actionable. 产品价值：Capture · Organize · Act
 - 保留 StarDeskBox / Nivlo 数据目录、数据库、备份、集成凭据和通知协议兼容，不修改历史迁移脚本。
 
 ## [0.1.4] - 2026-11-27

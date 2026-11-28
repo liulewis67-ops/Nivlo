@@ -1,23 +1,25 @@
-const SITE_URL = 'https://liulewis67-ops.github.io/StarAt/';
-const DOWNLOAD_URL = 'https://github.com/liulewis67-ops/StarAt/releases/download/v0.1.5/StarAt_0.1.5_x64-setup.exe';
-const REPO_URL = 'https://github.com/liulewis67-ops/StarAt';
-const RELEASES_URL = 'https://github.com/liulewis67-ops/StarAt/releases/tag/v0.1.5';
+const SITE_URL = 'https://liulewis67-ops.github.io/AsterJot/';
+const DOWNLOAD_URL = 'https://github.com/liulewis67-ops/AsterJot/releases/download/v0.1.5/StarAt_0.1.5_x64-setup.exe';
+const REPO_URL = 'https://github.com/liulewis67-ops/AsterJot';
+const RELEASES_URL = 'https://github.com/liulewis67-ops/AsterJot/releases/tag/v0.1.5';
 
 const copy = {
   zh: {
-    title: 'StarAt · Windows 桌面悬浮窗收集与行动工作台 | 待办、笔记与日历',
-    description: 'StarAt 是一款为 Windows 打造的开源本地优先桌面收集与行动工作台。通过桌面悬浮窗随手拖放捕获链接、文件、图片与灵感文字，在收件箱整理为待办、笔记与提示，再用今日视图与日历排期推进下一步。',
-    keywords: 'StarAt,Windows桌面收集工具,悬浮窗捕获,灵感收集,拖放收件箱,待办事项管理,本地优先笔记,日历排期,个人效率工作台,开源桌面工具,Tauri,SQLite',
+    title: 'AsterJot — Capture anything. Make it actionable. | Windows 桌面信息收集与行动工作台',
+    description: 'AsterJot（Capture anything. Make it actionable.）帮你把散落的信息转化为行动（Capture · Organize · Act）。开源、本地优先的 Windows 桌面收集与行动工作台：悬浮窗随手拖放捕获链接、文件、图片与灵感，在收件箱整理为待办、笔记与提示，再用今日与日历推进下一步。',
+    keywords: 'AsterJot,Capture anything. Make it actionable.,Capture · Organize · Act,散落信息转化为行动,Windows桌面收集工具,悬浮窗捕获,灵感收集,拖放收件箱,待办事项管理,本地优先笔记,日历排期,个人效率工作台,开源桌面工具,Tauri,SQLite',
     ogLocale: 'zh_CN',
+    imageAlt: 'AsterJot 应用图标 — Capture anything. Make it actionable.',
     skip: '跳到正文', nav: '主导航', language: '切换到英语', home: '回到页首',
     theme: { light: '切换到浅色模式', dark: '切换到深色模式' },
     features: '产品能力', workflow: '使用方式', faq: '常见问题',
     cta: '下载 Windows 版', ctaShort: '下载 v0.1.5', repoCta: 'GitHub 开源',
     eyebrow: 'Windows 桌面收集与行动工作台', version: 'v0.1.5',
-    hero: ['Everything starts', 'here.'],
-    lead: 'Turn scattered information into action. 把网页链接、本地文件和随手记拖进 Windows 桌面悬浮窗。在收件箱整理为待办、笔记与提示，再用今日与日历安排何时处理。',
+    hero: ['Capture anything.', 'Make it actionable.'],
+    value: '把零散信息变成下一步。',
+    lead: '把散落各处的链接、文件、图片与灵感拖进 Windows 桌面悬浮窗。在收件箱整理为待办、笔记与提示，再用今日与日历推进清晰的下一步。',
     meta: ['Windows x64 安装包', '本机 SQLite 优先存储', 'Apache-2.0 开源'],
-    demo: '交互演示', example: '实时可拖放', demoTitle: '把链接拖进悬浮窗',
+    demo: '交互演示', example: '实时可拖放', demoTitle: '把零散线索拖进悬浮窗',
     windowStatus: '本地已就绪',
     tabs: ['捕获', '整理', '安排'],
     captured: '已收入收件箱', dropIdle: '拖到这里收下', dropReady: '松开即可收下',
@@ -42,16 +44,17 @@ const copy = {
       { time: '16:30', title: '跟进首页修改反馈', tag: '待办', focus: false },
     ],
     details: ['', '让待办、笔记与提示各有位置，保留原始来源与上下文。', '把关键评审放进日历时间块，在「今日」聚焦眼前的事。'],
-    featureTitle: '让每条信息都有去处。',
-    featureSub: '从零散灵感捕获到有节奏的日程推进，每一环都保持轻盈、克制且本地优先。',
+    featureTitle: '把散落的信息，变成可执行的行动。',
+    featureSub: 'Capture anything. Make it actionable. 从一个不打断思路的起点入口开始，收下、整理并排期推进，全程轻盈克制且本地优先。',
     cards: [
       ['悬浮捕获', '一个不打断思路的入口', '从任意窗口随手拖入链接、文件、图片或文字，也支持剪贴板粘贴与全局快捷键记下灵感。'],
       ['来源与规则', '回头找得到原始资料', '完整保留信息来源。常见内容可由捕获工作流自动识别，再转成待办、笔记或提示。'],
       ['今日与日历', '知道今天该先做什么', '用「今日」视图集中处理眼前的事，在日历时间块里给之后的任务留出空间。'],
     ],
-    motto: ['Turn scattered information', 'into action.'],
-    howTitle: '从收下到行动，只需三步。',
-    howSub: '不必在发现信息的当下做决定，先接住，再整理，最后稳步推进。',
+    motto: ['Capture anything.', 'Make it actionable.'],
+    mottoSub: 'Capture · Organize · Act',
+    howTitle: '从零散信息到清晰行动，只需三步。',
+    howSub: '先在起点接住信息，再决定它的去处，最后落进日程稳步推进。',
     steps: [
       ['随手收下', '看到有用的内容就拖进悬浮窗，继续手头的事。', ['拖放捕获', '剪贴板粘贴', '全局快捷键']],
       ['回头整理', '打开收件箱，决定它是要做的事、留存的笔记，还是一条提示。', ['待办', '笔记', '提示', '保留来源']],
@@ -59,24 +62,24 @@ const copy = {
     ],
     faqSub: '关于适用平台、支持收集的内容类型、本地隐私存储与当前版本的常见说明。',
     questions: [
-      ['StarAt 是什么？', 'StarAt 是一款开源的 Windows 桌面收集与行动工作台，用同一个悬浮窗入口收集资料、在收件箱整理待办与笔记，并通过今日与日历安排后续行动。'],
-      ['StarAt 能收集哪些内容？', '可以收集网页链接、灵感文字、图片、本地文件和文件夹。部分应用来源无法直接拖入时，可复制后在悬浮窗粘贴或使用快捷键捕获。'],
+      ['AsterJot 是什么？', 'AsterJot（Capture anything. Make it actionable.）是一款开源、本地优先的 Windows 桌面收集与行动工作台，核心价值是把散落的信息转化为行动（Capture · Organize · Act）。你可以用同一个悬浮窗入口收集资料、在收件箱整理为待办与笔记，并通过今日与日历安排后续行动。'],
+      ['AsterJot 能收集哪些内容？', '可以收集网页链接、灵感文字、图片、本地文件和文件夹。部分应用来源无法直接拖入时，可复制后在悬浮窗粘贴或使用快捷键捕获。'],
       ['收下的东西会放在哪里？', '新捕获的内容会进入收件箱并保留来源信息，你可以随时把它整理为待办事项、笔记或提示。'],
       ['一定要配置捕获工作流吗？', '不需要。你可以直接手动收集和整理；当需要自动识别和处理常见链接或内容时，再按需启用捕获工作流。'],
-      ['我的资料保存在哪里？', 'StarAt 采用本地优先架构，默认将资料保存在本机 SQLite 数据库中。仅在使用需要访问网页或外部服务的捕获工作流时才需要联网。'],
-      ['现在可以下载 StarAt 吗？', '当前 v0.1.5 提供免费开源的 Windows x64 安装包，点击下载按钮即可直接下载安装。安装包暂未配置 Windows 代码签名，首次安装时系统可能提示发布者未知。'],
+      ['我的资料保存在哪里？', 'AsterJot 采用本地优先架构，默认将资料保存在本机 SQLite 数据库中。仅在使用需要访问网页或外部服务的捕获工作流时才需要联网。'],
+      ['现在可以下载 AsterJot 吗？', '当前 v0.1.5 提供免费开源的 Windows x64 安装包，点击下载按钮即可直接下载安装。安装包暂未配置 Windows 代码签名，首次安装时系统可能提示发布者未知。'],
     ],
-    endKicker: 'READY FOR WINDOWS · V0.1.5',
-    end: '先收下一条线索。',
-    endLead: '免费下载开源的 StarAt 0.1.5，把零散的信息变成可安排的下一步行动。',
-    foot: 'Everything starts here.',
+    endKicker: 'CAPTURE · ORGANIZE · ACT · V0.1.5',
+    end: '一切，从收下第一条线索开始。',
+    endLead: '免费下载开源的 AsterJot 0.1.5，把散落的信息转化为清晰可执行的下一步行动。',
+    foot: 'Capture · Organize · Act',
     footRelease: '发布说明 v0.1.5',
     footLicense: 'Apache-2.0 协议',
     schema: {
-      websiteDesc: 'StarAt 是为 Windows 打造的开源本地优先个人收集与行动工作台。',
-      altName: 'StarAt 桌面工作台',
-      howToName: '如何使用 StarAt 从收集信息到安排行动',
-      howToDesc: '从随手拖放收集到收件箱整理，再到日历与今日执行，只需三步。',
+      websiteDesc: 'AsterJot（Capture anything. Make it actionable.）是为 Windows 打造的开源本地优先收集与行动工作台，帮你把散落的信息转化为行动（Capture · Organize · Act）。',
+      altName: 'AsterJot 桌面工作台',
+      howToName: '如何使用 AsterJot 将散落的信息转化为行动',
+      howToDesc: '从桌面悬浮窗随手收下，到收件箱整理归类，再到日历与今日稳步推进，只需三步。',
       currency: 'CNY',
       features: [
         '桌面悬浮窗拖放捕获链接、文件、图片与文字，支持剪贴板粘贴与全局快捷键',
@@ -88,21 +91,23 @@ const copy = {
     },
   },
   en: {
-    title: 'StarAt · Local-First Windows Capture & Planning Workspace | Tasks, Notes & Calendar',
-    description: 'StarAt is a free, open-source, local-first Windows desktop capture and planning workspace. Drop links, files, images and quick thoughts into a floating window, triage them into tasks, notes or tips, and plan in Today and Calendar.',
-    keywords: 'StarAt,Windows desktop capture tool,floating capture window,drag and drop inbox,local-first task manager,SQLite notes app,Today and Calendar planner,open source productivity workspace,Tauri desktop app',
+    title: 'AsterJot — Capture anything. Make it actionable. | Capture · Organize · Act',
+    description: 'AsterJot — Capture anything. Make it actionable. Capture · Organize · Act with a free, open-source, local-first Windows desktop workspace. Drop links, files, images, and quick thoughts into a floating window, triage them into tasks, notes, or tips, and plan in Today and Calendar.',
+    keywords: 'AsterJot,Capture anything. Make it actionable.,Capture · Organize · Act,scattered information to action,Windows desktop capture tool,floating capture window,drag and drop inbox,local-first task manager,SQLite notes app,Today and Calendar planner,open source productivity workspace,Tauri desktop app',
     ogLocale: 'en_US',
+    imageAlt: 'AsterJot app icon — Capture anything. Make it actionable.',
     skip: 'Skip to content', nav: 'Main navigation', language: 'Switch to Chinese', home: 'Back to top',
     theme: { light: 'Switch to light mode', dark: 'Switch to dark mode' },
     features: 'Features', workflow: 'How it works', faq: 'FAQ',
     cta: 'Download for Windows', ctaShort: 'Download v0.1.5', repoCta: 'GitHub',
     eyebrow: 'Local-first workspace for Windows', version: 'v0.1.5',
-    hero: ['Everything starts', 'here.'],
-    lead: 'Turn scattered information into action. Drop links, local files and quick thoughts into a Windows floating window. Organize them as tasks, notes or tips, then schedule your next move in Today and Calendar.',
+    hero: ['Capture anything.', 'Make it actionable.'],
+    value: 'Capture · Organize · Act',
+    lead: 'Drop links, local files, images, and quick thoughts into a floating Windows window. Organize them as tasks, notes, or tips, then schedule your next move in Today and Calendar.',
     meta: ['Windows x64 installer', 'Local-first SQLite storage', 'Apache-2.0 open source'],
-    demo: 'Interactive demo', example: 'Live drag & drop', demoTitle: 'Drag a link into StarAt',
+    demo: 'Interactive demo', example: 'Live drag & drop', demoTitle: 'Drop scattered inputs into AsterJot',
     windowStatus: 'Local ready',
-    tabs: ['Capture', 'Organize', 'Plan'],
+    tabs: ['Capture', 'Organize', 'Act'],
     captured: 'Added to your inbox', dropIdle: 'Drop here to capture', dropReady: 'Release to capture',
     sourceLabel: 'Browser & desktop', replay: 'Replay',
     captureLabel: (label) => `Capture “${label}”`, announce: (label) => `“${label}” added to your inbox`,
@@ -125,16 +130,17 @@ const copy = {
       { time: '16:30', title: 'Follow up on homepage notes', tag: 'Task', focus: false },
     ],
     details: ['', 'Give tasks, notes and tips a clear place while preserving original context.', 'Block time on your calendar and focus on what matters next in Today.'],
-    featureTitle: 'A place for everything you pick up.',
-    featureSub: 'Designed to stay out of your way while you work, keeping your data local-first and ready for action.',
+    featureTitle: 'Turn scattered information into clear action.',
+    featureSub: 'Capture anything. Make it actionable. Start from one quiet entry point to capture, triage, and schedule—lightweight and local-first.',
     cards: [
       ['Floating capture', 'Stay with what you’re doing', 'Drop links, files, images or text from any window. Paste from clipboard or use a global shortcut to capture a thought.'],
       ['Sources and rules', 'Find the original when it matters', 'Keep the original source with every item. Capture workflows can recognize familiar inputs and turn them into tasks, notes or tips.'],
       ['Today and Calendar', 'See what to work on first', 'Bring today’s work into focus and reserve dedicated calendar blocks for upcoming tasks.'],
     ],
-    motto: ['Turn scattered information', 'into action.'],
-    howTitle: 'Three steps from capture to action.',
-    howSub: 'Separate catching an idea from deciding what to do with it.',
+    motto: ['Capture anything.', 'Make it actionable.'],
+    mottoSub: 'Capture · Organize · Act',
+    howTitle: 'Three steps from scattered info to action.',
+    howSub: 'Catch it at the starting point, decide what it means later, then make time to act.',
     steps: [
       ['Capture it', 'Drop something useful into the floating window and get back to what you were doing.', ['Drag & drop', 'Clipboard paste', 'Global shortcut']],
       ['Sort it later', 'Open your inbox and decide whether it’s a task to do, a note to keep or a tip to remember.', ['Task', 'Note', 'Tip', 'Source kept']],
@@ -142,23 +148,23 @@ const copy = {
     ],
     faqSub: 'Quick answers about supported content, local SQLite storage, workflows and the current Windows release.',
     questions: [
-      ['What is StarAt?', 'StarAt is an open-source, local-first Windows desktop workspace for collecting information via a floating window, organizing tasks and notes, and planning what comes next.'],
-      ['What can I capture?', 'StarAt accepts links, text, images, files and folders. If an item cannot be dragged in directly, copy and paste it into the floating window or use a shortcut.'],
+      ['What is AsterJot?', 'AsterJot (“Capture anything. Make it actionable.”) is an open-source, local-first Windows desktop workspace built to turn scattered information into action. Collect links, files, and thoughts via one floating window, triage them into tasks, notes, or tips, and plan what comes next in Today and Calendar.'],
+      ['What can I capture?', 'AsterJot accepts links, text, images, files and folders. If an item cannot be dragged in directly, copy and paste it into the floating window or use a shortcut.'],
       ['Where do captured items go?', 'Find new items in your inbox with their original source preserved, and organize them as tasks, notes or tips.'],
       ['Do I need to configure a workflow?', 'No. You can capture and organize items manually. Enable capture workflows only when you want to recognize and process familiar content automatically.'],
-      ['Where is my data stored?', 'StarAt is local-first and stores your data in a local SQLite database by default. A network connection is only needed for workflows that query webpages or external services.'],
+      ['Where is my data stored?', 'AsterJot is local-first and stores your data in a local SQLite database by default. A network connection is only needed for workflows that query webpages or external services.'],
       ['Can I download it now?', 'Version 0.1.5 provides a free, open-source Windows x64 installer directly from the download button. The installer is not yet code-signed, so Windows may display an unknown publisher prompt.'],
     ],
-    endKicker: 'READY FOR WINDOWS · V0.1.5',
-    end: 'Start with one thing.',
-    endLead: 'Download free, open-source StarAt 0.1.5 and turn loose pieces of information into your next action.',
-    foot: 'Everything starts here.',
+    endKicker: 'CAPTURE · ORGANIZE · ACT · V0.1.5',
+    end: 'Capture anything. Make it actionable.',
+    endLead: 'Download free, open-source AsterJot 0.1.5 and turn scattered information into your next clear action.',
+    foot: 'Capture · Organize · Act',
     footRelease: 'Release v0.1.5',
     footLicense: 'Apache-2.0',
     schema: {
-      websiteDesc: 'StarAt is a free, open-source, local-first personal capture and planning workspace for Windows.',
-      altName: 'StarAt Desktop Workspace',
-      howToName: 'How to turn scattered captures into planned actions with StarAt',
+      websiteDesc: 'AsterJot — Capture anything. Make it actionable. A free, open-source, local-first Windows workspace to turn scattered information into action.',
+      altName: 'AsterJot Desktop Workspace',
+      howToName: 'How to turn scattered information into action with AsterJot',
       howToDesc: 'Three simple steps from floating drag-and-drop capture to Today and Calendar execution.',
       currency: 'USD',
       features: [
@@ -228,7 +234,7 @@ const metaIcons = ['window', 'shield', 'spark'];
 const site = document.querySelector('#site');
 const urlLanguage = () => new URLSearchParams(location.search).get('lang');
 const preferred = () => {
-  try { return localStorage.getItem('starat-language'); } catch { return null; }
+  try { return localStorage.getItem('asterjot-language'); } catch { return null; }
 };
 let lang = [urlLanguage(), preferred(), navigator.language?.toLowerCase().startsWith('zh') ? 'zh' : 'en'].find((value) => value === 'zh' || value === 'en');
 let active = 0;
@@ -304,8 +310,8 @@ function renderDemo(focusTab = false, motion = '') {
   panel.innerHTML = `
     <div class="window">
       <div class="window-bar">
-        <img src="assets/starat.png" alt="" width="18" height="18">
-        <span>StarAt</span>
+        <img src="assets/asterjot.png" alt="" width="18" height="18">
+        <span>AsterJot</span>
         <span class="window-status">${t.windowStatus}</span>
         <span class="window-controls" aria-hidden="true">− □ ×</span>
       </div>
@@ -332,10 +338,10 @@ function renderDemo(focusTab = false, motion = '') {
       ${active === 0 ? tray : ''}
       ${active === 0
         ? `<div class="floating drop-zone${motion === 'capture' ? ' drop-pulse' : ''}" data-drop>
-            <div class="float-label"><span></span> StarAt</div>
+            <div class="float-label"><span></span> AsterJot</div>
             <div class="drop-target">${icon(inbox.length ? 'check' : 'tray')}<span data-drop-text>${inbox.length ? t.captured : t.dropIdle}</span></div>
           </div>`
-        : `<div class="floating"><div class="float-label"><span></span> StarAt</div><div class="capture-button status">${icon(icons[active])}<span>${active === 2 ? t.slot : t.file}</span></div></div>`}
+        : `<div class="floating"><div class="float-label"><span></span> AsterJot</div><div class="capture-button status">${icon(icons[active])}<span>${active === 2 ? t.slot : t.file}</span></div></div>`}
     </div>`;
   document.querySelector('#demo-description').textContent = hint();
   if (focusTab) document.querySelector(`#tab-${active}`).focus();
@@ -359,23 +365,27 @@ function syncSeo(t) {
     const el = document.querySelector(selector);
     if (el) el.content = content;
   };
+  const pageUrl = urlLanguage() ? `${SITE_URL}?lang=${lang}` : SITE_URL;
   setMeta('meta[name="description"]', t.description);
   setMeta('meta[name="keywords"]', t.keywords);
   setMeta('meta[property="og:title"]', t.title);
   setMeta('meta[property="og:description"]', t.description);
   setMeta('meta[property="og:locale"]', t.ogLocale);
+  setMeta('meta[property="og:url"]', pageUrl);
+  setMeta('meta[property="og:image:alt"]', t.imageAlt);
   setMeta('meta[name="twitter:title"]', t.title);
   setMeta('meta[name="twitter:description"]', t.description);
+  setMeta('meta[name="twitter:image:alt"]', t.imageAlt);
   const ld = document.querySelector('#structured-data');
   if (ld) {
-    const pageUrl = urlLanguage() ? `${SITE_URL}?lang=${lang}` : SITE_URL;
     ld.textContent = JSON.stringify({
       '@context': 'https://schema.org',
       '@graph': [
         {
           '@type': 'WebSite',
           '@id': `${SITE_URL}#website`,
-          name: 'StarAt',
+          name: 'AsterJot',
+          alternateName: 'Capture anything. Make it actionable.',
           url: SITE_URL,
           description: t.schema.websiteDesc,
           inLanguage: ['zh-CN', 'en'],
@@ -385,6 +395,8 @@ function syncSeo(t) {
           '@id': `${SITE_URL}#webpage`,
           url: pageUrl,
           name: t.title,
+          headline: 'Capture anything. Make it actionable.',
+          abstract: 'Capture · Organize · Act',
           description: t.description,
           isPartOf: { '@id': `${SITE_URL}#website` },
           about: { '@id': `${SITE_URL}#software` },
@@ -393,11 +405,12 @@ function syncSeo(t) {
         {
           '@type': 'SoftwareApplication',
           '@id': `${SITE_URL}#software`,
-          name: 'StarAt',
+          name: 'AsterJot',
           alternateName: t.schema.altName,
           applicationCategory: 'ProductivityApplication',
           operatingSystem: 'Windows 10, Windows 11',
           softwareVersion: '0.1.5',
+          abstract: 'Capture · Organize · Act',
           description: t.description,
           url: SITE_URL,
           downloadUrl: DOWNLOAD_URL,
@@ -405,7 +418,7 @@ function syncSeo(t) {
           releaseNotes: RELEASES_URL,
           codeRepository: REPO_URL,
           license: 'https://www.apache.org/licenses/LICENSE-2.0',
-          image: `${SITE_URL}assets/starat.png`,
+          image: `${SITE_URL}assets/asterjot.png`,
           isAccessibleForFree: true,
           inLanguage: ['zh-CN', 'en'],
           keywords: t.keywords,
@@ -463,9 +476,9 @@ function render(introMotion = false) {
     <a class="skip" href="#main">${t.skip}</a>
     <div class="header-shell">
       <header class="wrap header">
-        <a href="#top" class="brand" aria-label="StarAt · ${t.home}">
-          <img src="assets/starat.png" alt="" width="30" height="30">
-          <span>StarAt</span>
+        <a href="#top" class="brand" aria-label="AsterJot · ${t.home}">
+          <img src="assets/asterjot.png" alt="" width="30" height="30">
+          <span>AsterJot</span>
           <span class="version-pill">${t.version}</span>
         </a>
         <nav aria-label="${t.nav}" class="nav">
@@ -485,6 +498,8 @@ function render(introMotion = false) {
         <div class="intro">
           <p class="caption eyebrow-pill"><span class="signal"></span><span>${t.eyebrow}</span><span class="eyebrow-sep" aria-hidden="true">/</span><span class="eyebrow-ver">${t.version}</span></p>
           <h1 class="heading-1" id="hero-title"><span>${t.hero[0]} </span><span class="hero-accent">${t.hero[1]}</span></h1>
+          <p class="hero-value" lang="${lang === 'zh' ? 'zh-CN' : 'en'}">${t.value}</p>
+          <p class="caption">Capture · Organize · Act</p>
           <p class="lead">${t.lead}</p>
           <div class="cta-row">${primaryAction}${repoAction}</div>
           <div class="hero-meta">${t.meta.map((item, i) => `<span class="hero-meta-item">${icon(metaIcons[i])}<span>${item}</span></span>`).join('')}</div>
@@ -524,9 +539,14 @@ function render(introMotion = false) {
             <span class="motto-shard shard-1"></span>
             <span class="motto-shard shard-2"></span>
             <span class="motto-shard shard-3"></span>
-            <img src="assets/starat.png" alt="" width="68" height="68">
+            <img src="assets/asterjot.png" alt="" width="68" height="68">
           </div>
-          <h2 class="heading-2">${t.motto.map((line) => `<span class="motto-line">${(lang === 'zh' ? line.match(/.{1,2}/gu) : line.split(' ')).map((word) => `<span class="word">${word}</span>`).join(lang === 'zh' ? '' : ' ')}</span>`).join(' ')}</h2>
+          <h2 class="heading-2" lang="en">${t.motto.map((line) => {
+            const isCjk = /[\u4e00-\u9fff]/.test(line);
+            const parts = isCjk ? line.match(/.{1,2}/gu) : line.split(' ');
+            return `<span class="motto-line">${parts.map((word) => `<span class="word">${word}</span>`).join(isCjk ? '' : ' ')}</span>`;
+          }).join(' ')}</h2>
+          <p class="motto-sub">${t.mottoSub}</p>
         </div>
       </section>
 
@@ -571,7 +591,7 @@ function render(introMotion = false) {
     </main>
 
     <footer class="wrap footer">
-      <a class="brand" href="#top"><img src="assets/starat.png" alt="" width="24" height="24"><span>StarAt</span></a>
+      <a class="brand" href="#top"><img src="assets/asterjot.png" alt="" width="24" height="24"><span>AsterJot</span></a>
       <p class="caption">${t.foot}</p>
       <div class="footer-links">
         <a href="${RELEASES_URL}" target="_blank" rel="noopener noreferrer">${t.footRelease}</a>
@@ -903,13 +923,13 @@ document.addEventListener('visibilitychange', () => {
 site.addEventListener('click', (event) => {
   if (event.target.closest('[data-theme-toggle]')) {
     root.dataset.theme = theme() === 'dark' ? 'light' : 'dark';
-    try { localStorage.setItem('starat-theme', root.dataset.theme); } catch { /* Keep the choice for this page. */ }
+    try { localStorage.setItem('asterjot-theme', root.dataset.theme); } catch { /* Keep the choice for this page. */ }
     updateTheme();
     return;
   }
   if (event.target.closest('[data-language]')) {
     lang = lang === 'zh' ? 'en' : 'zh';
-    try { localStorage.setItem('starat-language', lang); } catch { /* URL still records the choice. */ }
+    try { localStorage.setItem('asterjot-language', lang); } catch { /* URL still records the choice. */ }
     const url = new URL(location.href);
     url.searchParams.set('lang', lang);
     history.replaceState(null, '', url);

@@ -15,7 +15,9 @@ pub mod floating;
 pub mod floating_port;
 pub mod search;
 
-use starat_platform::placement::{COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, Point};
+use asterjot_platform::placement::{
+    COLLAPSED_HEIGHT_LOGICAL_PX, COLLAPSED_WIDTH_LOGICAL_PX, Point,
+};
 use tauri::{
     AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder, Window,
     WindowEvent,
@@ -23,7 +25,7 @@ use tauri::{
 
 use std::sync::Arc;
 
-use starat_platform::foreground::{ForegroundPort, UnsupportedForeground};
+use asterjot_platform::foreground::{ForegroundPort, UnsupportedForeground};
 
 use crate::app::AppState;
 
@@ -59,7 +61,7 @@ pub fn create_floating_window<R: Runtime, M: Manager<R>>(
         FLOATING_WINDOW_LABEL,
         WebviewUrl::App("index.html".into()),
     )
-    .title("StarAt")
+    .title("AsterJot")
     .inner_size(COLLAPSED_WIDTH_LOGICAL_PX, COLLAPSED_HEIGHT_LOGICAL_PX)
     .decorations(false)
     .transparent(true)
@@ -92,7 +94,7 @@ pub fn suppress_bare_alt_menu<R: Runtime>(window: &WebviewWindow<R>) {
             }
         };
         let result = window.run_on_main_thread(move || {
-            if let Err(error) = starat_platform_windows::menu_key::suppress_bare_alt_menu(hwnd) {
+            if let Err(error) = asterjot_platform_windows::menu_key::suppress_bare_alt_menu(hwnd) {
                 tracing::warn!(event = "alt_menu_suppress_failed", window = %label, %error, "无法屏蔽单独按 Alt 的菜单模式");
             }
         });
@@ -112,9 +114,9 @@ pub fn foreground_port<R: Runtime>(window: &WebviewWindow<R>) -> Arc<dyn Foregro
     {
         match window.hwnd() {
             Ok(hwnd) => {
-                return Arc::new(starat_platform_windows::foreground::new_windows_foreground(
-                    hwnd.0 as isize,
-                ));
+                return Arc::new(
+                    asterjot_platform_windows::foreground::new_windows_foreground(hwnd.0 as isize),
+                );
             }
             Err(error) => {
                 tracing::warn!(event = "floating_hwnd_unavailable", %error, "无法获取悬浮窗句柄，不还原前台窗口");
@@ -139,7 +141,7 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         Some(window) => window,
         None => {
             WebviewWindowBuilder::new(app, MAIN_WINDOW_LABEL, WebviewUrl::App("index.html".into()))
-                .title("StarAt")
+                .title("AsterJot")
                 .inner_size(MAIN_WIDTH, MAIN_HEIGHT)
                 .decorations(false)
                 .visible(false)
@@ -161,14 +163,14 @@ pub fn show_main_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     Ok(())
 }
 
-/// 按命令行参数处理「通知被点击」的激活（`starat://item/<ID>`）：打开主窗口并定位到对应的 Item。
+/// 按命令行参数处理「通知被点击」的激活（`asterjot://item/<ID>`）：打开主窗口并定位到对应的 Item。
 ///
-/// 参数来自任何能启动程序的来源，只接受严格校验过的地址（见 `starat_platform::notification::parse_activation`）。
+/// 参数来自任何能启动程序的来源，只接受严格校验过的地址（见 `asterjot_platform::notification::parse_activation`）。
 /// 返回是否识别并处理了激活参数；没有时由调用方照常显示主窗口。
 pub fn handle_activation<R: Runtime>(app: &AppHandle<R>, args: &[String]) -> bool {
     let Some(item_id) = args
         .iter()
-        .find_map(|arg| starat_platform::notification::parse_activation(arg))
+        .find_map(|arg| asterjot_platform::notification::parse_activation(arg))
     else {
         return false;
     };

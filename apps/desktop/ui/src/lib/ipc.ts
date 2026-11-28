@@ -227,9 +227,9 @@ export interface IpcClient {
   pruneSkinAssets(keepFiles: string[]): Promise<number>;
   /** 读取本地 `skins/assets/` 的磁盘占用概况。 */
   getSkinStorageUsage(): Promise<SkinStorageUsageDto>;
-  /** 将当前皮肤清单与引用的本地帧图打包导出为 `.starat-skin.zip`，返回导出路径。 */
+  /** 将当前皮肤清单与引用的本地帧图打包导出为 `.asterjot-skin.zip`，返回导出路径。 */
   exportSkinPack(manifestJson: string, assetFiles: string[]): Promise<string>;
-  /** 选择并导入 `.starat-skin.zip`，返回清单 JSON；用户取消时返回 `null`。 */
+  /** 选择并导入 `.asterjot-skin.zip`，返回清单 JSON；用户取消时返回 `null`。 */
   importSkinPack(): Promise<string | null>;
   /** 修改日历一周从哪天开始。 */
   setWeekStart(weekStart: WeekStartDto): Promise<void>;
@@ -253,7 +253,7 @@ export interface IpcClient {
   listTrash(): Promise<TrashEntryDto[]>;
   /**
    * 永久删除回收站里的这些条目；不在回收站里的不会被删除。返回实际删除的数量。
-   * 只删除记录与 StarAt 自己保存的文件，被引用的用户文件不受影响。
+   * 只删除记录与 AsterJot 自己保存的文件，被引用的用户文件不受影响。
    */
   purgeItems(ids: string[]): Promise<number>;
   /** 清空回收站，返回删除的数量。 */
@@ -343,7 +343,7 @@ export interface IpcClient {
   suggestShortcuts(action: ShortcutActionDto): Promise<string[]>;
   /**
    * 修改一个动作的全局快捷键并保存（如 `Ctrl+Alt+Q`）。
-   * 不合法抛出 `SHORTCUT_INVALID`，被占用（其他程序或 StarAt 的另一个动作）抛出 `SHORTCUT_CONFLICT`，
+   * 不合法抛出 `SHORTCUT_INVALID`，被占用（其他程序或 AsterJot 的另一个动作）抛出 `SHORTCUT_CONFLICT`，
    * 此时原来的绑定保持不变。
    */
   setShortcut(action: ShortcutActionDto, accelerator: string): Promise<ShortcutStatusDto>;

@@ -1,7 +1,7 @@
 //! 捕获时补充来源应用的规则测试。
 
-use starat_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
-use starat_platform::source_app::SourceApplicationPort;
+use asterjot_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
+use asterjot_platform::source_app::SourceApplicationPort;
 
 use super::fill_source_application;
 

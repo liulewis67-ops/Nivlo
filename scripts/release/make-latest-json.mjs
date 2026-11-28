@@ -2,7 +2,7 @@
 // 生成 Tauri Updater 的清单 latest.json（实施计划 7.6）。
 //
 // 用法：
-//   node scripts/release/make-latest-json.mjs --version 0.1.1 --base-url https://host/starat \
+//   node scripts/release/make-latest-json.mjs --version 0.1.1 --base-url https://host/asterjot \
 //        [--notes "说明" | --notes-file docs/development/releases/v0.1.1.md]
 //        [--bundle-dir target/release/bundle/nsis] [--out latest.json]
 //
@@ -38,7 +38,7 @@ if (!decoded.startsWith("untrusted comment:") || !decoded.includes("\ntrusted co
 }
 const manifest = {
   version,
-  notes: arg("notes-file") ? readFileSync(arg("notes-file"), "utf8").trim() : arg("notes", `StarAt ${version}`),
+  notes: arg("notes-file") ? readFileSync(arg("notes-file"), "utf8").trim() : arg("notes", `AsterJot ${version}`),
   pub_date: new Date().toISOString(),
   platforms: {
     "windows-x86_64": {

@@ -223,7 +223,7 @@ describe("设置页：导出、备份与恢复", () => {
     ipc.chooseRestoreFile(true);
     await userEvent.click(screen.getByRole("button", { name: "选择备份…" }));
     expect(await screen.findByText("备份已准备好")).toBeInTheDocument();
-    expect(screen.getByText(/starat-before-restore-test\.zip/)).toBeInTheDocument();
+    expect(screen.getByText(/asterjot-before-restore-test\.zip/)).toBeInTheDocument();
     expect(ipc.calls).not.toContain("restartApp");
     await userEvent.click(screen.getByRole("button", { name: "立即重启" }));
     await waitFor(() => expect(ipc.calls).toContain("restartApp"));
@@ -245,7 +245,7 @@ describe("设置页：导出、备份与恢复", () => {
     expect(ipc.calls).not.toContain("resetAllData");
     await userEvent.click(screen.getByRole("button", { name: "再点一次确认删除" }));
     expect(await screen.findByText("重启后将删除数据")).toBeInTheDocument();
-    expect(screen.getByText(/starat-before-reset-test\.zip/)).toBeInTheDocument();
+    expect(screen.getByText(/asterjot-before-reset-test\.zip/)).toBeInTheDocument();
     expect(ipc.calls).toContain("resetAllData");
     expect(ipc.calls).not.toContain("restartApp");
     await userEvent.click(screen.getByRole("button", { name: "立即重启" }));

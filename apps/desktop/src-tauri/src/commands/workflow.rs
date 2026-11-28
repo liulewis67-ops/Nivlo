@@ -3,14 +3,14 @@
 //! 定义本体以 JSON 文本（`definitionJson`）往返：表单编辑器在前端组装，后端用与导入相同的
 //! 深度校验（JSON Schema + 正则 + 模板变量）把关，前后端不需要各维护一份 Step 的类型镜像。
 
-use serde::{Deserialize, Serialize};
-use specta::Type;
-use starat_application::error::{AppError, ErrorCode};
-use starat_application::workflow::{
+use asterjot_application::error::{AppError, ErrorCode};
+use asterjot_application::workflow::{
     PlannedItem, RunRecord, StepReport, StoredWorkflow, WorkflowRunResult,
 };
-use starat_domain::capture::CaptureInput;
-use starat_domain::workflow::{Workflow, WorkflowId, WorkflowSource};
+use asterjot_domain::capture::CaptureInput;
+use asterjot_domain::workflow::{Workflow, WorkflowId, WorkflowSource};
+use serde::{Deserialize, Serialize};
+use specta::Type;
 use tauri::{AppHandle, Runtime, State};
 use tauri_plugin_dialog::DialogExt;
 
@@ -79,7 +79,7 @@ fn script_hosts(workflow: &Workflow) -> Vec<String> {
         .steps
         .iter()
         .filter_map(|step| match step {
-            starat_domain::workflow::Step::Script { hosts, .. } => Some(hosts.clone()),
+            asterjot_domain::workflow::Step::Script { hosts, .. } => Some(hosts.clone()),
             _ => None,
         })
         .flatten()
@@ -227,7 +227,7 @@ impl From<&WorkflowRunResult> for DryRunResultDto {
                 failure
                     .action
                     .as_ref()
-                    .map(starat_application::workflow::FailureAction::code),
+                    .map(asterjot_application::workflow::FailureAction::code),
             ),
         };
         Self {
@@ -399,8 +399,8 @@ pub async fn delete_workflow(state: State<'_, AppState>, id: String) -> Result<(
 /// 样例输入 → 捕获输入（与真实捕获用同一套规范化）。
 fn sample_input(input: &DryRunInputDto) -> Result<CaptureInput, AppError> {
     let parsed = match input.kind.as_str() {
-        "file" => starat_capture::normalize_files(&[input.value.trim()]),
-        _ => starat_capture::normalize_text(&input.value),
+        "file" => asterjot_capture::normalize_files(&[input.value.trim()]),
+        _ => asterjot_capture::normalize_text(&input.value),
     };
     parsed.ok_or_else(|| AppError::new(ErrorCode::InvalidInput, "请先输入一个样例"))
 }
@@ -510,7 +510,7 @@ pub struct WorkflowImportPreviewDto {
 
 /// 预览（不写数据）。
 fn import_preview_dto(
-    preview: &starat_application::workflow::ImportPreview,
+    preview: &asterjot_application::workflow::ImportPreview,
 ) -> Result<WorkflowImportPreviewDto, AppError> {
     let workflow = &preview.workflow;
     let definition_json = serde_json::to_string_pretty(workflow).map_err(|e| {
@@ -521,7 +521,7 @@ fn import_preview_dto(
     })?;
     let mut step_kinds: Vec<String> = Vec::new();
     for step in &workflow.steps {
-        let kind = starat_workflow::executor::step_kind(step).to_owned();
+        let kind = asterjot_workflow::executor::step_kind(step).to_owned();
         if !step_kinds.contains(&kind) {
             step_kinds.push(kind);
         }
@@ -537,7 +537,7 @@ fn import_preview_dto(
         has_script: workflow
             .steps
             .iter()
-            .any(|step| matches!(step, starat_domain::workflow::Step::Script { .. })),
+            .any(|step| matches!(step, asterjot_domain::workflow::Step::Script { .. })),
         script_hosts: script_hosts(workflow),
         step_kinds,
         definition_json,
@@ -597,7 +597,7 @@ pub async fn pick_workflow_import<R: Runtime>(
     let picked = tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()
-            .add_filter("StarAt Workflow", &["json"])
+            .add_filter("AsterJot Workflow", &["json"])
             .blocking_pick_file()
     })
     .await

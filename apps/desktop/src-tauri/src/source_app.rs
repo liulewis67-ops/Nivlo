@@ -5,15 +5,15 @@
 
 use std::sync::Arc;
 
-use starat_domain::capture::{CaptureOrigin, CaptureRequest};
-use starat_platform::source_app::SourceApplicationPort;
+use asterjot_domain::capture::{CaptureOrigin, CaptureRequest};
+use asterjot_platform::source_app::SourceApplicationPort;
 
 /// 当前平台的来源应用识别：Windows 用前台窗口钩子，其他平台暂不支持（总是 `None`）。
 #[must_use]
 pub fn platform_source_application() -> Arc<dyn SourceApplicationPort> {
     #[cfg(target_os = "windows")]
     {
-        Arc::new(starat_platform_windows::source_app::WindowsSourceApplication)
+        Arc::new(asterjot_platform_windows::source_app::WindowsSourceApplication)
     }
     #[cfg(not(target_os = "windows"))]
     {

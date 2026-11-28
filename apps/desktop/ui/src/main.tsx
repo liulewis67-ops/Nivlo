@@ -111,7 +111,7 @@ async function bootstrap(): Promise<void> {
     setIpcClient(previewWindows(memory, label));
   } else {
     throw new Error(
-      "StarAt UI must run inside Tauri; use the Vite dev server for a browser preview.",
+      "AsterJot UI must run inside Tauri; use the Vite dev server for a browser preview.",
     );
   }
 

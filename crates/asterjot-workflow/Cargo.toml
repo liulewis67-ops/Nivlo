@@ -1,0 +1,35 @@
+[package]
+name = "asterjot-workflow"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "AsterJot workflow crate"
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+flate2.workspace = true
+jsonschema = { version = "0.30", default-features = false }
+asterjot-application.workspace = true
+asterjot-common.workspace = true
+asterjot-domain.workspace = true
+asterjot-script.workspace = true
+sha2.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync", "time", "macros", "rt"] }
+tokio-util.workspace = true
+tracing.workspace = true
+url.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+asterjot-application = { workspace = true, features = ["testing"] }
+asterjot-capture.workspace = true
+tokio = { workspace = true, features = ["macros", "rt", "test-util", "sync", "time"] }
+
+[lints]
+workspace = true

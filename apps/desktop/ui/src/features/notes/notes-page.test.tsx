@@ -54,11 +54,11 @@ describe("noteSnippet", () => {
 
 describe("noteMatches", () => {
   it("在标题或内容里找，不区分大小写，多个词都要出现", () => {
-    const note = { title: "Weekly 周报", content: "本周完成了 StarAt 的搜索" };
+    const note = { title: "Weekly 周报", content: "本周完成了 AsterJot 的搜索" };
     expect(noteMatches(note, "")).toBe(true);
     expect(noteMatches(note, "  ")).toBe(true);
     expect(noteMatches(note, "weekly")).toBe(true);
-    expect(noteMatches(note, "STARAT 搜索")).toBe(true);
+    expect(noteMatches(note, "ASTERJOT 搜索")).toBe(true);
     expect(noteMatches(note, "周报 日历")).toBe(false);
     expect(noteMatches({ title: "空的", content: null }, "内容")).toBe(false);
   });

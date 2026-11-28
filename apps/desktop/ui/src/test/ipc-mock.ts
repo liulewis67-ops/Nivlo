@@ -1086,7 +1086,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     suggestShortcuts: (action: ShortcutActionDto) => {
       calls.push("suggestShortcuts");
-      // 和后端同样的候选与过滤：跳过被占用的与 StarAt 各动作正在用的。
+      // 和后端同样的候选与过滤：跳过被占用的与 AsterJot 各动作正在用的。
       const candidates =
         action === "search"
           ? ["Ctrl+Alt+K", "Alt+Shift+Space", "Ctrl+Alt+Shift+Space", "Alt+Shift+K"]
@@ -1297,7 +1297,7 @@ export function createMemoryIpc(options: MemoryIpcOptions = {}): MemoryIpc {
     },
     exportSkinPack: () => {
       calls.push("exportSkinPack");
-      return Promise.resolve("exports/starat-skin-mock.starat-skin.zip");
+      return Promise.resolve("exports/asterjot-skin-mock.asterjot-skin.zip");
     },
     importSkinPack: () => {
       calls.push("importSkinPack");
@@ -1520,16 +1520,16 @@ ${(item.content ?? "").toLowerCase()}`;
     },
     exportDiagnostics: () => {
       calls.push("exportDiagnostics");
-      return Promise.resolve("C:\\StarAt\\exports\\starat-diagnostics-test.zip");
+      return Promise.resolve("C:\\AsterJot\\exports\\asterjot-diagnostics-test.zip");
     },
     createBackupFile: () => {
       calls.push("createBackupFile");
-      return Promise.resolve("C:\\StarAt\\exports\\starat-backup-test.zip");
+      return Promise.resolve("C:\\AsterJot\\exports\\asterjot-backup-test.zip");
     },
     exportData: (format) => {
       calls.push(`exportData:${format}`);
       return Promise.resolve({
-        path: `C:\\StarAt\\exports\\starat-export-test.${format === "json" ? "json" : format === "markdown" ? "md" : "zip"}`,
+        path: `C:\\AsterJot\\exports\\asterjot-export-test.${format === "json" ? "json" : format === "markdown" ? "md" : "zip"}`,
         itemCount: items.length,
       });
     },
@@ -1541,7 +1541,7 @@ ${(item.content ?? "").toLowerCase()}`;
           : {
               createdAt: "2026-10-10T08:00:00Z",
               appVersion: "0.1.0",
-              safetyBackup: "C:\\StarAt\\exports\\starat-before-restore-test.zip",
+              safetyBackup: "C:\\AsterJot\\exports\\asterjot-before-restore-test.zip",
             },
       );
     },
@@ -1551,7 +1551,7 @@ ${(item.content ?? "").toLowerCase()}`;
     },
     resetAllData: () => {
       calls.push("resetAllData");
-      return Promise.resolve("C:\\StarAt\\exports\\starat-before-reset-test.zip");
+      return Promise.resolve("C:\\AsterJot\\exports\\asterjot-before-reset-test.zip");
     },
     chooseRestoreFile: (chosen: boolean) => {
       restoreChoice = chosen ? "picked" : null;

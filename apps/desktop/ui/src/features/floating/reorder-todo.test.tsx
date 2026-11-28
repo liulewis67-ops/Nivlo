@@ -47,7 +47,7 @@ async function advance(ms: number): Promise<void> {
 async function openPanel(ipc: MemoryIpc): Promise<void> {
   renderWithProviders(<FloatingRoot />, ipc);
   await advance(0);
-  fireEvent.pointerEnter(screen.getByRole("group", { name: "StarAt悬浮窗" }));
+  fireEvent.pointerEnter(screen.getByRole("group", { name: "AsterJot悬浮窗" }));
   await advance(HOVER_ENTER_DELAY_MS);
 }
 

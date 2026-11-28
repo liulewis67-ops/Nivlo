@@ -8,7 +8,7 @@ Implementation evidence: [stage ledger](ui-ux-progress.md), including the separa
 
 ## Direction and evidence
 
-StarAt is an **Operate** interface: success means capturing information, organizing it, scheduling it and completing work with little interruption. Preserve its restrained system typography, neutral surfaces, blue accents and familiar desktop controls. Evaluate coordination across the whole journey before polishing individual screens.
+AsterJot is an **Operate** interface: success means capturing information, organizing it, scheduling it and completing work with little interruption. Preserve its restrained system typography, neutral surfaces, blue accents and familiar desktop controls. Evaluate coordination across the whole journey before polishing individual screens.
 
 Assessment A reviewed current browser fixtures on Today, Inbox, item details, Calendar, Settings, Workflows and Search at 1280×720, and Inbox/details and Calendar at the shipping default 960×640. Source and existing product/interaction plans were also inspected. The preview uses fixture dates; those dates are not evidence of a product defect. Native WebView2 focus/DPI, NVDA, injected errors and real compact floating-window rendering were not validated in this review.
 
@@ -113,7 +113,7 @@ Final package: current screenshot/state matrix, task scorecard, accessibility/na
 ## Evidence references
 
 - Implementation follow-up (2026-11-02): [stage ledger](ui-ux-progress.md), [requirements handoff](ui-ux-acceptance-handoff.md) and [unrun participant scorecard](ui-ux-task-scorecard.md). The initial findings and provisional score above remain historical; implementation/automated results do not replace formative sessions or manual accessibility/native review. The user directed proceeding with available checks and documenting gaps.
-- Product: `docs/architecture/StarAt_Product_Design.md`.
+- Product: `docs/architecture/AsterJot_Product_Design.md`.
 - Interaction history: `docs/development/interaction-optimization-plan.md`.
 - Native capture coverage: `docs/development/drop-matrix.md`.
 - Historical timings: `docs/development/perf-baseline.md`.

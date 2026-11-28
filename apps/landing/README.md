@@ -1,4 +1,4 @@
-# StarAt宣传落地页
+# AsterJot宣传落地页
 
 静态页面，与桌面应用独立。没有构建步骤或第三方请求。
 
@@ -16,4 +16,4 @@ node apps/desktop/ui/node_modules/vite/bin/vite.js apps/landing --host 127.0.0.1
 
 页面包含 Windows 0.1.5 下载入口及交互演示。示例数据只用于展示；演示不会调用桌面应用，也不会写入真实任务。下载入口直接指向 GitHub Release 的安装包文件，无需先打开发布页面；社交预览图使用 GitHub Pages 的绝对 URL。
 
-推送到 `main` 会触发 `.github/workflows/pages.yml`，部署本目录到 <https://liulewis67-ops.github.io/StarAt/>。首次需在仓库 Settings → Pages 中将 Source 设为 GitHub Actions；也可手动运行部署工作流。应在 Release 安装包发布成功后对外宣传下载地址。
+推送到 `main` 会触发 `.github/workflows/pages.yml`，部署本目录到 <https://liulewis67-ops.github.io/AsterJot/>。首次需在仓库 Settings → Pages 中将 Source 设为 GitHub Actions；也可手动运行部署工作流。应在 Release 安装包发布成功后对外宣传下载地址。

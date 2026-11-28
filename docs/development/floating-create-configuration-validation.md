@@ -17,7 +17,7 @@
 | 前端全量 Vitest | 69 个文件、704 项测试通过（第二轮优化后） |
 | 前端生产构建 | 通过；仍有构建产物大于 500 kB 的体积提示 |
 | Rust `cargo fmt --all --check` | 通过 |
-| Rust `cargo clippy -p starat-desktop --all-targets -j 2 -- -D warnings` | 通过 |
+| Rust `cargo clippy -p asterjot-desktop --all-targets -j 2 -- -D warnings` | 通过 |
 | Rust 悬浮控制器测试 | 34 项通过 |
 | Rust capability 测试 | 7 项通过 |
 | 配置页浏览器视觉场景 | 5 项通过；第二轮因底栏新增“继续新增”选项更新基线，复跑差异均为 0% |
@@ -28,9 +28,9 @@
 npm.cmd --prefix apps/desktop/ui run check
 npm.cmd --prefix apps/desktop/ui run build
 cargo fmt --all --check
-cargo clippy -p starat-desktop --all-targets -j 2 -- -D warnings
-cargo test -p starat-desktop windows::floating::tests -j 2
-cargo test -p starat-desktop --test capabilities -j 2
+cargo clippy -p asterjot-desktop --all-targets -j 2 -- -D warnings
+cargo test -p asterjot-desktop windows::floating::tests -j 2
+cargo test -p asterjot-desktop --test capabilities -j 2
 node scripts/visual/visual.mjs --create-stage
 ```
 
@@ -43,16 +43,16 @@ node scripts/visual/visual.mjs --create-stage
 - 连续新增两次：项目和日期保留，标题与描述清空，状态提示随下一次输入消失，最终取消不弹确认。
 - 配置页已打开时再次触发快速添加：窗口无焦点时重新调用 `beginFloatingInput(true)`，草稿与“笔记”类型保留。
 
-第二轮仅前端改动，未改 Rust，沿用 2026-11-05 0:05 编译、晚于全部 Rust 源码修改的 `target/debug/starat-desktop.exe`。
+第二轮仅前端改动，未改 Rust，沿用 2026-11-05 0:05 编译、晚于全部 Rust 源码修改的 `target/debug/asterjot-desktop.exe`。
 
 ### 第二轮本机原生实测
 
-隔离数据目录 `%TEMP%/starat-create-r2-20261105`、WebView2 目录 `%TEMP%/starat-create-r2-webview-20261105`；通过 CDP 读写页面状态，用 `keybd_event` 发送真实的 Ctrl+Shift+Space 全局快捷键，用 `GetForegroundWindow` 确认前台窗口。测试实例已退出。
+隔离数据目录 `%TEMP%/asterjot-create-r2-20261105`、WebView2 目录 `%TEMP%/asterjot-create-r2-webview-20261105`；通过 CDP 读写页面状态，用 `keybd_event` 发送真实的 Ctrl+Shift+Space 全局快捷键，用 `GetForegroundWindow` 确认前台窗口。测试实例已退出。
 
 | 场景 | 观察结果 |
 | --- | --- |
-| 前台为其他应用时按快捷键首次打开 | 配置页位于 `(448,48)`、640×720，前台切到 StarAt，焦点在标题，默认计划日期为当天 |
-| 已打开、选“笔记”并填写标题后切到其他应用，再按快捷键 | 前台回到 StarAt，`document.hasFocus()` 为 true，焦点在标题；标题与“笔记”类型保留，位置不变 |
+| 前台为其他应用时按快捷键首次打开 | 配置页位于 `(448,48)`、640×720，前台切到 AsterJot，焦点在标题，默认计划日期为当天 |
+| 已打开、选“笔记”并填写标题后切到其他应用，再按快捷键 | 前台回到 AsterJot，`document.hasFocus()` 为 true，焦点在标题；标题与“笔记”类型保留，位置不变 |
 | 勾选“创建后继续新增”，计划日期改为 2026-11-07，连续创建两次 | 配置页保持打开，显示“已创建「…」”，标题清空并聚焦，日期保留；输入下一条标题时提示消失 |
 | 空白续录按 Escape | 不弹放弃确认直接关闭；徽标回到 `(1472,62)`，前台还给原应用 |
 | 持久化结果 | 只读查询真实 `items` 表：恰好 2 条 todo（连续一、连续二），计划日期均为 2026-11-07，无多余记录 |
@@ -61,9 +61,9 @@ node scripts/visual/visual.mjs --create-stage
 
 ## 本机原生实测
 
-使用重新编译的 `target/debug/starat-desktop.exe`、真实 Tauri IPC、WebView2 及 SQLite；开发服务器提供前端。运行时确认 `window.__TAURI_INTERNALS__` 存在，未使用浏览器 Memory IPC。UI 通过 computer-use 操作，运行时几何和数据库通过只读检查确认。
+使用重新编译的 `target/debug/asterjot-desktop.exe`、真实 Tauri IPC、WebView2 及 SQLite；开发服务器提供前端。运行时确认 `window.__TAURI_INTERNALS__` 存在，未使用浏览器 Memory IPC。UI 通过 computer-use 操作，运行时几何和数据库通过只读检查确认。
 
-数据目录为 `%TEMP%/starat-create-validation-20261105`，WebView2 目录为 `%TEMP%/starat-create-validation-webview-20261105`。测试实例已退出，未使用日常数据目录。
+数据目录为 `%TEMP%/asterjot-create-validation-20261105`，WebView2 目录为 `%TEMP%/asterjot-create-validation-webview-20261105`。测试实例已退出，未使用日常数据目录。
 
 | 场景 | 观察结果 |
 | --- | --- |
@@ -88,7 +88,7 @@ node scripts/visual/visual.mjs --create-stage
 
 ## 笔记文档布局的本机验证（2026-11-05）
 
-发布版（`vite build` + `cargo build --release --features tauri/custom-protocol`），临时 `STARAT_DATA_DIR` 与 `WEBVIEW2_USER_DATA_FOLDER`，通过 CDP 驱动真实窗口；运行前确认没有其他 StarAt 实例，结束后关闭测试进程并删除临时目录。显示器：125% 缩放，logical 工作区 1536×816。
+发布版（`vite build` + `cargo build --release --features tauri/custom-protocol`），临时 `ASTERJOT_DATA_DIR` 与 `WEBVIEW2_USER_DATA_FOLDER`，通过 CDP 驱动真实窗口；运行前确认没有其他 AsterJot 实例，结束后关闭测试进程并删除临时目录。显示器：125% 缩放，logical 工作区 1536×816。
 
 | 检查 | 结果 |
 |---|---|

@@ -3,9 +3,9 @@
 //! 全局快捷键有自己的命令（`get_shortcut_status` / `set_shortcut`）；
 //! 主题与语言是纯前端的显示偏好，不经过后端。
 
-use starat_application::error::{AppError, ErrorCode};
-use starat_application::settings::keys;
-use starat_scheduler::service::MAX_REMINDER_COUNT;
+use asterjot_application::error::{AppError, ErrorCode};
+use asterjot_application::settings::keys;
+use asterjot_scheduler::service::MAX_REMINDER_COUNT;
 use tauri::{AppHandle, Manager, Runtime, State};
 use tauri_plugin_autostart::ManagerExt;
 

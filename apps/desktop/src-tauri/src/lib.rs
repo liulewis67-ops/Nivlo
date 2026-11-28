@@ -1,4 +1,4 @@
-//! `starat-desktop`：Tauri 桌面宿主，也是 Composition Root。
+//! `asterjot-desktop`：Tauri 桌面宿主，也是 Composition Root。
 //!
 //! 本 crate 只做装配与适配：
 //!
@@ -8,7 +8,7 @@
 //! * [`events`]：领域事件到前端事件的映射与转发。
 //! * [`app::AppState`]：唯一注册到 Tauri 的状态。
 //!
-//! 业务规则不在这里实现，都在 `starat-domain` / `starat-application`。
+//! 业务规则不在这里实现，都在 `asterjot-domain` / `asterjot-application`。
 
 pub mod app;
 pub mod autostart;
@@ -41,7 +41,7 @@ use std::sync::Arc;
 use tauri::{Manager, RunEvent, Wry};
 use tauri_specta::Event;
 
-use starat_application::day_change::run_day_change_watcher;
+use asterjot_application::day_change::run_day_change_watcher;
 
 use crate::app::AppState;
 use crate::events::FloatingPointerLeftEvent;
@@ -203,12 +203,12 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
     let app = tauri::Builder::default()
         // 只读皮肤帧图协议：仅服务 `skins/assets/<sha256>.(webp|png)`，不暴露任意磁盘路径。
-        .register_uri_scheme_protocol("starat-skin", |ctx, request| {
+        .register_uri_scheme_protocol("asterjot-skin", |ctx, request| {
             serve_skin_asset(ctx.app_handle(), request.uri().path())
         })
         // 单实例插件必须最先注册：第二次启动只唤起已有进程的主窗口，然后立即退出。
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            // 点击通知会以 `starat://item/<ID>` 参数再启动一次程序：转给这里，打开对应的 Item。
+            // 点击通知会以 `asterjot://item/<ID>` 参数再启动一次程序：转给这里，打开对应的 Item。
             if windows::handle_activation(app, &args) {
                 return;
             }
@@ -236,7 +236,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             // （当前数据整体挪到 replaced-<时间>/，不删除）。
             // 应用状态（以及它的 Clock）还没建好，这里直接用系统时钟，同样经过 Clock 接口。
             let stamp = {
-                use starat_common::clock::{Clock, SystemClock};
+                use asterjot_common::clock::{Clock, SystemClock};
                 SystemClock::new()
                     .now_utc()
                     .format("%Y%m%d-%H%M%S")
@@ -315,7 +315,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             let workflows = state.services.workflows.clone();
             let shutdown = state.runtime.shutdown_token();
             let workflow_maintainer = tauri::async_runtime::spawn(async move {
-                if let Err(error) = workflows.sync_builtin(starat_workflow::builtin::builtin_workflows()).await {
+                if let Err(error) = workflows.sync_builtin(asterjot_workflow::builtin::builtin_workflows()).await {
                     tracing::warn!(event = "workflow_sync_failed", %error, "同步内置 Workflow 失败");
                 }
                 loop {
@@ -455,7 +455,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             app.manage(windows::search::SearchWindowState::default());
             for action in shortcut::ShortcutAction::ALL {
                 let handle = app.handle().clone();
-                let on_pressed: starat_platform::shortcut::ShortcutCallback = match action {
+                let on_pressed: asterjot_platform::shortcut::ShortcutCallback = match action {
                     shortcut::ShortcutAction::QuickCreate => {
                         Arc::new(move || tray::request_quick_add(&handle))
                     }
@@ -504,7 +504,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                         .state::<AppState>()
                         .services
                         .settings
-                        .get(starat_application::settings::keys::SEARCH_PREWARM)
+                        .get(asterjot_application::settings::keys::SEARCH_PREWARM)
                         .await
                         .ok()
                         .flatten()
@@ -536,7 +536,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-/// 构造一个空体 HTTP 响应（供 `starat-skin://` 协议错误分支使用）。
+/// 构造一个空体 HTTP 响应（供 `asterjot-skin://` 协议错误分支使用）。
 fn empty_protocol_response(status: u16) -> tauri::http::Response<Vec<u8>> {
     tauri::http::Response::builder()
         .status(status)
@@ -544,19 +544,19 @@ fn empty_protocol_response(status: u16) -> tauri::http::Response<Vec<u8>> {
         .unwrap_or_else(|_| tauri::http::Response::new(Vec::new()))
 }
 
-/// 为 `starat-skin://localhost/<sha256>.(webp|png)` 提供只读文件响应。
+/// 为 `asterjot-skin://localhost/<sha256>.(webp|png)` 提供只读文件响应。
 fn serve_skin_asset<R: tauri::Runtime>(
     handle: &tauri::AppHandle<R>,
     raw_path: &str,
 ) -> tauri::http::Response<Vec<u8>> {
     let file_name = raw_path.trim_start_matches('/');
-    if !starat_storage::is_valid_skin_asset_file_name(file_name) {
+    if !asterjot_storage::is_valid_skin_asset_file_name(file_name) {
         return empty_protocol_response(400);
     }
     let Some((_, ext)) = file_name.split_once('.') else {
         return empty_protocol_response(400);
     };
-    let Some(format) = starat_application::ports::SkinAssetFormat::from_extension(ext) else {
+    let Some(format) = asterjot_application::ports::SkinAssetFormat::from_extension(ext) else {
         return empty_protocol_response(400);
     };
     let Some(state) = handle.try_state::<AppState>() else {

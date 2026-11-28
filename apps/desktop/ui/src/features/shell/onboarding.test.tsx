@@ -13,7 +13,7 @@ describe("首次运行引导", () => {
     await ipc.disableShortcut("quickCreate");
     ipc.showOnboarding();
     renderWithProviders(<MainShell />, ipc);
-    const dialog = await screen.findByRole("dialog", { name: "欢迎使用StarAt" });
+    const dialog = await screen.findByRole("dialog", { name: "欢迎使用AsterJot" });
     await userEvent.click(screen.getByRole("tab", { name: "第 4 步" }));
     expect(dialog).not.toHaveTextContent("Ctrl+Shift+Space");
     expect(dialog).toHaveTextContent("Ctrl+Alt+Space");
@@ -23,7 +23,7 @@ describe("首次运行引导", () => {
     const fresh = createMemoryIpc();
     fresh.showOnboarding();
     const view = renderWithProviders(<MainShell />, fresh);
-    expect(await screen.findByRole("dialog", { name: "欢迎使用StarAt" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "欢迎使用AsterJot" })).toBeInTheDocument();
     expect(document.querySelector("main")).toHaveAttribute("inert");
     fireEvent.keyDown(window, { key: "k", ctrlKey: true });
     fireEvent.keyDown(window, { key: "?" });
@@ -32,7 +32,7 @@ describe("首次运行引导", () => {
 
     renderWithProviders(<MainShell />, createMemoryIpc());
     await screen.findByRole("region", { name: "今天" });
-    expect(screen.queryByRole("dialog", { name: "欢迎使用StarAt" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "欢迎使用AsterJot" })).not.toBeInTheDocument();
   });
 
   it("走完四步：下一步 / 上一步 / 指示点跳转，最后一步是「开始使用」并记为看过", async () => {
@@ -41,15 +41,15 @@ describe("首次运行引导", () => {
     const ipc = createMemoryIpc();
     ipc.showOnboarding();
     renderWithProviders(<MainShell />, ipc);
-    const dialog = await screen.findByRole("dialog", { name: "欢迎使用StarAt" });
+    const dialog = await screen.findByRole("dialog", { name: "欢迎使用AsterJot" });
 
-    expect(screen.getByRole("heading", { name: "欢迎使用StarAt" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "欢迎使用AsterJot" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "上一步" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "下一步" }));
     expect(screen.getByRole("heading", { name: "悬停看今天，点一下就添加" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "上一步" }));
-    expect(screen.getByRole("heading", { name: "欢迎使用StarAt" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "欢迎使用AsterJot" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "第 4 步" }));
     expect(screen.getByRole("heading", { name: "用说话的方式安排时间" })).toBeInTheDocument();
@@ -62,7 +62,7 @@ describe("首次运行引导", () => {
     expect(screen.queryByRole("button", { name: "跳过" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "开始使用" }));
-    expect(screen.queryByRole("dialog", { name: "欢迎使用StarAt" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "欢迎使用AsterJot" })).not.toBeInTheDocument();
     await waitFor(() => expect(ipc.appSettings.onboardingCompleted).toBe(true));
     expect(screen.getByRole("heading", { name: "今天" })).toHaveFocus();
   });
@@ -84,7 +84,7 @@ describe("首次运行引导", () => {
       "search",
     );
     renderWithProviders(<MainShell />, ipc);
-    const dialog = await screen.findByRole("dialog", { name: "欢迎使用StarAt" });
+    const dialog = await screen.findByRole("dialog", { name: "欢迎使用AsterJot" });
 
     await user.click(screen.getByRole("tab", { name: "第 4 步" }));
     expect(dialog).toHaveTextContent("全局搜索的快捷键 Ctrl+Alt+Space 被别的程序占用了");
@@ -98,24 +98,24 @@ describe("首次运行引导", () => {
     const ipc = createMemoryIpc();
     ipc.showOnboarding();
     renderWithProviders(<MainShell />, ipc);
-    const dialog = await screen.findByRole("dialog", { name: "欢迎使用StarAt" });
+    const dialog = await screen.findByRole("dialog", { name: "欢迎使用AsterJot" });
     await waitFor(() => expect(screen.getByRole("button", { name: "下一步" })).toHaveFocus());
 
     fireEvent.keyDown(dialog, { key: "ArrowRight" });
     expect(screen.getByRole("heading", { name: "悬停看今天，点一下就添加" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole("button", { name: "下一步" })).toHaveFocus());
     fireEvent.keyDown(dialog, { key: "ArrowLeft" });
-    expect(screen.getByRole("heading", { name: "欢迎使用StarAt" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "欢迎使用AsterJot" })).toBeInTheDocument();
     // 在第一步再按 ← 不会越界。
     fireEvent.keyDown(dialog, { key: "ArrowLeft" });
-    expect(screen.getByRole("heading", { name: "欢迎使用StarAt" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "欢迎使用AsterJot" })).toBeInTheDocument();
     for (let i = 0; i < ONBOARDING_STEPS + 2; i += 1)
       fireEvent.keyDown(dialog, { key: "ArrowRight" });
     expect(screen.getByRole("heading", { name: "用说话的方式安排时间" })).toBeInTheDocument();
 
     fireEvent.keyDown(dialog, { key: "Escape" });
     await waitFor(() =>
-      expect(screen.queryByRole("dialog", { name: "欢迎使用StarAt" })).not.toBeInTheDocument(),
+      expect(screen.queryByRole("dialog", { name: "欢迎使用AsterJot" })).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(ipc.appSettings.onboardingCompleted).toBe(true));
   });
@@ -126,14 +126,14 @@ describe("首次运行引导", () => {
     const ipc = createMemoryIpc();
     renderWithProviders(<MainShell />, ipc);
     await screen.findByRole("region", { name: "设置" });
-    expect(screen.queryByRole("dialog", { name: "欢迎使用StarAt" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "欢迎使用AsterJot" })).not.toBeInTheDocument();
 
     await user.click(await screen.findByRole("button", { name: "重新查看" }));
-    expect(await screen.findByRole("dialog", { name: "欢迎使用StarAt" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "欢迎使用AsterJot" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "跳过" }));
     expect(screen.getByRole("button", { name: "重新查看" })).toHaveFocus();
-    expect(screen.queryByRole("dialog", { name: "欢迎使用StarAt" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "欢迎使用AsterJot" })).not.toBeInTheDocument();
     await waitFor(() => expect(ipc.appSettings.onboardingCompleted).toBe(true));
   });
 });

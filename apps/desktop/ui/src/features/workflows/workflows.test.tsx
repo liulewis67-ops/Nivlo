@@ -374,7 +374,7 @@ describe("导入与导出", () => {
 
     ipc.offerWorkflowFile(incoming({ schemaVersion: 2 }));
     await userEvent.click(screen.getByRole("button", { name: "导入" }));
-    expect(await screen.findByText(/升级StarAt后再导入/)).toBeInTheDocument();
+    expect(await screen.findByText(/升级AsterJot后再导入/)).toBeInTheDocument();
   });
 
   it("导出调用后端并提示路径", async () => {

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/*", "apps/desktop/src-tauri"]
+members = ["crates/asterjot-*", "apps/desktop/src-tauri"]
 
 [workspace.package]
 version = "0.1.5"
@@ -10,19 +10,19 @@ publish = false
 
 # 所有依赖版本在此统一声明，子 crate 使用 `xxx.workspace = true` 引用（后端规范 §2.2）。
 [workspace.dependencies]
-starat-domain = { path = "crates/starat-domain" }
-starat-application = { path = "crates/starat-application" }
-starat-storage = { path = "crates/starat-storage" }
-starat-capture = { path = "crates/starat-capture" }
-starat-workflow = { path = "crates/starat-workflow" }
-starat-script = { path = "crates/starat-script" }
-starat-scheduler = { path = "crates/starat-scheduler" }
-starat-integrations = { path = "crates/starat-integrations" }
-starat-platform = { path = "crates/starat-platform" }
-starat-platform-windows = { path = "crates/starat-platform-windows" }
-starat-platform-macos = { path = "crates/starat-platform-macos" }
-starat-platform-linux = { path = "crates/starat-platform-linux" }
-starat-common = { path = "crates/starat-common" }
+asterjot-domain = { path = "crates/asterjot-domain" }
+asterjot-application = { path = "crates/asterjot-application" }
+asterjot-storage = { path = "crates/asterjot-storage" }
+asterjot-capture = { path = "crates/asterjot-capture" }
+asterjot-workflow = { path = "crates/asterjot-workflow" }
+asterjot-script = { path = "crates/asterjot-script" }
+asterjot-scheduler = { path = "crates/asterjot-scheduler" }
+asterjot-integrations = { path = "crates/asterjot-integrations" }
+asterjot-platform = { path = "crates/asterjot-platform" }
+asterjot-platform-windows = { path = "crates/asterjot-platform-windows" }
+asterjot-platform-macos = { path = "crates/asterjot-platform-macos" }
+asterjot-platform-linux = { path = "crates/asterjot-platform-linux" }
+asterjot-common = { path = "crates/asterjot-common" }
 
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-build = { version = "2", features = [] }
@@ -56,7 +56,7 @@ flate2 = "1"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 sha2 = "0.10"
 # TLS 只链接 ring 一套加密后端：与 tauri-plugin-updater 共用，不再额外链接 aws-lc。
-# 用 rustls-no-provider 时须先安装进程级 CryptoProvider，见 starat-integrations `ReqwestHttp::new`。
+# 用 rustls-no-provider 时须先安装进程级 CryptoProvider，见 asterjot-integrations `ReqwestHttp::new`。
 reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 regex = "1"

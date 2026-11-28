@@ -222,7 +222,7 @@ a, button, summary { -webkit-tap-highlight-color: transparent; }
 .studio-head .signal::after { border-color: #60a5fa; }
 
 .heading-1 {
-  margin-block: 24px 20px;
+  margin-block: 24px 16px;
 }
 .heading-1 span {
   display: block;
@@ -233,9 +233,15 @@ a, button, summary { -webkit-tap-highlight-color: transparent; }
   background: linear-gradient(115deg, var(--hero-accent-start) 0%, var(--hero-accent-end) 58%, var(--amber) 125%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+.hero-value {
+  max-width: 490px;
+  color: var(--text);
+  font-size: 1.1875rem; font-weight: 600; line-height: 1.45; letter-spacing: -.015em;
+  margin-bottom: 12px;
+}
 .lead {
   max-width: 490px; color: var(--muted);
-  font-size: 1.075rem; line-height: 1.72;
+  font-size: 1.025rem; line-height: 1.72;
   margin-bottom: 30px;
 }
 
@@ -558,6 +564,11 @@ a, button, summary { -webkit-tap-highlight-color: transparent; }
 .shard-3 { width: 12px; height: 12px; bottom: -6px; right: -22px; background: var(--ice); opacity: .45; transform: rotate(26deg); animation-delay: -3.5s; }
 
 .motto-content h2 { max-width: 720px; line-height: 1.18; }
+.motto-sub {
+  color: var(--muted);
+  font-size: 1rem; line-height: 1.6;
+  margin-top: -10px;
+}
 .motto-line { display: block; }
 .motto-line:last-child {
   background: linear-gradient(110deg, var(--hero-accent-start) 0%, var(--amber) 115%);

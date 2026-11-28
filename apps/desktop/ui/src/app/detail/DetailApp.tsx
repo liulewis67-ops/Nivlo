@@ -29,7 +29,7 @@ export function DetailApp({
     queryFn: () => ipc.getItemDetail(id),
   });
   const item = query.data?.item;
-  const title = `${item?.title ?? t("detail.title")} · StarAt`;
+  const title = `${item?.title ?? t("detail.title")} · AsterJot`;
   useEffect(() => {
     document.title = title;
     if (isRunningInTauri()) void getCurrentWindow().setTitle(title).catch(reportError);

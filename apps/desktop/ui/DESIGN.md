@@ -1,4 +1,4 @@
-# StarAt design context — implementation draft
+# AsterJot design context — implementation draft
 
 ## Overview
 

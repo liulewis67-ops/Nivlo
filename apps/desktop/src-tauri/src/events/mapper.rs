@@ -1,7 +1,7 @@
 //! UI Event Mapper：选择并转换需要通知前端的领域事件。
 
-use starat_application::event::{UiEvent, UiEventMapper};
-use starat_domain::event::DomainEvent;
+use asterjot_application::event::{UiEvent, UiEventMapper};
+use asterjot_domain::event::DomainEvent;
 
 /// 默认映射：Item 的创建映射为 `ItemCreated`，其余影响 Item 展示的变化映射为 `ItemUpdated`。
 ///
@@ -37,7 +37,7 @@ impl UiEventMapper for DefaultUiEventMapper {
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
-    use starat_domain::id::{ItemId, ProjectId};
+    use asterjot_domain::id::{ItemId, ProjectId};
     use uuid::Uuid;
 
     use super::*;

@@ -7,33 +7,33 @@
 //! * 本地日期 `YYYY-MM-DD`，本地时间 `HH:MM:SS`（输入也接受 `HH:MM`）；
 //! * UTC 时间点为 RFC 3339。
 
+use asterjot_application::calendar::{
+    CalendarData, CalendarEntry, CalendarView, EntryKind, WeekStart,
+};
+use asterjot_application::capture::CaptureResult;
+use asterjot_application::error::{AppError, ErrorCode};
+use asterjot_application::inbox::{
+    InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
+};
+use asterjot_application::item::{ItemLink, Patch, RescheduleTarget, UpdateItemInput};
+use asterjot_application::organize::{ProjectSummary, TagSummary};
+use asterjot_application::ports::{ItemFilter, ItemOrder};
+use asterjot_application::settings::LaterRule;
+use asterjot_application::today::{TodayEntry, TodayView};
+use asterjot_application::trash::TrashEntry;
+use asterjot_domain::attachment::Attachment;
+use asterjot_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
+use asterjot_domain::id::{ItemId, ProjectId, TagId};
+use asterjot_domain::item::{
+    ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority,
+};
+use asterjot_domain::project::Project;
+use asterjot_domain::source::Source;
+use asterjot_domain::tag::Tag;
 use base64::Engine;
 use chrono::{DateTime, NaiveDate, NaiveTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use starat_application::calendar::{
-    CalendarData, CalendarEntry, CalendarView, EntryKind, WeekStart,
-};
-use starat_application::capture::CaptureResult;
-use starat_application::error::{AppError, ErrorCode};
-use starat_application::inbox::{
-    InboxEntry, OrganizeAction, OrganizeOutcome, PreviousState, ScheduleTarget,
-};
-use starat_application::item::{ItemLink, Patch, RescheduleTarget, UpdateItemInput};
-use starat_application::organize::{ProjectSummary, TagSummary};
-use starat_application::ports::{ItemFilter, ItemOrder};
-use starat_application::settings::LaterRule;
-use starat_application::today::{TodayEntry, TodayView};
-use starat_application::trash::TrashEntry;
-use starat_domain::attachment::Attachment;
-use starat_domain::capture::{CaptureInput, CaptureOrigin, CaptureRequest};
-use starat_domain::id::{ItemId, ProjectId, TagId};
-use starat_domain::item::{
-    ContentFormat, DatePoint, Item, ItemStatus, ItemType, NewItem, Priority,
-};
-use starat_domain::project::Project;
-use starat_domain::source::Source;
-use starat_domain::tag::Tag;
 
 use crate::shortcut::{ShortcutAction, ShortcutStatus};
 
@@ -379,7 +379,7 @@ pub enum CreateTextSourceDto {
     Selection,
 }
 
-impl From<CreateTextSourceDto> for starat_domain::source::SourceType {
+impl From<CreateTextSourceDto> for asterjot_domain::source::SourceType {
     fn from(value: CreateTextSourceDto) -> Self {
         Self::new(match value {
             CreateTextSourceDto::Clipboard => Self::CLIPBOARD,
@@ -415,7 +415,7 @@ impl From<ItemLinkDto> for ItemLink {
                 title: title.map(|t| t.trim().to_owned()).filter(|t| !t.is_empty()),
             },
             ItemLinkDto::File { path } => {
-                Self::File(starat_capture::file_ref(std::path::Path::new(&path)))
+                Self::File(asterjot_capture::file_ref(std::path::Path::new(&path)))
             }
         }
     }
@@ -659,10 +659,10 @@ pub struct ExpandedLayoutDto {
     pub vertical: VerticalAnchorDto,
 }
 
-impl From<starat_platform::placement::ExpandedLayout> for ExpandedLayoutDto {
+impl From<asterjot_platform::placement::ExpandedLayout> for ExpandedLayoutDto {
     /// Platform → DTO。
-    fn from(layout: starat_platform::placement::ExpandedLayout) -> Self {
-        use starat_platform::placement::{HorizontalAnchor, VerticalAnchor};
+    fn from(layout: asterjot_platform::placement::ExpandedLayout) -> Self {
+        use asterjot_platform::placement::{HorizontalAnchor, VerticalAnchor};
         Self {
             horizontal: match layout.horizontal {
                 HorizontalAnchor::Left => HorizontalAnchorDto::Left,
@@ -919,7 +919,7 @@ impl From<&Source> for SourceDto {
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AttachmentDto {
-    /// `reference`（引用用户的文件）或 `stored`（StarAt 保存的图片）。
+    /// `reference`（引用用户的文件）或 `stored`（AsterJot 保存的图片）。
     pub kind: String,
     /// 路径：引用时是原始路径；保存的图片是相对 `attachments/` 的文件名。
     pub path: String,
@@ -940,7 +940,7 @@ impl AttachmentDto {
         let exists = if value.owns_file() {
             true
         } else {
-            starat_capture::reference_exists(&value.path)
+            asterjot_capture::reference_exists(&value.path)
         };
         #[allow(clippy::cast_precision_loss)]
         let size_bytes = value.size_bytes.map(|size| size as f64);
@@ -1539,9 +1539,9 @@ mod tests {
 
     #[test]
     fn ipc_error_carries_code_and_action() {
-        let error: IpcError = AppError::from(starat_application::ports::StorageError::Unavailable(
-            "x".into(),
-        ))
+        let error: IpcError = AppError::from(
+            asterjot_application::ports::StorageError::Unavailable("x".into()),
+        )
         .into();
         assert_eq!(error.code, "STORAGE_UNAVAILABLE");
         assert_eq!(error.action.as_deref(), Some("OPEN_DIAGNOSTICS"));
@@ -1681,16 +1681,16 @@ impl TryFrom<CaptureRequestDto> for CaptureRequest {
         let empty = || invalid("没有可捕获的内容".to_owned());
         let input: CaptureInput = match value.input {
             CaptureInputDto::Text { text } => {
-                starat_capture::normalize_text(&text).ok_or_else(empty)?
+                asterjot_capture::normalize_text(&text).ok_or_else(empty)?
             }
             CaptureInputDto::Files { paths } => {
-                starat_capture::normalize_files(&paths).ok_or_else(empty)?
+                asterjot_capture::normalize_files(&paths).ok_or_else(empty)?
             }
             CaptureInputDto::Image { data_base64 } => {
                 let bytes = base64::engine::general_purpose::STANDARD
                     .decode(data_base64.as_bytes())
                     .map_err(|_| invalid("图片数据不是有效的 Base64".to_owned()))?;
-                starat_capture::image_input(bytes).map_err(|e| invalid(e.to_string()))?
+                asterjot_capture::image_input(bytes).map_err(|e| invalid(e.to_string()))?
             }
         };
         let mut request = Self::new(input, value.origin.into());
@@ -1734,9 +1734,9 @@ pub struct SkinAssetDto {
     pub size_bytes: u32,
 }
 
-impl From<starat_application::ports::StoredSkinAsset> for SkinAssetDto {
+impl From<asterjot_application::ports::StoredSkinAsset> for SkinAssetDto {
     /// Application → DTO。
-    fn from(value: starat_application::ports::StoredSkinAsset) -> Self {
+    fn from(value: asterjot_application::ports::StoredSkinAsset) -> Self {
         Self {
             id: value.id,
             ext: value.format.extension().to_owned(),
@@ -1757,9 +1757,9 @@ pub struct SkinStorageUsageDto {
     pub quota_bytes: u32,
 }
 
-impl From<starat_application::ports::SkinStorageUsage> for SkinStorageUsageDto {
+impl From<asterjot_application::ports::SkinStorageUsage> for SkinStorageUsageDto {
     /// Application → DTO。
-    fn from(value: starat_application::ports::SkinStorageUsage) -> Self {
+    fn from(value: asterjot_application::ports::SkinStorageUsage) -> Self {
         Self {
             file_count: u32::try_from(value.file_count).unwrap_or(u32::MAX),
             total_bytes: u32::try_from(value.total_bytes).unwrap_or(u32::MAX),

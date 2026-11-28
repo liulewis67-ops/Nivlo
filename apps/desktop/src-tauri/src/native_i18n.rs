@@ -3,7 +3,7 @@
 //! 语言偏好保存在 `settings` 表的 `ui.language`，与前端同一份；这里只提供语言枚举与解析，
 //! 具体文案放在使用它的模块（`tray`、`autostart`）里，按语言选择。
 
-use starat_application::settings::{SettingsService, keys};
+use asterjot_application::settings::{SettingsService, keys};
 
 /// 原生界面支持的语言。
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -45,7 +45,7 @@ impl Lang {
     }
 }
 
-impl From<Lang> for starat_scheduler::Locale {
+impl From<Lang> for asterjot_scheduler::Locale {
     fn from(lang: Lang) -> Self {
         match lang {
             Lang::ZhCn => Self::ZhCn,

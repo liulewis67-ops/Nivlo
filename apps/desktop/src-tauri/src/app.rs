@@ -6,20 +6,20 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use starat_application::calendar::CalendarService;
-use starat_application::capture::CaptureService;
-use starat_application::event::EventBus;
-use starat_application::export::ExportService;
-use starat_application::inbox::InboxService;
-use starat_application::item::ItemService;
-use starat_application::organize::{ProjectService, TagService};
-use starat_application::settings::SettingsService;
-use starat_application::today::TodayService;
-use starat_application::trash::TrashService;
-use starat_application::workflow::WorkflowService;
-use starat_common::clock::Clock;
-use starat_common::logging::LogGuard;
-use starat_storage::Database;
+use asterjot_application::calendar::CalendarService;
+use asterjot_application::capture::CaptureService;
+use asterjot_application::event::EventBus;
+use asterjot_application::export::ExportService;
+use asterjot_application::inbox::InboxService;
+use asterjot_application::item::ItemService;
+use asterjot_application::organize::{ProjectService, TagService};
+use asterjot_application::settings::SettingsService;
+use asterjot_application::today::TodayService;
+use asterjot_application::trash::TrashService;
+use asterjot_application::workflow::WorkflowService;
+use asterjot_common::clock::Clock;
+use asterjot_common::logging::LogGuard;
+use asterjot_storage::Database;
 use tauri::async_runtime::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
@@ -53,7 +53,7 @@ pub struct ApplicationServices {
     /// 第三方集成的连接管理（凭据只在系统凭据库里）。
     pub integrations: crate::integration_service::IntegrationService,
     /// 悬浮窗自定义皮肤帧图的本地文件存储。
-    pub skin_assets: Arc<dyn starat_application::ports::SkinAssetStore>,
+    pub skin_assets: Arc<dyn asterjot_application::ports::SkinAssetStore>,
 }
 
 /// 运行时句柄：事件总线、后台任务与需要在退出时释放的资源。
@@ -78,7 +78,7 @@ pub struct RuntimeHandles {
     /// 由主窗口启动时取走（事件只负责通知已经在运行的主窗口）。
     pending_main_view: Mutex<Option<String>>,
     /// Scheduler 的外部控制（唤醒、暂停通知）。
-    scheduler_control: Arc<starat_scheduler::Control>,
+    scheduler_control: Arc<asterjot_scheduler::Control>,
     /// Quick Create 的全局快捷键控制器；窗口创建之后才能构造（回调要用 `AppHandle`），因此用 `OnceLock`。
     shortcut: OnceLock<Arc<ShortcutController>>,
     /// 全局搜索的快捷键控制器。
@@ -86,14 +86,14 @@ pub struct RuntimeHandles {
     /// 从选区或剪贴板新建的快捷键控制器。
     context_create_shortcut: OnceLock<Arc<ShortcutController>>,
     /// 应用目录布局；启动时登记，导出诊断包 / 备份时使用。
-    paths: OnceLock<starat_common::paths::AppPaths>,
+    paths: OnceLock<asterjot_common::paths::AppPaths>,
     /// 需要和应用同寿命的系统监听器（电源事件窗口等）；退出时一并释放。
     keep_alive: Mutex<Vec<Box<dyn std::any::Any + Send>>>,
     /// Script Worker（QuickJS 沙箱线程）；退出时停止并等待线程结束。
-    script_worker: OnceLock<starat_script::ScriptWorker>,
+    script_worker: OnceLock<asterjot_script::ScriptWorker>,
     /// 后台补全队列的接收端：由启动流程取走并交给后台任务（只能取一次）。
     enrichment_queue: Mutex<
-        Option<tokio::sync::mpsc::UnboundedReceiver<starat_application::capture::EnrichmentJob>>,
+        Option<tokio::sync::mpsc::UnboundedReceiver<asterjot_application::capture::EnrichmentJob>>,
     >,
 }
 
@@ -124,7 +124,7 @@ impl RuntimeHandles {
             paths: OnceLock::new(),
             script_worker: OnceLock::new(),
             keep_alive: Mutex::new(Vec::new()),
-            scheduler_control: Arc::new(starat_scheduler::Control::new()),
+            scheduler_control: Arc::new(asterjot_scheduler::Control::new()),
         }
     }
 
@@ -139,27 +139,27 @@ impl RuntimeHandles {
     /// 登记 Script Worker（只能登记一次），返回给 Executor 用的句柄。
     pub fn set_script_worker(
         &self,
-        worker: starat_script::ScriptWorker,
-    ) -> starat_script::ScriptHandle {
+        worker: asterjot_script::ScriptWorker,
+    ) -> asterjot_script::ScriptHandle {
         let handle = worker.handle();
         let _ = self.script_worker.set(worker);
         handle
     }
 
     /// 登记应用目录布局（只能登记一次）。
-    pub fn set_paths(&self, paths: starat_common::paths::AppPaths) {
+    pub fn set_paths(&self, paths: asterjot_common::paths::AppPaths) {
         let _ = self.paths.set(paths);
     }
 
     /// 应用目录布局；启动完成之前为 `None`。
-    pub fn paths(&self) -> Option<&starat_common::paths::AppPaths> {
+    pub fn paths(&self) -> Option<&asterjot_common::paths::AppPaths> {
         self.paths.get()
     }
 
     /// 登记后台补全队列的接收端。
     pub fn set_enrichment_queue(
         &self,
-        queue: tokio::sync::mpsc::UnboundedReceiver<starat_application::capture::EnrichmentJob>,
+        queue: tokio::sync::mpsc::UnboundedReceiver<asterjot_application::capture::EnrichmentJob>,
     ) {
         *self
             .enrichment_queue
@@ -170,7 +170,7 @@ impl RuntimeHandles {
     /// 取走后台补全队列的接收端（只能取一次）。
     pub fn take_enrichment_queue(
         &self,
-    ) -> Option<tokio::sync::mpsc::UnboundedReceiver<starat_application::capture::EnrichmentJob>>
+    ) -> Option<tokio::sync::mpsc::UnboundedReceiver<asterjot_application::capture::EnrichmentJob>>
     {
         self.enrichment_queue
             .lock()
@@ -179,7 +179,7 @@ impl RuntimeHandles {
     }
 
     /// Scheduler 的外部控制句柄。
-    pub fn scheduler_control(&self) -> Arc<starat_scheduler::Control> {
+    pub fn scheduler_control(&self) -> Arc<asterjot_scheduler::Control> {
         self.scheduler_control.clone()
     }
 

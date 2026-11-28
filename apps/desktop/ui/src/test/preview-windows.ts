@@ -4,13 +4,13 @@ import type { MemoryIpc } from "./ipc-mock";
 
 /** 开发预览的同源详情窗口共享内存数据；生产构建不加载此模块。 */
 export function previewWindows(memory: MemoryIpc, label: string): IpcClient {
-  const opener = window.opener as (Window & { __staratPreviewIpc?: IpcClient }) | null;
+  const opener = window.opener as (Window & { __asterjotPreviewIpc?: IpcClient }) | null;
   if (
     label === "detail" &&
     opener?.location.origin === window.location.origin &&
-    opener.__staratPreviewIpc
+    opener.__asterjotPreviewIpc
   )
-    return opener.__staratPreviewIpc;
+    return opener.__asterjotPreviewIpc;
   const client: IpcClient = {
     ...memory,
     openItemInMain: async (id) => {
@@ -23,6 +23,6 @@ export function previewWindows(memory: MemoryIpc, label: string): IpcClient {
       detail.focus();
     },
   };
-  Object.assign(window, { __staratPreviewIpc: client });
+  Object.assign(window, { __asterjotPreviewIpc: client });
   return client;
 }

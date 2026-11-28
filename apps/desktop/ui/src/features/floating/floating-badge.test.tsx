@@ -10,7 +10,7 @@ import { LONG_PRESS_MS } from "./model/drag-intent";
 
 /** 徽标按钮。 */
 function badge(): HTMLElement {
-  return screen.getByRole("button", { name: /打开StarAt主窗口/ });
+  return screen.getByRole("button", { name: /打开AsterJot主窗口/ });
 }
 
 /** 按住到长按计时结束，徽标进入选中态。 */

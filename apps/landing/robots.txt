@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://liulewis67-ops.github.io/StarAt/sitemap.xml
+Sitemap: https://liulewis67-ops.github.io/AsterJot/sitemap.xml

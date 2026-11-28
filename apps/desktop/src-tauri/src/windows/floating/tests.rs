@@ -4,11 +4,11 @@
 
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use asterjot_application::testing::FakeUnitOfWork;
+use asterjot_common::clock::FakeClock;
+use asterjot_platform::foreground::ForegroundPort;
+use asterjot_platform::placement::{Edge, MonitorInfo, Rect};
 use chrono::{TimeZone, Utc};
-use starat_application::testing::FakeUnitOfWork;
-use starat_common::clock::FakeClock;
-use starat_platform::foreground::ForegroundPort;
-use starat_platform::placement::{Edge, MonitorInfo, Rect};
 
 use super::*;
 
@@ -499,11 +499,11 @@ async fn expand_places_the_panel_inside_the_work_area_and_reports_the_direction(
     // 徽标在右上角：面板向左、向下展开，右缘与徽标右缘对齐。
     assert_eq!(
         layout.horizontal,
-        starat_platform::placement::HorizontalAnchor::Right
+        asterjot_platform::placement::HorizontalAnchor::Right
     );
     assert_eq!(
         layout.vertical,
-        starat_platform::placement::VerticalAnchor::Top
+        asterjot_platform::placement::VerticalAnchor::Top
     );
     assert_eq!(bounds.x + 300, 1920);
 }

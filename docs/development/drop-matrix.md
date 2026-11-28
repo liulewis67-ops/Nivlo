@@ -25,7 +25,7 @@
 
 ## 10.1 实现方式（2026-10-12）
 
-不做自定义 `IDropTarget`：真机探测发现 WebView2 的拖放目标注册在**浏览器进程**的窗口上（另一个进程），本进程无法接管或转发。改用 WebView2 的正式接口：页面把拖入的 `File` 对象用 `chrome.webview.postMessageWithAdditionalObjects("starat:drop-files:<id>", files)` 交给宿主，宿主在 `WebMessageReceived` 里从 `ICoreWebView2File.Path` 取出磁盘路径，经 Tauri 事件 `starat-drop-paths` 发回页面，页面再以 `files` 输入捕获。HTML5 的链接 / 文本 / 图片拖放完全不受影响。真机验证方式：用调试端口把一个真实文件挂到 `<input type=file>`，再派发携带该 `File` 的 `drop` 事件，得到「已创建：<文件名>」，日志里 `capture_completed kind=file origin=drop`。
+不做自定义 `IDropTarget`：真机探测发现 WebView2 的拖放目标注册在**浏览器进程**的窗口上（另一个进程），本进程无法接管或转发。改用 WebView2 的正式接口：页面把拖入的 `File` 对象用 `chrome.webview.postMessageWithAdditionalObjects("asterjot:drop-files:<id>", files)` 交给宿主，宿主在 `WebMessageReceived` 里从 `ICoreWebView2File.Path` 取出磁盘路径，经 Tauri 事件 `asterjot-drop-paths` 发回页面，页面再以 `files` 输入捕获。HTML5 的链接 / 文本 / 图片拖放完全不受影响。真机验证方式：用调试端口把一个真实文件挂到 `<input type=file>`，再派发携带该 `File` 的 `drop` 事件，得到「已创建：<文件名>」，日志里 `capture_completed kind=file origin=drop`。
 
 ## 真实 OLE 拖放的自动化验证（2026-10-27）
 

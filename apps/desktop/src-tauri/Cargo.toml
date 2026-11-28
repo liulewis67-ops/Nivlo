@@ -1,13 +1,13 @@
 [package]
-name = "starat-desktop"
+name = "asterjot-desktop"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-description = "StarAt desktop host (Composition Root)"
+description = "AsterJot desktop host (Composition Root)"
 
 [lib]
-name = "starat_desktop_lib"
+name = "asterjot_desktop_lib"
 
 [build-dependencies]
 tauri-build.workspace = true
@@ -33,27 +33,27 @@ serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
 zip.workspace = true
-starat-common.workspace = true
-starat-domain.workspace = true
-starat-application.workspace = true
-starat-storage.workspace = true
-starat-capture.workspace = true
-starat-workflow.workspace = true
-starat-script.workspace = true
+asterjot-common.workspace = true
+asterjot-domain.workspace = true
+asterjot-application.workspace = true
+asterjot-storage.workspace = true
+asterjot-capture.workspace = true
+asterjot-workflow.workspace = true
+asterjot-script.workspace = true
 async-trait.workspace = true
-starat-scheduler.workspace = true
-starat-integrations.workspace = true
-starat-platform.workspace = true
+asterjot-scheduler.workspace = true
+asterjot-integrations.workspace = true
+asterjot-platform.workspace = true
 sys-locale = "0.3.2"
 
 [target.'cfg(target_os = "windows")'.dependencies]
-starat-platform-windows.workspace = true
+asterjot-platform-windows.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
-starat-platform-macos.workspace = true
+asterjot-platform-macos.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
-starat-platform-linux.workspace = true
+asterjot-platform-linux.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt", "test-util"] }
@@ -62,7 +62,7 @@ sqlx.workspace = true
 tempfile.workspace = true
 uuid.workspace = true
 tracing-subscriber.workspace = true
-starat-application = { workspace = true, features = ["testing"] }
+asterjot-application = { workspace = true, features = ["testing"] }
 
 [lints]
 workspace = true

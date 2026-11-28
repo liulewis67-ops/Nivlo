@@ -12,22 +12,22 @@
 
 use std::path::Path;
 
-use starat_common::paths::AppPaths;
-use starat_desktop_lib::lifecycle::startup::{build_app_state, open_database};
-use starat_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials, Secret};
+use asterjot_common::paths::AppPaths;
+use asterjot_desktop_lib::lifecycle::startup::{build_app_state, open_database};
+use asterjot_platform::credential::{CredentialKey, CredentialPort, MemoryCredentials, Secret};
 
 /// 带特征的测试 Token：足够独特，不会和普通数据碰撞。
-const CANARY: &str = "starat-canary-token-7f3a9c1e5b2d4086";
+const CANARY: &str = "asterjot-canary-token-7f3a9c1e5b2d4086";
 
 /// 当前平台的凭据库：Windows 用真实的 Credential Manager，其他平台用内存版。
 fn credential_store() -> Box<dyn CredentialPort> {
     #[cfg(target_os = "windows")]
     {
-        Box::new(starat_platform_windows::credential::WindowsCredentials::new())
+        Box::new(asterjot_platform_windows::credential::WindowsCredentials::new())
     }
     #[cfg(not(target_os = "windows"))]
     {
-        Box::new(starat_platform::credential::MemoryCredentials::new())
+        Box::new(asterjot_platform::credential::MemoryCredentials::new())
     }
 }
 
@@ -55,14 +55,17 @@ fn contains_canary(bytes: &[u8]) -> bool {
 #[tokio::test]
 async fn a_stored_token_never_shows_up_in_the_database_logs_or_config() {
     let dir = tempfile::tempdir().unwrap();
-    let paths = AppPaths::from_root(dir.path().join("StarAt"));
+    let paths = AppPaths::from_root(dir.path().join("AsterJot"));
     paths.ensure_dirs().unwrap();
     let database = open_database(&paths).await.unwrap();
     let state = build_app_state(database, paths.attachments_dir(), None);
 
     let store = credential_store();
-    let key =
-        CredentialKey::new("starat-test", &format!("leak-test-{}", std::process::id())).unwrap();
+    let key = CredentialKey::new(
+        "asterjot-test",
+        &format!("leak-test-{}", std::process::id()),
+    )
+    .unwrap();
     let secret = Secret::new(CANARY);
     store.set(&key, &secret).unwrap();
 
@@ -87,13 +90,13 @@ async fn a_stored_token_never_shows_up_in_the_database_logs_or_config() {
     // 经过连接管理的完整流程（真实的 SQLite 设置表 + 内存凭据库，避免动用开发机上的真实凭据）：
     // 秘密只进凭据库，设置表里只有元数据。
     {
-        use starat_application::ports::integration::IntegrationRegistry;
+        use asterjot_application::ports::integration::IntegrationRegistry;
         let canary_store = std::sync::Arc::new(MemoryCredentials::new());
         let mut registry = IntegrationRegistry::new();
         registry.register(std::sync::Arc::new(
-            starat_integrations::GithubIntegration::new(canary_store.clone()),
+            asterjot_integrations::GithubIntegration::new(canary_store.clone()),
         ));
-        let service = starat_desktop_lib::integration_service::IntegrationService::new(
+        let service = asterjot_desktop_lib::integration_service::IntegrationService::new(
             state.services.settings.clone(),
             canary_store.clone(),
             std::sync::Arc::new(registry),
@@ -133,7 +136,7 @@ async fn a_stored_token_never_shows_up_in_the_database_logs_or_config() {
     assert!(
         files
             .iter()
-            .any(|f| f.to_string_lossy().contains("starat.db"))
+            .any(|f| f.to_string_lossy().contains("asterjot.db"))
     );
     for file in files {
         let bytes = std::fs::read(&file).unwrap();

@@ -5,7 +5,7 @@ Application 层的 `AppError` 通过 IPC 返回 `{ code, message, action }`（�
 
 **新增错误码的步骤**：
 
-1. 在 `crates/starat-application/src/error.rs` 的 `ErrorCode` 中添加变体，并加入 `ErrorCode::ALL` 与 `as_str`。
+1. 在 `crates/asterjot-application/src/error.rs` 的 `ErrorCode` 中添加变体，并加入 `ErrorCode::ALL` 与 `as_str`。
 2. 在下表登记（测试 `every_error_code_is_registered_in_the_docs` 会检查）。
 3. 错误码一旦发布不得改名；废弃时在"备注"中标注，不删除。
 

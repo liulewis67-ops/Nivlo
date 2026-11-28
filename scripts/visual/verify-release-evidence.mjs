@@ -38,7 +38,7 @@ assert(native.warm.length>=20&&native.warmBudgetPassed&&native.warmP95<150,'Nati
 assert(native.cold.length===3,'Expected three separate cold search activations');
 assert(native.runtimeEnvironments.length===3,'Missing per-run native runtime records');
 assert(native.zoom.length===6&&native.badges.length===4,'Missing native zoom/badge matrix');
-assert(hash('target/release/starat-desktop.exe')===native.executableSha256,'Release executable differs from tested executable');
+assert(hash('target/release/asterjot-desktop.exe')===native.executableSha256,'Release executable differs from tested executable');
 assert(hash('tests/e2e/e2e.mjs')===native.harnessSha256,'Native harness changed after measurement');
 for(const [path,expected]of Object.entries(native.sourceFiles))assert(hash(path)===expected,`Stale native source: ${path}`);
 for(const zoom of native.zoom){

@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use starat_application::error::{AppError, ErrorAction, ErrorCode};
-use starat_platform::error::PlatformError;
+use asterjot_application::error::{AppError, ErrorAction, ErrorCode};
+use asterjot_platform::error::PlatformError;
 use tauri::{AppHandle, Manager, PhysicalPosition, Runtime, State, WebviewWindow};
 use tauri_specta::Event;
 
