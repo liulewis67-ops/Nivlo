@@ -102,7 +102,7 @@ const copy = {
     cta: 'Download for Windows', ctaShort: 'Download v0.1.5', repoCta: 'GitHub',
     eyebrow: 'Local-first workspace for Windows', version: 'v0.1.5',
     hero: ['Capture anything.', 'Make it actionable.'],
-    value: 'Capture · Organize · Act',
+    value: 'From scattered information to your next step.',
     lead: 'Drop links, local files, images, and quick thoughts into a floating Windows window. Organize them as tasks, notes, or tips, then schedule your next move in Today and Calendar.',
     meta: ['Windows x64 installer', 'Local-first SQLite storage', 'Apache-2.0 open source'],
     demo: 'Interactive demo', example: 'Live drag & drop', demoTitle: 'Drop scattered inputs into AsterJot',
