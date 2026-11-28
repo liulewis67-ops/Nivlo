@@ -1,7 +1,7 @@
 const SITE_URL = 'https://liulewis67-ops.github.io/AsterJot/';
-const DOWNLOAD_URL = 'https://github.com/liulewis67-ops/AsterJot/releases/download/v0.1.5/StarAt_0.1.5_x64-setup.exe';
+const DOWNLOAD_URL = 'https://github.com/liulewis67-ops/AsterJot/releases/download/v0.1.6/AsterJot_0.1.6_x64-setup.exe';
 const REPO_URL = 'https://github.com/liulewis67-ops/AsterJot';
-const RELEASES_URL = 'https://github.com/liulewis67-ops/AsterJot/releases/tag/v0.1.5';
+const RELEASES_URL = 'https://github.com/liulewis67-ops/AsterJot/releases/tag/v0.1.6';
 
 const copy = {
   zh: {
@@ -13,8 +13,8 @@ const copy = {
     skip: '跳到正文', nav: '主导航', language: '切换到英语', home: '回到页首',
     theme: { light: '切换到浅色模式', dark: '切换到深色模式' },
     features: '产品能力', workflow: '使用方式', faq: '常见问题',
-    cta: '下载 Windows 版', ctaShort: '下载 v0.1.5', repoCta: 'GitHub 开源',
-    eyebrow: 'Windows 桌面收集与行动工作台', version: 'v0.1.5',
+    cta: '下载 Windows 版', ctaShort: '下载 v0.1.6', repoCta: 'GitHub 开源',
+    eyebrow: 'Windows 桌面收集与行动工作台', version: 'v0.1.6',
     hero: ['Capture anything.', 'Make it actionable.'],
     value: '把零散信息变成下一步。',
     lead: '把散落各处的链接、文件、图片与灵感拖进 Windows 桌面悬浮窗。在收件箱整理为待办、笔记与提示，再用今日与日历推进清晰的下一步。',
@@ -67,13 +67,13 @@ const copy = {
       ['收下的东西会放在哪里？', '新捕获的内容会进入收件箱并保留来源信息，你可以随时把它整理为待办事项、笔记或提示。'],
       ['一定要配置捕获工作流吗？', '不需要。你可以直接手动收集和整理；当需要自动识别和处理常见链接或内容时，再按需启用捕获工作流。'],
       ['我的资料保存在哪里？', 'AsterJot 采用本地优先架构，默认将资料保存在本机 SQLite 数据库中。仅在使用需要访问网页或外部服务的捕获工作流时才需要联网。'],
-      ['现在可以下载 AsterJot 吗？', '当前 v0.1.5 提供免费开源的 Windows x64 安装包，点击下载按钮即可直接下载安装。安装包暂未配置 Windows 代码签名，首次安装时系统可能提示发布者未知。'],
+      ['现在可以下载 AsterJot 吗？', '当前 v0.1.6 提供免费开源的 Windows x64 安装包，点击下载按钮即可直接下载安装。安装包暂未配置 Windows 代码签名，首次安装时系统可能提示发布者未知。'],
     ],
-    endKicker: 'CAPTURE · ORGANIZE · ACT · V0.1.5',
+    endKicker: 'CAPTURE · ORGANIZE · ACT · V0.1.6',
     end: '一切，从收下第一条线索开始。',
-    endLead: '免费下载开源的 AsterJot 0.1.5，把散落的信息转化为清晰可执行的下一步行动。',
+    endLead: '免费下载开源的 AsterJot 0.1.6，把散落的信息转化为清晰可执行的下一步行动。',
     foot: 'Capture · Organize · Act',
-    footRelease: '发布说明 v0.1.5',
+    footRelease: '发布说明 v0.1.6',
     footLicense: 'Apache-2.0 协议',
     schema: {
       websiteDesc: 'AsterJot（Capture anything. Make it actionable.）是为 Windows 打造的开源本地优先收集与行动工作台，帮你把散落的信息转化为行动（Capture · Organize · Act）。',
@@ -99,8 +99,8 @@ const copy = {
     skip: 'Skip to content', nav: 'Main navigation', language: 'Switch to Chinese', home: 'Back to top',
     theme: { light: 'Switch to light mode', dark: 'Switch to dark mode' },
     features: 'Features', workflow: 'How it works', faq: 'FAQ',
-    cta: 'Download for Windows', ctaShort: 'Download v0.1.5', repoCta: 'GitHub',
-    eyebrow: 'Local-first workspace for Windows', version: 'v0.1.5',
+    cta: 'Download for Windows', ctaShort: 'Download v0.1.6', repoCta: 'GitHub',
+    eyebrow: 'Local-first workspace for Windows', version: 'v0.1.6',
     hero: ['Capture anything.', 'Make it actionable.'],
     value: 'From scattered information to your next step.',
     lead: 'Drop links, local files, images, and quick thoughts into a floating Windows window. Organize them as tasks, notes, or tips, then schedule your next move in Today and Calendar.',
@@ -153,13 +153,13 @@ const copy = {
       ['Where do captured items go?', 'Find new items in your inbox with their original source preserved, and organize them as tasks, notes or tips.'],
       ['Do I need to configure a workflow?', 'No. You can capture and organize items manually. Enable capture workflows only when you want to recognize and process familiar content automatically.'],
       ['Where is my data stored?', 'AsterJot is local-first and stores your data in a local SQLite database by default. A network connection is only needed for workflows that query webpages or external services.'],
-      ['Can I download it now?', 'Version 0.1.5 provides a free, open-source Windows x64 installer directly from the download button. The installer is not yet code-signed, so Windows may display an unknown publisher prompt.'],
+      ['Can I download it now?', 'Version 0.1.6 provides a free, open-source Windows x64 installer directly from the download button. The installer is not yet code-signed, so Windows may display an unknown publisher prompt.'],
     ],
-    endKicker: 'CAPTURE · ORGANIZE · ACT · V0.1.5',
+    endKicker: 'CAPTURE · ORGANIZE · ACT · V0.1.6',
     end: 'Capture anything. Make it actionable.',
-    endLead: 'Download free, open-source AsterJot 0.1.5 and turn scattered information into your next clear action.',
+    endLead: 'Download free, open-source AsterJot 0.1.6 and turn scattered information into your next clear action.',
     foot: 'Capture · Organize · Act',
-    footRelease: 'Release v0.1.5',
+    footRelease: 'Release v0.1.6',
     footLicense: 'Apache-2.0',
     schema: {
       websiteDesc: 'AsterJot — Capture anything. Make it actionable. A free, open-source, local-first Windows workspace to turn scattered information into action.',
@@ -409,7 +409,7 @@ function syncSeo(t) {
           alternateName: t.schema.altName,
           applicationCategory: 'ProductivityApplication',
           operatingSystem: 'Windows 10, Windows 11',
-          softwareVersion: '0.1.5',
+          softwareVersion: '0.1.6',
           abstract: 'Capture · Organize · Act',
           description: t.description,
           url: SITE_URL,

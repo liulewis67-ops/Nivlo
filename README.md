@@ -8,7 +8,7 @@ Capture · Organize · Act
 
 为 Windows 打造的个人收集与行动工作台，使用 Tauri 2、Rust 与 React。
 
-[产品介绍](https://liulewis67-ops.github.io/AsterJot/) · [下载](https://github.com/liulewis67-ops/AsterJot/releases/download/v0.1.5/StarAt_0.1.5_x64-setup.exe) · [发布说明](docs/development/releases/v0.1.5.md)
+[产品介绍](https://liulewis67-ops.github.io/AsterJot/) · [下载](https://github.com/liulewis67-ops/AsterJot/releases/download/v0.1.6/AsterJot_0.1.6_x64-setup.exe) · [发布说明](docs/development/releases/v0.1.6.md)
 
 拖入链接、文字或文件，在收件箱整理为待办、笔记和提示，再用今日与日历安排处理。数据默认保存于本机；可配置捕获工作流和外部集成。
 
